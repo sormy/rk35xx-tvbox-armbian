@@ -481,6 +481,24 @@ is *not* copied.)
 > speed with it (**~290 MB/s HS400ES → ~100 MB/s HS200/100 MHz**). Still faster than the SD, and the
 > eMMC is the root device after `armbian-install`, so write integrity wins.
 
+### `armbian-install`: the stock bootloader write soft-bricks the box
+
+Migrating to eMMC with an unmodified `armbian-install` left a box bootless
+([#6](https://github.com/sormy/rk3518-r69-armbian/issues/6)) — while a whole-image `dd` of the same
+image to eMMC booted fine. That split pins it on the bootloader: the rootfs copy is fine, but
+`armbian-install` then calls the u-boot package's `write_uboot_platform`
+(`/usr/lib/u-boot/platform_install.sh`), which dd's the **generic ROCK-2F blobs** to sectors 64 +
+16384 of the target — and sector 64 is the idbloader, where the whole bring-up established that only
+the **factory** DDR init brings this DRAM die up.
+
+The fix is structural, not procedural. The firmware payload ships an R69 **override** of
+`platform_install.sh` (`firmware/r69-platform-install`) plus the loader pair at
+`/usr/local/share/r69/`, so *every* `write_uboot_platform` caller — `armbian-install`,
+`armbian-config`, a manual `source` — writes the factory idbloader @ 64 + our `u-boot.itb` @ 16384:
+the same loaders at the same offsets `build-image.sh` puts on the SD (and that the README's earlier
+manual-restore `dd`s wrote — the override just removes the chance to skip them). The stock file
+can't reappear: `r69-firstboot` already apt-holds `linux-u-boot-*` for exactly this class of hazard.
+
 ---
 
 ## Ethernet — the integrated PHY needs its calibration driver
@@ -660,6 +678,7 @@ R69 (or a similar RK3518 box) running well.
 | DKMS modules fail on a kernel `apt upgrade` (`scripts/basic/fixdep: not found`, apt left half-broken) | dpkg configures **linux-image before linux-headers**, so the dkms hook runs before the headers postinst compiles the kernel host tools (`fixdep`/`modpost`) | `00-r69-kernel-prepare` postinst.d hook (sorts before `dkms`) pre-builds them; one-time recovery on an already-broken box: `dkms autoinstall -k $(uname -r)` then `dpkg --configure -a` |
 | SD card hangs at boot (`Card stuck being busy!`), rootfs never mounts — only with **some** cards | ROCK 2F `sd-uhs-*` + `vqmmc-supply`, but the R69 SD rail has no 1.8 V switch | strip `sd-uhs-*` + `vqmmc-supply` (match factory: 3.3 V high-speed) |
 | eMMC reads fine but **writes** fail with I/O errors (`armbian-install` breaks) | ROCK 2F runs HS400ES @ 200 MHz; writes are host-clock-timed and the board can't hold it | `mmc-hs200-1_8v` + `max-frequency` 100 MHz (match factory) |
+| `armbian-install` to eMMC → box boots nothing | stock `write_uboot_platform` flashed ROCK-2F loaders to sectors 64 + 16384 | R69 `platform_install.sh` override (in the firmware payload) writes the factory idbloader + our `u-boot.itb`; already bricked → rewrite the loaders (README "Back to stock") |
 | Ethernet links at **10 Mb/s** with a garbled link partner | uncalibrated Generic PHY bound — `CONFIG_RK630_PHY` off, FEPHY OTP calibration not applied | build `rk630phy` as DKMS (auto on first boot) |
 
 ---

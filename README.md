@@ -105,8 +105,9 @@ sudo r69-update --pull                # or fetch the repo first (needs git)
 
 It installs the firmware payload, refreshes + rebuilds the IR and Ethernet-PHY DKMS modules,
 reinstalls the device tree, and restarts the changed services — **rebooting only if `board.dtb`
-actually changed** (the bootloader is never touched). It reads the same `firmware/payload.list` the
-image build uses, so the two never drift.
+actually changed** (the bootloader is never touched — though the payload does stage the R69 loader
+pair + `write_uboot_platform` override that makes a *later* `armbian-install` safe). It reads the
+same `firmware/payload.list` the image build uses, so the two never drift.
 
 ## Customizing
 
@@ -203,23 +204,28 @@ alongside the system. Booted from the SD:
 ```sh
 sudo dd if=/dev/mmcblk1 of=/root/emmc-stock.img bs=4M status=progress    # 1. back up Android (your only undo)
 sudo armbian-install                                                     # 2. choose "Boot from eMMC / system on eMMC"
-sudo dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=512 skip=64    seek=64    count=16320 conv=notrunc   # 3. restore R69 idbloader
-sudo dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=512 skip=16384 seek=16384 count=8192  conv=notrunc; sync  #    + our u-boot.itb
-sudo poweroff                                                            # 4. pull the SD — it boots from eMMC
+sudo poweroff                                                            # 3. pull the SD — it boots from eMMC
 ```
 
-Steps 3–4 copy the R69 loaders back from the SD's own boot sectors (`armbian-install` overwrites
-sectors 64 + 16384 with stock blobs that won't boot this box). Afterward, **move the backup off the
-card to durable storage** — it shouldn't live only on the SD. On your computer, read it out of the
-SD's rootfs with e2tools:
+> **Images built before August 2026 soft-brick at step 2**
+> ([#6](https://github.com/sormy/rk3518-r69-armbian/issues/6)): stock `armbian-install` flashes the
+> generic ROCK-2F loaders to eMMC sectors 64 + 16384, and those lack this box's DDR tuning — the
+> box then boots nothing. Current images override `write_uboot_platform`
+> (`/usr/lib/u-boot/platform_install.sh`) so every bootloader write uses the R69 pair instead —
+> factory idbloader + our `u-boot.itb`, the same bytes at the same offsets as the SD you're booted
+> from. **On an older image, run `r69-update` first** (see
+> [Update a running box](#update-a-running-box-no-reflash)); it installs the override. Already
+> bricked? See [recovery](#back-to-stock).
+
+Afterward, **move the backup off the card to durable storage** — it shouldn't live only on the SD.
+On your computer, read it out of the SD's rootfs with e2tools:
 
 ```sh
 e2cp /dev/diskNs1:/root/emmc-stock.img emmc-stock.img    # macOS diskNs1 · Linux sdX1 (the SD's rootfs)
 ```
 
 > **Double-check the device nodes before you `dd`:** `mmcblk1` = eMMC, `mmcblk0` = your SD (confirm
-> with `lsblk` — swapping them overwrites your SD). `armbian-install` to eMMC has since been run for
-> real (it's what surfaced the HS200 fix), but the loader-restore steps still want a careful eye.
+> with `lsblk` — swapping them overwrites your SD).
 
 <a id="back-to-stock"></a>**Back to stock / recovery**
 
@@ -237,6 +243,10 @@ e2cp /dev/diskNs1:/root/emmc-stock.img emmc-stock.img    # macOS diskNs1 · Linu
   sudo dd if=firmware/factory_idbloader.bin of=$EMMC seek=64    conv=notrunc
   sudo dd if=firmware/u-boot.itb            of=$EMMC seek=16384 conv=notrunc; sync
   ```
+- **Nothing boots, not even an SD** — fall back to the BootROM's maskrom mode: hold the recessed
+  AV-jack button while applying power, then use `rkdeveloptool` over USB-OTG (load an rk3528
+  loader from Rockchip's [rkbin](https://github.com/rockchip-linux/rkbin), then `wl 0` your stock
+  dump or an R69 image). *Untested on this box* — the SD slot has always stayed bootable here.
 
 > **Golden rule:** never overwrite **sector 64** with a non-factory idbloader — it holds the DDR
 > tuning for your exact DRAM die.

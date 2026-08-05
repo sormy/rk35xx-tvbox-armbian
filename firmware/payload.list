@@ -41,3 +41,9 @@
 0644 board.dtb                        /usr/local/share/r69/board.dtb
 0755 r69-dtb-persist                  /etc/kernel/postinst.d/r69-dtb-persist
 0755 r69-kernel-prepare               /etc/kernel/postinst.d/00-r69-kernel-prepare
+
+# R69 loader pair + write_uboot_platform override: armbian-install (and any other bootloader
+# write) flashes these instead of the ROCK-2F blobs that soft-brick the box (issue #6)
+0644 factory_idbloader.bin            /usr/local/share/r69/factory_idbloader.bin
+0644 u-boot.itb                       /usr/local/share/r69/u-boot.itb
+0644 r69-platform-install             /usr/lib/u-boot/platform_install.sh

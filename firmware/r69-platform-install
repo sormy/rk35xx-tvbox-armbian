@@ -1,0 +1,25 @@
+# R69 override of the u-boot package's /usr/lib/u-boot/platform_install.sh. Everything that
+# flashes a bootloader (armbian-install, armbian-config, a manual source + write) sources this
+# file, and the stock version writes the generic ROCK-2F blobs — which lack this DRAM die's
+# tuning and soft-brick the box (GitHub issue #6). This one writes the R69 pair instead, the
+# same bytes at the same offsets as build-image.sh. The stock file can't come back while
+# linux-u-boot-* is apt-held (r69-firstboot does that).
+DIR=/usr/local/share/r69
+
+write_uboot_platform() {
+	dd if="$1/factory_idbloader.bin" of="$2" seek=64 conv=notrunc status=none
+	dd if="$1/u-boot.itb" of="$2" seek=16384 conv=notrunc status=none
+	sync
+}
+
+setup_write_uboot_platform() {
+	if grep -q "ubootpart" /proc/cmdline; then
+		local tmp part dev
+		tmp=$(cat /proc/cmdline)
+		tmp="${tmp##*ubootpart=}"
+		tmp="${tmp%% *}"
+		[ -n "$tmp" ] && part=$(findfs PARTUUID=$tmp 2> /dev/null)
+		[ -n "$part" ] && dev=$(lsblk -n -o PKNAME "$part" 2> /dev/null)
+		[ -n "$dev" ] && DEVICE="/dev/$dev"
+	fi
+}
