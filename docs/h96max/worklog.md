@@ -1716,6 +1716,13 @@ Byte-for-byte, the encoder output on both boards is **identical** at every resol
 bytes for 1080p HEVC) — same silicon, deterministic encoder, and a neat cross-check that neither box
 is an outlier.
 
-**Consequence for anyone who patched MPP's SoC table to work around this:** delete that patch. MPP
-scans its table in reverse, so a bolted-on `rk3518` entry now wins over `rk3528a` — and if it was
-cloned from the `rk3528` entry, it silently costs VP9 hardware decode.
+**Consequence for anyone who patched MPP's SoC table to work around this:** the patch is now
+redundant — drop it and stay on upstream.
+
+I first wrote here that such a patch would _win_ over `rk3528a` and cost VP9, and that was wrong;
+measuring it settled the matter. `check_soc_info()` walks the table in reverse, so the **last**
+matching entry wins, and a hand-added `rk3518` entry placed next to the `rk3528` ones sits _before_
+`rk3528a` and never matches at all. A box carrying exactly that patch reports
+`match chip name: rk3528a`, with the full `0x00f0079c` decode caps — VP9 included. The hazard only
+appears if the entry is appended _after_ `rk3528a`. `mpp_debug=0x10` prints which entry matched;
+trust that over reasoning about the file.

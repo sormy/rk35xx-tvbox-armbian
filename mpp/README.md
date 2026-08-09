@@ -74,11 +74,17 @@ register work but nothing that repairs this; `nyanmisaka/mpp` — what the prebu
 builds use — carries the same commits; and no MPP issue describes the failure. The patch applies
 cleanly to a pristine `develop` checkout.
 
-## If you already patched MPP's SoC table, undo it
+## If you already patched MPP's SoC table
 
 A tree that reports only `rockchip,rk3518` sends MPP to its "unknown SoC" fallback, and the usual
-workaround is to hand-add an `rk3518` entry to `osal/mpp_soc.c`. **Delete that patch.** Both boards
-now name the SoC `rockchip,rk3528a` in the DTB, so stock MPP identifies it — and MPP scans its table
-**in reverse**, so a bolted-on `rk3518` entry is matched _first_ and wins over `rk3528a`. If it was
-cloned from the `rk3528` entry (the natural thing to do), it silently costs you **VP9 hardware
-decode**, which `rk3528a` has and `rk3528` does not.
+workaround is to hand-add an `rk3518` entry to `osal/mpp_soc.c`. With the DTB naming the SoC
+`rockchip,rk3528a`, that workaround is **redundant** — stock MPP identifies the part on its own — so
+drop it and stay on upstream, where you also get the fixes above.
+
+Whether it is _harmful_ depends on where it was inserted, because `check_soc_info()` walks the table
+**in reverse**: the last matching entry wins. Placed next to the `rk3528` entries — the natural
+spot, and what one such patch did — it sits _before_ `rk3528a` and therefore never matches;
+detection still lands on `rk3528a` (verified on a box carrying exactly that patch). **Appended after
+`rk3528a`, it would win** — and if it was cloned from the `rk3528` entry it would silently cost
+**VP9 hardware decode**, which `rk3528a` has and `rk3528` does not. Check the order before assuming
+either way; `mpp_debug=0x10` prints which entry actually matched.
