@@ -1,13 +1,18 @@
 # Hardware video — what the VPU does, and how to prove it
 
-Both boxes carry the same RK3528-class video pipeline. This page is the family reference: which
-blocks exist, which formats they are _supposed_ to handle, and the test that decides each cell.
-Per-board results live in [`docs/r69/board.md`](r69/board.md#hardware-video) and
+Both boxes carry the same RK3528-class video engine: a decoder good to 8K, an encoder for H.264,
+H.265 and MJPEG, and a 2D scaler. This page says which blocks exist, what they are _supposed_ to
+handle, and how to test each one on your own box. Measured results are per board, in
+[`docs/r69/board.md`](r69/board.md#hardware-video) and
 [`docs/h96max/board.md`](h96max/board.md#hardware-video) — this page never claims a box works.
 
-> Run end-to-end on the **R69** (2026-08-09); its numbers are in
-> [`docs/r69/board.md`](r69/board.md#hardware-video). The H96 Max is still 🟡 until an image with
-> its `rk3528a` graft is flashed.
+Everything here runs through **MPP** — Rockchip's Media Process Platform (`librockchip_mpp`), a
+userspace library. The vendor kernel offers the video engine only through MPP's own interface at
+`/dev/mpp_service`, not the standard V4L2 one, so every player and transcoder that uses this
+hardware goes through MPP. Debian doesn't package it; [`../mpp/`](../mpp/README.md) covers building
+it and the one patch it needs.
+
+Both boards have been measured with the full matrix (2026-08-09).
 
 ## The blocks
 
@@ -24,12 +29,13 @@ reaches them through a single `/dev/mpp_service`; RGA has its own node.
 | RGA2          | `rga@ff850000`       | —          | scale / colour-convert / rotate between codec stages        |
 
 \* H.264 encode needs a [12-line MPP fix](../mpp/README.md); stock MPP returns empty frames. Cause
-and measurements: [below](#h264-encode--an-upstream-mpp-bug-and-the-fix).
+and measurements: [below](#h264-encode--a-library-bug-not-a-hardware-limit).
 
 **No AV1**, and this is tested, not assumed: MPP refuses it with
-`unable to create dec av1 for soc rk3528a unsupported`. Ignore the tool's own banner, which lists
-AV1 and VP8 _encode_ — that is the library's compiled-in set, not this SoC's. The honest list is the
-`coding caps` line from `mpp_debug=0x10`: dec `0x00f0079c`, enc `0x00100180`.
+`unable to create dec av1 for soc rk3528a unsupported`. Ignore the format list that `mpi_dec_test`
+prints in its usage banner: it names AV1 and VP8 _encode_ too, because that is everything the
+library was compiled with, not what this chip has. The honest list is the `coding caps` line from
+`mpp_debug=0x10`: dec `0x00f0079c`, enc `0x00100180`.
 
 > **MPP understates this encoder.** Its table marks `vepu540c` `cap_4k = 0` — 1080p only — yet HEVC
 > encodes at 4K and 8K on real hardware, `ffprobe`-confirmed at full frame size. Test the
@@ -39,14 +45,14 @@ AV1 and VP8 _encode_ — that is the library's compiled-in set, not this SoC's. 
 
 The vendor kernel exposes the VPU as `/dev/mpp_service` — the userspace **MPP library ABI**, not
 V4L2 M2M. Debian's ffmpeg has no `--enable-rkmpp` and there are no `/dev/videoN` M2M nodes for its
-`v4l2m2m` wrappers to bind, so stock ffmpeg silently decodes on the four A53s. Baking a
+`v4l2m2m` wrappers to bind, so stock ffmpeg silently decodes on the CPU instead. Baking a
 `librockchip_mpp` + ffmpeg stack into the image is exactly the "big compiled userspace" this repo
 refuses to carry ([AGENTS.md](../AGENTS.md#phase-3--board-data)) — it is a recipe, below.
 
 What the image _must_ get right is everything a stack can't fix for itself: SoC identity and device
 permissions. Both are shipped.
 
-### SoC identity — the whole reason this page exists
+### SoC identity — MPP has to recognise the chip
 
 MPP picks its codec table by substring-matching `/proc/device-tree/compatible` (`read_soc_name()` →
 `check_soc_info()` in `osal/mpp_soc.c`; it reads the **whole** property, NUL separators turned to
@@ -61,7 +67,7 @@ never used. Nothing in the error names the actual cause.
 | Board   | Root `compatible` carries                   | Stock MPP matches |
 | ------- | ------------------------------------------- | ----------------- |
 | R69     | `rockchip,rk3528a` — **factory, untouched** | `rk3528a`         |
-| H96 Max | `rockchip,rk3528a` — **grafted, ours**      | `rk3528a`         |
+| H96 Max | `rockchip,rk3528a` — **added by this repo** | `rk3528a`         |
 
 The H96 Max graft is one appended string ([dtb.md](h96max/dtb.md)); its factory tree named only
 `rockchip,rk3518`. It is honest, not a lie to the kernel: this box's own sub-nodes say
@@ -87,19 +93,16 @@ ls -l /dev/mpp_service /dev/rga /dev/dma_heap/    # want crw-rw---- root video
 
 ## Getting the tools
 
-MPP's own test binaries are the measuring instrument — no ffmpeg required, and `mpi_enc_test`
-synthesises its own frames, so encoding needs no sample media at all.
+The measuring instruments are MPP's own test programs, `mpi_dec_test` and `mpi_enc_test`. They need
+no ffmpeg, and `mpi_enc_test` generates its own frames, so encoding can be tested with no sample
+media at all.
+
+**Build them following [`../mpp/README.md`](../mpp/README.md)**, which includes the H.264 patch and
+the out-of-tree build the sources require. Then:
 
 ```sh
-sudo apt install -y cmake build-essential git       # a bare Armbian has git and gcc, but no g++
-git clone --depth 1 https://github.com/rockchip-linux/mpp ~/mpp
-cmake -S ~/mpp -B ~/mpp-build -DCMAKE_BUILD_TYPE=Release && nice make -C ~/mpp-build -j4
 export PATH="$HOME/mpp-build/test:$PATH"
 ```
-
-> Build **out of tree**. MPP keeps its own cmake helpers in `mpp/build/`, so pointing cmake's output
-> there deletes `merge_objects.cmake` and every later configure dies on
-> `Unknown CMake command "merge_objects"` — with the cause already erased.
 
 Prebuilt rkmpp stacks (Armbian's `rockchip-multimedia` packages, `jellyfin-ffmpeg-rockchip`) become
 usable the moment the SoC is detected — none has been tested here.
@@ -178,7 +181,7 @@ Three traps that cost real time, all harness, none hardware:
   hardware rejects (`Profile 1 is not yet supported`) — and then the test **spins forever** rather
   than exiting. Always `timeout`.
 - **AVS, AVS+ and AVS2** are claimed by the capability word but have no practical encoder to make a
-  sample with; leave them 🟡 and say why rather than inventing a result.
+  sample with; record them as untested (🟡) with the reason, rather than inventing a result.
 
 Run the matrix **as your normal user, not root** — that run is what proves the udev rule, and it is
 the only run that matters, because nothing on this box should decode video as root.
@@ -191,38 +194,16 @@ the only run that matters, because nothing on this box should decode video as ro
 | No `venc-opp-table` in either factory tree                              | encoder runs at a fixed 297 MHz, no devfreq scaling |
 | `rkvdec2_init: failed on clk_get clk_core` / `No core reset resource`   | noisy boot log, decoder works                       |
 
-The last two are **factory behaviour, not ours** — the box's stock Android dmesg
+The last two are **factory behaviour, not something this repo introduced** — the stock Android dmesg
 (`stock/h96max/dmesg.txt`) prints exactly the same lines. Neither has been shown to block anything,
 so neither has been grafted: this repo does not add DT nodes with no proven consumer.
 
-### H.264 encode — an upstream MPP bug, and the fix
+### H.264 encode — a library bug, not a hardware limit
 
-Stock MPP fails identically on both boards, at every resolution and every rate-control mode:
-`hal_h264e_vepu540c_status_check enc not done hw_status: 0x00000000`, output ~40 bytes. Every
-prebuilt rkmpp stack inherits this, so "this box can't encode H.264" looks like hardware.
+Stock MPP returns empty frames for H.264 on both boards, at every resolution and rate-control mode
+(`hal_h264e_vepu540c_status_check enc not done hw_status: 0x00000000`, ~40-byte output). Every
+prebuilt rkmpp stack inherits it, so "this box can't encode H.264" looks like a hardware limit.
 
-It isn't. The `rkvenc` IRQ increments **exactly once per submitted frame** during a failing H.264
-run — identical to a working HEVC run — so the encoder accepts each job and signals completion. The
-bug is one line of plumbing: `hal_h264e_vepu540c_status_check()` tests
-`reg_ctl.common.int_sta.enc_done_sta`, but the H.264 HAL only ever **writes** the control block —
-its lone `MPP_DEV_REG_RD` covers `reg_st`. Nothing ever reads the hardware status word back, so the
-check always sees the zero the HAL itself wrote. The H.265 HAL, on the same `vepu540c`, reads it
-explicitly from `VEPU540C_REG_BASE_HW_STATUS` — which is why HEVC works and H.264 doesn't.
-
-Adding that read-back **fixes it** — [`mpp/h264e-vepu540c-status.patch`](../mpp/README.md), 12 lines
-against `develop`:
-
-```sh
-git -C ~/mpp apply /path/to/repo/mpp/h264e-vepu540c-status.patch
-make -C ~/mpp-build -j4
-```
-
-Measured on the R69 with the patch, `ffprobe`-verified at every frame size, HEVC unaffected:
-
-| H.264 encode |   720p | 1080p |    4K |   8K |
-| ------------ | -----: | ----: | ----: | ---: |
-| stock MPP    |     ❌ |    ❌ |    ❌ |   ❌ |
-| patched      | 116.25 | 55.03 | 14.43 | 3.62 |
-
-Not upstream as of 2026-08-09: `develop` has recent `vepu540c`/RK3528 register work but nothing that
-repairs this, `nyanmisaka/mpp` carries the same commits, and no MPP issue describes it.
+It isn't: the encoder completes every frame, and MPP simply never reads the result. A 12-line patch
+restores it, giving 116 / 55 / 14 / 3.6 fps at 720p / 1080p / 4K / 8K. Cause, patch and how to apply
+it: [`../mpp/README.md`](../mpp/README.md).

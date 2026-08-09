@@ -81,8 +81,7 @@ The RK3528-class VPU, via `/dev/mpp_service` — and it does rather more than th
 **H.264 encode works once MPP is fixed.** Stock MPP never reads the hardware status register back on
 the H.264 path, so it always sees "not done" and throws away a frame the encoder really did produce
 — the `rkvenc` IRQ fires once per frame throughout. Twelve lines restore it:
-[`../../mpp/`](../../mpp/README.md), story in
-[../codec.md](../codec.md#h264-encode--an-upstream-mpp-bug-and-the-fix).
+[`../../mpp/`](../../mpp/README.md), story in [../codec.md](../../mpp/README.md).
 
 Not present, and proven so rather than assumed: **AV1** is refused with
 `unable to create dec av1 for soc rk3528a unsupported`. **AVS / AVS+ / AVS2** are claimed by the
