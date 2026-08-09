@@ -40,6 +40,50 @@ The eMMC's real win over a good SD card is **random 4K writes — ~6× faster** 
 which is what makes the box feel quicker after migrating; sequential gains are milder. The R69's
 Samsung part is quicker still on writes — see its [board doc](../r69/board.md#measured-on-our-unit).
 
+## Hardware video
+
+The RK3528-class VPU via `/dev/mpp_service` — **8K decode and 8K HEVC encode**, well past what the
+box is sold as. Blocks, tools and the test behind each cell: [../codec.md](../codec.md).
+
+**This board needed a device-tree graft to get here.** Its factory tree named the SoC only
+`rockchip,rk3518`, a name no MPP release contains, so the library fell back to "unknown SoC" and the
+entire VPU was unreachable — every encode died at `could not found coding type` and decode never
+left the A53s. With `"rockchip,rk3528a"` appended ([dtb.md](dtb.md)) MPP identifies it:
+`match chip name: rk3528a`, dec caps `0x00f0079c`, enc `0x00100180`.
+
+**Decode ✅ — fps, measured here, 30-frame runs as a normal user:**
+
+| Format |        720p | 1080p |   4K |   8K |
+| ------ | ----------: | ----: | ---: | ---: |
+| H.264  |       329.5 | 152.8 | 39.7 |  9.6 |
+| HEVC   |       605.8 | 326.1 | 85.3 | 20.7 |
+| MJPEG  |       521.7 | 292.0 | 91.1 | 23.6 |
+| VP9    |       634.2 | 326.7 | 84.8 |   ➖ |
+| MPEG-2 |       175.4 |  82.8 |   ➖ |   ➖ |
+| MPEG-4 |       197.3 |  93.5 |   ➖ |   ➖ |
+| VP8    |       129.6 |  59.7 |   ➖ |   ➖ |
+| H.263  | 831.1 (CIF) |    ➖ |   ➖ |   ➖ |
+
+**Encode ✅ — fps:**
+
+| Format         |  720p | 1080p |   4K |   8K | Verdict                                  |
+| -------------- | ----: | ----: | ---: | ---: | ---------------------------------------- |
+| HEVC           | 125.9 |  60.6 | 15.9 |  4.0 | 4K/8K output confirmed real by `ffprobe` |
+| MJPEG          | 323.2 | 172.0 | 49.3 | 12.7 |                                          |
+| H.264, stock   |    ❌ |    ❌ |   ❌ |   ❌ | size 0 — an **upstream MPP bug**         |
+| H.264, patched | 115.3 |  54.9 | 14.4 |  3.6 | [12-line fix](../../mpp/README.md)       |
+
+Not present, and proven rather than assumed: **AV1** is refused with
+`unable to create dec av1 for soc rk3528a unsupported`. **AVS / AVS+ / AVS2** are claimed by the
+capability word but stay 🟡 — no encoder exists to make a sample clip.
+
+> Two things here contradict MPP's own capability table, which marks this encoder `cap_4k = 0` and
+> the decoder 4K: **8K decodes** on all three main codecs, and **HEVC encodes at 4K and 8K**, with
+> `ffprobe` confirming genuine `7680x4320` bitstreams rather than downscaled ones.
+
+The R69 measures within noise of every number above — same silicon, and a useful cross-check that
+neither box is an outlier ([R69 board doc](../r69/board.md#hardware-video)).
+
 ## Names on disk
 
 This board uses the family-neutral **`rk35xx-`** naming (only the R69 keeps legacy `r69-` names):

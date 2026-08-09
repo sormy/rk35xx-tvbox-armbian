@@ -1,0 +1,4 @@
+# The vendor driver ships these root-only 0600, so librockchip_mpp/librga fail as a normal user
+# (group membership alone can't help) — hardware decode/encode needs all three unprivileged.
+KERNEL=="mpp_service|rga|iep", GROUP="video", MODE="0660"
+SUBSYSTEM=="dma_heap", GROUP="video", MODE="0660"

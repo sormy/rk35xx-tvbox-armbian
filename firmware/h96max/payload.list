@@ -49,6 +49,9 @@
 # hardware watchdog: systemd pings it, the SoC resets the box if it stops (node enabled in board.dtb)
 0644 common/rk35xx-watchdog.conf                /etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf
 
+# hardware video codec: open the MPP/RGA/dma-heap nodes to group video (see docs/codec.md)
+0644 common/rk35xx-vpu.rules                    /etc/udev/rules.d/99-rk35xx-vpu.rules
+
 # in-place updater, so `rk35xx-update --pull` works on the box without a checkout
 0755 ../rk35xx-update                           /usr/local/sbin/rk35xx-update
 

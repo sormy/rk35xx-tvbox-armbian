@@ -14,6 +14,8 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `firmware/<board>/` | `board.conf`, `board.dts`/`.dtb`, `payload.list`, factory idbloader |
 | `firmware/common/`  | everything shared between boards                                    |
 | `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage) |
+| `docs/`             | family-wide notes — `codec.md` (the VPU and its per-format test)    |
+| `mpp/`              | patches to Rockchip's userspace codec library, with a README        |
 | `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                    |
 | `backup/<board>/`   | eMMC images (gitignored)                                            |
 
@@ -81,15 +83,16 @@ route back to Android once you migrate.
 **Derive `board.dtb` from the box's own factory Android DTB**, never from a reference board's. Apply
 only these grafts, each with a functional consumer:
 
-| Graft                                               | Consumer                                     |
-| --------------------------------------------------- | -------------------------------------------- |
-| debug uart `status` → `okay` + its `xfer` pinctrl   | `ttyS0` console                              |
-| `fiq-debugger` → `disabled`                         | frees that UART for `ttyS0`                  |
-| IR `remote_support_psci` → `1`                      | remote wakes the box from off                |
-| GPU → lima `clocks`/`clock-names`/`interrupt-names` | Armbian uses mainline lima                   |
-| LEDs → labels `power`/`standby`, `retain-state-*`   | the shared LED hooks                         |
-| `watchdog` → `okay`                                 | systemd `RuntimeWatchdogSec`                 |
-| board `compatible` prepend                          | only if a driver keys firmware lookup off it |
+| Graft                                               | Consumer                                                          |
+| --------------------------------------------------- | ----------------------------------------------------------------- |
+| debug uart `status` → `okay` + its `xfer` pinctrl   | `ttyS0` console                                                   |
+| `fiq-debugger` → `disabled`                         | frees that UART for `ttyS0`                                       |
+| IR `remote_support_psci` → `1`                      | remote wakes the box from off                                     |
+| GPU → lima `clocks`/`clock-names`/`interrupt-names` | Armbian uses mainline lima                                        |
+| LEDs → labels `power`/`standby`, `retain-state-*`   | the shared LED hooks                                              |
+| `watchdog` → `okay`                                 | systemd `RuntimeWatchdogSec`                                      |
+| board `compatible` prepend                          | only if a driver keys firmware lookup off it                      |
+| SoC `compatible` append                             | only if userspace can't name the SoC without it (`docs/codec.md`) |
 
 **Leave everything else factory**, including the `model` string. If nothing consumes it, don't graft
 it. Most `status = "disabled"` nodes are simply unwired on that PCB (i2c, spi, spare uarts/pwms,
@@ -140,7 +143,7 @@ Flash, boot, then run **every unattended check before asking the human for anyth
 one batched list. First boot compiles DKMS offline — allow ~4 minutes before assuming a failure.
 
 Test in **risk order**: the things most likely to be wrong on a new board are SDIO Wi-Fi, the
-Ethernet PHY, and anything the DTB touches. Prove those before the easy wins.
+Ethernet PHY, the video codec and anything the DTB touches. Prove those before the easy wins.
 
 ## Unattended (agent, over SSH)
 
@@ -158,10 +161,47 @@ Ethernet PHY, and anything the DTB touches. Prove those before the easy wins.
 | RAM             | `free -m` vs advertised; `stress-ng --vm --verify`                                         |
 | eMMC / SD       | present; `fio` random-4K + sequential, direct I/O, identical parameters on every board     |
 | IR receiver     | input node exists and the patched driver bound (check `dmesg`)                             |
+| Video codec     | **every format in `docs/codec.md`** encodes/decodes on the VPU, as a normal user not root  |
 | Watchdog        | `/dev/watchdog` exists; journal shows systemd took it; `wdctl` then reports it busy        |
 | Suspend         | `systemctl suspend` — confirm it drops off the network                                     |
 | Upgrade safety  | `apt-mark showhold` lists `linux-u-boot-*`; `BOARD_NAME` survives an `apt full-upgrade`    |
 | Loaders         | after migration, `dd` sectors 64/16384 and md5 against `/usr/local/share/*/`               |
+
+## Video codec — every format, both directions
+
+**A first-class check, not an extra.** These are TV boxes: one that can't decode in hardware is a
+slow ARM computer with an HDMI port. And it fails _silently_ — everything still plays, on the A53s,
+at a tenth of the speed — so only a per-format matrix will tell you. Tools and exact commands:
+[`docs/codec.md`](docs/codec.md); results belong in `docs/<board>/board.md`.
+
+**Gate first: does userspace know what SoC this is?** `librockchip_mpp` substring-matches
+`/proc/device-tree/compatible` against a hardcoded table. Miss it and it assumes legacy blocks this
+silicon lacks, every encode dies at `could not found coding type`, and no error names the cause —
+one `mpp_debug=0x10` run answers it. If the factory tree's SoC name isn't in MPP, that is a **DTB
+graft** (Phase 2), not a userspace problem.
+
+Then give every cell a state (✅ 🟢 🟡 ❌ ➖) — **per board, never inherited from the sibling** —
+and **at 720p, 1080p, 4K and 8K**, not just 1080p. Both surprises this repo found were at the
+extremes.
+
+| Must be tested                | Decode | Encode | Pass means                                      |
+| ----------------------------- | :----: | :----: | ----------------------------------------------- |
+| H.264 · HEVC · MJPEG          |   ✔    |   ✔    | encoded output **decodes back** — not just >0 B |
+| VP9 · AVS2                    |   ✔    |   —    | VP9 also settles `rk3528a` vs `rk3528`          |
+| MPEG-2 · MPEG-4 · H.263 · VP8 |   ✔    |   —    | legacy VPU2 block, ≤1080p                       |
+| AVS / AVS+                    |   ✔    |   —    | 🟡 is the honest answer when no clip exists     |
+| AV1                           |   ➖   |   ➖   | absent — MPP refuses it; record the refusal     |
+
+Three rules decide whether a pass is real. **Run as a normal user, not root** — the VPU nodes ship
+root-only `0600`, the payload's udev rule is what fixes that, and running as root hides the bug.
+**Record fps**, because a codec that quietly fell back to software is the failure this matrix exists
+to catch. And **believe the hardware over the capability table**: MPP marks this encoder 1080p-only
+(`cap_4k = 0`) and it encodes 4K and 8K anyway — verify with `ffprobe`, not with the struct.
+
+When something fails, separate silicon from software before writing it down: watch
+`/proc/interrupts` for the codec IRQ across a run. One interrupt per frame means the hardware took
+the job and finished it, so a zero-size result is a **userspace HAL bug** — which is exactly how the
+H.264-encode failure here was pinned on MPP rather than on the box.
 
 ## Needs the human (batch these)
 
@@ -173,6 +213,7 @@ Ethernet PHY, and anything the DTB touches. Prove those before the easy wins.
 | Suspend wake      | resume with the remote, and confirm it **stays** up (no logind double-fire)          |
 | Toothpick button  | press it while `evtest` watches the `adc-keys` node                                  |
 | HDMI              | picture on a real TV, audio audible; also try a PC monitor for the pixel-clock quirk |
+| Video playback    | a real 4K HEVC file on the TV — smooth, in sync, and the CPU near idle while it runs |
 | USB               | a device in each port; USB 3 needs a SuperSpeed device for throughput                |
 | SD card slot      | insert a card, confirm it enumerates                                                 |
 | AV jack           | 3.5 mm cable — analog audio, composite video                                         |
@@ -183,7 +224,7 @@ Ethernet PHY, and anything the DTB touches. Prove those before the easy wins.
 ## Done means
 
 - Every unattended check passes and every human check is answered — no cell in the matrix left at a
-  guess.
+  guess, the per-format codec matrix included.
 - The box **boots from eMMC** with its own loader pair verified on-device.
 - `docs/<board>/board.md` carries identity, names on disk, measured numbers and known gaps; the
   worklog tells the story; the README lists the board.

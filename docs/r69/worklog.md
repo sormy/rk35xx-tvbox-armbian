@@ -833,3 +833,126 @@ Consumer Control + air-mouse nodes — and it is **the same BLE HID model as the
 (`usb:v2B54p1600`) despite the two answering to different IR usercodes. Pairing needs one
 `bluetoothctl` session with `default-agent` and a scan running; `--agent` alone or a separate `pair`
 invocation fails with `AuthenticationFailed`.
+
+### 2026-08-09 — video codec bring-up: this board was already right
+
+Codec testing became a first-class check after the H96 Max turned out to have been unable to reach
+its VPU at all (that board's [worklog](../h96max/worklog.md) has the story). The R69 is the control
+case, and it needed **no device-tree work**: its factory root compatible already carries
+`rockchip,rk3528a`, which is exactly what `librockchip_mpp` substring-matches, so the library has
+always identified this SoC correctly here.
+
+What it did _not_ have is usable permissions. `/dev/mpp_service` (subsystem `mpp_class`), `/dev/rga`
+and all three `/dev/dma_heap/*` nodes are created **root-only `0600`**, so no unprivileged player
+can touch the VPU no matter which groups it is in — and nothing in Armbian's shipped rules covers
+them (`90-chromium-video.rules` only handles mainline V4L2 M2M nodes, which this vendor kernel
+doesn't create).
+
+`firmware/common/rk35xx-vpu.rules` fixes that, and it is **verified here**: after installing it,
+`udevadm trigger` flipped all five nodes to `root:video 0660`, and `udevadm test` names line 3 of
+that file as the rule setting `GROUP 44` / `MODE 0660` on `mpp_service`. Note the two subsystems —
+`mpp_class` for `mpp_service`, `misc` for `rga` — if you re-trigger by hand, match both or you'll
+think the rule half-failed.
+
+Getting to a matrix meant a toolchain: a bare Armbian has `git` and `gcc` but **no `g++`**, which
+MPP's cmake needs. `apt install build-essential ffmpeg` plus cmake, and one trap worth the ink —
+**build MPP out of tree.** Point cmake's output at `mpp/build/` (the obvious guess) and you delete
+MPP's own `build/cmake/merge_objects.cmake`, after which every configure fails on
+`Unknown CMake command "merge_objects"` with the cause already erased. Use `~/mpp-build`.
+
+### 2026-08-09 — the matrix, measured
+
+All runs on the R69, 30 frames, **as `art` — not root** (which is the point of the udev rule), MPP
+built from `rockchip-linux/mpp` at `develop`. Detection first: `match chip name: rk3528a`, decode
+caps `0x00f0079c`, encode caps `0x00100180`.
+
+**Decode — fps, every format the SoC claims:**
+
+| Format |        720p | 1080p |   4K |   8K |
+| ------ | ----------: | ----: | ---: | ---: |
+| H.264  |       324.3 | 148.9 | 37.3 |  8.1 |
+| HEVC   |       602.8 | 319.3 | 84.8 | 20.0 |
+| MJPEG  |       530.9 | 296.8 | 88.9 | 23.7 |
+| VP9    |       635.1 | 324.9 | 84.8 |    — |
+| MPEG-2 |       177.0 |  83.0 |    — |    — |
+| MPEG-4 |       198.7 |  93.5 |    — |    — |
+| VP8    |       128.2 |  59.3 |    — |    — |
+| H.263  | 801.8 (CIF) |       |      |      |
+
+**Encode — fps:**
+
+| Format |  720p | 1080p |   4K |   8K |
+| ------ | ----: | ----: | ---: | ---: |
+| HEVC   | 126.3 |  61.0 | 15.9 |  4.0 |
+| MJPEG  | 329.3 | 173.3 | 49.9 | 12.9 |
+| H.264  |     — |     — |    — |    — |
+
+Four things came out of this that no datasheet would have told us:
+
+**1. VP9 decodes — so `rk3528a` is the right name.** 635/325/85 fps at 720p/1080p/4K. VP9 is the
+_only_ capability separating MPP's `rk3528a` entry from its `rk3528` one, so this is the evidence
+that the H96 Max's DTB graft should say `rk3528a`, and it is no longer a judgement call.
+
+**2. 8K decode is real**, and not marginal: HEVC 20 fps, MJPEG 23.7, H.264 8.1. MPP's `vdpu382a`
+struct sets `cap_8k = 1` and the silicon backs it. Nobody advertises this box as an 8K decoder.
+
+**3. MPP's own capability table understates the encoder.** It marks `vepu540c` `cap_4k = 0`, i.e.
+1080p only — yet HEVC encoded at 4K (15.9 fps) and **8K (4.0 fps)**, and `ffprobe` on the box
+confirms the bitstreams really are `hevc,3840,2160` and `hevc,7680,4320`, not downscaled. MJPEG
+encodes 4K at 49.9 fps. Treat "1080p encoder" as a floor, not a ceiling.
+
+**4. H.264 encode is broken here too** — `size 0` at every resolution, exactly as on the H96 Max, so
+it is an MPP HAL bug on `vepu540c` and not a board or DTB fault. HEVC on the same block is fine.
+
+Two harness traps, both costing a confusing hour: **MJPEG decode needs explicit `-w`/`-h`** or the
+frame buffer sizes to 0 and it dies at `mpp_buffer_get ... size 0` / `ret -2` — nothing to do with
+the hardware. And a **VP9 profile-1 clip** (what `ffmpeg` gives you if the source isn't `yuv420p`)
+prints `Profile 1 is not yet supported` and then **spins forever** instead of exiting — always run
+these under `timeout`.
+
+AV1 is refused precisely as it should be: `unable to create dec av1 for soc rk3528a unsupported`.
+Note the tool's own banner lists AV1 and VP8 _encode_ regardless — that list is the library's
+compiled-in set, not this SoC's; the `mpp_debug=0x10` caps line is the honest one. AVS/AVS+/AVS2 are
+claimed by the caps but stay untested: no encoder exists to make a sample clip.
+
+### 2026-08-09 — the H.264 encoder was never broken; MPP just never looked
+
+The `size 0` failure looked like a dead H.264 path in the encoder, and the first instinct — mine
+included — was to write it off as a silicon or HAL-revision limitation and tell people to use HEVC.
+The interrupt counter said otherwise: across a 10-frame H.264 run the `rkvenc` IRQ incremented
+**exactly ten times**, the same as a working HEVC run. Hardware that never encodes doesn't raise a
+completion interrupt per frame. So the frames existed and something upstream of them was lying.
+
+Diffing the two HALs on the same `vepu540c` block found it in a couple of minutes:
+
+- `hal_h264e_vepu540c_status_check()` tests `regs_set->reg_ctl.common.int_sta.enc_done_sta`
+- but the H.264 HAL's only `MPP_DEV_REG_RD` covers `reg_st` at `VEPU540C_STATUS_OFFSET`; the control
+  block containing `int_sta` is **write-only** in that path
+- so the "hardware status" it checks is the zero MPP itself wrote — `hw_status: 0x00000000`, every
+  time, on every SoC using this HAL
+- `hal_h265e_vepu540c` reads that word explicitly from `VEPU540C_REG_BASE_HW_STATUS` (0x2c) before
+  checking it, which is the entire reason HEVC works and H.264 doesn't
+
+Twelve lines — one extra `MPP_DEV_REG_RD` mirroring the H.265 path — and H.264 encodes at every
+resolution: **116.3 / 55.0 / 14.4 / 3.6 fps** at 720p / 1080p / 4K / 8K, `ffprobe` confirming real
+`h264,1920,1080` and `h264,7680,4320` bitstreams, the hardware decoder reading them back at 280 fps,
+and HEVC unchanged at 60.9 fps. Patch kept at `mpp/` (patch + README).
+
+This is an upstream bug, not an rk3518 quirk: any SoC whose H.264 encoding goes through
+`hal_h264e_vepu540c` (RK3528, RK3562 and relatives) should be hitting it. Nothing in
+`rockchip-linux/mpp` `develop` fixes it as of today, `nyanmisaka/mpp` carries the same code, and no
+issue describes it — worth sending upstream.
+
+**The lesson worth keeping:** "the vendor's own library says the hardware didn't finish" is not
+evidence that the hardware didn't finish. `/proc/interrupts` is, and it costs one line to check.
+
+### 2026-08-09 — deployed and rebooted
+
+`rk35xx-deploy art@cnc --no-reboot` (this box answers to `cnc` now), then an explicit reboot. The
+updater correctly reported _"device tree unchanged — no reboot needed"_: the R69's DTB is untouched
+by the codec work, since its factory tree already names the SoC `rockchip,rk3528a`.
+
+Back in ~24 s, boot 17.3 s, no failed units, DKMS modules installed and loaded, `/dev/watchdog`
+present, Ethernet PHY still `RK630`. The VPU nodes come up `root:video 0660` **from the udev rule
+now, on a cold boot** — not from the hand-install used during testing — which is the thing that
+needed proving.

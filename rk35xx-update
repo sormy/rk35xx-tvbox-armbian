@@ -113,6 +113,9 @@ echo "[3/5] installing the DTB into the running kernel"
 
 echo "[4/5] reloading systemd + restarting changed services"
 systemctl daemon-reload
+# device-node rules only apply to nodes that already exist after a re-trigger (VPU: mpp_class, misc)
+udevadm control --reload
+udevadm trigger --subsystem-match=mpp_class --subsystem-match=misc --subsystem-match=dma_heap
 for s in ${BOARD_UPDATE_RESTART:-}; do systemctl restart "$s" 2>/dev/null || true; done
 for s in ${BOARD_UPDATE_TRY_RESTART:-}; do systemctl try-restart "$s" 2>/dev/null || true; done
 echo "  (power-key / suspend drop-ins take effect after 'systemctl restart systemd-logind' or a reboot)"

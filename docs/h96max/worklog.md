@@ -1608,3 +1608,114 @@ loaded, Wi-Fi up on the same lease, and the **watchdog still armed** — DT node
 Note for anyone reading `armbian-install`'s menu: it does **not** show device names or sizes when
 listing targets, only afterwards at the confirmation prompt — and on this image the eMMC is
 `mmcblk2` while the SD is `mmcblk1`. Read that confirmation carefully.
+
+### 2026-08-09 — the VPU was never reachable, and the reason was one string
+
+Symptom, found while trying to use the box as a video edge node: **hardware encode fails on
+everything**. Every coding type dies at `mpp_enc_hal_init could not found coding type`, and stock
+ffmpeg quietly decodes on the four A53s — `-hwaccels` lists no rkmpp, `-c:v h264_v4l2m2m` returns
+`-22`, and `/dev/video0..3` are all `uvcvideo`. The vendor kernel doesn't do V4L2 M2M at all: the
+VPU is behind `/dev/mpp_service`, the MPP library ABI.
+
+The instinct is to blame the chip or the DTB. Both are innocent. `rkvenc@ff780000` probes, its power
+domain is on, its clocks are sane, and IRQ 67 increments once per encoded frame.
+
+**It is `librockchip_mpp` failing to recognise the SoC.** `read_soc_name()` reads the whole of
+`/proc/device-tree/compatible` and `check_soc_info()` substring-matches it against a hardcoded table
+(`osal/mpp_soc.c`). Our factory tree says `rockchip,rk3518` — and **no MPP release has ever
+contained an `rk3518` entry**. So it falls to `mpp_soc_default`, "unknown SoC", which assumes
+`vdpu1`/`vdpu2` decoders and `vepu1`/`vepu2` encoders. This silicon has none of those encoders,
+hence the error, and its real RKVDEC and JPEG decoders are never touched. There is no env override.
+
+What settles the identity, all of it local evidence:
+
+- our own `rkvdec`/`rkvenc` nodes are `rockchip,rkv-{de,en}coder-rk3528`
+- stock Android boots `init.rk3528.rc` and binds an `rk3528-acodec` (`stock/h96max/dmesg.txt`)
+- the R69 — same `35181001` SoC ID — has `rockchip,rk3528a` in _its_ factory root compatible, and
+  Android there reports `ro.soc.model = RK3528`
+
+So the box is an RK3528 badged RK3518, and the fix is to say so: **append `"rockchip,rk3528a"` to
+the root compatible**, last, so every existing `rk3518` match still wins and the kernel merely gains
+a fallback it already understands. The rebuilt DTB differs from the old one by that line alone.
+
+The payoff is bigger than our own tooling: **no fork of MPP is needed any more.** Prebuilt rkmpp
+stacks — Armbian's `rockchip-multimedia`, `jellyfin-ffmpeg-rockchip`, Kodi builds — go from
+"impossible on this box" to "works", without a patch. Before this, the only route was hand-adding an
+`rk3518` entry to `mpp_soc.c` and rebuilding the whole stack.
+
+**Measured earlier on this box with that hand-patched MPP** (same table entry the DTB now selects,
+so it should reproduce): MJPEG 720p decode in **7 ms** (131 fps), HEVC encode **1080p @ 52 fps**
+validated by decoding the output back — and **H.264 encode returns size 0**
+(`hal_h264e_vepu540c_status_check enc not done hw_status: 0x00000000`). That last one is an MPP HAL
+bug on this encoder revision, not silicon: the same `vepu540c` block does HEVC at 52 fps.
+
+Second gap, same area: `/dev/mpp_service`, `/dev/rga` and `/dev/dma_heap/*` are created root-only
+`0600`, so any non-root player dies at `os_allocator_dma_heap_open ... failed` and no group
+membership can rescue it. Shipping `firmware/common/rk35xx-vpu.rules` to give them to group `video`
+— **verified on the R69** (`udevadm test` names that rule as the one setting `GROUP 44`,
+`MODE 0660`), still to be re-checked here.
+
+Two DT defects are real but **factory behaviour, not ours** — stock Android's dmesg prints the same
+lines: no `venc-opp-table`, so the encoder runs at a fixed 297 MHz with no devfreq
+(`rkvenc_init: failed to add venc devfreq`), and `rkvdec2_init: failed on clk_get clk_core` /
+`No core reset resource define`. Nothing has been shown to block on either, so neither was grafted.
+
+Open, and deliberately not guessed at: `rk3528a` vs `rk3528` differ in MPP by exactly one
+capability, **VP9 decode**. We claim `rk3528a` because that is what the sibling board's factory tree
+claims for this silicon; the format matrix in `docs/codec.md` is what will confirm or refute it, and
+if VP9 comes back ❌ the correction is that one string.
+
+Untried idea worth recording: a compatible change can probably be tested **without flashing** by
+bind-mounting a doctored file over `/proc/device-tree/compatible` inside a private mount namespace
+(`unshare -m`) and running MPP there. Not attempted yet — if it works it turns a reflash-and-reboot
+cycle into seconds.
+
+### 2026-08-09 — H.264 encode: fixed upstream-side, pending re-test here
+
+The `size 0` H.264 encode failure recorded above is **not** specific to this box and not a HAL
+revision limit — it is a plumbing bug in MPP that affects every SoC using `hal_h264e_vepu540c`. The
+H.264 path never reads the hardware status register back; it checks the zero it wrote itself, while
+the encoder happily completes each frame (the `rkvenc` IRQ fires once per submitted frame). The
+H.265 HAL on the same block does read it, which is the whole difference.
+
+Diagnosed and fixed on the R69, since this box was busy: `mpp/` (patch + README), twelve lines,
+giving 116 / 55 / 14.4 / 3.6 fps at 720p / 1080p / 4K / 8K there. Expect the same here — the encoder
+block is identical — but that stays 🟡 until this box runs it.
+
+Also settled from that R69 session: the open question above — `rk3528a` or `rk3528`? — is answered
+**`rk3528a`**. VP9 is the only capability separating the two entries in MPP, and the R69 decodes it
+at 635 / 325 / 85 fps (720p / 1080p / 4K) on the same silicon. The graft in `board.dts` stands as
+written; no correction needed.
+
+### 2026-08-09 — deployed, rebooted, and the graft proved out
+
+`rk35xx-deploy art@h96max --no-reboot`, then an explicit reboot. The updater reported _"device tree
+changed — a reboot is required"_, which is exactly the signal it should give: both copies
+(`/usr/local/share/rk35xx/board.dtb` and `/boot/dtb/rockchip/board.dtb`) md5-matched the repo before
+the restart.
+
+Back up in **~24 s**, boot 12.8 s (4.1 kernel + 8.7 userspace), no failed units, all five DKMS
+modules installed with IR and PHY loaded, `/dev/watchdog` present, Ethernet still on the vendor
+`RK630` driver. Nothing regressed.
+
+The line that mattered:
+
+```
+chip name: h96max,rk3518-tvbox rockchip,rk3518-evb1-ddr4-v10 rockchip,rk3518 rockchip,rk3528a
+match chip name: rk3528a
+coding caps: dec 00f0079c enc 00100180
+```
+
+Same caps word as the R69. **This board could not do hardware video at all before that string**, and
+the entire matrix now runs on it — as `art`, not root, which is the udev rule doing its job. Decode
+to 8K on H.264 / HEVC / MJPEG, VP9 at 634 / 327 / 85 fps, and HEVC encode at 4K (15.9) and 8K (4.0)
+despite MPP's table claiming a 1080p ceiling. With our patch, H.264 encodes at 115 / 55 / 14.4 / 3.6
+fps and `ffprobe` confirms genuine `h264,7680,4320`. Numbers in [board.md](board.md#hardware-video).
+
+Byte-for-byte, the encoder output on both boards is **identical** at every resolution (e.g. 663,470
+bytes for 1080p HEVC) — same silicon, deterministic encoder, and a neat cross-check that neither box
+is an outlier.
+
+**Consequence for anyone who patched MPP's SoC table to work around this:** delete that patch. MPP
+scans its table in reverse, so a bolted-on `rk3518` entry now wins over `rk3528a` — and if it was
+cloned from the `rk3528` entry, it silently costs VP9 hardware decode.

@@ -18,21 +18,26 @@ per-board kernel fork is not.
 
 ## Boxes
 
-|            | **R69**                                                                            | **H96 Max** "H313"                                                                         |
-| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-|            | <img src="docs/r69/image1.jpg" alt="R69" width="240">                              | <img src="docs/h96max/image1.jpg" alt="H96 Max" width="240">                               |
-|            | <img src="docs/r69/board.jpg" alt="R69 PCB, serial header lower-left" width="240"> | <img src="docs/h96max/board.jpg" alt="H96 Max PCB, serial header lower-right" width="240"> |
-| Board key  | `r69`                                                                              | `h96max`                                                                                   |
-| SoC        | RK3518                                                                             | RK3518                                                                                     |
-| RAM        | 2 GB (**1.5 GB usable** — boot-chain ceiling)                                      | 2 GB                                                                                       |
-| eMMC       | 16 GB (Samsung)                                                                    | 16 GB (Micron)                                                                             |
-| Wi-Fi / BT | AIC8800D80                                                                         | Seekwave SWT6621S                                                                          |
-| Details    | [docs/r69/board.md](docs/r69/board.md)                                             | [docs/h96max/board.md](docs/h96max/board.md)                                               |
+|            | **R69**                                     | **H96 Max** "H313"                             |
+| ---------- | ------------------------------------------- | ---------------------------------------------- |
+| Box        | <img src="docs/r69/image1.jpg" width="300"> | <img src="docs/h96max/image1.jpg" width="300"> |
+| Board      | <img src="docs/r69/board.jpg" width="300">  | <img src="docs/h96max/board.jpg" width="300">  |
+| Board key  | `r69`                                       | `h96max`                                       |
+| SoC        | RK3518                                      | RK3518                                         |
+| RAM        | 2 GB (1.5 GB usable)                        | 2 GB                                           |
+| eMMC       | 16 GB Samsung                               | 16 GB Micron                                   |
+| Wi-Fi / BT | AIC8800D80                                  | Seekwave SWT6621S                              |
+| Details    | [board doc][r69]                            | [board doc][h96]                               |
+
+[r69]: docs/r69/board.md
+[h96]: docs/h96max/board.md
 
 > **RK3518 is the budget bin of RK3528** — same 4×Cortex-A53, but rated to 1.4 GHz instead of 2.0, a
-> Mali-450 GPU instead of Mali-G52, and 10/100 Ethernet instead of gigabit. It reports itself as
-> `rockchip,rk3528a`, which is why the ROCK 2F image boots on it. Specs you read for RK3528 don't
-> transfer.
+> Mali-450 GPU instead of Mali-G52, and 10/100 Ethernet instead of gigabit. Underneath it really is
+> an RK3528: the R69's factory tree calls it `rockchip,rk3528a` outright, which is why the ROCK 2F
+> image boots on it, and the H96 Max's says only `rockchip,rk3518` — a name no userspace knows, so
+> that board carries a one-string graft ([why](docs/codec.md)). Specs you read for RK3528 don't
+> transfer, but the **video engine does**: both decode to 8K.
 
 ### Add yours
 
@@ -54,7 +59,10 @@ Each one is written up in full, wrong turns included. A few hours, not a few wee
 ✅ works, verified · 🟢 likely works, unverified · 🟡 not tested · ❌ tested, doesn't work · ➖ not
 present on this box
 
-Measured throughput and thermals live in each board's doc.
+Measured throughput and thermals live in each board's doc. The video rows are a summary of a
+per-format matrix — which codecs, how fast, and how to test yours: [docs/codec.md](docs/codec.md).
+Hardware H.264 **encoding** additionally needs a 12-line fix to Rockchip's MPP library, which ships
+here with instructions: [mpp/](mpp/README.md).
 
 | Feature                           | R69 | H96 Max |
 | --------------------------------- | :-: | :-----: |
@@ -67,6 +75,9 @@ Measured throughput and thermals live in each board's doc.
 | HDMI audio                        | ✅  |   ✅    |
 | HDMI-CEC                          | 🟢  |   🟢    |
 | GPU (lima, OpenGL ES)             | ✅  |   ✅    |
+| Video decode to 8K, hardware      | ✅  |   ✅    |
+| Video encode to 8K, HEVC + MJPEG  | ✅  |   ✅    |
+| Video encode, H.264 (needs patch) | ✅  |   ✅    |
 | Serial console                    | ✅  |   ✅    |
 | USB 2.0                           | ✅  |   ✅    |
 | USB 3.0                           | 🟢  |   🟢    |

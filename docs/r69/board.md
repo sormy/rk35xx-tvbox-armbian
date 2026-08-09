@@ -46,6 +46,56 @@ Its Samsung part is the faster of the two boxes by a wide margin on everything t
 (measured with identical `fio` runs). Reads match exactly, because there both boards sit on the 100
 MHz ceiling.
 
+## Hardware video
+
+The RK3528-class VPU, via `/dev/mpp_service` — and it does rather more than the spec sheet says:
+**8K decode** and **8K HEVC encode** both work. Blocks, tools and the test behind each cell:
+[../codec.md](../codec.md).
+
+**This board needed no device-tree work**: its factory tree already calls the SoC
+`rockchip,rk3528a`, so `librockchip_mpp` identifies it out of the box. (The H96 Max's says
+`rockchip,rk3518`, which no MPP release knows — that board carries a graft to match this one.)
+
+**Decode ✅ — fps, measured here, 30-frame runs as a normal user:**
+
+| Format |        720p | 1080p |   4K |   8K |
+| ------ | ----------: | ----: | ---: | ---: |
+| H.264  |       324.3 | 148.9 | 37.3 |  8.1 |
+| HEVC   |       602.8 | 319.3 | 84.8 | 20.0 |
+| MJPEG  |       530.9 | 296.8 | 88.9 | 23.7 |
+| VP9    |       635.1 | 324.9 | 84.8 |   ➖ |
+| MPEG-2 |       177.0 |  83.0 |   ➖ |   ➖ |
+| MPEG-4 |       198.7 |  93.5 |   ➖ |   ➖ |
+| VP8    |       128.2 |  59.3 |   ➖ |   ➖ |
+| H.263  | 801.8 (CIF) |    ➖ |   ➖ |   ➖ |
+
+**Encode — fps:**
+
+| Format         |  720p | 1080p |   4K |   8K | Verdict                                     |
+| -------------- | ----: | ----: | ---: | ---: | ------------------------------------------- |
+| HEVC           | 126.3 |  61.0 | 15.9 |  4.0 | ✅ real 4K/8K confirmed by `ffprobe`        |
+| MJPEG          | 329.3 | 173.3 | 49.9 | 12.9 | ✅                                          |
+| H.264, stock   |    ❌ |    ❌ |   ❌ |   ❌ | size 0 — an **upstream MPP bug**, not a box |
+| H.264, patched | 116.3 |  55.0 | 14.4 |  3.6 | ✅ 12-line fix, see below                   |
+
+**H.264 encode works once MPP is fixed.** Stock MPP never reads the hardware status register back on
+the H.264 path, so it always sees "not done" and throws away a frame the encoder really did produce
+— the `rkvenc` IRQ fires once per frame throughout. Twelve lines restore it:
+[`../../mpp/`](../../mpp/README.md), story in
+[../codec.md](../codec.md#h264-encode--an-upstream-mpp-bug-and-the-fix).
+
+Not present, and proven so rather than assumed: **AV1** is refused with
+`unable to create dec av1 for soc rk3528a unsupported`. **AVS / AVS+ / AVS2** are claimed by the
+capability word but stay 🟡 — no encoder exists to make a sample clip.
+
+> The 1080p encode "ceiling" in MPP's own table is wrong for this silicon: `vepu540c` is marked
+> `cap_4k = 0`, yet 4K and 8K HEVC both encode and `ffprobe` confirms the real frame size.
+
+**Device nodes ✅ verified here.** `/dev/mpp_service`, `/dev/rga` and every `/dev/dma_heap/*` ship
+root-only `0600` — unusable by any non-root process, whatever groups it is in. The payload's
+`99-r69-vpu.rules` hands all of them to group `video` (`udevadm test` confirms it is that rule
+setting `GROUP 44`, `MODE 0660`), which is what lets a normal user's player touch the VPU at all.
+
 ## Names on disk
 
 The R69 shipped before the family naming existed, so **its installed files keep the `r69-` prefix**
