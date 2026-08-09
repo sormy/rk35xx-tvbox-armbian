@@ -76,15 +76,7 @@ cleanly to a pristine `develop` checkout.
 
 ## If you already patched MPP's SoC table
 
-A tree that reports only `rockchip,rk3518` sends MPP to its "unknown SoC" fallback, and the usual
-workaround is to hand-add an `rk3518` entry to `osal/mpp_soc.c`. With the DTB naming the SoC
-`rockchip,rk3528a`, that workaround is **redundant** — stock MPP identifies the part on its own — so
-drop it and stay on upstream, where you also get the fixes above.
-
-Whether it is _harmful_ depends on where it was inserted, because `check_soc_info()` walks the table
-**in reverse**: the last matching entry wins. Placed next to the `rk3528` entries — the natural
-spot, and what one such patch did — it sits _before_ `rk3528a` and therefore never matches;
-detection still lands on `rk3528a` (verified on a box carrying exactly that patch). **Appended after
-`rk3528a`, it would win** — and if it was cloned from the `rk3528` entry it would silently cost
-**VP9 hardware decode**, which `rk3528a` has and `rk3528` does not. Check the order before assuming
-either way; `mpp_debug=0x10` prints which entry actually matched.
+Drop it and stay on upstream — it buys nothing now. The one thing that must be true is in the
+**device tree**: the root `compatible` has to carry `rockchip,rk3528a`, which is what MPP matches
+on. Both boards ship that (the R69 from the factory, the H96 Max via a graft). Confirm with
+`mpp_debug=0x10`, which prints the entry that actually matched.
