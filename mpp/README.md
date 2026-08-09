@@ -13,6 +13,25 @@ rule that lets a non-root process open the VPU. See [`../docs/codec.md`](../docs
 
 This folder holds one patch, because it fixes a bug you would otherwise waste a day on.
 
+## First: MPP has to recognise the SoC
+
+Everything here depends on it. MPP picks its codec table by matching the **root `compatible` in the
+device tree**; when it recognises nothing it falls back to a generic profile describing encoders
+this silicon doesn't have, and every encode fails with `could not found coding type` while decode
+quietly runs on the CPU. No error names the real cause.
+
+The name MPP matches for this family is **`rockchip,rk3528a`**. Both boards here ship a tree
+carrying it — the R69 from the factory, the H96 Max via a one-line graft
+([why](../docs/h96max/dtb.md)). One command tells you which entry it actually matched:
+
+```sh
+mpp_debug=0x10 mpi_enc_test -t 7 -w 176 -h 144 -n 1 -o /dev/null 2>&1 | head -3
+```
+
+`match chip name: rk3528a` is what you want. `use default chip info` means the device tree is the
+problem, and nothing below will work until that is fixed — patching MPP's SoC table to paper over it
+is not worth doing.
+
 ## `h264e-vepu540c-status.patch` — makes H.264 encoding work
 
 Stock MPP cannot encode H.264 on this silicon. Every frame comes back empty:
@@ -73,10 +92,3 @@ patch, both boards, `ffprobe`-verified at every frame size — and HEVC unaffect
 register work but nothing that repairs this; `nyanmisaka/mpp` — what the prebuilt rkmpp ffmpeg
 builds use — carries the same commits; and no MPP issue describes the failure. The patch applies
 cleanly to a pristine `develop` checkout.
-
-## If you already patched MPP's SoC table
-
-Drop it and stay on upstream — it buys nothing now. The one thing that must be true is in the
-**device tree**: the root `compatible` has to carry `rockchip,rk3528a`, which is what MPP matches
-on. Both boards ship that (the R69 from the factory, the H96 Max via a graft). Confirm with
-`mpp_debug=0x10`, which prints the entry that actually matched.
