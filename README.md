@@ -1,265 +1,260 @@
-# Armbian on the R69 (a generic RK3518 TV box)
+# Armbian for RK35xx TV boxes
 
-<img src="box.jpg" alt="The R69 — a generic RK3518/RK3528-family Android TV box" width="320" align="left" hspace="16" vspace="8">
+Run Debian on a **$35 RK3518 Android TV box** that has no idea it's about to run Debian.
 
-A flash-and-go [Armbian](https://armbian.com/boards/rock-2f) image for the
-[**R69**](https://www.amazon.com/dp/B0GK8P5YFT) — a cheap RK3518 ("RK3528-family") Android TV box
-that has no idea it's about to run Debian. One script bakes the bring-up into a stock Armbian image;
-you flash it to an SD card and boot Linux.
+What you get for that money: a small, silent, fanless Armbian machine that arrives complete — case,
+PSU, HDMI cable, and a remote that works over both IR and Bluetooth. No shopping list, no
+enclosure-and-power-supply arithmetic.
 
-And this is the rare port where that _isn't_ followed by a list of what's broken: **essentially
-every peripheral works** — video, audio, Wi-Fi, Bluetooth, the lot ([the scorecard](#what-works) is
-refreshingly green). It ships **complete — board, case, PSU brick, remote, HDMI cable — for ~$35**,
-where a bare Raspberry Pi 3 (1 GB, bring-your-own-everything) runs ~$55. Even the remote earns its
-keep: pair it to [cncjs](https://github.com/cncjs/cncjs) and you've got a wireless pendant for
-jogging a CNC. As a tiny always-on Linux box, it's tough to beat.
+Not a distro — a thin layer over the **stock Armbian image for the Radxa ROCK 2F** (same
+RK3528-family kernel). One script bakes in what upstream can't know — the factory DDR bootloader, a
+device tree, two DKMS drivers, a few boot fixups — and you flash the result to an SD card. Kernel
+and userspace keep coming from Armbian via `apt upgrade`.
 
-> Curious how a locked Android box with no documentation got here? →
-> **[HOW-IT-WAS-DONE.md](HOW-IT-WAS-DONE.md)**
+**Why not a proper Armbian build?** That means owning a kernel tree and merging upstream on time,
+forever. Here everything that actually rots stays someone else's full-time job — and with the zoo of
+near-identical TV boxes China ships every other week, per-board data is cheap to add where a
+per-board kernel fork is not.
 
-<br clear="left">
+## Boxes
 
-## Is this your box?
+|            | **R69**                                                                            | **H96 Max** "H313"                                                                         |
+| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+|            | <img src="docs/r69/image1.jpg" alt="R69" width="240">                              | <img src="docs/h96max/image1.jpg" alt="H96 Max" width="240">                               |
+|            | <img src="docs/r69/board.jpg" alt="R69 PCB, serial header lower-left" width="240"> | <img src="docs/h96max/board.jpg" alt="H96 Max PCB, serial header lower-right" width="240"> |
+| Board key  | `r69`                                                                              | `h96max`                                                                                   |
+| SoC        | RK3518                                                                             | RK3518                                                                                     |
+| RAM        | 2 GB (**1.5 GB usable** — boot-chain ceiling)                                      | 2 GB                                                                                       |
+| eMMC       | 16 GB (Samsung)                                                                    | 16 GB (Micron)                                                                             |
+| Wi-Fi / BT | AIC8800D80                                                                         | Seekwave SWT6621S                                                                          |
+| Details    | [docs/r69/board.md](docs/r69/board.md)                                             | [docs/h96max/board.md](docs/h96max/board.md)                                               |
 
-This image is built and verified against **one specific box**. Check yours matches before flashing:
+> **RK3518 is the budget bin of RK3528** — same 4×Cortex-A53, but rated to 1.4 GHz instead of 2.0, a
+> Mali-450 GPU instead of Mali-G52, and 10/100 Ethernet instead of gigabit. It reports itself as
+> `rockchip,rk3528a`, which is why the ROCK 2F image boots on it. Specs you read for RK3528 don't
+> transfer.
 
-|               |                                                                                                |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| Name          | **"R69"** (stock `ro.product.name=R69-1`), Android 12                                          |
-| SoC           | **RK3518A** — `SoC: 35181001`, reports `rk3528` (RK3518 is a variant inside the RK3528 family) |
-| RAM / storage | 2 GB DRAM (**~1.5 GB real**) · 16 GB **Samsung eMMC 5.x** (HS200 — see below) · micro-SD        |
-| Wi-Fi / BT    | **AIC8800D80** (SDIO Wi-Fi + UART Bluetooth)                                                   |
-| Ports         | HDMI · USB 2.0 · USB 3.0 · 10/100 Ethernet · micro-SD · AV jack                                |
-| Remote        | bundled 22-button IR remote                                                                    |
-| Serial header | 4 pads by the SD slot, **1500000** baud                                                        |
+### Add yours
 
-A **close-but-not-identical** RK3518/RK3528 box can probably be brought up the same way, but will
-need its own device-tree tweaks — that whole method is in
-**[HOW-IT-WAS-DONE.md](HOW-IT-WAS-DONE.md)**.
+It's a generic **rk35xx TV box** builder that happens to ship two boards. **PRs welcome.**
+
+A board is a `firmware/<board>/` directory, no code: `factory_idbloader.bin` and `board.dtb` (both
+carved from its own eMMC), `payload.list`, `board.conf`. U-boot, DKMS drivers, first-boot setup and
+the updater are shared.
+
+**Base the DTB on the box's own Android tree**, with a handful of surgical edits for Armbian — it
+already has every pin, clock and rail right for that board.
+
+The fastest route: **hook up serial** (see below), point a coding agent — Claude Code, Codex,
+whatever you use — at the existing `docs/*/worklog.md` bring-ups and let it walk the paved path.
+Each one is written up in full, wrong turns included. A few hours, not a few weekends.
 
 ## What works
 
-- **✅ Working** — RAM, HDMI video + audio, serial console, Wi-Fi, Ethernet, USB 2.0 & 3.0, SD card,
-  CPU temperature, GPU, eMMC, front LED (blue = on / red = standby), IR remote (all 22 buttons),
-  Bluetooth, and the **power button** (configurable power-off _or_ suspend-to-RAM; the remote wakes
-  it from either).
-- **🟡 Not fully tested** — USB 3.0 SuperSpeed, HDMI-CEC, GPU rendering.
-- **❓ Untested** — the rear IR-extender jack, the AV jack's analog audio output.
-- **❌ Not working** — composite video on the AV jack; the remote's **voice** and **mouse-mode**
-  buttons press as plain keys, but their special functions (voice capture, on-screen cursor) aren't
-  set up.
+✅ works, verified · 🟢 likely works, unverified · 🟡 not tested · ❌ tested, doesn't work · ➖ not
+present on this box
 
-**Heads-up**
+Measured throughput and thermals live in each board's doc.
 
-- **No GPIO header** — no GPIO/I²C/SPI pins. If you need them, add a USB-to-GPIO adapter. The one
-  real gap.
-- **To fully power off, unplug it.** The power key sleeps or "powers off" but keeps sipping a
-  trickle either way — it never quite commits.
-- **Bluetooth needs one online step on `minimal` images** — they ship no `bluez`; see
-  [Bluetooth](#bluetooth).
-- The sticker says **2 GB RAM; it's really ~1.5 GB** — these boxes fib about their RAM; it's
-  practically a genre.
+| Feature                           | R69 | H96 Max |
+| --------------------------------- | :-: | :-----: |
+| Boot from SD                      | ✅  |   ✅    |
+| Install to eMMC                   | ✅  |   ✅    |
+| Ethernet 10/100                   | ✅  |   ✅    |
+| Wi-Fi                             | ✅  |   ✅    |
+| Bluetooth                         | ✅  |   ✅    |
+| HDMI video                        | ✅  |   ✅    |
+| HDMI audio                        | ✅  |   ✅    |
+| HDMI-CEC                          | 🟢  |   🟢    |
+| GPU (lima, OpenGL ES)             | ✅  |   ✅    |
+| Serial console                    | ✅  |   ✅    |
+| USB 2.0                           | ✅  |   ✅    |
+| USB 3.0                           | 🟢  |   🟢    |
+| SD card slot                      | ✅  |   ✅    |
+| Temperature sensor                | ✅  |   ✅    |
+| LEDs                              | ✅  |   ✅    |
+| IR remote                         | ✅  |   ✅    |
+| Remote over Bluetooth (air-mouse) | ✅  |   ✅    |
+| Remote voice mic (app territory)  | 🟡  |   🟡    |
+| Toothpick button                  | ✅  |   ✅    |
+| Power button                      | ✅  |   ✅    |
+| Suspend-to-RAM                    | ✅  |   ✅    |
+| Wake from off / suspend by remote | ✅  |   ✅    |
+| Wake-on-LAN                       | 🟡  |   🟡    |
+| AV jack audio                     | 🟡  |   🟡    |
+| AV jack composite video           | 🟡  |   🟡    |
+| IR-extender jack                  | 🟡  |   ➖    |
+| CPU deep idle                     | ❌  |   ❌    |
+| Hardware watchdog                 | ✅  |   ✅    |
 
-## Flash it
+## Build
 
-Grab a **microSD** (8 GB+; **32 GB+** if you'll install to eMMC, to hold the backup) + reader and a
-**stock Armbian base image for the Radxa ROCK 2F**
-([armbian.com/boards/rock-2f](https://armbian.com/boards/rock-2f), the `.img.xz`). Then build,
-flash, boot:
-
-```bash
-# 0. host tools (prerequisite)
-brew install e2tools xz coreutils                       # macOS
-sudo apt install e2tools xz-utils                       # Debian-like
-
-# 1. build the R69 image from the base
-./build-image.sh Armbian_rk35xx_rock-2f.img.xz          # -> Armbian_rk35xx_rock-2f-r69.img
-
-# 2. find card
-diskutil list # macOS
-lsblk         # Linux
-
-# 3. flash to the card
-diskutil unmountDisk /dev/diskN                                                       # macOS
-sudo gdd if="Armbian_ABC.img" of=/dev/rdiskN bs=4M conv=fsync status=progress; sync   # macOS
-sudo dd  if="Armbian_ABC.img" of=/dev/sdX    bs=4M conv=fsync status=progress; sync   # Linux
-# …or just use Balena Etcher
-
-# 4. first boot: insert card, power on, SSH in (or serial @ 1500000 baud), Armbian default root pass is 1234
-ssh root@<box-ip>                                        # first login sets a password
-```
-
-## Update a running box (no reflash)
-
-Already flashed, and just want the latest DTB / driver / script changes? Apply them in place instead
-of rebuilding and reflashing:
+Needs a **microSD** (8 GB+) and a stock **[Armbian ROCK 2F](https://www.armbian.com/rock-2f/)**
+`.img.xz` — tested against the `minimal` vendor 6.1 build.
 
 ```bash
-# from your dev machine, over SSH — pushes this repo to the box and applies it:
-./r69-deploy root@<box-ip>            # add --reboot to reboot automatically if the DTB changed
-
-# …or on the box itself, from a checkout or straight from GitHub:
-sudo ./r69-update                     # run from a repo checkout on the box
-sudo r69-update --pull                # or fetch the repo first (needs git)
+brew install e2tools xz coreutils            # macOS  ·  apt install e2tools xz-utils on Debian
+./build-image.sh Armbian_..._Rock-2f_..._minimal.img.xz h96max      # board: r69 | h96max
 ```
 
-It installs the firmware payload, refreshes + rebuilds the IR and Ethernet-PHY DKMS modules,
-reinstalls the device tree, and restarts the changed services — **rebooting only if `board.dtb`
-actually changed** (the bootloader is never touched — though the payload does stage the R69 loader
-pair + `write_uboot_platform` override that makes a *later* `armbian-install` safe). It reads the
-same `firmware/payload.list` the image build uses, so the two never drift.
+~1 minute, no Docker, no kernel build. Output: `Armbian_..._-<board>.img`.
 
-## Customizing
+## Flash and boot
 
-Everything below is optional — the defaults already work, so skip to whatever itch you've got.
+```bash
+diskutil list                            # macOS — find the card   ·   lsblk on Linux
+diskutil unmountDisk /dev/diskN
+sudo gdd if=Armbian_..._-h96max.img of=/dev/rdiskN bs=4M conv=fsync status=progress; sync   # macOS
+sudo dd  if=Armbian_..._-h96max.img of=/dev/sdX    bs=4M conv=fsync status=progress; sync   # Linux
+```
 
-**Front LED** — two entries under `/sys/class/leds/`: `power` (blue), `standby` (red).
-Live-controllable:
+…or [Balena Etcher](https://etcher.balena.io/). Insert the card and power on.
+
+> **First boot takes a few minutes** — it compiles and installs the IR and Ethernet-PHY kernel
+> modules offline before the box settles. It won't answer on the network until that's done, so give
+> it ~5 minutes before assuming anything is wrong. If it never shows up, that's what the
+> [serial console](#serial-console) is for: a 3.3 V USB-TTL adapter and three micro test-clamps on
+> GND/RX/TX will show you exactly where it stopped.
+
+```bash
+ssh root@<box-ip>        # Armbian default password for root is 1234
+```
+
+Stock Android is untouched — **eject the SD and Android boots again.**
+
+> **A side benefit.** Cheap Android TV boxes — the export-only kind, often stamped "not for sale in
+> China" — have a documented history of shipping with preinstalled malware and backdoors (the BADBOX
+> family being the famous case). Booting Armbian replaces that userspace wholesale. Note the
+> asymmetry, though: running from SD leaves the Android image sitting dormant on the eMMC, while
+> [installing to eMMC](#install-to-emmc) overwrites it for good.
+
+## Install to eMMC
+
+Faster than any SD card. **Wipes factory Android, which can't be re-dumped afterwards** — back it up
+first; that image is your only road back.
 
 ```sh
-echo 1 > /sys/class/leds/power/brightness          # on (0 = off)
-echo heartbeat > /sys/class/leds/standby/trigger    # pulse (none = back to manual)
+lsblk                                        # the eMMC is the disk with mmcblkXboot0/boot1 beside it
+sudo dd if=/dev/mmcblkX bs=4M status=progress | ssh you@host 'cat > emmc-stock.img'   # or dd to a file
+sudo armbian-install                         # choose "Boot from eMMC / system on eMMC"
+sudo poweroff                                # pull the SD; it boots from eMMC
 ```
 
-**Power button — off vs suspend** — default is a clean `poweroff` (the remote cold-boots it back in
-~10–15 s). Switch to **suspend-to-RAM** (remote wakes instantly, Wi-Fi session intact):
+Restoring is the same `dd` in reverse, from an Armbian SD.
+
+> **Never trust remembered device names.** `mmcblk` numbering shifts between images and boots — on
+> one of our builds the eMMC was `mmcblk1`, on the next `mmcblk2`. Identify it every time: the eMMC
+> is the ~16 GB disk that has **`boot0`/`boot1` companions**, which SD cards never have.
+
+> **Sector 64 is sacred** — it holds your DRAM die's DDR tuning. Our images make `armbian-install`
+> write the right loaders; on images older than August 2026, update first
+> ([#6](https://github.com/sormy/rk35xx-tvbox-armbian/issues/6)).
+
+## Update a running box
+
+For changes in **this repo** — DTB, drivers, scripts. Everything else: `apt upgrade`.
+
+```bash
+./rk35xx-deploy root@<box-ip>     # push this repo and apply  (--reboot if the DTB changed)
+sudo rk35xx-update --pull         # …or on the box, fetching the repo itself
+```
+
+Detects the board, installs the payload, rebuilds DKMS, reinstalls the DTB, restarts what changed —
+rebooting only if `board.dtb` did, never touching the bootloader. On the R69, `r69-update` /
+`r69-deploy` still work.
+
+> Updating **overwrites the files it ships**, so local edits to them (e.g. switching
+> `HandlePowerKey` to suspend) are reverted. Keep customisations elsewhere, or re-apply after an
+> update.
+
+## Remote
+
+IR works unpaired; Bluetooth adds air-mouse and battery. Keycodes differ between the two, and
+between boxes — the board docs list ours, but check your own:
 
 ```sh
-sudo sed -i 's/HandlePowerKey=.*/HandlePowerKey=suspend/' /etc/systemd/logind.conf.d/zz-r69-powerkey.conf
-sudo systemctl restart systemd-logind     # suspend -> poweroff to switch back
+cat /proc/bus/input/devices    # IR = ffa90030.pwm  ·  BLE = "Bluetooth remote …"
+sudo evtest /dev/input/eventN  # press buttons, read keycodes  (apt install evtest)
 ```
 
-<a id="bluetooth"></a>**Bluetooth** — `minimal` images ship no `bluez`, and first boot never
-downloads anything. Install it once and re-run the setup (it configures + starts BT, installs
-nothing):
+To pair it: **hold left + right on the remote until its LED blinks** (that's pairing mode), then
+scan and look for the entry named **`Bluetooth remote`**:
 
 ```sh
-sudo apt install bluez
-sudo /usr/local/sbin/r69-firstboot
+sudo apt install bluez            # minimal images ship without it
+
+# 1. remote in pairing mode (LED blinking), then find it by name:
+MAC=$(bluetoothctl --timeout 20 scan on | grep -im1 "bluetooth remote" \
+      | grep -oE '([0-9A-F]{2}:){5}[0-9A-F]{2}')
+echo "found: $MAC"
+
+# 2. put it back in pairing mode, then pair in ONE session with the scan running:
+{ echo "agent NoInputNoOutput"; sleep 1; echo "default-agent"; sleep 1; echo "scan on"; sleep 8
+  echo "pair $MAC";  sleep 20; echo "trust $MAC"; sleep 2
+  echo "connect $MAC"; sleep 8;  echo quit; } | bluetoothctl
 ```
 
-Then `hci0` comes up every boot and `bluetoothctl` works normally.
+It has to be **one session with a scan running** — `pair` from a separate invocation fails with
+`org.bluez.Error.AuthenticationFailed`, and so does `--agent` on its own. To undo it:
+`bluetoothctl remove $MAC` drops the bond (the remote then falls back to IR), while
+`bluetoothctl disconnect $MAC` just parks it for this session.
 
-**IR remote** — built and loaded automatically on first boot (the remote + power button need it). To
-rebuild by hand (e.g. after a kernel change) or test keys:
+> Dead IR? Your remote's usercode isn't in the DTB's scancode tables. Boxes sold under the same
+> model name often ship different remotes, so don't assume the tables here cover yours.
 
-```sh
-rockchip-pwm-remotectl-r69-setup   # DKMS rebuild + load; survives kernel updates
-evtest /dev/input/event4           # press remote keys (apt install evtest)
+## Serial console
+
+**Set this up first** — it's the only view of U-Boot, early boot, and any hang before the network
+exists. RK35xx boxes run their debug UART at **1500000 baud**.
+
+Both cases open with a plastic pry tool (phone-repair triangle); clips only, nothing glued. On the
+H96 Max a couple of screws free the PCB to reach the pads from the back.
+
+| Board       | Where                                       | Pinout, `[square pad]` first |
+| ----------- | ------------------------------------------- | ---------------------------- |
+| **R69**     | 4-pad header beside the SD slot             | **[GND] · TX · RX · 3V3**    |
+| **H96 Max** | 3 plated holes between the SD slot and LEDs | **[RX] · GND · TX**          |
+
+Both boards are photographed above with the header marked.
+
+- **Adapter:** 3.3 V USB-TTL that does 1.5 Mbaud — **FT232 or CH340**, e.g.
+  [Waveshare FT232RNL](https://www.amazon.com/dp/B0CX55K4RG) (~$14).
+- **Wiring:** GND, TX, RX only, crossed (box TX → adapter RX, box RX ← adapter TX). **Never connect
+  3V3/VCC** — the box is self-powered; tying rails can backfeed.
+- **Contact:** no soldering — [test-hook grabbers](https://www.amazon.com/dp/B07BCZSNGS) (~$10) grip
+  the pads.
+
+**On an unknown box** — every one of these has a header somewhere, usually a group of 3–4 pins near
+the SD slot or the SoC, with only one or two candidate groups on the whole board. Pins are often
+tiny, which is what the grabbers are for.
+
+- **4 pins = GND · TX · RX · 3V3**, **3 pins = GND · TX · RX**. Order can vary.
+- **Find GND first:** with the box powered, measure each pin against exposed metal (USB shell, SD
+  cage, Ethernet jack) — GND reads 0 V. Of the rest, **3V3 reads highest** and TX/RX sit a few mV
+  below it.
+- **TX vs RX is a coin flip** — right half the time, certain by the second try, and swapping them
+  damages nothing. Remember they cross: box TX → adapter RX.
+- After a wrong guess, **unplug and replug the adapter** before judging the next attempt; it often
+  needs the reset.
+
+```bash
+brew install tio                                              # or: apt install tio
+tio -b 1500000 -L --log-file boot.log /dev/cu.usbserial-XXXX  # macOS: cu.*, not tty.*
+tio -b 1500000 -L --log-file boot.log /dev/ttyUSB0            # Linux
 ```
 
-The remote shows up as input device **`ffa90030.pwm`** (default `/dev/input/event4`; the number can
-shift — confirm with `evtest`). All 22 buttons emit standard Linux key events, with scancodes from
-`rockchip,usercode = <0xfb05>` in `firmware/board.dts`:
+Power-cycle and the log scrolls. You get a login prompt, and U-Boot's countdown is interruptible.
 
-| Button                      | Key event        |
-| --------------------------- | ---------------- |
-| Power                       | `KEY_POWER`      |
-| OK (center)                 | `KEY_ENTER`      |
-| Up                          | `KEY_UP`         |
-| Down                        | `KEY_DOWN`       |
-| Left                        | `KEY_LEFT`       |
-| Right                       | `KEY_RIGHT`      |
-| Back                        | `KEY_BACK`       |
-| Home                        | `KEY_HOME`       |
-| Delete                      | `KEY_BACKSPACE`  |
-| Hamburger (menu)            | `KEY_MENU`       |
-| Cog (settings)              | `KEY_SETUP`      |
-| Voice                       | `KEY_HELP`       |
-| Mouse                       | `KEY_TEXT`       |
-| Volume up                   | `KEY_VOLUMEUP`   |
-| Volume down                 | `KEY_VOLUMEDOWN` |
-| Mute                        | `KEY_MUTE`       |
-| Page up                     | `KEY_PAGEUP`     |
-| Page down                   | `KEY_PAGEDOWN`   |
-| YouTube (top-left)          | `KEY_F6`         |
-| Netflix (top-right)         | `KEY_F7`         |
-| Prime Video (bottom-left)   | `KEY_F3`         |
-| Google Play (bottom-right)  | `KEY_F8`         |
+> **A CP2102 will betray you** — it tops out short of 1.5 Mbaud and renders the boot log as
+> confident, well-formatted noise. Garbage on screen? Suspect the adapter first.
 
-**Toothpick button** — the recessed button behind the AV jack (press with a toothpick) is an
-`adc-keys` input: Linux sees it as a keypress (`KEY_VOLUMEUP`) on `/dev/input/event3` — a free
-button to remap. Test:
+Output but no input → recheck contact and the TX↔RX crossing. Full kernel log on serial and HDMI →
+set `verbosity=7` in `/boot/armbianEnv.txt`.
 
-```sh
-evtest /dev/input/event3           # press with a toothpick (apt install evtest)
-```
+## Credits
 
-**Ethernet PHY** — the integrated RK630 PHY needs its vendor driver for OTP calibration (without it
-some units drop to 10 Mb/s); it's built + loaded automatically on first boot, like the IR driver, so
-Ethernet links at 100 Mb/s out of the box. To rebuild by hand or check which driver holds the PHY:
+Original RK3518 bring-up method by
+**[juliovendramini/rk3518_armbian](https://github.com/juliovendramini/rk3518_armbian)**.
 
-```sh
-rk630-phy-r69-setup                          # DKMS rebuild + load; survives kernel updates
-readlink /sys/class/net/end0/phydev/driver   # want "RK630 PHY", not "Generic PHY"
-```
-
-**Run from eMMC** (optional, but worth it) — the Samsung eMMC (capped at **HS200 / 100 MHz** for
-write reliability) still beats any microSD in the slot, especially on random I/O.
-Migrating wipes the eMMC's factory Android, and **you can't re-dump it later** (no root from
-the Android menus; USB-OTG maskrom untested here), so **back it up first — that dump is your only
-way back to stock**. Use an SD **at least 2× the eMMC** (≥ 32 GB) so the ~16 GB backup fits
-alongside the system. Booted from the SD:
-
-```sh
-sudo dd if=/dev/mmcblk1 of=/root/emmc-stock.img bs=4M status=progress    # 1. back up Android (your only undo)
-sudo armbian-install                                                     # 2. choose "Boot from eMMC / system on eMMC"
-sudo poweroff                                                            # 3. pull the SD — it boots from eMMC
-```
-
-> **Images built before August 2026 soft-brick at step 2**
-> ([#6](https://github.com/sormy/rk3518-r69-armbian/issues/6)): stock `armbian-install` flashes the
-> generic ROCK-2F loaders to eMMC sectors 64 + 16384, and those lack this box's DDR tuning — the
-> box then boots nothing. Current images override `write_uboot_platform`
-> (`/usr/lib/u-boot/platform_install.sh`) so every bootloader write uses the R69 pair instead —
-> factory idbloader + our `u-boot.itb`, the same bytes at the same offsets as the SD you're booted
-> from. **On an older image, run `r69-update` first** (see
-> [Update a running box](#update-a-running-box-no-reflash)); it installs the override. Already
-> bricked? See [recovery](#back-to-stock).
-
-Afterward, **move the backup off the card to durable storage** — it shouldn't live only on the SD.
-On your computer, read it out of the SD's rootfs with e2tools:
-
-```sh
-e2cp /dev/diskNs1:/root/emmc-stock.img emmc-stock.img    # macOS diskNs1 · Linux sdX1 (the SD's rootfs)
-```
-
-> **Double-check the device nodes before you `dd`:** `mmcblk1` = eMMC, `mmcblk0` = your SD (confirm
-> with `lsblk` — swapping them overwrites your SD).
-
-<a id="back-to-stock"></a>**Back to stock / recovery**
-
-- **Never migrated (still on SD)** — just **eject the SD**; the eMMC's factory Android is untouched
-  and boots with no SD in. No backup needed.
-- **Migrated to eMMC, want Android back** — boot an Armbian SD (it leaves the eMMC alone), put the
-  `emmc-stock.img` you saved during the eMMC install where it can reach it, and write it over the
-  whole eMMC:
-  ```sh
-  sudo dd if=emmc-stock.img of=/dev/mmcblk1 bs=4M status=progress; sync
-  ```
-- **Only the bootloader is broken** (e.g. sector 64 clobbered) — rewrite just the loaders:
-  ```sh
-  EMMC=/dev/mmcblk1   # eMMC whole-disk node — NOT your SD
-  sudo dd if=firmware/factory_idbloader.bin of=$EMMC seek=64    conv=notrunc
-  sudo dd if=firmware/u-boot.itb            of=$EMMC seek=16384 conv=notrunc; sync
-  ```
-- **Nothing boots, not even an SD** — fall back to the BootROM's maskrom mode: hold the recessed
-  AV-jack button while applying power, then use `rkdeveloptool` over USB-OTG (load an rk3528
-  loader from Rockchip's [rkbin](https://github.com/rockchip-linux/rkbin), then `wl 0` your stock
-  dump or an R69 image). *Untested on this box* — the SD slot has always stayed bootable here.
-
-> **Golden rule:** never overwrite **sector 64** with a non-factory idbloader — it holds the DDR
-> tuning for your exact DRAM die.
-
-## License & credits
-
-The original RK3518 bring-up — the DDR/idbloader investigation, the AIC8800 SDIO work, and the "edit
-the vendor DTB" method — is by
-**[juliovendramini/rk3518_armbian](https://github.com/juliovendramini/rk3518_armbian)**. This repo
-applies that method to the R69 and reduces it to one script.
-
-- **Scripts** (`build-image.sh`, `build-uboot.sh`, the `firmware/` helpers) — **MIT**.
-- **Device tree** (`firmware/board.dts`/`.dtb`) — derived from the mainline Linux **Radxa ROCK 2F**
-  DT, **GPL-2.0+ / MIT**; distributing it carries those terms.
-- **`firmware/factory_idbloader.bin`, `u-boot.itb`** — Rockchip/U-Boot/ATF blobs, under their own
-  licenses.
+Scripts MIT · device trees GPL-2.0+/MIT (derived from Rockchip DTs) · `factory_idbloader.bin` and
+`u-boot.itb` are Rockchip/U-Boot/ATF blobs under their own licenses.

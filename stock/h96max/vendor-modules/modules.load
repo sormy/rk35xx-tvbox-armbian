@@ -1,0 +1,13 @@
+8852bs.ko
+skw_bootcoms.ko
+skw_sdio.ko
+skw.ko
+bcmdhd.ko
+skw_sdio_lite.ko
+swt6621s_wifi.ko
+8822cs.ko
+aic8800_bsp.ko
+aic8800_btlpm.ko
+aic8800_fdrv.ko
+cyw88459.ko
+rkvtunnel.ko

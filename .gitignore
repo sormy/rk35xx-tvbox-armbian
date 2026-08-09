@@ -8,3 +8,5 @@
 *~
 *.xz
 *.img
+/*.log
+/.claude/

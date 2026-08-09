@@ -1,0 +1,23 @@
+NAME          SIZE TYPE PARTLABEL     PARTUUID
+mmcblk0      59.7G disk               
+└─mmcblk0p1  59.1G part               93df381f-c391-40a2-ba45-22371e372f4e
+mmcblk1      14.7G disk               
+├─mmcblk1p1     4M part security      332f0000-0000-4757-8000-5dcf00005ddc
+├─mmcblk1p2     4M part uboot         cf7e0000-0000-4c02-8000-20670000449d
+├─mmcblk1p3     4M part trust         d71a0000-0000-4d1f-8000-591d00003fcd
+├─mmcblk1p4     4M part misc          92250000-0000-4369-8000-033900003133
+├─mmcblk1p5     4M part dtbo          49640000-0000-467f-8000-3c0200006198
+├─mmcblk1p6     1M part vbmeta        44410000-0000-4d62-8000-47c100007bc4
+├─mmcblk1p7    64M part boot          cb4b0000-0000-4279-8000-0cbf00000f7f
+├─mmcblk1p8    96M part recovery      26320000-0000-4b0e-8000-154100000f91
+├─mmcblk1p9   384M part backup        9c4e0000-0000-4150-8000-1192000053c1
+├─mmcblk1p10  384M part cache         76180000-0000-4c51-8000-53f9000017d8
+├─mmcblk1p11   64M part metadata      fd2d0000-0000-4308-8000-52bd0000799f
+├─mmcblk1p12    1M part baseparameter 76500000-0000-404f-8000-292700007edb
+├─mmcblk1p13  2.3G part super         2c670000-0000-4965-8000-177f00000c57
+└─mmcblk1p14 11.4G part userdata      667c0000-0000-476b-8000-7e0d00006fda
+mmcblk1boot0    4M disk               
+mmcblk1boot1    4M disk               
+zram0         984M disk               
+zram1          50M disk               
+zram2           0B disk               

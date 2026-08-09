@@ -1,0 +1,8 @@
+input4::capslock
+input4::compose
+input4::kana
+input4::numlock
+input4::scrolllock
+mmc1::
+power
+standby

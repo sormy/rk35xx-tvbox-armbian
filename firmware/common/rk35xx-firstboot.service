@@ -1,0 +1,14 @@
+[Unit]
+# done-file written only on success, so a failed run retries next boot
+Description=rk35xx first-boot setup (u-boot hold + offline DKMS builds)
+ConditionPathExists=!/var/lib/rk35xx-firstboot.done
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/rk35xx-firstboot
+ExecStartPost=/bin/touch /var/lib/rk35xx-firstboot.done
+
+[Install]
+WantedBy=multi-user.target

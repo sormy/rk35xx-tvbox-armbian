@@ -1,0 +1,55 @@
+# R69 firmware payload — the files copied verbatim into the rootfs. Single source of truth, shared by
+# build-image.sh (stages into the offline image via e2cp) and r69-update (installs into the live / ).
+# One line per file:  <mode> <src-under-firmware/> <dest-absolute>.  Blank lines and #comments ignored.
+# The DKMS driver *sources* (.c/.h) are NOT here — they're fetched by fetch-dkms-src.sh.
+
+# first-boot setup + per-boot MAC pin (services enabled via a multi-user.target drop-in, image-only)
+0755 r69/r69-firstboot                          /usr/local/sbin/r69-firstboot
+0644 r69/r69-firstboot.service                  /etc/systemd/system/r69-firstboot.service
+0755 r69/r69-mac-pin                            /usr/local/sbin/r69-mac-pin
+0644 r69/r69-mac-pin.service                    /etc/systemd/system/r69-mac-pin.service
+
+# IR-remote DKMS (setup script + build files; .c/.h fetched by fetch-dkms-src.sh)
+0755 r69/rockchip-pwm-remotectl-r69-setup /usr/local/sbin/rockchip-pwm-remotectl-r69-setup
+
+# RK630 Ethernet-PHY DKMS
+0755 r69/rk630-phy-r69-setup /usr/local/sbin/rk630-phy-r69-setup
+
+# standby-LED hooks (red-on/blue-off at poweroff + suspend)
+0755 common/rk35xx-led-shutdown                      /usr/lib/systemd/system-shutdown/r69-led
+0755 common/rk35xx-led-sleep                         /usr/lib/systemd/system-sleep/r69-led
+
+# power-button behaviour (zz- prefix so these drop-ins win)
+0644 common/rk35xx-suspend.conf                   /etc/systemd/sleep.conf.d/zz-r69-suspend.conf
+0644 common/rk35xx-powerkey.conf                  /etc/systemd/logind.conf.d/zz-r69-powerkey.conf
+
+# Bluetooth attach + login hint
+0755 r69/r69-bt                                 /usr/local/sbin/r69-bt
+0644 r69/r69-bt.service                         /etc/systemd/system/r69-bt.service
+0755 r69/r69-motd-bluetooth                     /etc/update-motd.d/99-r69-bluetooth
+
+# login-banner board name: armbian-bsp upgrades reset BOARD_NAME in /etc/armbian-release; this
+# apt Post-Invoke hook puts "R69" back after every apt run (BOARD=rock-2f stays for the tooling)
+0755 r69/r69-boardname                          /usr/local/sbin/r69-boardname
+0644 r69/r69-boardname.apt                      /etc/apt/apt.conf.d/99-r69-boardname
+
+# DTB master copy + kernel postinst.d hooks (persist our DTB, prep headers so DKMS builds)
+0644 r69/board.dtb                              /usr/local/share/r69/board.dtb
+0755 r69/r69-dtb-persist                        /etc/kernel/postinst.d/r69-dtb-persist
+0755 common/rk35xx-kernel-prepare                  /etc/kernel/postinst.d/00-r69-kernel-prepare
+
+# R69 loader pair + write_uboot_platform override: armbian-install (and any other bootloader
+# write) flashes these instead of the ROCK-2F blobs that soft-brick the box (issue #6)
+0644 r69/factory_idbloader.bin                  /usr/local/share/r69/factory_idbloader.bin
+0644 common/u-boot.itb                          /usr/local/share/r69/u-boot.itb
+0644 r69/r69-platform-install                   /usr/lib/u-boot/platform_install.sh
+
+# hardware watchdog: systemd pings it, the SoC resets the box if it stops (node enabled in board.dtb)
+0644 common/rk35xx-watchdog.conf                /etc/systemd/system.conf.d/zz-r69-watchdog.conf
+
+# in-place updater, so `r69-update --pull` works on the box without a checkout
+0755 ../rk35xx-update                           /usr/local/sbin/rk35xx-update
+0755 ../r69-update                              /usr/local/sbin/r69-update
+
+# kill the base image's getty on ttyFIQ0 (device can't exist here) — else boot stalls 90 s
+0644 common/rk35xx-ttyfiq0-getty.service      /etc/systemd/system/serial-getty@ttyFIQ0.service

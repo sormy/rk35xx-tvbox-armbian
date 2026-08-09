@@ -1,0 +1,6 @@
+#!/bin/sh
+# armbian-bsp upgrades reset BOARD_NAME in /etc/armbian-release; restore ours (BOARD= stays rock-2f)
+f=/etc/armbian-release
+n=$(cat /usr/local/share/rk35xx/board-name 2>/dev/null)
+[ -f "$f" ] && [ -n "$n" ] && ! grep -q "^BOARD_NAME=\"$n\"\$" "$f" && sed -i "s/^BOARD_NAME=.*/BOARD_NAME=\"$n\"/" "$f"
+exit 0

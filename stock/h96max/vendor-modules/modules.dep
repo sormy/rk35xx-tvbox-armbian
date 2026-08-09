@@ -1,0 +1,13 @@
+/vendor/lib/modules/rkvtunnel.ko:
+/vendor/lib/modules/skw.ko: /vendor/lib/modules/skw_bootcoms.ko /vendor/lib/modules/skw_sdio.ko
+/vendor/lib/modules/cyw88459.ko:
+/vendor/lib/modules/aic8800_btlpm.ko: /vendor/lib/modules/aic8800_bsp.ko
+/vendor/lib/modules/skw_bootcoms.ko: /vendor/lib/modules/skw_sdio.ko
+/vendor/lib/modules/aic8800_fdrv.ko: /vendor/lib/modules/aic8800_bsp.ko
+/vendor/lib/modules/swt6621s_wifi.ko:
+/vendor/lib/modules/aic8800_bsp.ko:
+/vendor/lib/modules/8822cs.ko:
+/vendor/lib/modules/8852bs.ko:
+/vendor/lib/modules/skw_sdio_lite.ko:
+/vendor/lib/modules/skw_sdio.ko:
+/vendor/lib/modules/bcmdhd.ko:

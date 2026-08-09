@@ -1,0 +1,130 @@
+#!/bin/sh
+# rk35xx-update — apply the current repo's firmware to THIS running box, no reflash. Idempotent.
+# Installs the payload (firmware/<board>/payload.list) into place, refreshes + rebuilds the DKMS
+# drivers, reinstalls the device tree, reloads systemd + restarts the changed services, and reboots
+# ONLY if the DTB actually changed. Run from a repo checkout on the box, or with --pull to fetch it.
+#   usage: sudo rk35xx-update [--board <id>] [--pull] [--reboot | --no-reboot]
+#
+# The board is auto-detected from the identity dir; --board overrides. Every installed name derives
+# from the board's BOARD_PREFIX, so the R69 keeps its historical r69- names while every other board
+# uses the neutral rk35xx- ones (see firmware/<board>/board.conf).
+#
+# Deliberately does NOT redo the one-time image-build steps (rebrand, the unit-enable drop-in, the
+# console/armbianEnv edit, board drop-ins) — those are already in place on a booted box, and the
+# Wi-Fi/Bluetooth fixups live in the board's first-boot script. The bootloader (idbloader/u-boot.itb)
+# is never touched here; changing it on a live boot device is a separate, riskier operation.
+set -e
+[ "$(id -u)" = 0 ] || { echo "run as root (sudo rk35xx-update)"; exit 1; }
+
+BOARD=""
+PULL=0
+REBOOT=ask
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --board)      BOARD="${2:?--board needs a board id}"; shift ;;
+    --pull)       PULL=1 ;;
+    --reboot)     REBOOT=yes ;;
+    --no-reboot)  REBOOT=no ;;
+    *) echo "unknown arg: $1"; exit 1 ;;
+  esac
+  shift
+done
+
+# board identity: explicit flag, else the shipped board-id, else the R69's pre-board-id layout
+if [ -z "$BOARD" ]; then
+  if [ -f /usr/local/share/rk35xx/board-id ]; then
+    BOARD="$(cat /usr/local/share/rk35xx/board-id)"
+  elif [ -d /usr/local/share/r69 ]; then
+    BOARD=r69
+  else
+    echo "cannot tell which board this is (no /usr/local/share/rk35xx/board-id); pass --board"; exit 1
+  fi
+fi
+
+REPO_URL=https://github.com/sormy/rk35xx-tvbox-armbian
+SELF="$(cd "$(dirname "$0")" && pwd)"
+if [ "$PULL" = 1 ]; then
+  # pull in place when we're already in a checkout; otherwise clone beside the board's identity dir
+  if [ -d "$SELF/.git" ]; then REPO="$SELF"
+  else
+    case "$BOARD" in
+      r69) REPO=/usr/local/share/r69/repo ;;      # the historical path deployed boxes already use
+      *)   REPO=/usr/local/share/rk35xx/repo ;;
+    esac
+  fi
+  if [ -d "$REPO/.git" ]; then
+    git -C "$REPO" remote set-url origin "$REPO_URL"   # heals clones after a repo rename
+    git -C "$REPO" pull --ff-only
+  else
+    git clone --depth 1 "$REPO_URL" "$REPO"
+  fi
+elif [ -f "$SELF/firmware/$BOARD/payload.list" ]; then
+  REPO="$SELF"
+else
+  echo "not in a repo checkout (no firmware/$BOARD/payload.list next to me); re-run with --pull"; exit 1
+fi
+FW="$REPO/firmware"
+[ -f "$FW/$BOARD/board.conf" ] || { echo "unknown board '$BOARD' (no firmware/$BOARD/board.conf)"; exit 1; }
+# shellcheck source=/dev/null
+. "$FW/$BOARD/board.conf"
+P="${BOARD_PREFIX:?board.conf must set BOARD_PREFIX}"
+
+SHARE=/usr/local/share/$P
+DKMS_IR=/usr/src/rockchip-pwm-remotectl-$P-1.0
+DKMS_PHY=/usr/src/rk630-phy-$P-1.0
+
+dtbsum() { [ -f "$SHARE/board.dtb" ] && md5sum "$SHARE/board.dtb" | cut -d' ' -f1 || echo none; }
+OLD_DTB="$(dtbsum)"
+
+echo "[1/5] installing firmware payload ($BOARD)"
+while read -r mode src dest; do
+  case "$mode" in ''|\#*) continue ;; esac
+  install -D -m "$mode" "$FW/$src" "$dest"
+done < "$FW/$BOARD_PAYLOAD"
+"/usr/local/sbin/$P-boardname"   # re-assert the login-banner name (apt upgrades reset it)
+
+echo "[2/5] refreshing DKMS driver sources + rebuilding"
+"$FW/common/fetch-dkms-src.sh" "$DKMS_IR" "$DKMS_PHY"
+# the sources are rk35xx-named; rewriting them to $P is a no-op on every board except the R69
+sed -i "s/remotectl-pwm-rk35xx/remotectl-pwm-$P/" "$DKMS_IR/rockchip_pwm_remotectl.c"
+sed "s/rk35xx/$P/g" "$FW/common/ir/Makefile"      > "$DKMS_IR/Makefile"
+sed "s/rk35xx/$P/g" "$FW/common/ir/dkms.conf"     > "$DKMS_IR/dkms.conf"
+sed "s/rk35xx/$P/g" "$FW/common/ethphy/dkms.conf" > "$DKMS_PHY/dkms.conf"
+printf 'obj-m += rk630phy.o\n'                    > "$DKMS_PHY/Makefile"
+
+# rebuild so a changed source or a new kernel actually takes: remove --all, then add/build/install.
+# Boards that ship per-driver setup scripts (the R69) go through those, keeping their exact behavior.
+dkms_rebuild() {
+  name="$(basename "$1" | sed 's/-1\.0$//')"
+  if [ -x "/usr/local/sbin/$name-setup" ]; then
+    "/usr/local/sbin/$name-setup" || echo "  ($name setup reported an issue; continuing)"
+    return 0
+  fi
+  dkms remove  -m "$name" -v 1.0 --all 2>/dev/null || true
+  dkms add     -m "$name" -v 1.0 || { echo "  ($name dkms add failed; continuing)"; return 0; }
+  dkms build   -m "$name" -v 1.0 || { echo "  ($name dkms build failed; continuing)"; return 0; }
+  dkms install -m "$name" -v 1.0 || echo "  ($name dkms install failed; continuing)"
+}
+dkms_rebuild "$DKMS_IR"
+dkms_rebuild "$DKMS_PHY"
+
+echo "[3/5] installing the DTB into the running kernel"
+"/etc/kernel/postinst.d/$P-dtb-persist" "$(uname -r)"
+
+echo "[4/5] reloading systemd + restarting changed services"
+systemctl daemon-reload
+for s in ${BOARD_UPDATE_RESTART:-}; do systemctl restart "$s" 2>/dev/null || true; done
+for s in ${BOARD_UPDATE_TRY_RESTART:-}; do systemctl try-restart "$s" 2>/dev/null || true; done
+echo "  (power-key / suspend drop-ins take effect after 'systemctl restart systemd-logind' or a reboot)"
+
+echo "[5/5] done"
+if [ "$OLD_DTB" != "$(dtbsum)" ]; then
+  echo "device tree changed — a reboot is required to load it."
+  case "$REBOOT" in
+    yes) echo "rebooting now…"; reboot ;;
+    no)  echo "reboot skipped (--no-reboot); run 'reboot' when ready." ;;
+    ask) printf "reboot now? [y/N] "; read -r ans; case "$ans" in [yY]) reboot ;; *) echo "run 'reboot' when ready." ;; esac ;;
+  esac
+else
+  echo "device tree unchanged — no reboot needed. New drivers/services are live."
+fi

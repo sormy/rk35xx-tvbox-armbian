@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Build the R69's bootable u-boot.itb (rk3528) from mainline U-Boot + Rockchip's ATF blob,
-# straight into firmware/u-boot.itb (what build-image.sh bakes in). All inputs are pinned so the
-# build is reproducible. Why mainline + why we keep the factory idbloader: HOW-IT-WAS-DONE.md.
+# Build the shared RK3518-family bootable u-boot.itb (rk3528) from mainline U-Boot + Rockchip's ATF blob,
+# straight into firmware/common/u-boot.itb (what build-image.sh bakes in). All inputs are pinned so the
+# build is reproducible. Why mainline + why we keep the factory idbloader: docs/r69/worklog.md.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
 BUILD="$REPO/uboot-build"                         # scratch (gitignored): the clones + compile tree
-OUT="${1:-$REPO/firmware/u-boot.itb}"             # the artifact we ship; pass an absolute path to override
+OUT="${1:-$REPO/firmware/common/u-boot.itb}"      # the artifact we ship; pass an absolute path to override
 
 # --- pinned dependencies (bump deliberately, never float) ---
 UBOOT_REPO="https://github.com/u-boot/u-boot.git"

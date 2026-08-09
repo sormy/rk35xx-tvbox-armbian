@@ -1,0 +1,1 @@
+Linux r69 6.1.115-vendor-rk35xx #1 SMP Fri Jan 16 11:40:29 UTC 2026 aarch64 GNU/Linux

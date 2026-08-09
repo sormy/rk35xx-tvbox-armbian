@@ -1,0 +1,12 @@
+#!/bin/sh
+# red while suspended, blue on resume (needs retain-state-suspended)
+case "$1" in
+  pre)
+    echo 0 > /sys/class/leds/power/brightness 2>/dev/null
+    echo 1 > /sys/class/leds/standby/brightness 2>/dev/null
+    ;;
+  post)
+    echo 0 > /sys/class/leds/standby/brightness 2>/dev/null
+    echo 1 > /sys/class/leds/power/brightness 2>/dev/null
+    ;;
+esac

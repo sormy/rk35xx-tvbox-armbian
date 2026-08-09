@@ -1,0 +1,8 @@
+type: SD
+name: JC1S5
+cid: 1b534d4a43315335308d5c67f7016bfb
+csd: 400e00325b590001dd7f7f800a40000d
+manfid: 0x00001b
+oemid: 0x534d
+date: 11/2022
+serial: 0x8d5c67f7

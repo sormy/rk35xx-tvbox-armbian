@@ -1,0 +1,12 @@
+type: MMC
+name: R1J96N
+cid: 13014e52314a39364e10910b93407200
+csd: d07f01320f5903ffffffffef86400000
+manfid: 0x000013
+oemid: 0x014e
+date: 07/2015
+fwrev: 0x8200df0700011100
+hwrev: 0x0
+serial: 0x910b9340
+rev: 0x7
+preferred_erase_size: 4194304

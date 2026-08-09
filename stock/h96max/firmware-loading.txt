@@ -1,0 +1,4 @@
+[    9.464088] [SKWBOOT]:request_firmware SWT6621S_DRAM_SDIO.bin
+[    9.504010] [SKWBOOT]:request_firmware SWT6621S_IRAM_SDIO.bin
+[    9.548472] [SKWBOOT]:request_firmware SWT6621S_NV_SDIO.bin
+[   10.537276] [SWT6621S DBG] skw_calib_download: fw file: SWT6621S_SEEKWAVE_R00001.bin

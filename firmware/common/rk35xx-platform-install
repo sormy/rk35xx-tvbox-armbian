@@ -1,0 +1,20 @@
+# write_uboot_platform override: the stock version writes ROCK-2F loaders and soft-bricks the box
+DIR=/usr/local/share/rk35xx
+
+write_uboot_platform() {
+	dd if="$1/factory_idbloader.bin" of="$2" seek=64 conv=notrunc status=none
+	dd if="$1/u-boot.itb" of="$2" seek=16384 conv=notrunc status=none
+	sync
+}
+
+setup_write_uboot_platform() {
+	if grep -q "ubootpart" /proc/cmdline; then
+		local tmp part dev
+		tmp=$(cat /proc/cmdline)
+		tmp="${tmp##*ubootpart=}"
+		tmp="${tmp%% *}"
+		[ -n "$tmp" ] && part=$(findfs PARTUUID=$tmp 2> /dev/null)
+		[ -n "$part" ] && dev=$(lsblk -n -o PKNAME "$part" 2> /dev/null)
+		[ -n "$dev" ] && DEVICE="/dev/$dev"
+	fi
+}

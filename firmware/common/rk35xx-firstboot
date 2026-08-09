@@ -1,0 +1,21 @@
+#!/bin/sh
+# rk35xx family first boot: hold the u-boot package (its postinst flashes ROCK-2F loaders =
+# soft-brick), then build every staged DKMS source offline (the image ships kernel headers).
+set -e
+
+ub=$(dpkg-query -W -f='${Package}\n' 'linux-u-boot-*' 2>/dev/null | head -1)
+[ -n "$ub" ] && apt-mark hold "$ub" >/dev/null 2>&1 || true
+
+for conf in /usr/src/*/dkms.conf; do
+  [ -f "$conf" ] || continue
+  name=$(sed -n 's/^PACKAGE_NAME="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$conf")
+  ver=$(sed -n 's/^PACKAGE_VERSION="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$conf")
+  [ -n "$name" ] && [ -n "$ver" ] || continue
+  dkms status "$name/$ver" 2>/dev/null | grep -q installed && continue
+  dkms remove "$name/$ver" --all >/dev/null 2>&1 || true
+  dkms add "$name/$ver" 2>/dev/null || true
+  dkms build "$name/$ver"
+  dkms install "$name/$ver"
+done
+depmod -a
+systemctl restart systemd-modules-load 2>/dev/null || true

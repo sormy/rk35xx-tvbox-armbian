@@ -1,0 +1,2 @@
+phy_id: 0x00441400
+phy driver: ../../../../../../bus/mdio_bus/drivers/RK630 PHY

@@ -1,0 +1,15 @@
+[    0.000000] Kernel command line: storagemedia=emmc androidboot.storagemedia=emmc androidboot.mode=normal  androidboot.dtb_idx=0 androidboot.dtbo_idx=0 kernel.offhdmi=0  androidboot.verifiedbootstate=orange androidboot.serialno=YT26050805378 console=ttyFIQ0 firmware_class.path=/vendor/etc/firmware init=/init rootwait ro loop.max_part=7 printk.devkmsg=on kvm-arm.mode=none androidboot.console=ttyFIQ0 androidboot.wificountrycode=CN androidboot.hardware=rk30board androidboot.boot_devices=ffbf0000.mmc androidboot.selinux=permissive earlycon=uart8250,mmio32,0xff9f0000 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0 4bit PCB-56f70fd2ad,spl-v1.06,bl31-v1.20,bl32-v1.06,uboot-12/24/2025 androidboot.fwver=ddr-v1.11
+[    1.549148] init: Setting product property ro.product.brand to 'RockChip' (from ro.product.product.brand)
+[    1.549232] init: Setting product property ro.product.device to 'rk3518_box_32' (from ro.product.product.device)
+[    1.549361] init: Setting product property ro.product.manufacturer to 'RockChip' (from ro.product.product.manufacturer)
+[    1.549419] init: Setting product property ro.product.model to 'H96Max_H313' (from ro.product.product.model)
+[    1.549471] init: Setting product property ro.product.name to 'rk3518_box_32' (from ro.product.product.name)
+[    1.549557] init: Setting property 'ro.product.cpu.abilist' to 'armeabi-v7a,armeabi'
+[    1.549598] init: Setting property 'ro.product.cpu.abilist32' to 'armeabi-v7a,armeabi'
+[    1.549637] init: Setting property 'ro.product.cpu.abilist64' to ''
+[    2.373174] init: processing action (ro.product.debugfs_restrictions.enabled=true && early-init) from (/system/etc/init/init-debug.rc:10)
+[    2.373522] init: Command 'mount debugfs debugfs /sys/kernel/debug' action=ro.product.debugfs_restrictions.enabled=true && early-init (/system/etc/init/init-debug.rc:11) took 0ms and failed: mount() failed: Device or resource busy
+[    2.386583] init: processing action (ro.product.cpu.abilist32=* && early-init) from (/vendor/etc/init/boringssl_self_test.rc:2)
+[    3.005207] init: processing action (ro.product.cpu.abilist32=* && init) from (/system/etc/init/hw/init.rc:484)
+[    9.407506] init: processing action (apexd.status=ready && ro.product.cpu.abilist32=*) from (/system/etc/init/hw/init.rc:488)
+[    9.487234] init: Command 'exec_start boringssl_self_test_apex32' action=apexd.status=ready && ro.product.cpu.abilist32=* (/system/etc/init/hw/init.rc:489) took 79ms and succeeded

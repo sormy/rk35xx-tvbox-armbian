@@ -1,0 +1,8 @@
+#!/bin/sh
+# poweroff parks these no-PMIC boxes still-powered: red on, blue off (needs retain-state-shutdown)
+case "$1" in
+  poweroff|halt)
+    echo 0 > /sys/class/leds/power/brightness 2>/dev/null
+    echo 1 > /sys/class/leds/standby/brightness 2>/dev/null
+    ;;
+esac

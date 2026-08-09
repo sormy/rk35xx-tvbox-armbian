@@ -1,0 +1,628 @@
+[    9.429181] [SKWSDIO INFO] skw_sdio_scan_card: sdio_scan_card
+[    9.429637] [SKWSDIO INFO] skw_sdio_probe: sdio_enable_func ret=0 type 0
+[    9.429687] [SKWSDIO INFO] wakeup_modem: wakeup_modem enter gpio_val=0 : 0
+[    9.444612] [SKWSDIO INFO] skw_sdio_probe: enable func1 done
+[    9.444985] [SKWSDIO INFO] check_chipid: Chip id:SV6160LITE used SDIO20 
+[    9.463358] [SKWSDIO INFO] skw_sdio_scan_card: scan end!
+[    9.463440] [SKWSDIO INFO] skw_sdio_io_init:  OK
+[    9.463450] [SKWBOOT]:seekwave_boot_init: enter chip_id=SV6160LITE
+[    9.463895] [SKWBOOT_WARN]:no BT_antenna setting
+[    9.463967] [SKWBOOT]:seekwave_boot_parse_dt,modem boot setting::=>
+[    9.463979] [SKWBOOT]:chipen=106
+[    9.463987] [SKWBOOT]:hst_wak_wf=108
+[    9.463995] [SKWBOOT]:wf_wak_hst=107
+[    9.464003] [SKWBOOT]:dma_type=1
+[    9.464010] [SKWBOOT]:bt_antenna=0
+[    9.464058] [SKWBOOT]:seekwave_boot_parse_dt,chipen=106, gpio_out:108 gpio_in:107 ret = 0
+[    9.464076] [SKWBOOT_ERR]:seekwave_boot_parse_dt:gpio_chip_en request fail ret=-16
+[    9.464088] [SKWBOOT]:request_firmware SWT6621S_DRAM_SDIO.bin
+[    9.471899] [SKWBOOT]:boot data dram_img_data 0c987cbb
+[    9.504010] [SKWBOOT]:request_firmware SWT6621S_IRAM_SDIO.bin
+[    9.548404] [SKWBOOT]:boot data iram_img_data 5f540700
+[    9.548472] [SKWBOOT]:request_firmware SWT6621S_NV_SDIO.bin
+[    9.704536] [SKWBOOT]:image_size=358776,192816, ret=0
+[    9.704587] [SKWBOOT]:skw_boot_init line:726,the tail_offset ---0x14c, the head_offset --0xf8 ,iram_addr=0x100000,dram_addr=0x20200000, 					nv_head_addr:0xc8,nv_tail_addr:0xe8,nv_size=28
+[    9.704605] [SKWBOOT]:skw_boot_init line:734 analysis the img module
+[    9.704614] [SKWBOOT]:skw_boot_init line:750 dl_addr=0x110000, write_addr=0x110000, index=0x1,data_size=0x4e38
+[    9.704626] [SKWBOOT]:skw_boot_init line:750 dl_addr=0x20228000, write_addr=0x20228000, index=0x1,data_size=0x7090
+[    9.704637] [SKWBOOT]:skw_boot_init line:750 dl_addr=0x115000, write_addr=0x115000, index=0x2,data_size=0x2bdd4
+[    9.704648] [SKWBOOT]:skw_boot_init line:750 dl_addr=0x20216268, write_addr=0x20216268, index=0x2,data_size=0x25a8
+[    9.704658] [SKWBOOT]:skw_boot_init line:750 dl_addr=0x20210000, write_addr=0x20210000, index=0x2,data_size=0x5890
+[    9.704669] [SKWBOOT]:skw_boot_init line:750 dl_addr=0x141000, write_addr=0x141000, index=0x3,data_size=0x16978
+[    9.704680] [SKWBOOT]:skw_boot_init line:750 dl_addr=0x20202910, write_addr=0x20202910, index=0x3,data_size=0x1be0
+[    9.704691] [SKWBOOT]:skw_boot_init line:753 bsp_index count:2, bt_index_count=2, wifi_index_count=3 
+[    9.704703] [SKWSDIO INFO] skw_boot_loader: the ---debug---line:1497 
+[    9.704712] [SKWSDIO INFO] skw_boot_loader: the ---debug---line:1508 
+[    9.704725] [SKWSDIO INFO] wakeup_modem: wakeup_modem enter gpio_val=1 : 1
+[    9.716070] [SKWSDIO INFO] skw_sdio_set_dma_type: dma_type=1,adma_rx_enable:1
+[    9.716096] [SKWSDIO INFO] wakeup_modem: wakeup_modem enter gpio_val=1 : 1
+[    9.729390] [SKWSDIO INFO] skw_sdio_slp_feature_en: no-sleep_support_enable:0
+[    9.729415] [SKWSDIO INFO] skw_sdio_boot_cp: DOWNLOAD BIN TO CP
+[    9.729456] [SKWSDIO INFO] skw_sdio_boot_cp: line:1117 dram_dl_size = 192816 iram_dl_size = 358776 iram_dl_addr = 0x100000, dram_dl_addr = 0x20200000
+[    9.966203] [SKWSDIO INFO] skw_sdio_boot_cp: line:1127 write the download done flag
+[    9.966252] [SKWSDIO INFO] wakeup_modem: wakeup_modem enter gpio_val=1 : 1
+[   10.186154] [SKWSDIO INFO] skw_sdio2_handle_packet: LOOPCHECK channel received: trunk_W23.20.2-rev36555-rev36563-rev36560 20250618-15:38:14, slp=2
+[   10.186193] [SKWSDIO INFO] skw_sdio_gpio_irq_pre_ops: cp_detect_sleep_mode is 1 or 2
+[   10.186383] [SKWSDIO INFO] skw_sdio_host_irq_init: gpio_In:107,gpio_out:108 irq 88
+[   10.186710] [SKWSDIO INFO] skw_sdio_bind_WIFI_driver:  wifi_pdata bus_type:0x3 
+[   10.186717] [SKWSDIO ERROR] skw_sdio2_adma_parser: skw_sdio2_adma_parser[0]:ch:255 len:0x5fc 0xFFFFFFFF 0xFFFFFFFF : 0xFFFFFFFF 0xffffffff 0xFFFFFFFF
+[   10.188300] [SKWSDIO INFO] skw_sdio_bind_BT_driver: The check chipid ucompdata = SV6160LITE 
+[   10.190129] [SKWSDIO INFO] skw_sdio_boot_cp: line:1150 boot cp pass!!
+[   10.190170] [SKWSDIO ERROR] skw_sdio_cp_service_ops: service not support!
+[   10.190180] [SKWSDIO INFO] skw_boot_loader: boot loader ops end!!!
+[   10.190190] [SKWBOOT]:skw_first_boot first boot pass
+[   10.198894] [SKWLOG]:skw_bt_state_event_init enter  ret=0
+[   10.487403] [SWT6621S INFO] VERSION: 2.0.250319-250618.eececbe (6.1.118)
+[   10.489096] [SWT6621S ERROR] skw_update_config: load skwifid.cfg failed, ret: -2
+[   10.489436] [SWT6621S INFO] skw_drv_probe: chip: 1, MAC: 00:00:00:00:00:00
+[   10.502972] [SWT6621S DBG] skw_register_rx_callback: register cmd port: 6, data port bitmap: 0x80
+[   10.504627] [SWT6621S DBG] skw_hw_xmit_init: dma: 0
+[   10.508762] [SKWSDIO INFO] wifi_service_start: the ---debug---line:2378 
+[   10.508828] [SKWBOOT]:skw_start_wifi_service Enter cp_state =0 
+[   10.508839] [SKWBOOT]:skw_download_signal_ops line:629 download data ops done the dl_count=2 
+[   10.508850] [SKWSDIO INFO] skw_boot_loader: the ---debug---line:1497 
+[   10.508861] [SKWSDIO INFO] skw_WIFI_service_start: Enter STARTWIFI cp_state:0
+[   10.508871] [SKWSDIO INFO] send_modem_service_command: the ---debug---line:463 
+[   10.508880] [SKWSDIO INFO] send_modem_service_command: service = 0 cmd 1
+[   10.508895] [SKWSDIO INFO] wakeup_modem: wakeup_modem enter gpio_val=0 : 1
+[   10.510411] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(1,1) ret=0
+[   10.512399] [SKWSDIO INFO] send_modem_service_command: ret = 0 command 0
+[   10.512532] [SKWSDIO INFO] skw_sdio2_handle_packet: LOOPCHECK channel received: WIFIREADY
+[   10.513390] [SKWSDIO INFO] skw_sdio_cp_service_ops: -----WIFI SERIVCE START
+[   10.513502] [SKWSDIO INFO] skw_boot_loader: boot loader ops end!!!
+[   10.513519] [SKWBOOT]:skw_start_wifi_service wifi boot sucessfull
+[   10.518647] [SWT6621S DBG] skw_set_link_loss_mib: beacon to: 6
+[   10.521027] [SWT6621S DBG] skw_set_24ghz_band_mib: 24ghz_band: 1
+[   10.524914] [SWT6621S DBG] skw_util_set_mib_enable: set 131 mib:0
+[   10.527435] [SWT6621S DBG] skw_sync_chip_info: efuse mac: fe:fd:fc:99:08:5f, valid
+[   10.527498] [SWT6621S DBG] skw_save_random_mac_to_efuse: save mac: 0xfe:fd:fc:99:08:5f
+[   10.537184] [SWT6621S DBG] skw_setup_mac_address: addr[0]: fe:fd:fc:99:08:5f
+[   10.537245] [SWT6621S DBG] skw_setup_mac_address: addr[1]: fe:fd:fc:9b:08:5f
+[   10.537256] [SWT6621S DBG] skw_setup_mac_address: addr[2]: fe:fd:fc:9d:08:5f
+[   10.537265] [SWT6621S DBG] skw_setup_mac_address: addr[3]: fe:fd:fc:91:08:5f
+[   10.537276] [SWT6621S DBG] skw_calib_download: fw file: SWT6621S_SEEKWAVE_R00001.bin
+[   10.564374] [SWT6621S DBG] skw_calib_bin_download: file size: 2372
+[   10.564434] [SWT6621S DBG] skw_calib_bin_download: bb_file remain: 1860, seq: 0 len: 512 end: 0
+[   10.564497] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   10.566275] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(8,8) ret=0
+[   10.568575] [SWT6621S DBG] skw_calib_bin_download: bb_file remain: 1348, seq: 1 len: 512 end: 0
+[   10.569177] [SWT6621S DBG] skw_calib_bin_download: bb_file remain: 836, seq: 2 len: 512 end: 0
+[   10.569488] [SWT6621S DBG] skw_calib_bin_download: bb_file remain: 324, seq: 3 len: 512 end: 0
+[   10.569782] [SWT6621S DBG] skw_calib_bin_download: bb_file remain: 0, seq: 4 len: 324 end: 1
+[   10.625549] [SWT6621S DBG] skw_sync_band_capa: BW capa: 0x1f, flags: 0x100
+[   10.625610] [SWT6621S INFO] skw_setup_wiphy: 2g_only:0
+[   10.625616] [SWT6621S DBG] skw_sync_band_capa: BW capa: 0x1f, flags: 0x100
+[   10.626797] [SWT6621S INFO] skw_add_iface: STA, inst: 0, mac: 00:00:00:00:00:00, bitmap: 0x1
+[   10.626870] [SWT6621S DBG] skw_iface_setup: STA, addr: fe:fd:fc:99:08:5f
+[   10.626888] [SWT6621S DBG] skw_cmd_open_dev: STA, inst: 0, mac: fe:fd:fc:99:08:5f, flags: 0x0
+[   10.634751] [SWT6621S DBG] skw_add_vif: iface: 0x0, bitmap: 0x1
+[   22.649464] [SWT6621S DBG] skw_ndo_open: dev: wlan0, type: STA
+[   22.649536] [SWT6621S DBG] skw_ndo_set_rx_mode: wlan0, mc: 1, uc: 0
+[   22.649754] [SWT6621S DBG] skw_ndo_set_rx_mode: wlan0, mc: 2, uc: 0
+[   22.649805] [SWT6621S DBG] skw_set_power_mgmt: wlan0, enabled: 0, timeout: -1
+[   22.654568] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   22.656385] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(14,14) ret=0
+[   22.673057] [SWT6621S DBG] skw_vendor_get_logger_feature: features: 0x0
+[   22.751958] [SWT6621S DBG] skw_vendor_get_logger_feature: features: 0x0
+[   22.759009] [SWT6621S DBG] skw_vendor_get_logger_feature: features: 0x0
+[   22.773839] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0xf
+[   23.030395] [SWT6621S DBG] skw_mgmt_frame_register: STA add filter ACTION
+[   23.030511] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   23.031180] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(16,16) ret=0
+[   23.124720] [SWT6621S DBG] skw_wow_enable: len:5 9
+[   23.124838] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   23.125452] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(17,17) ret=0
+[   23.129196] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[   23.134841] [SWT6621S DBG] skw_vendor_get_logger_feature: features: 0x0
+[   23.137169] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0xf
+[   23.256294] [SWT6621S DBG] skw_android_cmd: wlan0: COUNTRY CN
+[   23.256352] [SWT6621S DBG] skw_set_regdom: country: CN
+[   23.256507] [SWT6621S DBG] skw_cmd_set_regdom: 1 @ 13, power: 20, gain: 0, flags: 0x0
+[   23.256540] [SWT6621S DBG] skw_cmd_set_regdom: 36 @ 13, power: 23, gain: 0, flags: 0x808
+[   23.256553] [SWT6621S DBG] skw_cmd_set_regdom: 52 @ 13, power: 20, gain: 0, flags: 0x818
+[   23.256564] [SWT6621S DBG] skw_cmd_set_regdom: 149 @ 17, power: 33, gain: 0, flags: 0x0
+[   23.256635] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   23.257356] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(18,18) ret=0
+[   23.289888] [SWT6621S DBG] skw_android_cmd: wlan0: SETSUSPENDMODE 1
+[   27.174905] [SWT6621S DBG] skw_android_cmd: wlan0: BTCOEXSCAN-STOP
+[   27.175697] [SWT6621S DBG] skw_android_cmd: wlan0: RXFILTER-STOP
+[   27.177004] [SWT6621S DBG] skw_android_cmd: wlan0: RXFILTER-ADD 2
+[   27.177662] [SWT6621S DBG] skw_android_cmd: wlan0: RXFILTER-START
+[   27.178247] [SWT6621S DBG] skw_android_cmd: wlan0: RXFILTER-STOP
+[   27.179486] [SWT6621S DBG] skw_android_cmd: wlan0: RXFILTER-ADD 3
+[   27.180015] [SWT6621S DBG] skw_android_cmd: wlan0: RXFILTER-START
+[   27.202365] [SWT6621S DBG] skw_android_cmd: wlan0: SETSUSPENDMODE 1
+[   27.203272] [SWT6621S DBG] skw_set_power_mgmt: wlan0, enabled: 1, timeout: -1
+[   27.437756] [SWT6621S DBG] skw_android_cmd: wlan0: SETSUSPENDMODE 0
+[   30.718794] [SKWBOOT]:HwBinder:428_1 pid:454 bt_start_service
+[   30.718873] [SKWBOOT]:skw_start_bt_service Enter cp_state =0 
+[   30.718884] [SKWBOOT]:skw_download_signal_ops line:629 download data ops done the dl_count=3 
+[   30.718895] [SKWSDIO INFO] skw_boot_loader: the ---debug---line:1497 
+[   30.718906] [SKWSDIO INFO] skw_BT_service_start: Enter cpstate=0
+[   30.718916] [SKWSDIO INFO] send_modem_service_command: the ---debug---line:463 
+[   30.718926] [SKWSDIO INFO] send_modem_service_command: service = 1 cmd 4
+[   30.718943] [SKWSDIO INFO] wakeup_modem: wakeup_modem enter gpio_val=0 : 1
+[   30.719526] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(19,19) ret=0
+[   30.728357] [SKWSDIO INFO] send_modem_service_command: ret = 0 command 0
+[   30.739566] [SKWSDIO INFO] skw_sdio2_handle_packet: LOOPCHECK channel received: BTREADY
+[   30.750275] [SKWSDIO INFO] skw_boot_loader: boot loader ops end!!!
+[   30.750385] [SKWBOOT]:skw_start_bt_service line:966 , boot bt sucessfully!
+[   30.750399] [SKWBOOT]:Open user_boot device: ret=0 task 454
+[   30.750485] [SKWSDIO INFO] open_sdio_port: HwBinder:428_1(454) open_sdio_port portno = 2
+[   30.750502] [SKWBOOT]:ucom_open: ucom[2] BTCMD(0x2)
+[   30.750512] [SKWBOOT]:the portno=2 - chipid = 0x6160 
+[   30.759223] [SKWSDIO INFO] open_sdio_port: HwBinder:428_1(454) open_sdio_port portno = 5
+[   30.759266] [SKWBOOT]:ucom_open: ucom[5] BTDATA(0x5)
+[   30.759278] [SKWBOOT]:the portno=5 - chipid = 0x6160 
+[   30.843767] [SKWSDIO INFO] open_sdio_port: HwBinder:428_1(454) open_sdio_port portno = 3
+[   30.843893] [SKWBOOT]:ucom_open: ucom[3] BTAUDIO(0x3)
+[   30.843910] [SKWBOOT]:the portno=3 - chipid = 0x6160 
+[   30.857905] type=1107 audit(1766548273.760:562): uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=SKWBT.OPEN.STATE pid=428 uid=1002 gid=1002 scontext=u:r:hal_bluetooth_default:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=1'
+[   32.809904] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   32.811539] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(100,100) ret=0
+[   32.964859] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   32.965426] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(104,104) ret=0
+[   33.100588] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   33.101184] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(108,108) ret=0
+[   33.342939] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x1
+[   33.345620] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x2
+[   33.348847] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x1
+[   33.350857] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x2
+[   33.359986] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x1
+[   33.362153] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x2
+[   33.364782] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x1
+[   33.366953] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x2
+[   33.369930] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x1
+[   33.373894] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x2
+[   33.376690] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x4
+[   33.378987] [SWT6621S DBG] skw_vendor_get_usable_channels: band_mask: 0x8
+[   33.427444] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[   33.427614] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[   33.428100] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(112,112) ret=0
+[   34.487089] [SWT6621S DBG] skw_android_cmd: wlan0: BTCOEXSCAN-STOP
+[   34.886195] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 161
+[   34.890777] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[   53.432512] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[   54.890143] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 93
+[   54.891028] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[   93.441038] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[   94.956475] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 110
+[   94.957216] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[  104.468142] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  104.470140] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(93,93) ret=0
+[  124.954746] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  124.955822] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(99,99) ret=0
+[  135.212189] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  135.213584] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(102,102) ret=0
+[  148.033499] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  148.035426] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(161,161) ret=0
+[  158.278832] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  158.280195] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(164,164) ret=0
+[  168.524504] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  168.525229] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(167,167) ret=0
+[  173.490257] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[  174.952808] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 131
+[  174.953444] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[  178.779750] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  178.780377] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(49,49) ret=0
+[  201.844347] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  201.845452] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(98,98) ret=0
+[  212.089018] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  212.090210] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(101,101) ret=0
+[  222.344235] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  222.345606] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(104,104) ret=0
+[  235.165755] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  235.167796] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(174,174) ret=0
+[  245.410886] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  245.412716] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(177,177) ret=0
+[  255.656833] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  255.657480] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(180,180) ret=0
+[  265.910603] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  265.912003] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(183,183) ret=0
+[  278.732382] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  278.733982] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(245,245) ret=0
+[  288.977672] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  288.978818] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(248,248) ret=0
+[  299.222346] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  299.223673] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(251,251) ret=0
+[  309.456084] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  309.457498] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(254,254) ret=0
+[  309.888299] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  309.889617] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(4,4) ret=0
+[  333.504050] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[  335.020860] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 111
+[  335.021428] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[  343.191766] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  343.193758] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(189,189) ret=0
+[  353.447505] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  353.448861] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(192,192) ret=0
+[  376.512316] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  376.514202] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(5,5) ret=0
+[  386.757498] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  386.759130] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(8,8) ret=0
+[  397.010964] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  397.012338] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(11,11) ret=0
+[  420.075737] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  420.076400] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(86,86) ret=0
+[  430.320218] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  430.321323] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(89,89) ret=0
+[  463.639898] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  463.640618] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(154,154) ret=0
+[  473.884144] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  473.885507] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(157,157) ret=0
+[  484.138831] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  484.140179] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(160,160) ret=0
+[  493.527261] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[  495.048301] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 137
+[  495.048848] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[  507.203998] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  507.204885] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(106,106) ret=0
+[  517.448705] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  517.449601] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(109,109) ret=0
+[  527.703407] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  527.704809] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(112,112) ret=0
+[  550.770689] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  550.772091] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(181,181) ret=0
+[  561.015097] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  561.016822] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(184,184) ret=0
+[  571.269885] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  571.271277] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(187,187) ret=0
+[  584.090572] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  584.092381] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(9,9) ret=0
+[  594.335993] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  594.337217] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(12,12) ret=0
+[  604.580622] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  604.582041] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(15,15) ret=0
+[  614.835177] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  614.836509] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(18,18) ret=0
+[  637.901583] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  637.902431] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(91,91) ret=0
+[  648.146369] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  648.147217] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(94,94) ret=0
+[  653.533491] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[  655.053081] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 149
+[  655.053705] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[  658.400599] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  658.401138] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(248,248) ret=0
+[  681.465744] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  681.466630] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(56,56) ret=0
+[  691.710277] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  691.711487] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(59,59) ret=0
+[  701.964412] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  701.965770] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(62,62) ret=0
+[  725.028639] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  725.029872] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(143,143) ret=0
+[  735.273242] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  735.274621] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(146,146) ret=0
+[  745.527486] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  745.528828] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(149,149) ret=0
+[  768.592606] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  768.594010] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(219,219) ret=0
+[  778.837411] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  778.838864] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(222,222) ret=0
+[  789.092181] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  789.093481] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(225,225) ret=0
+[  812.156848] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  812.158254] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(46,46) ret=0
+[  813.634844] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[  815.152015] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 143
+[  815.152645] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[  822.411874] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  822.412391] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(194,194) ret=0
+[  845.476326] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  845.477579] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(37,37) ret=0
+[  855.721306] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  855.722515] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(40,40) ret=0
+[  865.975274] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  865.976616] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(43,43) ret=0
+[  899.273853] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  899.275645] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(141,141) ret=0
+[  909.528257] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  909.529602] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(144,144) ret=0
+[  922.350515] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  922.352212] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(202,202) ret=0
+[  932.595756] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  932.597007] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(205,205) ret=0
+[  942.840633] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  942.841856] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(208,208) ret=0
+[  953.121752] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  953.123087] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(211,211) ret=0
+[  973.676517] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[  975.196484] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 142
+[  975.196991] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[  976.188732] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  976.190190] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(161,161) ret=0
+[  986.433628] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  986.435008] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(164,164) ret=0
+[  996.688168] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[  996.689481] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(167,167) ret=0
+[ 1019.751843] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1019.753429] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(252,252) ret=0
+[ 1040.250037] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1040.251352] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(4,4) ret=0
+[ 1063.315805] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1063.317641] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(57,57) ret=0
+[ 1073.560696] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1073.562504] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(60,60) ret=0
+[ 1083.815515] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1083.816848] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(63,63) ret=0
+[ 1106.881346] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1106.882776] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(108,108) ret=0
+[ 1117.126370] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1117.127618] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(111,111) ret=0
+[ 1127.381204] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1127.382534] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(114,114) ret=0
+[ 1133.767146] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 1135.286338] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 137
+[ 1135.287003] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 1150.446777] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1150.448058] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(55,55) ret=0
+[ 1160.691620] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1160.692791] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(58,58) ret=0
+[ 1170.945679] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1170.947013] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(61,61) ret=0
+[ 1194.009842] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1194.011232] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(127,127) ret=0
+[ 1204.254516] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1204.255993] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(130,130) ret=0
+[ 1237.567638] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1237.569400] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(191,191) ret=0
+[ 1247.812518] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1247.814216] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(194,194) ret=0
+[ 1258.066982] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1258.068303] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(197,197) ret=0
+[ 1270.887892] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1270.889775] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(10,10) ret=0
+[ 1281.133094] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1281.134649] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(13,13) ret=0
+[ 1291.377960] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1291.379386] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(16,16) ret=0
+[ 1293.830308] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 1295.293609] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 145
+[ 1295.294258] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 1301.633369] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1301.633918] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(166,166) ret=0
+[ 1324.698595] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1324.699788] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(222,222) ret=0
+[ 1334.943470] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1334.944595] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(225,225) ret=0
+[ 1345.198166] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1345.199553] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(228,228) ret=0
+[ 1368.261570] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1368.263059] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(31,31) ret=0
+[ 1378.506453] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1378.507833] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(34,34) ret=0
+[ 1388.760715] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1388.762057] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(37,37) ret=0
+[ 1401.581701] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1401.583403] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(91,91) ret=0
+[ 1411.826995] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1411.828225] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(94,94) ret=0
+[ 1422.071969] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1422.073013] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(97,97) ret=0
+[ 1432.326968] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1432.328288] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(100,100) ret=0
+[ 1453.896380] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 1455.358887] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 130
+[ 1455.359500] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 1455.391817] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1455.393394] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(44,44) ret=0
+[ 1465.637343] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1465.639170] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(47,47) ret=0
+[ 1488.698923] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1488.700866] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(110,110) ret=0
+[ 1498.944135] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1498.945622] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(113,113) ret=0
+[ 1509.189444] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1509.190395] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(116,116) ret=0
+[ 1519.444296] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1519.445640] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(119,119) ret=0
+[ 1542.509623] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1542.510864] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(191,191) ret=0
+[ 1552.754414] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1552.755598] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(194,194) ret=0
+[ 1563.009744] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1563.011179] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(197,197) ret=0
+[ 1575.831064] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1575.833209] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(10,10) ret=0
+[ 1586.076369] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1586.077982] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(13,13) ret=0
+[ 1596.330922] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1596.332272] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(16,16) ret=0
+[ 1609.151729] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1609.153552] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(71,71) ret=0
+[ 1613.986807] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 1615.451789] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 109
+[ 1615.452416] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 1619.396964] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1619.398378] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(185,185) ret=0
+[ 1629.641735] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1629.643184] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(188,188) ret=0
+[ 1639.896251] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1639.897575] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(191,191) ret=0
+[ 1662.962420] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1662.963594] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(13,13) ret=0
+[ 1683.454360] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1683.455694] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(19,19) ret=0
+[ 1696.276288] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1696.277958] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(78,78) ret=0
+[ 1706.521578] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1706.522767] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(81,81) ret=0
+[ 1716.766471] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1716.767572] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(84,84) ret=0
+[ 1727.020486] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1727.021820] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(87,87) ret=0
+[ 1750.084531] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1750.085954] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(151,151) ret=0
+[ 1760.329309] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1760.330796] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(154,154) ret=0
+[ 1770.583867] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1770.585243] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(157,157) ret=0
+[ 1773.998511] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 1775.457579] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 126
+[ 1775.458178] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 1783.404858] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1783.407337] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(88,88) ret=0
+[ 1803.902968] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1803.904285] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(94,94) ret=0
+[ 1826.968107] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1826.969552] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(170,170) ret=0
+[ 1837.213092] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1837.214410] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(173,173) ret=0
+[ 1847.468120] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1847.469456] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(176,176) ret=0
+[ 1860.289541] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1860.291972] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(232,232) ret=0
+[ 1870.536139] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1870.537792] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(235,235) ret=0
+[ 1880.780769] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1880.782600] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(238,238) ret=0
+[ 1891.035497] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1891.036837] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(241,241) ret=0
+[ 1914.100134] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1914.101955] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(41,41) ret=0
+[ 1924.345071] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1924.346759] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(44,44) ret=0
+[ 1934.000242] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 1935.518666] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 143
+[ 1935.519451] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 1957.631973] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1957.633210] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(3,3) ret=0
+[ 1967.876746] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 1967.877973] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(6,6) ret=0
+[ 2001.181130] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2001.182398] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(70,70) ret=0
+[ 2011.425967] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2011.427165] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(73,73) ret=0
+[ 2021.680069] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2021.681390] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(76,76) ret=0
+[ 2044.746681] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2044.748569] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(150,150) ret=0
+[ 2055.002311] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2055.003614] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(153,153) ret=0
+[ 2078.068482] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2078.069946] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(219,219) ret=0
+[ 2088.313324] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2088.314748] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(222,222) ret=0
+[ 2094.096269] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 2095.614723] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 152
+[ 2095.615263] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 2098.568265] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2098.568784] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(125,125) ret=0
+[ 2111.390100] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2111.392380] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(181,181) ret=0
+[ 2121.635154] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2121.637168] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(184,184) ret=0
+[ 2131.879976] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2131.881946] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(187,187) ret=0
+[ 2142.134626] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2142.136005] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(190,190) ret=0
+[ 2165.200700] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2165.202393] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(7,7) ret=0
+[ 2175.445319] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2175.447202] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(10,10) ret=0
+[ 2185.699905] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2185.701269] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(13,13) ret=0
+[ 2208.762294] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2208.763576] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(73,73) ret=0
+[ 2229.259622] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2229.260945] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(79,79) ret=0
+[ 2252.322845] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2252.324780] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(139,139) ret=0
+[ 2254.143649] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 2255.605669] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 100
+[ 2255.606163] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 2272.814820] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2272.816216] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(247,247) ret=0
+[ 2295.882018] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2295.884020] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(46,46) ret=0
+[ 2306.136831] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2306.138206] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(49,49) ret=0
+[ 2329.201584] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2329.203354] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(124,124) ret=0
+[ 2339.446240] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2339.448181] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(127,127) ret=0
+[ 2349.700404] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2349.701749] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(130,130) ret=0
+[ 2372.746886] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2372.748591] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(201,201) ret=0
+[ 2382.991609] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2382.993318] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(204,204) ret=0
+[ 2414.196374] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 2415.714661] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 138
+[ 2415.715204] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 2416.312300] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2416.313743] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(155,155) ret=0
+[ 2426.557083] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2426.558595] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(158,158) ret=0
+[ 2436.811626] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2436.812942] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(161,161) ret=0
+[ 2459.876519] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2459.877927] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(227,227) ret=0
+[ 2480.363098] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2480.364450] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(233,233) ret=0
+[ 2503.428208] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2503.430125] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(48,48) ret=0
+[ 2513.673303] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2513.674935] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(51,51) ret=0
+[ 2523.926794] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2523.928107] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(54,54) ret=0
+[ 2557.239373] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2557.240939] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(111,111) ret=0
+[ 2574.269614] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 2575.787705] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 138
+[ 2575.788239] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 2580.304326] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2580.305752] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(56,56) ret=0
+[ 2590.549397] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2590.550552] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(59,59) ret=0
+[ 2600.803380] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2600.804757] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(62,62) ret=0
+[ 2613.624488] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2613.626083] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(123,123) ret=0
+[ 2623.869777] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2623.870923] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(126,126) ret=0
+[ 2634.114514] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2634.115773] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(129,129) ret=0
+[ 2644.368739] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2644.370103] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(132,132) ret=0
+[ 2667.430157] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2667.432134] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(200,200) ret=0
+[ 2677.685121] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2677.686530] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(203,203) ret=0
+[ 2710.981123] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2710.982315] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(28,28) ret=0
+[ 2721.234604] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2721.236001] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(31,31) ret=0
+[ 2734.367913] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 2735.886977] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 118
+[ 2735.887526] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 2744.300035] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2744.301711] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(218,218) ret=0
+[ 2754.545132] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2754.546574] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(221,221) ret=0
+[ 2764.800223] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2764.801579] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(224,224) ret=0
+[ 2777.621433] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2777.623103] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(47,47) ret=0
+[ 2787.866674] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2787.867957] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(50,50) ret=0
+[ 2798.111571] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2798.112811] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(53,53) ret=0
+[ 2831.423565] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2831.425102] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(124,124) ret=0
+[ 2841.678230] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2841.679664] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(127,127) ret=0
+[ 2864.744050] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2864.745556] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(205,205) ret=0
+[ 2874.988832] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2874.990378] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(208,208) ret=0
+[ 2885.243500] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2885.244838] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(211,211) ret=0
+[ 2894.372740] [SWT6621S DBG] skw_scan: STA: chip: 1, nr_chan: 26, n_ssids: 1, ie_len: 0
+[ 2895.891267] [SWT6621S DBG] skw_scan_done: inst: 0, aborted: 0, scan result: 134
+[ 2895.891835] [SWT6621S DBG] skw_dump_survey: last idx: 0
+[ 2908.306950] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2908.308688] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(149,149) ret=0
+[ 2918.562228] [SKWSDIO INFO] try_to_wakeup_modem: try_to_wakeup_modem enter gpio_val=0 : 1
+[ 2918.563557] [SKWSDIO INFO] skw_sdio_rx_thread: line:1507 cp fifo status(152,152) ret=0
