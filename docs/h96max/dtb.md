@@ -37,7 +37,7 @@ existing `rk3518` match still wins; the kernel simply gains a fallback it alread
 `rk3528a` vs `rk3528` differ in MPP by exactly one capability, VP9 decode — which is what made the
 choice real rather than cosmetic. **Measured on the R69** (same silicon, and `rk3528a` from the
 factory): VP9 decodes at 635 / 325 / 85 fps at 720p / 1080p / 4K, so `rk3528a` is the truthful name
-and this graft is right. Full story: [../codec.md](../codec.md).
+and this graft is right.
 
 Rebuild: `dtc -@ -I dts -O dtb -o board.dtb board.dts` — this tree round-trips cleanly (verify with
 `diff <(dtc -I dtb -O dts board.dtb) <(dtc -I dtb -O dts <(dtc -@ -I dts -O dtb board.dts))`).

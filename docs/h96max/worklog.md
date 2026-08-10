@@ -1662,7 +1662,7 @@ lines: no `venc-opp-table`, so the encoder runs at a fixed 297 MHz with no devfr
 
 Open, and deliberately not guessed at: `rk3528a` vs `rk3528` differ in MPP by exactly one
 capability, **VP9 decode**. We claim `rk3528a` because that is what the sibling board's factory tree
-claims for this silicon; the format matrix in `docs/codec.md` is what will confirm or refute it, and
+claims for this silicon; the format matrix is what will confirm or refute it, and
 if VP9 comes back ❌ the correction is that one string.
 
 Untried idea worth recording: a compatible change can probably be tested **without flashing** by

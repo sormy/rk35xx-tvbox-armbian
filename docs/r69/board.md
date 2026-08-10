@@ -50,7 +50,7 @@ MHz ceiling.
 
 The RK3528-class VPU, via `/dev/mpp_service` — and it does rather more than the spec sheet says:
 **8K decode** and **8K HEVC encode** both work. Blocks, tools and the test behind each cell:
-[../codec.md](../codec.md).
+[AGENTS.md](../../AGENTS.md#video-codec--every-format-both-directions).
 
 **This board needed no device-tree work**: its factory tree already calls the SoC
 `rockchip,rk3528a`, so `librockchip_mpp` identifies it out of the box. (The H96 Max's says
@@ -81,7 +81,7 @@ The RK3528-class VPU, via `/dev/mpp_service` — and it does rather more than th
 **H.264 encode works once MPP is fixed.** Stock MPP never reads the hardware status register back on
 the H.264 path, so it always sees "not done" and throws away a frame the encoder really did produce
 — the `rkvenc` IRQ fires once per frame throughout. Twelve lines restore it:
-[`../../mpp/`](../../mpp/README.md), story in [../codec.md](../../mpp/README.md).
+[`../../mpp/`](../../mpp/README.md).
 
 Not present, and proven so rather than assumed: **AV1** is refused with
 `unable to create dec av1 for soc rk3528a unsupported`. **AVS / AVS+ / AVS2** are claimed by the

@@ -43,7 +43,7 @@ Samsung part is quicker still on writes — see its [board doc](../r69/board.md#
 ## Hardware video
 
 The RK3528-class VPU via `/dev/mpp_service` — **8K decode and 8K HEVC encode**, well past what the
-box is sold as. Blocks, tools and the test behind each cell: [../codec.md](../codec.md).
+box is sold as. Blocks, tools and the test behind each cell: [AGENTS.md](../../AGENTS.md#video-codec--every-format-both-directions).
 
 **This board needed a device-tree graft to get here.** Its factory tree named the SoC only
 `rockchip,rk3518`, a name no MPP release contains, so the library fell back to "unknown SoC" and the

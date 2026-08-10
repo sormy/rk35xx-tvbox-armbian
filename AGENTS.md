@@ -169,39 +169,74 @@ Ethernet PHY, the video codec and anything the DTB touches. Prove those before t
 
 ## Video codec — every format, both directions
 
-**A first-class check, not an extra.** These are TV boxes: one that can't decode in hardware is a
-slow ARM computer with an HDMI port. And it fails _silently_ — everything still plays, on the A53s,
-at a tenth of the speed — so only a per-format matrix will tell you. Tools and exact commands:
-[`docs/codec.md`](docs/codec.md); results belong in `docs/<board>/board.md`.
+**A first-class check, not an extra.** These are TV boxes; one that can't decode in hardware is a
+slow ARM computer with an HDMI port — and it fails _silently_, everything still playing on the CPU
+at a tenth of the speed. Results go in `docs/<board>/board.md`.
 
-**Gate first: does userspace know what SoC this is?** `librockchip_mpp` substring-matches
-`/proc/device-tree/compatible` against a hardcoded table. Miss it and it assumes legacy blocks this
-silicon lacks, every encode dies at `could not found coding type`, and no error names the cause —
-one `mpp_debug=0x10` run answers it. If the factory tree's SoC name isn't in MPP, that is a **DTB
-graft** (Phase 2), not a userspace problem.
+The engine is reached only through **MPP** (`librockchip_mpp`, userspace) at `/dev/mpp_service` —
+not V4L2. Build it with the H.264 patch per [`mpp/README.md`](mpp/README.md); that gives you the
+`mpi_dec_test` / `mpi_enc_test` used below.
 
-Then give every cell a state (✅ 🟢 🟡 ❌ ➖) — **per board, never inherited from the sibling** —
-and **at 720p, 1080p, 4K and 8K**, not just 1080p. Both surprises this repo found were at the
-extremes.
+| Block         | Node                 | MPP name   | Handles                                                     |
+| ------------- | -------------------- | ---------- | ----------------------------------------------------------- |
+| RKVDEC        | `rkvdec@ff740100`    | `vdpu382a` | H.264 · HEVC · VP9 · AVS2 decode — to 8K, 10-bit, AFBC      |
+| JPEG decoder  | `jpegd@ff870000`     | `rkjpegd`  | MJPEG decode, to 8K                                         |
+| VPU2 (legacy) | `vdpu@ff7c0400`      | `vdpu2`    | MPEG-2 · H.263 · MPEG-4 · H.264 · MJPEG · VP8 · AVS, ≤1080p |
+| AVS+ decoder  | `avsd_plus@ff7c1000` | `avspd`    | AVS+                                                        |
+| RKVENC        | `rkvenc@ff780000`    | `vepu540c` | H.264 · HEVC · MJPEG encode, to 8K                          |
+| RGA2          | `rga@ff850000`       | —          | scale / colour-convert between codec stages                 |
+
+**Gate first — does userspace know the SoC?** MPP substring-matches `/proc/device-tree/compatible`
+against a hardcoded table; miss it and every encode dies at `could not found coding type` with
+nothing naming the cause. A factory name MPP doesn't know is a **DTB graft** (Phase 2), not a
+userspace problem — see [docs/h96max/dtb.md](docs/h96max/dtb.md).
+
+```sh
+mpp_debug=0x10 mpi_enc_test -t 7 -w 176 -h 144 -n 1 -o /dev/null 2>&1 | head -3
+```
+
+`match chip name: rk3528a` passes. `use default chip info` means the DTB is wrong or a kernel update
+overwrote it — diff `/boot/dtb-*/rockchip/board.dtb` against `/usr/local/share/*/board.dtb`.
+
+**Then the matrix**, at **720p, 1080p, 4K and 8K** — both surprises this repo found were at the
+extremes. `-t` is the numeric `MppCodingType`: MPEG-2 `2`, H.263 `3`, MPEG-4 `4`, H.264 `7`, MJPEG
+`8`, VP8 `9`, VP9 `10`, HEVC `16777220`, AVS+ `16777221`, AVS `16777222`, AVS2 `16777223`.
+
+```sh
+# encode — generates its own frames, no sample media needed
+timeout 90 mpi_enc_test -t $t -w $w -h $h -n 30 -o /tmp/e.bin   # ~40 B out = HAL never finished
+ffprobe -v error -show_entries stream=codec_name,width,height -of csv=p=0 /tmp/e.bin
+# decode — clips from any machine with ffmpeg (4K/8K wants a real one, not the box)
+ffmpeg -y -f lavfi -i testsrc=size=1920x1080:rate=30:duration=2 -pix_fmt yuv420p \
+       -c:v libx264 -preset veryfast -b:v 20M -f h264 clip.264
+timeout 150 mpi_dec_test -t 7 -i clip.264 -n 30
+```
+
+Give every cell a state (✅ 🟢 🟡 ❌ ➖), **per board, never inherited from the sibling**:
 
 | Must be tested                | Decode | Encode | Pass means                                      |
 | ----------------------------- | :----: | :----: | ----------------------------------------------- |
 | H.264 · HEVC · MJPEG          |   ✔    |   ✔    | encoded output **decodes back** — not just >0 B |
 | VP9 · AVS2                    |   ✔    |   —    | VP9 also settles `rk3528a` vs `rk3528`          |
 | MPEG-2 · MPEG-4 · H.263 · VP8 |   ✔    |   —    | legacy VPU2 block, ≤1080p                       |
-| AVS / AVS+                    |   ✔    |   —    | 🟡 is the honest answer when no clip exists     |
+| AVS / AVS+                    |   ✔    |   —    | 🟡 is honest when no clip exists                |
 | AV1                           |   ➖   |   ➖   | absent — MPP refuses it; record the refusal     |
 
-Three rules decide whether a pass is real. **Run as a normal user, not root** — the VPU nodes ship
-root-only `0600`, the payload's udev rule is what fixes that, and running as root hides the bug.
-**Record fps**, because a codec that quietly fell back to software is the failure this matrix exists
-to catch. And **believe the hardware over the capability table**: MPP marks this encoder 1080p-only
-(`cap_4k = 0`) and it encodes 4K and 8K anyway — verify with `ffprobe`, not with the struct.
+Traps, all harness and none hardware: **MJPEG decode needs explicit `-w`/`-h`** or it dies at
+`mpp_buffer_get ... size 0`, reading exactly like a broken decoder; **`-pix_fmt yuv420p` on every
+clip**, or ffmpeg hands you VP9 profile 1, which the hardware rejects and then **spins forever** —
+always `timeout`.
+
+What makes a pass real: **run as a normal user, not root** (the nodes ship root-only `0600`, the
+payload's udev rule fixes that, and root hides the bug); **record fps**, since a silent fallback to
+software is the failure this matrix exists to catch; and **believe the hardware over the capability
+table** — MPP marks this encoder 1080p-only (`cap_4k = 0`) and it does 4K and 8K anyway.
 
 When something fails, separate silicon from software before writing it down: watch
-`/proc/interrupts` for the codec IRQ across a run. One interrupt per frame means the hardware took
-the job and finished it, so a zero-size result is a **userspace HAL bug** — which is exactly how the
-H.264-encode failure here was pinned on MPP rather than on the box.
+`/proc/interrupts` for the codec IRQ. One interrupt per frame means the hardware took the job and
+finished it, so a zero-size result is a **userspace bug** — that is how the H.264-encode failure was
+pinned on MPP rather than the box. Known non-fatal noise, identical under stock Android: no
+`venc-opp-table` (encoder fixed at 297 MHz) and `rkvdec2_init: failed on clk_get clk_core`.
 
 ## Needs the human (batch these)
 

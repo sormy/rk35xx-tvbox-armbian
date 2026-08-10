@@ -9,7 +9,7 @@ doesn't ship it; you build it.
 **The image deliberately doesn't carry any of this** — a compiled ffmpeg/MPP stack is exactly the
 "big compiled userspace" that would make this repo expensive to maintain. What the image _does_ ship
 is the two things a stack can't fix for itself: the DTB that lets MPP identify the SoC, and the udev
-rule that lets a non-root process open the VPU. See [`../docs/codec.md`](../docs/codec.md).
+rule that lets a non-root process open the VPU. See [`../AGENTS.md`](../AGENTS.md#video-codec--every-format-both-directions).
 
 This folder holds one patch, because it fixes a bug you would otherwise waste a day on.
 

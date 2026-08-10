@@ -36,7 +36,7 @@ per-board kernel fork is not.
 > Mali-450 GPU instead of Mali-G52, and 10/100 Ethernet instead of gigabit. Underneath it really is
 > an RK3528: the R69's factory tree calls it `rockchip,rk3528a` outright, which is why the ROCK 2F
 > image boots on it, and the H96 Max's says only `rockchip,rk3518` — a name no userspace knows, so
-> that board carries a one-string graft ([why](docs/codec.md)). Specs you read for RK3528 don't
+> that board carries a one-string graft ([why](docs/h96max/dtb.md)). Specs you read for RK3528 don't
 > transfer, but the **video engine does**: both decode to 8K.
 
 ### Add yours
@@ -60,7 +60,7 @@ Each one is written up in full, wrong turns included. A few hours, not a few wee
 present on this box
 
 Measured throughput and thermals live in each board's doc. The video rows are a summary of a
-per-format matrix — which codecs, how fast, and how to test yours: [docs/codec.md](docs/codec.md).
+per-format matrix; how to test yours is in [AGENTS.md](AGENTS.md#video-codec--every-format-both-directions).
 Hardware H.264 **encoding** additionally needs a 12-line fix to Rockchip's MPP library, which ships
 here with instructions: [mpp/](mpp/README.md).
 
