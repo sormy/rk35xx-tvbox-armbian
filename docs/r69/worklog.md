@@ -941,7 +941,8 @@ and HEVC unchanged at 60.9 fps. Patch kept at `mpp/` (patch + README).
 This is an upstream bug, not an rk3518 quirk: any SoC whose H.264 encoding goes through
 `hal_h264e_vepu540c` (RK3528, RK3562 and relatives) should be hitting it. Nothing in
 `rockchip-linux/mpp` `develop` fixes it as of today, `nyanmisaka/mpp` carries the same code, and no
-issue describes it — worth sending upstream.
+issue described it. Reported as #965 and fixed by Rockchip internally the next day — see the
+2026-08-10 entry below.
 
 **The lesson worth keeping:** "the vendor's own library says the hardware didn't finish" is not
 evidence that the hardware didn't finish. `/proc/interrupts` is, and it costs one line to check.
@@ -956,3 +957,18 @@ Back in ~24 s, boot 17.3 s, no failed units, DKMS modules installed and loaded, 
 present, Ethernet PHY still `RK630`. The VPU nodes come up `root:video 0660` **from the udev rule
 now, on a cold boot** — not from the hand-install used during testing — which is the thing that
 needed proving.
+
+### 2026-08-10 — the H.264 fix is Rockchip's problem now
+
+Reported upstream as [rockchip-linux/mpp#965](https://github.com/rockchip-linux/mpp/issues/965) with
+the reproduction, the interrupt evidence and the diff. Answered the same day: _"We've confirmed and
+fixed the issue internally — it will be synced to the GitHub repo with the next upstream update."_
+
+So the bug is real, acknowledged, and fixed at the source rather than only in our tree. Worth noting
+how that project works, for whoever reports the next one: every commit carries a `Change-Id`, so
+GitHub is a mirror of an internal Gerrit. Three of forty-nine pull requests have ever been merged —
+yet patches _do_ get taken, replayed internally and the PR closed with thanks. **File an issue with
+the diff inline**; the reproduction is the part they can't reconstruct, and it does not depend on a
+workflow they don't use.
+
+Once the sync lands, `mpp/h264e-vepu540c-status.patch` can be deleted from this repo.

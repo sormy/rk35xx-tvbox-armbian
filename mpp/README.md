@@ -9,7 +9,8 @@ doesn't ship it; you build it.
 **The image deliberately doesn't carry any of this** — a compiled ffmpeg/MPP stack is exactly the
 "big compiled userspace" that would make this repo expensive to maintain. What the image _does_ ship
 is the two things a stack can't fix for itself: the DTB that lets MPP identify the SoC, and the udev
-rule that lets a non-root process open the VPU. See [`../AGENTS.md`](../AGENTS.md#video-codec--every-format-both-directions).
+rule that lets a non-root process open the VPU. See
+[`../AGENTS.md`](../AGENTS.md#video-codec--every-format-both-directions).
 
 This folder holds one patch, because it fixes a bug you would otherwise waste a day on.
 
@@ -88,7 +89,17 @@ patch, both boards, `ffprobe`-verified at every frame size — and HEVC unaffect
 
 ## Upstream status
 
-**Not upstream as of 2026-08-09.** `rockchip-linux/mpp` `develop` has recent `vepu540c`/RK3528
-register work but nothing that repairs this; `nyanmisaka/mpp` — what the prebuilt rkmpp ffmpeg
-builds use — carries the same commits; and no MPP issue describes the failure. The patch applies
-cleanly to a pristine `develop` checkout.
+**Reported and accepted:**
+[rockchip-linux/mpp#965](https://github.com/rockchip-linux/mpp/issues/965). Rockchip confirmed the
+bug on 2026-08-10 and fixed it in their internal tree — _"it will be synced to the GitHub repo with
+the next upstream update"_. It is not in the public mirror yet (`develop` was still at `8f922ed`
+when this was written), so the patch here is what you need until that sync lands.
+
+**When it does land, stop using this patch.** Check before applying:
+
+```sh
+grep -c VEPU540C_REG_BASE_HW_STATUS mpp/hal/rkenc/h264e/hal_h264e_vepu540c.c
+```
+
+Non-zero means the read-back is already there — build without the patch. `git apply` will refuse it
+anyway rather than double-apply, but knowing why saves confusion.
