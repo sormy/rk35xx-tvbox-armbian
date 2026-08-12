@@ -18,6 +18,19 @@ stay untouched.
 Everything else is factory, unchanged. The label is what names the sysfs entry
 (`/sys/class/leds/power`); the node was renamed to match so the tree doesn't read as a trap.
 
+## Why the LEDs are driven from userspace
+
+`retain-state-shutdown` and `retain-state-suspended` are not decoration: without them the LED core
+sets `LED_CORE_SUSPENDRESUME` / clears the LED at shutdown, and it would fight the `system-shutdown`
+/ `system-sleep` hooks that pick which LED is lit. With them, the kernel keeps its hands off and the
+hooks are the single authority.
+
+Device tree can express only half of the behaviour anyway — dropping `retain-state-*` turns the blue
+LED **off** at poweroff and suspend, but nothing in DT can turn the red one **on**: there is no
+property or trigger for a power-state transition (`default-on` fires at probe, `panic-indicator` at
+panic). Splitting the policy between the tree and the hooks would put half a problem in each place,
+so all of it lives in the hooks.
+
 Rebuild: `dtc -@ -I dts -O dtb -o board.dtb board.dts` — this tree round-trips cleanly (verify with
 `diff <(dtc -I dtb -O dts board.dtb) <(dtc -I dtb -O dts <(dtc -@ -I dts -O dtb board.dts))`).
 
