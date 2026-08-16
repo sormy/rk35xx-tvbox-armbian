@@ -3,7 +3,6 @@
 /memreserve/	0x0000000008300000 0x0000000000019000;
 /memreserve/	0x000000000a200000 0x00000000001483dd;
 / {
-	serial-number = "e7b0656439babdb6";
 	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3528a";
 	interrupt-parent = <0x01>;
 	#address-cells = <0x02>;
@@ -1949,7 +1948,6 @@
 	};
 
 	gmac0: ethernet@ffbd0000 {
-		local-mac-address = [c4 2a fe 10 51 77];
 		compatible = "rockchip,rk3528-gmac", "snps,dwmac-4.20a";
 		reg = <0x00 0xffbd0000 0x00 0x10000>;
 		interrupts = <0x00 0x71 0x04 0x00 0x74 0x04>;
@@ -4203,7 +4201,7 @@
 	chosen: chosen {
 		linux,initrd-end = <0x00 0xa3483dd>;
 		linux,initrd-start = <0x00 0xa200000>;
-		bootargs = "storagemedia=emmc androidboot.storagemedia=emmc androidboot.mode=normal  androidboot.dtb_idx=0 androidboot.dtbo_idx=0  androidboot.verifiedbootstate=orange androidboot.serialno=e7b0656439babdb6 console=ttyFIQ0 firmware_class.path=/vendor/etc/firmware init=/init rootwait ro loop.max_part=7 printk.devkmsg=on kvm-arm.mode=none loglevel=0 androidboot.hardware=rk30board androidboot.boot_devices=ffbf0000.mmc androidboot.selinux=permissive earlycon=uart8250,mmio32,0xff9f0000 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0 androidboot.fwver=ddr-v1.11-56f70fd2ad,bl31-v1.20,bl32-v1.06,uboot-50224-dirt-01/19/2026";
+		bootargs = "storagemedia=emmc androidboot.storagemedia=emmc androidboot.mode=normal  androidboot.dtb_idx=0 androidboot.dtbo_idx=0  androidboot.verifiedbootstate=orange androidboot.serialno=<soc-serial> console=ttyFIQ0 firmware_class.path=/vendor/etc/firmware init=/init rootwait ro loop.max_part=7 printk.devkmsg=on kvm-arm.mode=none loglevel=0 androidboot.hardware=rk30board androidboot.boot_devices=ffbf0000.mmc androidboot.selinux=permissive earlycon=uart8250,mmio32,0xff9f0000 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0 androidboot.fwver=ddr-v1.11-56f70fd2ad,bl31-v1.20,bl32-v1.06,uboot-50224-dirt-01/19/2026";
 		phandle = <0x1ce>;
 	};
 
