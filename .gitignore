@@ -2,6 +2,7 @@
 /backup/
 /build/
 /uboot-build/
+/tools/
 *.tmp
 .DS_Store
 *.swp
