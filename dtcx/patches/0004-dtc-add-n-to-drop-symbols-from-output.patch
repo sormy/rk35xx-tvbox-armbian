@@ -1,0 +1,76 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] dtc: add -n to drop __symbols__ from the output
+
+__symbols__ is generated from the labels, so once a blob has been
+decompiled with labels restored the node is redundant in the source: -@
+rebuilds it, byte for byte, from the labels it produced.
+
+Add -n/--no-symbols to drop it, which makes a decompiled tree readable
+without the ~20KB of path mappings. It is deliberately separate from -P
+rather than implied by it: recompiling without -@ would then silently
+lose the node, so removing it has to be something the user asks for.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/dtc.c b/dtc.c
+index 2a2cb76..8c7f021 100644
+--- a/dtc.c
++++ b/dtc.c
+@@ -21,6 +21,7 @@ int generate_symbols;	/* enable symbols & fixup support */
+ int generate_fixups;		/* suppress generation of fixups on symbol support */
+ int auto_label_aliases;		/* auto generate labels -> aliases */
+ int phandle_refs;		/* print phandle refs as &label (dtb -> dts) */
++int no_symbols;			/* drop __symbols__ from the output tree */
+ int annotate;		/* Level of annotation: 1 for input source location
+ 			   >1 for full input source location. */
+ 
+@@ -48,7 +49,7 @@ static void fill_fullpaths(struct node *tree, const char *prefix)
+ 
+ /* Usage related data. */
+ static const char usage_synopsis[] = "dtc [options] <input file>";
+-static const char usage_short_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@LAPThv";
++static const char usage_short_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@LAPnThv";
+ static struct option const usage_long_opts[] = {
+ 	{"quiet",            no_argument, NULL, 'q'},
+ 	{"in-format",         a_argument, NULL, 'I'},
+@@ -71,6 +72,7 @@ static struct option const usage_long_opts[] = {
+ 	{"local-fixups",     no_argument, NULL, 'L'},
+ 	{"auto-alias",       no_argument, NULL, 'A'},
+ 	{"phandle-refs",     no_argument, NULL, 'P'},
++	{"no-symbols",      no_argument, NULL, 'n'},
+ 	{"annotate",         no_argument, NULL, 'T'},
+ 	{"help",             no_argument, NULL, 'h'},
+ 	{"version",          no_argument, NULL, 'v'},
+@@ -110,6 +112,7 @@ static const char * const usage_opts_help[] = {
+ 	"\n\tPossibly generates a __local_fixups__ and a __fixups__ node at the root node",
+ 	"\n\tEnable auto-alias of labels",
+ 	"\n\tPrint phandle references as &label instead of raw values (for -I dtb -O dts)",
++	"\n\tDrop the __symbols__ node from the output (regenerate it with -@)",
+ 	"\n\tAnnotate output .dts with input source file and line (-T -T for more details)",
+ 	"\n\tPrint this help and exit",
+ 	"\n\tPrint version and exit",
+@@ -265,6 +268,9 @@ int main(int argc, char *argv[])
+ 		case 'A':
+ 			auto_label_aliases = 1;
+ 			break;
++		case 'n':
++			no_symbols = true;
++			break;
+ 		case 'P':
+ 			phandle_refs = true;
+ 			break;
+@@ -349,6 +355,14 @@ int main(int argc, char *argv[])
+ 	if (phandle_refs)
+ 		generate_phandle_refs(dti);
+ 
++	/* after the passes above have taken the labels out of it */
++	if (no_symbols) {
++		struct node *sym = get_subnode(dti->dt, "__symbols__");
++
++		if (sym)
++			delete_node(sym);
++	}
++
+ 	if (generate_symbols)
+ 		generate_label_tree(dti, "__symbols__", true);
+ 

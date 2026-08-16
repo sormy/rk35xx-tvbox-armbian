@@ -1,19 +1,11 @@
 /dts-v1/;
 
-/memreserve/	0x0000000008300000 0x0000000000019000;
-/memreserve/	0x000000000a200000 0x00000000001483dd;
 / {
-	serial-number = "e7b0656439babdb6";
-	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3528a";
+	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518";
 	interrupt-parent = <0x01>;
 	#address-cells = <0x02>;
 	#size-cells = <0x02>;
 	model = "Rockchip RK3518 EVB1 DDR4 V10 Board";
-
-	memory {
-		reg = <0x00 0x200000 0x00 0x8200000 0x00 0x8c00000 0x00 0x57400000 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00>;
-		device_type = "memory";
-	};
 
 	aliases {
 		ethernet0 = "/ethernet@ffbd0000";
@@ -270,23 +262,6 @@
 			};
 
 			route_tve: route-tve {
-				overscan,bottom_margin = <0x64>;
-				overscan,top_margin = <0x64>;
-				overscan,right_margin = <0x64>;
-				overscan,left_margin = <0x64>;
-				video,aspect_ratio = <0x00>;
-				video,flags = <0x1015>;
-				video,vrefresh = <0x32>;
-				video,crtc_vsync_end = <0x125>;
-				video,crtc_hsync_end = <0x330>;
-				video,vdisplay = <0x240>;
-				video,hdisplay = <0x2d0>;
-				video,clock = <0x34bc>;
-				logo,ymirror = <0x00>;
-				logo,bpp = <0x20>;
-				logo,height = <0x438>;
-				logo,width = <0x780>;
-				logo,offset = <0x7e9000>;
 				status = "okay";
 				logo,uboot = "logo.bmp";
 				logo,kernel = "logo_kernel.bmp";
@@ -790,9 +765,9 @@
 		reboot_mode: reboot-mode {
 			compatible = "syscon-reboot-mode";
 			offset = <0x70200>;
-			mode-bootloader = <0x5242c309>;
+			mode-bootloader = <0x5242c301>;
 			mode-charge = <0x5242c30b>;
-			mode-fastboot = <0x5242c303>;
+			mode-fastboot = <0x5242c309>;
 			mode-loader = <0x5242c301>;
 			mode-normal = <0x5242c300>;
 			mode-recovery = <0x5242c303>;
@@ -1947,7 +1922,6 @@
 	};
 
 	gmac0: ethernet@ffbd0000 {
-		local-mac-address = [c4 2a fe 10 51 77];
 		compatible = "rockchip,rk3528-gmac", "snps,dwmac-4.20a";
 		reg = <0x00 0xffbd0000 0x00 0x10000>;
 		interrupts = <0x00 0x71 0x04 0x00 0x74 0x04>;
@@ -4197,9 +4171,7 @@
 	};
 
 	chosen: chosen {
-		linux,initrd-end = <0x00 0xa3483dd>;
-		linux,initrd-start = <0x00 0xa200000>;
-		bootargs = "storagemedia=emmc androidboot.storagemedia=emmc androidboot.mode=normal  androidboot.dtb_idx=0 androidboot.dtbo_idx=0  androidboot.verifiedbootstate=orange androidboot.serialno=e7b0656439babdb6 console=ttyFIQ0 firmware_class.path=/vendor/etc/firmware init=/init rootwait ro loop.max_part=7 printk.devkmsg=on kvm-arm.mode=none loglevel=0 androidboot.hardware=rk30board androidboot.boot_devices=ffbf0000.mmc androidboot.selinux=permissive earlycon=uart8250,mmio32,0xff9f0000 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0 androidboot.fwver=ddr-v1.11-56f70fd2ad,bl31-v1.20,bl32-v1.06,uboot-50224-dirt-01/19/2026";
+		bootargs = "earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0";
 		phandle = <0x1ce>;
 	};
 
@@ -4230,7 +4202,7 @@
 
 		drm_logo: drm-logo@0 {
 			compatible = "rockchip,drm-logo";
-			reg = <0x00 0x5df00000 0x00 0xfd2000>;
+			reg = <0x00 0x00 0x00 0x00>;
 			phandle = <0x15>;
 		};
 

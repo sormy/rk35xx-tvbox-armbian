@@ -1,0 +1,62 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] dtc: preserve label order when restoring from __symbols__
+
+add_label() prepends, which suits the parser because it feeds a node's
+labels in reverse. generate_labels_from_tree() feeds them in file order,
+so prepending reverses the list: a blob decompiled and recompiled with -@
+comes back with its __symbols__ entries in the opposite order, and the
+result is no longer byte-identical to the input.
+
+  $ dtc -@ -I dts -O dtb -o t.dtb t.dts   # "aaa: bbb: ccc: thing {"
+  $ dtc -I dtb -O dts t.dtb               # "ccc: bbb: aaa: thing {"
+
+Append instead, so the list matches the order -@ will write back out.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/livetree.c b/livetree.c
+index e5b8e6d..8496181 100644
+--- a/livetree.c
++++ b/livetree.c
+@@ -1339,6 +1339,32 @@ void generate_phandle_refs(struct dt_info *dti)
+ 	generate_phandle_refs_node(dti, dti->dt);
+ }
+ 
++/*
++ * add_label() prepends, which is fine while parsing because the parser feeds
++ * labels in reverse. Restoring from __symbols__ feeds them in file order, so
++ * prepending reverses the list and a later -@ regenerates __symbols__ in the
++ * opposite order - the blob stops round-tripping. Append instead.
++ */
++static void add_label_tail(struct label **labels, char *label)
++{
++	struct label *new, **p;
++
++	for_each_label_withdel(*labels, new)
++		if (streq(new->label, label)) {
++			new->deleted = 0;
++			return;
++		}
++
++	new = xmalloc(sizeof(*new));
++	memset(new, 0, sizeof(*new));
++	new->label = label;
++	new->next = NULL;
++
++	for (p = labels; *p; p = &(*p)->next)
++		;
++	*p = new;
++}
++
+ void generate_labels_from_tree(struct dt_info *dti, const char *name)
+ {
+ 	struct node *an;
+@@ -1353,7 +1379,7 @@ void generate_labels_from_tree(struct dt_info *dti, const char *name)
+ 
+ 		labeled_node = get_node_by_path(dti->dt, p->val.val);
+ 		if (labeled_node)
+-			add_label(&labeled_node->labels, p->name);
++			add_label_tail(&labeled_node->labels, p->name);
+ 		else if (quiet < 1)
+ 			fprintf(stderr, "Warning: Path %s referenced in property %s/%s missing",
+ 				p->val.val, name, p->name);

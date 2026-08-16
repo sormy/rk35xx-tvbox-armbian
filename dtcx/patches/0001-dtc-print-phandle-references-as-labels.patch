@@ -1,0 +1,405 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] dtc: add -P to print phandle references as &label
+
+When converting a blob back to source, dtc prints phandle cells as raw
+numbers because the DTB records no reference information. The data needed
+to recover it is still there: __symbols__ carries the label names, and
+#<specifier>-cells on each target gives the group width.
+
+Add -P/--phandle-refs, which walks the well-known phandle-bearing
+properties and adds the REF_PHANDLE markers the writer already knows how
+to print, so "clocks = <0x02 0xaf>" comes back as "clocks = <&cru 0xaf>".
+
+A property is only marked when the walk consumes its value exactly; any
+mismatch leaves it untouched and numeric. Explicit phandle properties are
+preserved, so the output recompiles to a byte-identical blob.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/dtc.c b/dtc.c
+index 6dae60d..2a2cb76 100644
+--- a/dtc.c
++++ b/dtc.c
+@@ -20,6 +20,7 @@ int phandle_format = PHANDLE_EPAPR;	/* Use linux,phandle or phandle properties *
+ int generate_symbols;	/* enable symbols & fixup support */
+ int generate_fixups;		/* suppress generation of fixups on symbol support */
+ int auto_label_aliases;		/* auto generate labels -> aliases */
++int phandle_refs;		/* print phandle refs as &label (dtb -> dts) */
+ int annotate;		/* Level of annotation: 1 for input source location
+ 			   >1 for full input source location. */
+ 
+@@ -47,7 +48,7 @@ static void fill_fullpaths(struct node *tree, const char *prefix)
+ 
+ /* Usage related data. */
+ static const char usage_synopsis[] = "dtc [options] <input file>";
+-static const char usage_short_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@LAThv";
++static const char usage_short_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@LAPThv";
+ static struct option const usage_long_opts[] = {
+ 	{"quiet",            no_argument, NULL, 'q'},
+ 	{"in-format",         a_argument, NULL, 'I'},
+@@ -69,6 +70,7 @@ static struct option const usage_long_opts[] = {
+ 	{"symbols",	     no_argument, NULL, '@'},
+ 	{"local-fixups",     no_argument, NULL, 'L'},
+ 	{"auto-alias",       no_argument, NULL, 'A'},
++	{"phandle-refs",     no_argument, NULL, 'P'},
+ 	{"annotate",         no_argument, NULL, 'T'},
+ 	{"help",             no_argument, NULL, 'h'},
+ 	{"version",          no_argument, NULL, 'v'},
+@@ -107,6 +109,7 @@ static const char * const usage_opts_help[] = {
+ 	"\n\tEnable generation of symbols",
+ 	"\n\tPossibly generates a __local_fixups__ and a __fixups__ node at the root node",
+ 	"\n\tEnable auto-alias of labels",
++	"\n\tPrint phandle references as &label instead of raw values (for -I dtb -O dts)",
+ 	"\n\tAnnotate output .dts with input source file and line (-T -T for more details)",
+ 	"\n\tPrint this help and exit",
+ 	"\n\tPrint version and exit",
+@@ -262,6 +265,9 @@ int main(int argc, char *argv[])
+ 		case 'A':
+ 			auto_label_aliases = 1;
+ 			break;
++		case 'P':
++			phandle_refs = true;
++			break;
+ 		case 'T':
+ 			annotate++;
+ 			break;
+@@ -340,6 +346,9 @@ int main(int argc, char *argv[])
+ 
+ 	generate_labels_from_tree(dti, "__symbols__");
+ 
++	if (phandle_refs)
++		generate_phandle_refs(dti);
++
+ 	if (generate_symbols)
+ 		generate_label_tree(dti, "__symbols__", true);
+ 
+diff --git a/dtc.h b/dtc.h
+index 473552e..2d3c90d 100644
+--- a/dtc.h
++++ b/dtc.h
+@@ -340,6 +340,7 @@ struct dt_info *build_dt_info(unsigned int dtsflags,
+ 			      struct node *tree, uint32_t boot_cpuid_phys);
+ void sort_tree(struct dt_info *dti);
+ void generate_labels_from_tree(struct dt_info *dti, const char *name);
++void generate_phandle_refs(struct dt_info *dti);
+ void generate_label_tree(struct dt_info *dti, const char *name, bool allocph);
+ void generate_fixups_tree(struct dt_info *dti, const char *name);
+ void fixup_phandles(struct dt_info *dti, const char *name);
+diff --git a/livetree.c b/livetree.c
+index 5d72abc..fbc3cda 100644
+--- a/livetree.c
++++ b/livetree.c
+@@ -1112,6 +1112,193 @@ static int generate_local_fixups_tree_internal(struct dt_info *dti,
+ 	return ret;
+ }
+ 
++/*
++ * Reconstruct &label references when reading a blob.
++ *
++ * dtc emits "&label" for a cell only when the property carries a REF_PHANDLE
++ * marker at that offset. The parser creates those markers; the blob reader
++ * cannot, because nothing in a DTB says which cells are phandles. The
++ * information is still present though: #<specifier>-cells on the target node
++ * gives the group width, and __symbols__ gives the label names. This walks the
++ * well-known phandle-bearing properties and adds the missing markers, so
++ * -I dtb -O dts prints references instead of raw numbers.
++ *
++ * Properties are only marked when the walk consumes the value exactly; any
++ * mismatch leaves the property untouched and numeric.
++ */
++struct phandle_prop {
++	const char *name;
++	const char *cells_prop;		/* NULL: bare phandle, no specifier */
++};
++
++static const struct phandle_prop phandle_props[] = {
++	{ "clocks",			"#clock-cells" },
++	{ "assigned-clocks",		"#clock-cells" },
++	{ "assigned-clock-parents",	"#clock-cells" },
++	{ "interrupts-extended",	"#interrupt-cells" },
++	{ "resets",			"#reset-cells" },
++	{ "dmas",			"#dma-cells" },
++	{ "phys",			"#phy-cells" },
++	{ "pwms",			"#pwm-cells" },
++	{ "iommus",			"#iommu-cells" },
++	{ "power-domains",		"#power-domain-cells" },
++	{ "mboxes",			"#mbox-cells" },
++	{ "sound-dai",			"#sound-dai-cells" },
++	{ "thermal-sensors",		"#thermal-sensor-cells" },
++	{ "cooling-device",		"#cooling-cells" },
++	{ "hwlocks",			"#hwlock-cells" },
++	{ "gpios",			"#gpio-cells" },
++	{ "interrupt-parent",		NULL },
++	{ "memory-region",		NULL },
++	{ "mmc-pwrseq",			NULL },
++	{ "operating-points-v2",	NULL },
++	{ "next-level-cache",		NULL },
++	{ "phy-handle",			NULL },
++	{ "remote-endpoint",		NULL },
++	{ "nvmem-cells",		NULL },
++	{ "cpu",			NULL },
++	{ NULL,				NULL },
++};
++
++static bool phandle_prop_lookup(const char *name, const char **cells_prop)
++{
++	const struct phandle_prop *pp;
++	size_t len = strlen(name);
++
++	for (pp = phandle_props; pp->name; pp++)
++		if (streq(name, pp->name)) {
++			*cells_prop = pp->cells_prop;
++			return true;
++		}
++
++	if (len > 7 && streq(name + len - 7, "-supply")) {
++		*cells_prop = NULL;
++		return true;
++	}
++	/* vendor trees use both "reset-gpios" and "reset_gpios" spellings */
++	if (len > 6 && streq(name + len - 5, "gpios") &&
++	    (name[len - 6] == '-' || name[len - 6] == '_')) {
++		*cells_prop = "#gpio-cells";
++		return true;
++	}
++	if (len > 5 && streq(name + len - 4, "gpio") &&
++	    (name[len - 5] == '-' || name[len - 5] == '_')) {
++		*cells_prop = "#gpio-cells";
++		return true;
++	}
++	if (len > 8 && !strncmp(name, "pinctrl-", 8) &&
++	    name[8] >= '0' && name[8] <= '9') {
++		*cells_prop = NULL;
++		return true;
++	}
++
++	return false;
++}
++
++/*
++ * A node may carry several labels, and their order depends on how __symbols__
++ * was written. Pick the lexicographically smallest so the emitted reference is
++ * the same no matter what order they arrive in - otherwise two dumps of the
++ * same hardware disagree on the name and diff noisily.
++ */
++static const char *phandle_ref_name(struct node *n)
++{
++	const char *best = NULL;
++	struct label *l;
++
++	for_each_label(n->labels, l)
++		if (!best || strcmp(l->label, best) < 0)
++			best = l->label;
++
++	return best ? best : n->fullpath;
++}
++
++static bool phandle_refs_walk(struct dt_info *dti, struct property *prop,
++			      const char *cells_prop, bool apply)
++{
++	unsigned int off = 0;
++
++	if (prop->val.len == 0 || prop->val.len % 4)
++		return false;
++
++	while (off < (unsigned int)prop->val.len) {
++		struct node *target;
++		struct property *cp;
++		unsigned int ncells = 0;
++		cell_t ph = propval_cell_n(prop, off / 4);
++
++		if (ph == 0 || ph == (cell_t)-1)
++			return false;
++
++		target = get_node_by_phandle(dti->dt, ph);
++		if (!target)
++			return false;
++
++		if (cells_prop) {
++			cp = get_property(target, cells_prop);
++			if (!cp || cp->val.len != 4)
++				return false;
++			ncells = propval_cell(cp);
++		}
++
++		if (off + 4 + ncells * 4 > (unsigned int)prop->val.len)
++			return false;
++
++		if (apply) {
++			/*
++			 * Claim the whole value as one uint32 group before the
++			 * first reference. add_type_markers() inserts a 4-byte
++			 * TYPE_UINT32 per REF_PHANDLE otherwise, which splits
++			 * "clocks = <&cru 1>" into "<&cru>, <1>"; it bails out
++			 * when the property is already type-marked.
++			 */
++			if (off == 0)
++				property_add_marker(prop, TYPE_UINT32, 0, NULL);
++
++			property_add_marker(prop, REF_PHANDLE, off,
++					    xstrdup(phandle_ref_name(target)));
++		}
++
++		off += 4 + ncells * 4;
++	}
++
++	return true;
++}
++
++static void generate_phandle_refs_node(struct dt_info *dti, struct node *node)
++{
++	struct property *prop;
++	struct node *child;
++
++	/* __symbols__, __fixups__, __local_fixups__ hold paths, not phandles */
++	if (node->name && node->name[0] == '_' && node->name[1] == '_')
++		return;
++
++	for_each_property(node, prop) {
++		const char *cells_prop;
++
++		if (streq(prop->name, "phandle") ||
++		    streq(prop->name, "linux,phandle"))
++			continue;
++		if (prop->val.markers)
++			continue;
++		if (!phandle_prop_lookup(prop->name, &cells_prop))
++			continue;
++		if (!phandle_refs_walk(dti, prop, cells_prop, false))
++			continue;
++
++		phandle_refs_walk(dti, prop, cells_prop, true);
++	}
++
++	for_each_child(node, child)
++		generate_phandle_refs_node(dti, child);
++}
++
++void generate_phandle_refs(struct dt_info *dti)
++{
++	generate_phandle_refs_node(dti, dti->dt);
++}
++
+ void generate_labels_from_tree(struct dt_info *dti, const char *name)
+ {
+ 	struct node *an;
+diff --git a/livetree.c b/livetree.c
+index 8496181..75f0bd9 100644
+--- a/livetree.c
++++ b/livetree.c
+@@ -1188,7 +1188,23 @@ static const struct phandle_prop phandle_props[] = {
+ 	{ "cooling-device",		"#cooling-cells" },
+ 	{ "hwlocks",			"#hwlock-cells" },
+ 	{ "gpios",			"#gpio-cells" },
++	{ "io-channels",		"#io-channel-cells" },
+ 	{ "interrupt-parent",		NULL },
++	{ "cpu-idle-states",		NULL },
++	{ "interrupt-affinity",		NULL },
++	{ "devfreq-events",		NULL },
++	{ "extcon",			NULL },
++	{ "shmem",			NULL },
++	/* rockchip vendor trees reach syscons by bare phandle */
++	{ "rockchip,grf",		NULL },
++	{ "rockchip,pipe-grf",		NULL },
++	{ "rockchip,pipe-phy-grf",	NULL },
++	{ "rockchip,usbgrf",		NULL },
++	{ "rockchip,sram",		NULL },
++	{ "rockchip,cpu",		NULL },
++	{ "rockchip,codec",		NULL },
++	{ "rockchip,taskqueue-node",	NULL },
++	{ "rockchip,resetgroup-node",	NULL },
+ 	{ "memory-region",		NULL },
+ 	{ "mmc-pwrseq",			NULL },
+ 	{ "operating-points-v2",	NULL },
+@@ -1211,6 +1227,11 @@ static bool phandle_prop_lookup(const char *name, const char **cells_prop)
+ 			return true;
+ 		}
+ 
++	/* fixed layout, no #*-cells to consult: <&pinctrl gpio-off pin-off count> */
++	if (streq(name, "gpio-ranges")) {
++		*cells_prop = "";
++		return true;
++	}
+ 	if (len > 7 && streq(name + len - 7, "-supply")) {
+ 		*cells_prop = NULL;
+ 		return true;
+@@ -1274,7 +1295,9 @@ static bool phandle_refs_walk(struct dt_info *dti, struct property *prop,
+ 		if (!target)
+ 			return false;
+ 
+-		if (cells_prop) {
++		if (cells_prop && !cells_prop[0]) {
++			ncells = 3;			/* gpio-ranges */
++		} else if (cells_prop) {
+ 			cp = get_property(target, cells_prop);
+ 			if (!cp || cp->val.len != 4)
+ 				return false;
+diff --git a/livetree.c b/livetree.c
+index 75f0bd9..cd646d0 100644
+--- a/livetree.c
++++ b/livetree.c
+@@ -1202,6 +1202,11 @@ static const struct phandle_prop phandle_props[] = {
+ 	{ "rockchip,usbgrf",		NULL },
+ 	{ "rockchip,sram",		NULL },
+ 	{ "rockchip,cpu",		NULL },
++	{ "rockchip,srv",		NULL },
++	{ "connect",			NULL },
++	{ "ports",			NULL },
++	{ "pm_qos",			NULL },
++	{ "gpio",			"#gpio-cells" },
+ 	{ "rockchip,codec",		NULL },
+ 	{ "rockchip,taskqueue-node",	NULL },
+ 	{ "rockchip,resetgroup-node",	NULL },
+@@ -1328,6 +1333,40 @@ static bool phandle_refs_walk(struct dt_info *dti, struct property *prop,
+ 	return true;
+ }
+ 
++/*
++ * rockchip,pins is <bank pin func &pcfg>: a fixed four-cell group whose phandle sits last, so the
++ * generic walk (phandle first, width from #*-cells) cannot express it.
++ */
++static bool phandle_refs_pins(struct dt_info *dti, struct property *prop, bool apply)
++{
++	unsigned int off;
++
++	if (prop->val.len == 0 || prop->val.len % 16)
++		return false;
++
++	for (off = 0; off < (unsigned int)prop->val.len; off += 16) {
++		struct node *target;
++		cell_t ph = propval_cell_n(prop, off / 4 + 3);
++
++		if (ph == 0 || ph == (cell_t)-1)
++			return false;
++
++		target = get_node_by_phandle(dti->dt, ph);
++		if (!target)
++			return false;
++
++		if (apply) {
++			if (off == 0)
++				property_add_marker(prop, TYPE_UINT32, 0, NULL);
++
++			property_add_marker(prop, REF_PHANDLE, off + 12,
++					    xstrdup(phandle_ref_name(target)));
++		}
++	}
++
++	return true;
++}
++
+ static void generate_phandle_refs_node(struct dt_info *dti, struct node *node)
+ {
+ 	struct property *prop;
+@@ -1345,6 +1384,11 @@ static void generate_phandle_refs_node(struct dt_info *dti, struct node *node)
+ 			continue;
+ 		if (prop->val.markers)
+ 			continue;
++		if (streq(prop->name, "rockchip,pins")) {
++			if (phandle_refs_pins(dti, prop, false))
++				phandle_refs_pins(dti, prop, true);
++			continue;
++		}
+ 		if (!phandle_prop_lookup(prop->name, &cells_prop))
+ 			continue;
+ 		if (!phandle_refs_walk(dti, prop, cells_prop, false))

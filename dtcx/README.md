@@ -1,0 +1,47 @@
+# dtcx — dtc that can round-trip a vendor DTB
+
+Vanilla `dtc` v1.8.1 plus four patches. Decompiling a blob normally gives raw numbers; `dtcx` gives
+references:
+
+```
+dtc  :  clocks = <0x02 0xaf>;
+dtcx :  clocks = <&cru 0xaf>;          # -P
+```
+
+```sh
+make          # fetch, patch, build -> ./dtcx
+make test     # every reference resolved, byte-identical round trip, on firmware/*/board.dtb
+```
+
+| Flag | Does                                                                  |
+| ---- | --------------------------------------------------------------------- |
+| `-P` | phandle values -> `&label` (or `&{/path}` if the blob has no symbols) |
+| `-n` | drop the generated `__symbols__` node; `-@` rebuilds it identically   |
+| `-s` | also sorts a node's labels, so `-P -s` output is a fixed point        |
+
+## How
+
+Everything needed is in the blob: `__symbols__` gives label names, `#<specifier>-cells` on each
+target gives the group width. The patch adds the `REF_PHANDLE` markers dtc's writer already knows
+how to print, for the known phandle-bearing properties — `clocks`, `*-gpios`, `pinctrl-N`,
+`*-supply`, `resets`, `power-domains`, `rockchip,pins` and friends.
+
+A property is marked **only if the walk consumes its value exactly**; anything that does not line up
+(`interrupt-map`, a target missing its `#*-cells`) stays numeric. Which properties hold phandles is
+binding knowledge and must be declared — values alone cannot tell you, because phandles are small
+integers and would match `bus-width = <4>`.
+
+## The guarantee
+
+Explicit `phandle = <N>;` properties are preserved, so **the output recompiles byte-identical**,
+with or without `__symbols__` in the source. `make test` enforces it, so a cell-arithmetic mistake
+cannot reach a shipped tree. That is what keeps a labelled tree diffable against the factory blob.
+
+Do not ship a sorted tree — `-s` reorders the blob and breaks that. It is for comparing two trees.
+
+## Upstream
+
+None of this is in dtc (checked against master, 2026-08); `add_phandle_marker()` exists but is only
+wired to overlay `__local_fixups__`, which a board DTB has none of. Each patch in `patches/` is
+formatted to send. 0003 is a plain round-trip bug — `add_label()` prepends, so a blob decompiled and
+recompiled with `-@` comes back with its labels reversed — and stands alone.

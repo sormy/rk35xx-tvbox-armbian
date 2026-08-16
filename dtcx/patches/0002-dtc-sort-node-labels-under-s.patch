@@ -1,0 +1,69 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] dtc: sort node labels under -s
+
+-s exists to make two trees comparable. A node can carry several labels
+and their order follows whatever the input used, so two dumps of the same
+hardware can disagree on the label list and diff for no real reason.
+
+Sort them alongside properties and subnodes.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/livetree.c b/livetree.c
+index 5d72abc..eb07852 100644
+--- a/livetree.c
++++ b/livetree.c
+@@ -816,6 +816,45 @@ static void sort_properties(struct node *node)
+ 	free(tbl);
+ }
+ 
++static int cmp_label(const void *ax, const void *bx)
++{
++	const struct label *a = *((const struct label * const *)ax);
++	const struct label *b = *((const struct label * const *)bx);
++
++	return strcmp(a->label, b->label);
++}
++
++/*
++ * A node can carry several labels and their order is whatever the input
++ * happened to use, so two dumps of the same tree can disagree on the label
++ * list. -s exists to make trees comparable, so sort these too.
++ */
++static void sort_labels(struct node *node)
++{
++	int n = 0, i = 0;
++	struct label *l, **tbl;
++
++	for_each_label_withdel(node->labels, l)
++		n++;
++
++	if (n < 2)
++		return;
++
++	tbl = xmalloc(n * sizeof(*tbl));
++
++	for_each_label_withdel(node->labels, l)
++		tbl[i++] = l;
++
++	qsort(tbl, n, sizeof(*tbl), cmp_label);
++
++	node->labels = tbl[0];
++	for (i = 0; i < (n - 1); i++)
++		tbl[i]->next = tbl[i + 1];
++	tbl[n - 1]->next = NULL;
++
++	free(tbl);
++}
++
+ static int cmp_subnode(const void *ax, const void *bx)
+ {
+ 	const struct node *a, *b;
+@@ -856,6 +895,7 @@ static void sort_node(struct node *node)
+ {
+ 	struct node *c;
+ 
++	sort_labels(node);
+ 	sort_properties(node);
+ 	sort_subnodes(node);
+ 	for_each_child_withdel(node, c)
