@@ -1,6 +1,6 @@
 # dtcx — dtc that can round-trip a vendor DTB
 
-Vanilla `dtc` v1.8.1 plus four patches. Decompiling a blob normally gives raw numbers; `dtcx` gives
+Vanilla `dtc` v1.8.1 plus five patches. Decompiling a blob normally gives raw numbers; `dtcx` gives
 references:
 
 ```
@@ -30,6 +30,14 @@ A property is marked **only if the walk consumes its value exactly**; anything t
 (`interrupt-map`, a target missing its `#*-cells`) stays numeric. Which properties hold phandles is
 binding knowledge and must be declared — values alone cannot tell you, because phandles are small
 integers and would match `bus-width = <4>`.
+
+**The table is wrong in both directions, and both directions are silent.** A missing name leaves a
+reference as a number, which stays valid only for the allocation it was dumped from;
+`snps,mtl-rx-config` sat that way and re-pointed at the PHY when the tree was rebuilt. A name that
+does not hold a phandle gets one invented: `rockchip,taskqueue-node = <2>` is an MPP queue
+**index**, and reading it as a phandle printed `&cru`. Neither shows up in a round trip — the value
+recompiles to the same number in the same tree — so a new name is checked against the vendor dtsi,
+not against `make test`.
 
 ## The guarantee
 

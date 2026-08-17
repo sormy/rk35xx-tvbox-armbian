@@ -1,7 +1,8 @@
 # Device trees, for upstreaming
 
-A board tree as a diff against that box's own factory tree. `<board>/armbian.patch` is the only file
-edited by hand; `./build.sh` regenerates the rest and verifies it.
+A board tree as a diff against that box's own factory tree. `<board>/armbian.patch` and
+`<board>/header.dts` are the only files edited by hand; `./build.sh` regenerates the rest, including
+the submission itself, and verifies it.
 
 ## Process
 
@@ -12,41 +13,48 @@ edited by hand; `./build.sh` regenerates the rest and verifies it.
    ```sh
    cd <board> && diff -u --label board.dts --label armbian.dts board.dts armbian.dts > armbian.patch
    ```
-4. Build its DTB — this is what boots. Copy `armbian.dts` and `armbian.dtb` over
-   `firmware/<board>/board.dts` and `board.dtb` — **needed for overlay mode**, where that pair is
-   what images ship and what `rk35xx-update` installs, and it has no other source. An upstreamed
-   board gets its DTB from the kernel package instead and never reads `firmware/`.
+4. Build its DTB — this is what boots — and copy it, with its source, over
+   `firmware/<board>/board.dtb` and `board.dts`. **Needed for overlay mode**, where that pair is
+   what images ship and what `rk35xx-update` installs; `firmware/` is the only tracked copy of this
+   tree, everything under `upstream/` being generated. An upstreamed board gets its DTB from the
+   kernel package instead and never reads `firmware/`.
 5. `scripts/gen-overrides.py` re-expresses it as `/delete-node/` + `&label { }` over the vendor's
-   reference dtsi. That output (`armbian-native.dts`) is a machine reference — correct, but with no
-   reasons in it.
-6. Carry it into `armbian-native-annotated.dts` **by hand**, one short comment per block saying why
-   the block exists. A blob carries no reasons and a guessed one is worse than none, so a block
-   whose purpose is unknown gets a plain statement of what changed, not an invented cause. When the
-   patch changes, diff the two files to see what to carry over.
-7. Verify both describe the same hardware, ignoring phandle values:
+   reference dtsi, under `<board>/header.dts`. That output, `armbian-native.dts`, is the file that
+   gets submitted.
+6. Verify both describe the same hardware. Every line is compared, phandle values included:
+   `scripts/remap-phandles.py` translates the native tree's to the patched tree's by node path
+   rather than dropping them, so the diff fails unless every node carries the same phandle and every
+   `&label` beside it resolves to the same node. Node order is the only thing left free. Ahead of
+   it, `scripts/check-refs.py` proves no reference survived as a bare number — the two trees number
+   their nodes differently, so such a number is the same text in both while naming a different node
+   in each, and no diff can see it.
    ```
    VERIFIED: native tree is content-identical to the patched tree
    ```
 
-Steps 2, 4, 5 and 7 are `./build.sh`; steps 3 and 6 are human. `build.sh` compiles the annotated
-file, not the generated one, so forgetting to carry a change over fails the gate rather than
-shipping quietly. Comments never reach the blob, so they cannot break it — but they can drift, and
-nothing but reading catches a comment that is merely wrong.
+Everything but step 3 is `./build.sh`; the submission is generated, so there is no second copy to
+forget to update.
+
+**The overrides carry no comments.** They describe the vendor's board, and the vendor shipped a blob
+with no reasons in it — asking for one comment per block asks for reasons that do not exist, and the
+ones written that way described the wrong node about as often as the right one. What _is_ knowable
+is the departure from the factory tree, because that is `armbian.patch`: those go in `header.dts`,
+one line each, and the commit message points there rather than repeating them.
 
 ## Files
 
 One directory per board, named after the installed dtb — `r69-xr821/`, `h96max-zx/`. Two files are
 source; the rest is generated and gitignored.
 
-| File                           | What                                                       |
-| ------------------------------ | ---------------------------------------------------------- |
-| `armbian.patch`                | **source** — the grafts, against the factory tree          |
-| `armbian-native-annotated.dts` | **source** — the `#include` form, commented by hand        |
-| `board.dtb` / `board.dts`      | factory blob and its decompile                             |
-| `armbian.dts` / `.dtb`         | patch applied                                              |
-| `armbian-consts.dts`           | `dt-bindings` names instead of hex                         |
-| `armbian-native.dts`           | machine-generated overrides, a reference to diff against   |
-| `armbian-native.dtb`           | built from the annotated file, gated against `armbian.dtb` |
+| File                      | What                                                 |
+| ------------------------- | ---------------------------------------------------- |
+| `armbian.patch`           | **source** — the grafts, against the factory tree    |
+| `header.dts`              | **source** — SPDX and the board's provenance block   |
+| `board.dtb` / `board.dts` | factory blob and its decompile                       |
+| `armbian.dts` / `.dtb`    | patch applied                                        |
+| `armbian-consts.dts`      | `dt-bindings` names instead of hex                   |
+| `armbian-native.dts`      | **the submission** — header plus generated overrides |
+| `armbian-native.dtb`      | built from it, gated against `armbian.dtb`           |
 
 ## Why a diff
 

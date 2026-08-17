@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * R69 TV box (PCB silkscreen XR821_V1.1) — Rockchip RK3518, RK3528 family.
+ *
+ * The vendor derived this box from Rockchip's EVB1 DDR4 V10 reference design and its
+ * compatible still says so, so this includes that board and overrides what differs.
+ *
+ * Checked against the box's own factory device tree, carved from its eMMC: this file
+ * compiles to a tree content-identical to that blob plus the changes below. The
+ * overrides that follow are the box's own hardware, and carry no reasons because the
+ * blob carries none; these are the deliberate departures from it.
+ *
+ *   compatible         board name first; rk3528a last, as rkmpp has no rk3518 entry
+ *                      and cannot otherwise find the VPU
+ *   model              name the box, keeping the vendor string
+ *   gpu@ff700000       interrupt-names and clocks in the form mainline lima expects,
+ *                      not the vendor Mali blob's
+ *   serial@ff9f0000    enabled with uart0m0_xfer, for the ttyS0 console
+ *   uart2              bluetooth serdev child, aicsemi,aic8800-bt
+ *   pwm@ffa90030       remote_support_psci 0 -> 1, so the remote wakes the box
+ *   watchdog@ffac0000  enabled, for systemd's RuntimeWatchdogSec
+ *   leds               power/standby labels, active-low, and retain-state-* in place
+ *                      of the vendor's invert-on-shutdown
+ *   chosen             dropped; u-boot supplies bootargs, and the vendor string names
+ *                      ttyFIQ0
+ *   fiq-debugger       disabled; it owns ff9f0000 otherwise
+ */

@@ -69,7 +69,7 @@ def main():
             continue                                    # parent already deleted
         out.append(f"/delete-node/ {addr(path, base[path])};")
     if out:
-        out.insert(0, "/* hardware the reference board has and this box does not */")
+        out.insert(0, "/* nodes the reference board has and this box does not */")
 
     changed = []
     for path in sorted(set(base) & set(target)):

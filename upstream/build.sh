@@ -27,6 +27,10 @@ cp $B/board.dts $B/armbian.dts
 patch -s $B/armbian.dts < $B/armbian.patch
 $DTC -@ -I dts -O dtb -o $B/armbian.dtb $B/armbian.dts 2>/dev/null
 
+# what boots in overlay mode; firmware/ is the only tracked copy of this tree
+cp $B/armbian.dts firmware/$STOCK/board.dts
+cp $B/armbian.dtb firmware/$STOCK/board.dtb
+
 if [ ! -d "$BINDINGS" ]; then
 	git init -q "$KERNEL"
 	git -C "$KERNEL" remote add origin "$KERNEL_URL" 2>/dev/null || true
@@ -39,24 +43,29 @@ fi
 # dt-bindings names instead of hex; same tree, just legible
 upstream/scripts/dts-consts.py $B/armbian.dts "$BINDINGS" "$SOC" > $B/armbian-consts.dts
 
-# the same board as an include of the reference design, with the overrides generated from the diff
+# the submission: header.dts plus overrides against the reference design
 printf '/dts-v1/;\n#include "%s"\n#include "%s-linux.dtsi"\n' "$BASE" "$SOC" > /tmp/base.dts
 cpp_dts /tmp/base.dts /tmp/base.pp
 $DTC -@ -I dts -O dtb -o /tmp/base.dtb /tmp/base.pp 2>/dev/null
 $DTC -I dtb -O dts -P -n /tmp/base.dtb 2>/dev/null > /tmp/base.out
 $DTC -I dtb -O dts -P -n $B/armbian.dtb 2>/dev/null > /tmp/target.out
-{ printf '/dts-v1/;\n#include "%s"\n#include "%s-linux.dtsi"\n\n' "$BASE" "$SOC"
+{ cat $B/header.dts
+  printf '/dts-v1/;\n#include "%s"\n#include "%s-linux.dtsi"\n\n' "$BASE" "$SOC"
   upstream/scripts/gen-overrides.py /tmp/base.out /tmp/target.out; } > $B/armbian-native.dts
-cpp_dts $B/armbian-native-annotated.dts /tmp/native.pp
+cpp_dts $B/armbian-native.dts /tmp/native.pp
 $DTC -@ -I dts -O dtb -o $B/armbian-native.dtb /tmp/native.pp 2>/dev/null
 
-# the gate: the hand-maintained include-based tree must describe the same hardware as the patched
-# one. armbian-native.dts above is the machine-generated reference - diff it against the annotated
-# file to see what a patch change means for the submission.
-# phandle values are allocated per compile and carry no meaning, so ignore them.
+# the gate: the include-based tree must describe the same hardware as the patched one
 set +x
-strip() { $DTC -I dtb -O dts -P -n -s "$1" 2>/dev/null | grep -v 'phandle = <'; }
-if diff <(strip $B/armbian.dtb) <(strip $B/armbian-native.dtb) > /tmp/native.diff; then
+$DTC -I dtb -O dts -P -n -s $B/armbian.dtb 2>/dev/null > /tmp/gate-patched.dts
+$DTC -I dtb -O dts -P -n -s $B/armbian-native.dtb 2>/dev/null > /tmp/gate-native.dts
+
+# a numeric reference is the one difference a diff cannot see, so rule it out first
+upstream/scripts/check-refs.py /tmp/gate-patched.dts /tmp/gate-native.dts || exit 1
+
+# every line compared, phandle values translated rather than dropped; -s leaves node order free
+upstream/scripts/remap-phandles.py /tmp/gate-patched.dts /tmp/gate-native.dts > /tmp/gate-native-remapped.dts
+if diff /tmp/gate-patched.dts /tmp/gate-native-remapped.dts > /tmp/native.diff; then
 	echo "VERIFIED: native tree is content-identical to the patched tree"
 else
 	echo "MISMATCH: $(grep -c '^[<>]' /tmp/native.diff) lines differ - see /tmp/native.diff"

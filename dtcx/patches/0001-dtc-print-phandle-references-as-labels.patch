@@ -287,7 +287,7 @@ diff --git a/livetree.c b/livetree.c
 index 8496181..75f0bd9 100644
 --- a/livetree.c
 +++ b/livetree.c
-@@ -1188,7 +1188,23 @@ static const struct phandle_prop phandle_props[] = {
+@@ -1188,7 +1188,21 @@ static const struct phandle_prop phandle_props[] = {
  	{ "cooling-device",		"#cooling-cells" },
  	{ "hwlocks",			"#hwlock-cells" },
  	{ "gpios",			"#gpio-cells" },
@@ -306,8 +306,6 @@ index 8496181..75f0bd9 100644
 +	{ "rockchip,sram",		NULL },
 +	{ "rockchip,cpu",		NULL },
 +	{ "rockchip,codec",		NULL },
-+	{ "rockchip,taskqueue-node",	NULL },
-+	{ "rockchip,resetgroup-node",	NULL },
  	{ "memory-region",		NULL },
  	{ "mmc-pwrseq",			NULL },
  	{ "operating-points-v2",	NULL },
@@ -338,7 +336,7 @@ diff --git a/livetree.c b/livetree.c
 index 75f0bd9..cd646d0 100644
 --- a/livetree.c
 +++ b/livetree.c
-@@ -1202,6 +1202,11 @@ static const struct phandle_prop phandle_props[] = {
+@@ -1200,6 +1200,11 @@ static const struct phandle_prop phandle_props[] = {
  	{ "rockchip,usbgrf",		NULL },
  	{ "rockchip,sram",		NULL },
  	{ "rockchip,cpu",		NULL },
@@ -348,8 +346,8 @@ index 75f0bd9..cd646d0 100644
 +	{ "pm_qos",			NULL },
 +	{ "gpio",			"#gpio-cells" },
  	{ "rockchip,codec",		NULL },
- 	{ "rockchip,taskqueue-node",	NULL },
- 	{ "rockchip,resetgroup-node",	NULL },
+ 	{ "memory-region",		NULL },
+ 	{ "mmc-pwrseq",			NULL },
 @@ -1328,6 +1333,40 @@ static bool phandle_refs_walk(struct dt_info *dti, struct property *prop,
  	return true;
  }

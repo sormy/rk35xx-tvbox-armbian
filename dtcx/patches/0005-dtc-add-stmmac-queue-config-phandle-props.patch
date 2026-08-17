@@ -1,0 +1,26 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] dtc: recognise the stmmac queue-config phandle properties
+
+snps,axi-config, snps,mtl-rx-config and snps,mtl-tx-config reach the
+controller's own stmmac-axi-config / rx-queues-config / tx-queues-config
+subnodes by bare phandle. Without them in the table the cells stay
+numeric, and a number that means a node is only valid for the exact
+allocation it was dumped from.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/livetree.c b/livetree.c
+index cd646d0..b1e4f27 100644
+--- a/livetree.c
++++ b/livetree.c
+@@ -1212,6 +1212,10 @@ static const struct phandle_prop phandle_props[] = {
+ 	{ "mmc-pwrseq",			NULL },
+ 	{ "operating-points-v2",	NULL },
+ 	{ "next-level-cache",		NULL },
++	/* stmmac reaches its own queue-config subnodes by bare phandle */
++	{ "snps,axi-config",		NULL },
++	{ "snps,mtl-rx-config",		NULL },
++	{ "snps,mtl-tx-config",		NULL },
+ 	{ "phy-handle",			NULL },
+ 	{ "remote-endpoint",		NULL },
+ 	{ "nvmem-cells",		NULL },

@@ -1,4 +1,4 @@
-# Only board.conf and armbian.patch are source; build.sh regenerates the rest.
+# Only armbian.patch and header.dts are source; build.sh regenerates the rest.
 .kernel/
 */board.dtb
 */board.dts
@@ -7,4 +7,3 @@
 */armbian-consts.dts
 */armbian-native.dts
 */armbian-native.dtb
-!*/armbian-native-annotated.dts

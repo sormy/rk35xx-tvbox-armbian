@@ -994,8 +994,8 @@
 		rockchip,grf = <&grf>;
 		rockchip,grf-mem-offset = <0x20010>;
 		rockchip,grf-mem-values = <0x21 0xffff0021>;
-		rockchip,taskqueue-node = <&gic>;
-		rockchip,resetgroup-node = <&gic>;
+		rockchip,taskqueue-node = <0x01>;
+		rockchip,resetgroup-node = <0x01>;
 		status = "okay";
 		phandle = <0xe7>;
 	};
@@ -1030,8 +1030,8 @@
 		rockchip,grf = <&grf>;
 		rockchip,grf-mem-offset = <0x40034>;
 		rockchip,grf-mem-values = <0xf040000 0xf040f04>;
-		rockchip,taskqueue-node = <&cru>;
-		rockchip,resetgroup-node = <&cru>;
+		rockchip,taskqueue-node = <0x02>;
+		rockchip,resetgroup-node = <0x02>;
 		rockchip,disable-auto-freq;
 		status = "okay";
 		phandle = <0xe8>;
@@ -1064,8 +1064,8 @@
 		reset-names = "shared_video_a", "shared_video_h";
 		iommus = <&vdpu_mmu>;
 		rockchip,srv = <&mpp_srv>;
-		rockchip,taskqueue-node = <&cru>;
-		rockchip,resetgroup-node = <&cru>;
+		rockchip,taskqueue-node = <0x02>;
+		rockchip,resetgroup-node = <0x02>;
 		rockchip,disable-auto-freq;
 		status = "okay";
 		phandle = <0xe9>;
@@ -1171,8 +1171,8 @@
 		resets = <&cru 0x27b &cru 0x27a &cru 0x27c>;
 		reset-names = "shared_rst_a", "shared_rst_h", "shared_rst_s";
 		rockchip,srv = <&mpp_srv>;
-		rockchip,taskqueue-node = <&cpu0>;
-		rockchip,resetgroup-node = <&cpu0>;
+		rockchip,taskqueue-node = <0x03>;
+		rockchip,resetgroup-node = <0x03>;
 		iommus = <&iep_mmu>;
 		status = "okay";
 		phandle = <0xec>;
@@ -1207,8 +1207,8 @@
 		rockchip,grf = <&grf>;
 		rockchip,grf-mem-offset = <0x600e0>;
 		rockchip,grf-mem-values = <0xf0040000 0xf004f004>;
-		rockchip,taskqueue-node = <&cpu0>;
-		rockchip,resetgroup-node = <&cpu0>;
+		rockchip,taskqueue-node = <0x03>;
+		rockchip,resetgroup-node = <0x03>;
 		rockchip,disable-auto-freq;
 		iommus = <&iep_mmu>;
 		status = "okay";
@@ -1229,8 +1229,8 @@
 		reset-names = "video_a", "video_h";
 		iommus = <&jpegd_mmu>;
 		rockchip,srv = <&mpp_srv>;
-		rockchip,taskqueue-node = <&cpu1>;
-		rockchip,resetgroup-node = <&cpu1>;
+		rockchip,taskqueue-node = <0x04>;
+		rockchip,resetgroup-node = <0x04>;
 		status = "okay";
 		phandle = <0xee>;
 	};
@@ -1939,9 +1939,9 @@
 		reset-names = "stmmaceth";
 		snps,mixed-burst;
 		snps,tso;
-		snps,axi-config = <0x70>;
-		snps,mtl-rx-config = <0x71>;
-		snps,mtl-tx-config = <0x72>;
+		snps,axi-config = <&gmac0_stmmac_axi_setup>;
+		snps,mtl-rx-config = <&gmac0_mtl_rx_setup>;
+		snps,mtl-tx-config = <&gmac0_mtl_tx_setup>;
 		phy-mode = "rmii";
 		clock_in_out = "input";
 		phy-handle = <&rmii0_phy>;
