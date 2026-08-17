@@ -12,7 +12,10 @@ edited by hand; `./build.sh` regenerates the rest and verifies it.
    ```sh
    cd <board> && diff -u --label board.dts --label armbian.dts board.dts armbian.dts > armbian.patch
    ```
-4. Build its DTB — this is what boots and what gets deployed.
+4. Build its DTB — this is what boots. Copy `armbian.dts` and `armbian.dtb` over
+   `firmware/<board>/board.dts` and `board.dtb` — **needed for overlay mode**, where that pair is
+   what images ship and what `rk35xx-update` installs, and it has no other source. An upstreamed
+   board gets its DTB from the kernel package instead and never reads `firmware/`.
 5. `scripts/gen-overrides.py` re-expresses it as `/delete-node/` + `&label { }` over the vendor's
    reference dtsi. That output (`armbian-native.dts`) is a machine reference — correct, but with no
    reasons in it.
