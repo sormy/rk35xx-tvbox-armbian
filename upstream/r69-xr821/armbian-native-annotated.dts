@@ -22,9 +22,10 @@
 /delete-node/ &vdd_gpu;
 /delete-node/ &vdd_logic;
 
-/* rk3518 is the SoC's real name; rk3528a appended last so rkmpp can match the codec */
+/* board name first, then the reference design it derives from; rk3528a last so rkmpp
+ * can match the codec, which has no rk3518 entry */
 &{/} {
-	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
+	compatible = "r69-xr821,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
 	model = "R69 XR821_V1.1 (Rockchip RK3518 EVB1 DDR4 V10 Board)";
 };
 

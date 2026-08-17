@@ -1,12 +1,13 @@
 --- board.dts
 +++ armbian.dts
-@@ -1,11 +1,12 @@
+@@ -1,11 +1,13 @@
  /dts-v1/;
  
  / {
 -	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518";
-+	/* rk3528a appended last: rkmpp has no rk3518 entry, so userspace cannot find the VPU */
-+	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
++	/* board name first; rk3528a last, because rkmpp has no rk3518 entry and cannot
++	 * otherwise find the VPU */
++	compatible = "r69-xr821,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
  	interrupt-parent = <&gic>;
  	#address-cells = <0x02>;
  	#size-cells = <0x02>;
@@ -15,7 +16,7 @@
  
  	aliases {
  		ethernet0 = "/ethernet@ffbd0000";
-@@ -847,9 +848,10 @@
+@@ -847,9 +849,10 @@
  		compatible = "arm,mali-450";
  		reg = <0x00 0xff700000 0x00 0x40000>;
  		interrupts = <0x00 0x58 0x04 0x00 0x59 0x04 0x00 0x56 0x04 0x00 0x5c 0x04 0x00 0x5d 0x04 0x00 0x5a 0x04 0x00 0x5b 0x04>;
@@ -29,7 +30,7 @@
  		assigned-clocks = <&scmi_clk 0x16>;
  		assigned-clock-rates = <0x11e1a300>;
  		power-domains = <&power 0x04>;
-@@ -1386,7 +1388,10 @@
+@@ -1386,7 +1389,10 @@
  		reg-shift = <0x02>;
  		reg-io-width = <0x04>;
  		dmas = <&dmac 0x09 &dmac 0x08>;
@@ -41,7 +42,7 @@
  		phandle = <0xf4>;
  	};
  
-@@ -1416,6 +1421,12 @@
+@@ -1416,6 +1422,12 @@
  		pinctrl-names = "default";
  		pinctrl-0 = <&uart2m0_xfer &uart2m0_ctsn>;
  		phandle = <0xf6>;
@@ -54,7 +55,7 @@
  	};
  
  	uart3: serial@ffa08000 {
-@@ -1670,7 +1681,8 @@
+@@ -1670,7 +1682,8 @@
  		status = "okay";
  		remote_pwm_id = <0x03>;
  		handle_cpu_id = <0x01>;
@@ -64,7 +65,7 @@
  		phandle = <0x108>;
  
  		ir_key1 {
-@@ -1786,7 +1798,8 @@
+@@ -1786,7 +1799,8 @@
  		clocks = <&cru 0x73 &cru 0x72>;
  		clock-names = "tclk", "pclk";
  		interrupts = <0x00 0x1c 0x04>;
@@ -74,7 +75,7 @@
  		phandle = <0x10e>;
  	};
  
-@@ -4153,27 +4166,28 @@
+@@ -4153,27 +4167,28 @@
  	leds {
  		compatible = "gpio-leds";
  
@@ -114,7 +115,7 @@
  
  	fiq-debugger {
  		compatible = "rockchip,fiq-debugger";
-@@ -4184,7 +4198,8 @@
+@@ -4184,7 +4199,8 @@
  		interrupts = <0x00 0xba 0x04>;
  		pinctrl-names = "default";
  		pinctrl-0 = <&uart0m0_xfer>;
