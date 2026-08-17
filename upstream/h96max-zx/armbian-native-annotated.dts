@@ -1,0 +1,382 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * H96 Max ZX TV box (PCB silkscreen 3518_ZX_V01) — Rockchip RK3518, RK3528 family.
+ *
+ * The vendor derived this box from Rockchip's EVB1 DDR4 V10 reference design and its
+ * compatible still says so, so this includes that board and overrides what differs.
+ *
+ * Checked against the box's own factory device tree, carved from its eMMC: this file
+ * compiles to a tree content-identical to that blob plus the changes below.
+ */
+/dts-v1/;
+#include "rk3528-evb1-ddr4-v10.dtsi"
+#include "rk3528-linux.dtsi"
+
+/* hardware the reference board has and this box does not */
+/delete-node/ &chosen;
+/delete-node/ &{/cpu0-opp-table/opp-1008000000};
+/delete-node/ &{/cpu0-opp-table/opp-1608000000};
+/delete-node/ &{/cpu0-opp-table/opp-1800000000};
+/delete-node/ &{/cpu0-opp-table/opp-2016000000};
+/delete-node/ &{/cpu0-opp-table/opp-408000000};
+/delete-node/ &{/cpu0-opp-table/opp-600000000};
+/delete-node/ &{/cpu0-opp-table/opp-816000000};
+/delete-node/ &{/dmc-opp-table/opp-920000000};
+/delete-node/ &gmac1;
+/delete-node/ &{/gpu-opp-table/opp-300000000};
+/delete-node/ &{/gpu-opp-table/opp-500000000};
+/delete-node/ &{/gpu-opp-table/opp-600000000};
+/delete-node/ &pcie2x1;
+/delete-node/ &vdd_cpu;
+/delete-node/ &vdd_gpu;
+/delete-node/ &vdd_logic;
+
+&{/} {
+	compatible = "h96max-zx,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
+	model = "H96 Max 3518_ZX_V01 (Rockchip RK3518 EVB1 DDR4 V10 Board)";
+};
+
+&{/aliases} {
+	/delete-property/ ethernet1;
+};
+
+&cpu0_opp_table {
+	mbist-vmin = <0xc96a8 0xe1d48 0xe1d48>;
+	rockchip,pvtm-voltage-sel = <0x00 0x58c 0x00 0x582 0x5a4 0x01 0x5a5 0x5c2 0x02 0x5c3 0x5e5 0x03 0x5e6 0x608 0x04 0x609 0x62b 0x05 0x62c 0x653 0x06 0x654 0x699 0x07 0x69a 0x6d0 0x08 0x6d1 0x707 0x09 0x708 0x270f 0x0a>;
+	rockchip,pvtm-freq = <0x159b40>;
+	rockchip,pvtm-volt = <0xe7ef0>;
+	rockchip,video-1080p-freq = <0x124f80>;
+};
+
+&{/cpu0-opp-table/opp-1200000000} {
+	/delete-property/ opp-microvolt-L0;
+	/delete-property/ opp-microvolt-L1;
+	/delete-property/ opp-microvolt-L2;
+	/delete-property/ opp-microvolt-L3;
+	/delete-property/ opp-microvolt-L4;
+	/delete-property/ opp-microvolt-L5;
+	/delete-property/ opp-microvolt-L6;
+	opp-microvolt = <0xdbba0 0xdbba0 0xf4240>;
+};
+
+&{/cpu0-opp-table/opp-1416000000} {
+	/delete-property/ opp-microvolt-L10;
+	/delete-property/ opp-microvolt-L11;
+	/delete-property/ opp-microvolt-L5;
+	/delete-property/ opp-microvolt-L6;
+	/delete-property/ opp-microvolt-L7;
+	/delete-property/ opp-microvolt-L8;
+	/delete-property/ opp-microvolt-L9;
+	opp-microvolt = <0xdbba0 0xdbba0 0xf4240>;
+	opp-microvolt-L1 = <0xe7ef0 0xe7ef0 0xf4240>;
+	opp-microvolt-L2 = <0xe4e1c 0xe4e1c 0xf4240>;
+	opp-microvolt-L3 = <0xe1d48 0xe1d48 0xf4240>;
+	opp-microvolt-L4 = <0xdec74 0xdec74 0xf4240>;
+	opp-microvolt-L0 = <0xeafc4 0xeafc4 0xf4240>;
+};
+
+&{/cpuinfo} {
+	nvmem-cells = <&otp_id &otp_cpu_version &cpu_code &cpu_code1>;
+	nvmem-cell-names = "id", "cpu-version", "cpu-code", "cpu-code1";
+};
+
+&route_hdmi {
+	/delete-property/ logo,kernel;
+	logo,mode = "fullscreen";
+};
+
+&route_tve {
+	/delete-property/ logo,kernel;
+	logo,mode = "fullscreen";
+};
+
+&dmc {
+	center-supply = <&vdd_cpu>;
+};
+
+&{/dmc-opp-table/opp-1056000000} {
+	/delete-property/ opp-microvolt-L0;
+	/delete-property/ opp-microvolt-L1;
+	/delete-property/ opp-microvolt-L2;
+	/delete-property/ opp-microvolt-L3;
+	/delete-property/ opp-microvolt-L4;
+	opp-microvolt = <0xdbba0 0xdbba0 0xf4240>;
+};
+
+&gmac0 {
+	snps,axi-config = <0x70>;
+	snps,mtl-rx-config = <0x71>;
+	snps,mtl-tx-config = <0x72>;
+};
+
+&{/fiq-debugger} {
+	status = "disabled";
+};
+
+&gpu_bus {
+	/delete-property/ bus-supply;
+	status = "disabled";
+};
+
+&gpu_opp_table {
+	rockchip,pvtm-voltage-sel = <0x00 0x329 0x00 0x32a 0x33e 0x01 0x33f 0x352 0x02 0x353 0x370 0x03 0x371 0x37a 0x04 0x37b 0x38e 0x05 0x38f 0x3a2 0x06 0x3a3 0x3b6 0x07 0x3b7 0x3ca 0x08 0x3cb 0x3e3 0x09 0x3e8 0x270f 0x0a>;
+	rockchip,pvtm-volt = <0xe7ef0>;
+};
+
+&{/gpu-opp-table/opp-700000000} {
+	/delete-property/ clock-latency-ns;
+	/delete-property/ opp-microvolt-L1;
+	/delete-property/ opp-microvolt-L2;
+	/delete-property/ opp-microvolt-L3;
+	/delete-property/ opp-microvolt-L4;
+	/delete-property/ opp-microvolt-L5;
+	/delete-property/ opp-microvolt-L6;
+	/delete-property/ opp-microvolt-L7;
+	/delete-property/ opp-microvolt-L8;
+};
+
+&{/gpu-opp-table/opp-800000000} {
+	/delete-property/ clock-latency-ns;
+	/delete-property/ opp-microvolt-L6;
+	/delete-property/ opp-microvolt-L7;
+	/delete-property/ opp-microvolt-L8;
+	opp-microvolt = <0xdbba0 0xdbba0 0xf4240>;
+	opp-microvolt-L1 = <0xe7ef0 0xe7ef0 0xf4240>;
+	opp-microvolt-L2 = <0xe4e1c 0xe4e1c 0xf4240>;
+	opp-microvolt-L3 = <0xe1d48 0xe1d48 0xf4240>;
+	opp-microvolt-L4 = <0xdec74 0xdec74 0xf4240>;
+	opp-microvolt-L5 = <0xdbba0 0xdbba0 0xf4240>;
+	opp-microvolt-L0 = <0xeafc4 0xeafc4 0xf4240>;
+};
+
+&gpu {
+	mali-supply = <&vdd_cpu>;
+};
+
+&hdmi {
+	rockchip,cts-manual;
+};
+
+&i2c6 {
+	status = "disabled";
+};
+
+&sdhci {
+	/delete-property/ mmc-hs400-1_8v;
+	/delete-property/ mmc-hs400-enhanced-strobe;
+	max-frequency = <0x5f5e100>;
+	mmc-hs200-1_8v;
+};
+
+&sdio0 {
+	/delete-property/ bus-width;
+	/delete-property/ cap-sd-highspeed;
+	/delete-property/ cap-sdio-irq;
+	/delete-property/ disable-wp;
+	/delete-property/ keep-power-in-suspend;
+	/delete-property/ mmc-pwrseq;
+	/delete-property/ no-mmc;
+	/delete-property/ no-sd;
+	/delete-property/ non-removable;
+	/delete-property/ pinctrl-0;
+	/delete-property/ pinctrl-names;
+	/delete-property/ sd-uhs-sdr104;
+	/delete-property/ supports-sdio;
+	max-frequency = <0x8f0d180>;
+	status = "disabled";
+};
+
+&sdio1 {
+	/delete-property/ rockchip,use-v2-tuning;
+	max-frequency = <0xbebc200>;
+	status = "okay";
+	no-sd;
+	no-mmc;
+	supports-sdio;
+	bus-width = <0x04>;
+	disable-wp;
+	cap-sd-highspeed;
+	cap-sdio-irq;
+	keep-power-in-suspend;
+	non-removable;
+	mmc-pwrseq = <&sdio_pwrseq>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdio1_bus4 &sdio1_cmd &sdio1_clk>;
+	sd-uhs-sdr104;
+};
+
+&sdmmc {
+	/delete-property/ sd-uhs-sdr104;
+	/delete-property/ sd-uhs-sdr12;
+	/delete-property/ sd-uhs-sdr25;
+	/delete-property/ sd-uhs-sdr50;
+	status = "okay";
+};
+
+&mpp_srv {
+	rockchip,iommu-shared-mask = <0x420a>;
+};
+
+&wifi_enable_h {
+	rockchip,pins = <0x03 0x0a 0x00 &pcfg_pull_none>;
+};
+
+&pwm3 {
+	remote_support_psci = <0x01>;
+};
+
+&{/pwm@ffa90030/ir_key4} {
+	rockchip,usercode = <0x7f80>;
+	rockchip,key_table = <0xec 0xe8 0xd8 0x9e 0xc7 0x67 0xbf 0x6c 0xc8 0x69 0xc6 0x6a 0x8c 0x66 0x78 0x73 0x76 0x72 0x7e 0x74 0x7c 0x8b 0xb7 0x184>;
+};
+
+&{/pwm@ffa90030/ir_key5} {
+	rockchip,usercode = <0xfeaa>;
+	rockchip,key_table = <0xec 0xe8 0xe6 0x9e 0xe9 0x67 0xe5 0x6c 0xae 0x69 0xaf 0x6a 0xee 0x66 0xe7 0x73 0xef 0x72 0xbf 0x74 0xbe 0x71 0xb3 0x8b 0xff 0x184 0xb1 0x18e 0xf2 0x18f 0xf3 0x04 0xb5 0x05 0xf6 0x06 0xf7 0x07 0xb9 0x190 0xfa 0x191 0xfb 0x0a 0xfe 0x0b 0xbd 0x0e 0xbc 0xb7 0xf0 0xba 0xb4 0x19c 0xb8 0x1e 0xb0 0x197>;
+};
+
+&{/pwm@ffa90030/ir_key6} {
+	rockchip,usercode = <0xfb04>;
+	rockchip,key_table = <0xf7 0x74 0xd0 0x184 0xb5 0x8b 0x5b 0xb8 0x4d 0xb7 0xba 0x67 0xb9 0x6c 0xb8 0x69 0xb7 0x6a 0xbb 0xe8 0xe5 0x9e 0xe4 0x0e 0xd2 0x66 0xfd 0x73 0xfc 0x72 0xf6 0x71 0xff 0x192 0xfe 0x193 0x04 0x40 0x14 0x41 0x4c 0x42 0x4b 0x43>;
+};
+
+&{/pwm@ffa90030/ir_key7} {
+	rockchip,usercode = <0xfe01>;
+	rockchip,key_table = <0xec 0xe8 0xe6 0x9e 0xe9 0x67 0xe5 0x6c 0xae 0x69 0xaf 0x6a 0xee 0x66 0xe7 0x73 0xef 0x72 0xbf 0x74 0xbe 0x71 0xb3 0x8b 0xff 0x184 0xb1 0x02 0xf2 0x03 0xf3 0x04 0xb5 0x05 0xf6 0x06 0xf7 0x07 0xb9 0x08 0xfa 0x09 0xfb 0x0a 0xfe 0x0b 0xbd 0x0e 0xbc 0xb7 0xf0 0xba 0xb4 0x19c 0xb8 0x1e 0xb0 0x197>;
+};
+
+&sai3 {
+	assigned-clocks = <&cru 0x184>;
+	assigned-clock-rates = <0x5dc000>;
+	rockchip,always-on;
+};
+
+&sai0 {
+	pinctrl-0 = <&i2s0m0_lrck &i2s0m0_sclk &i2s0m0_sdi &i2s0m0_sdo>;
+	status = "okay";
+};
+
+&sai1 {
+	status = "disabled";
+};
+
+&sdio_pwrseq {
+	reset-gpios = <&gpio3 0x0a 0x01>;
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0m0_xfer>;
+	status = "okay";
+};
+
+&usbdrd_dwc3 {
+	dr_mode = "host";
+};
+
+&vcc5v0_otg {
+	gpio = <&gpio4 0x0c 0x00>;
+};
+
+&vop {
+	esmart_lb_mode = [03];
+	support-multi-area;
+};
+
+&wdt {
+	status = "okay";
+};
+
+&wireless_bluetooth {
+	BT,wake_host_irq = <0xa7 0x12 0x00>;
+	status = "disabled";
+};
+
+&wireless_wlan {
+	WIFI,host_wake_irq = <0xa7 0x07 0x00>;
+	status = "disabled";
+};
+
+&dmc_opp_table {
+	opp-324000000 {
+		opp-hz = <0x00 0x134fd900>;
+		opp-microvolt = <0xdbba0 0xdbba0 0xf4240>;
+	};
+};
+
+&dmc_opp_table {
+	opp-666000000 {
+		opp-hz = <0x00 0x27b25a80>;
+		opp-microvolt = <0xdbba0 0xdbba0 0xf4240>;
+	};
+};
+
+&dmc_opp_table {
+	opp-780000000 {
+		opp-hz = <0x00 0x2e7ddb00>;
+		opp-microvolt = <0xdbba0 0xdbba0 0xf4240>;
+	};
+};
+
+&{/} {
+	leds: gpio-leds {
+		compatible = "gpio-leds";
+		power {
+			gpios = <&gpio4 0x11 0x01>;
+			linux,default-trigger = "none";
+			default-state = "on";
+			retain-state-suspended;
+			retain-state-shutdown;
+		};
+		standby {
+			gpios = <&gpio4 0x0b 0x01>;
+			linux,default-trigger = "none";
+			default-state = "off";
+			retain-state-suspended;
+			retain-state-shutdown;
+		};
+	};
+};
+
+&otp {
+	cpu_code1: cpu-code1@52 {
+		reg = <0x52 0x02>;
+	};
+};
+
+&reserved_memory {
+	cma {
+		compatible = "shared-dma-pool";
+		reusable;
+		size = <0x00 0x800000>;
+		linux,cma-default;
+	};
+};
+
+&{/} {
+	seekwcn_boot: seekwcn_boot {
+		compatible = "seekwave,sv6160lite";
+		dma_type = <0x01>;
+		seekwave_nv_name = "SEEKWAVE_NV_SWT6652.bin";
+		status = "okay";
+		gpio_host_wake = <0xa6 0x0b 0x01>;
+		gpio_chip_wake = <0xa6 0x0c 0x00>;
+		gpio_chip_en = <0xa6 0x0a 0x00>;
+	};
+};
+
+&{/} {
+	vdd_cpu: vdd_logic: vdd_gpu: vdd-cpu {
+		compatible = "pwm-regulator";
+		pwms = <&pwm1 0x00 0x1388 0x01>;
+		regulator-name = "vdd_cpu";
+		regulator-min-microvolt = <0xb6210>;
+		regulator-max-microvolt = <0x125368>;
+		regulator-init-microvolt = <0xe8aa8>;
+		regulator-always-on;
+		regulator-boot-on;
+		regulator-settling-time-up-us = <0xfa>;
+		pwm-supply = <&vcc5v0_sys>;
+		status = "okay";
+	};
+};

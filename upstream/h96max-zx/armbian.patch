@@ -1,0 +1,121 @@
+--- board.dts
++++ armbian.dts
+@@ -1,11 +1,13 @@
+ /dts-v1/;
+ 
+ / {
+-	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518";
++	/* board name first: the Seekwave driver builds its firmware filenames from it.
++	 * rk3528a last, because rkmpp has no rk3518 entry and cannot otherwise find the VPU */
++	compatible = "h96max-zx,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
+ 	interrupt-parent = <&gic>;
+ 	#address-cells = <0x02>;
+ 	#size-cells = <0x02>;
+-	model = "Rockchip RK3518 EVB1 DDR4 V10 Board";
++	model = "H96 Max 3518_ZX_V01 (Rockchip RK3518 EVB1 DDR4 V10 Board)";
+ 
+ 	aliases {
+ 		ethernet0 = "/ethernet@ffbd0000";
+@@ -845,9 +847,10 @@
+ 		compatible = "arm,mali-450";
+ 		reg = <0x00 0xff700000 0x00 0x40000>;
+ 		interrupts = <0x00 0x58 0x04 0x00 0x59 0x04 0x00 0x56 0x04 0x00 0x5c 0x04 0x00 0x5d 0x04 0x00 0x5a 0x04 0x00 0x5b 0x04>;
+-		interrupt-names = "Mali_GP_IRQ", "Mali_GP_MMU_IRQ", "IRQPP", "Mali_PP0_IRQ", "Mali_PP0_MMU_IRQ", "Mali_PP1_IRQ", "Mali_PP1_MMU_IRQ";
+-		clocks = <&scmi_clk 0x16 &cru 0x113 &cru 0x10e>;
+-		clock-names = "clk_mali", "aclk_gpu_mali", "pclk_gpu";
++		/* names mainline lima expects; the vendor Mali blob used its own */
++		interrupt-names = "gp", "gpmmu", "pp", "pp0", "ppmmu0", "pp1", "ppmmu1";
++		clocks = <&cru 0x113 &cru 0x113>;
++		clock-names = "bus", "core";
+ 		assigned-clocks = <&scmi_clk 0x16>;
+ 		assigned-clock-rates = <0x11e1a300>;
+ 		power-domains = <&power 0x04>;
+@@ -1384,7 +1387,10 @@
+ 		reg-shift = <0x02>;
+ 		reg-io-width = <0x04>;
+ 		dmas = <&dmac 0x09 &dmac 0x08>;
+-		status = "disabled";
++		/* the debug header, as ttyS0; fiq-debugger below gives up this same UART */
++		pinctrl-names = "default";
++		pinctrl-0 = <&uart0m0_xfer>;
++		status = "okay";
+ 		phandle = <0xf3>;
+ 	};
+ 
+@@ -1668,7 +1674,8 @@
+ 		status = "okay";
+ 		remote_pwm_id = <0x03>;
+ 		handle_cpu_id = <0x01>;
+-		remote_support_psci = <0x00>;
++		/* IR as an ATF wake source, so the remote can power the box on */
++		remote_support_psci = <0x01>;
+ 		phandle = <0x107>;
+ 
+ 		ir_key1 {
+@@ -1784,7 +1791,8 @@
+ 		clocks = <&cru 0x73 &cru 0x72>;
+ 		clock-names = "tclk", "pclk";
+ 		interrupts = <0x00 0x1c 0x04>;
+-		status = "disabled";
++		/* /dev/watchdog for systemd RuntimeWatchdogSec - also the only hang recorder */
++		status = "okay";
+ 		phandle = <0x10d>;
+ 	};
+ 
+@@ -2082,11 +2090,9 @@
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&sdmmc_clk &sdmmc_cmd &sdmmc_det &sdmmc_bus4>;
+ 		rockchip,default-sample-phase = <0x5a>;
++		/* sd-uhs-* removed: with UHS the SD intermittently fails to re-initialise after a
++		 * warm reset and the box comes up with no root. Costs SDR104, keeps reboots. */
+ 		supports-sd;
+-		sd-uhs-sdr12;
+-		sd-uhs-sdr25;
+-		sd-uhs-sdr50;
+-		sd-uhs-sdr104;
+ 		vqmmc-supply = <&vccio_sd>;
+ 		vmmc-supply = <&vcc_sd>;
+ 		phandle = <0x114>;
+@@ -4104,7 +4110,9 @@
+ 		compatible = "gpio-leds";
+ 		phandle = <0x1c7>;
+ 
+-		work-green {
++		/* power/standby are the names the shared LED hooks drive; the factory called
++		 * them work-green and work-red */
++		power {
+ 			gpios = <&gpio4 0x11 0x01>;
+ 			linux,default-trigger = "none";
+ 			default-state = "on";
+@@ -4112,7 +4120,8 @@
+ 			retain-state-shutdown;
+ 		};
+ 
+-		work-red {
++		/* the standby half of the same rename; the factory called it work-red */
++		standby {
+ 			gpios = <&gpio4 0x0b 0x01>;
+ 			linux,default-trigger = "none";
+ 			default-state = "off";
+@@ -4121,10 +4130,7 @@
+ 		};
+ 	};
+ 
+-	chosen: chosen {
+-		bootargs = "earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0";
+-		phandle = <0x1c8>;
+-	};
++	/* chosen dropped: u-boot supplies bootargs, and the vendor string names ttyFIQ0 */
+ 
+ 	fiq-debugger {
+ 		compatible = "rockchip,fiq-debugger";
+@@ -4135,7 +4141,8 @@
+ 		interrupts = <0x00 0xba 0x04>;
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&uart0m0_xfer>;
+-		status = "okay";
++		/* frees ff9f0000 for ttyS0 above */
++		status = "disabled";
+ 	};
+ 
+ 	reserved_memory: reserved-memory {
