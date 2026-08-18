@@ -1,0 +1,142 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] ln: implement -s
+
+e2ln has accepted -s since the option was added, and answered it with
+"Not implemented yet". Implement it.
+
+libext2fs already does the work: ext2fs_symlink() stores the target inline
+when it fits in i_block[] and allocates a block when it does not, and knows
+about extents either way. Growing a full directory block is the caller's
+job, as it is for every other creation path here.
+
+The target is stored verbatim and never resolved, so it may name something
+that does not exist yet -- which is the usual reason to write one into an
+image being assembled.
+
+    e2ln -s /lib/systemd/system/serial-getty@.service img:/etc/systemd/L
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/src/e2tool-e2ln.c b/src/e2tool-e2ln.c
+--- a/src/e2tool-e2ln.c
++++ b/src/e2tool-e2ln.c
+@@ -34,7 +34,10 @@
+ #include "e2tool-e2ln.h"
+ 
+ /* Macros */
+-#define USAGE "Usage: e2ln [-vfs] source destination\n"
++#define USAGE "Usage: e2ln [-vf] filesystem:source destination\n" \
++              "       e2ln -s [-v] target filesystem:linkname\n"
++
++static long create_symlink(int argc, char *argv[], int verbose);
+ 
+ /* Name:    main_e2ln()
+  *
+@@ -128,10 +131,7 @@ main_e2ln(int argc, char *argv[])
+     }
+ 
+   if (symlink)
+-    {
+-      fputs("Not implemented yet\n", stderr);
+-      return(1);
+-    }
++    return(create_symlink(argc, argv, verbose));
+ 
+   cur_filesys = argv[optind++];
+   if (NULL == (src_dir = strchr(cur_filesys, ':')))
+@@ -374,3 +374,95 @@ create_hard_link(ext2_filsys fs, ext2_ino_t cwd, ext2_ino_t new_file_ino,
+ 
+ } /* end of create_hard_link */
+ 
++
++/* Name:    create_symlink()
++ *
++ * Description:
++ *
++ * This function creates a symbolic link in an ext2fs file system. The
++ * target is stored verbatim and is never resolved, exactly as ln -s does.
++ *
++ * Arguments:
++ *
++ * int argc;       The number of arguments
++ * char *argv[];   the command line arguments
++ * int verbose;    print the link that was created
++ *
++ * Return Values:
++ *
++ * 0 - the link was created successfully
++ * otherwise, an error code is returned
++ */
++static long
++create_symlink(int argc, char *argv[], int verbose)
++{
++  ext2_filsys fs = NULL;
++  ext2_ino_t root;
++  ext2_ino_t destd;
++  char *target;
++  char *cur_filesys;
++  char *dest_dir;
++  char *dest_name;
++  long retval;
++
++  if (argc - optind != 2)
++    {
++      fputs(USAGE, stderr);
++      return(1);
++    }
++
++  target = argv[optind++];
++  cur_filesys = argv[optind];
++
++  if (NULL == (dest_dir = strchr(cur_filesys, ':')))
++    {
++      fprintf(stderr, "Invalid file specification: %s\n", cur_filesys);
++      return(1);
++    }
++  *dest_dir++ = '\0';
++
++  if (*dest_dir == '\0' || *target == '\0')
++    {
++      fputs(USAGE, stderr);
++      return(1);
++    }
++
++  if ((retval = open_filesystem(cur_filesys, &fs, &root, 1)))
++    return retval;
++
++  if (get_file_parts(fs, root, dest_dir, &destd, &dest_dir, &dest_name))
++    {
++      ext2fs_close(fs);
++      return(-1);
++    }
++
++  /* ext2fs_symlink() picks fast or slow form by target length, and knows
++     about extents; a full directory block is the caller's to grow */
++  retval = ext2fs_symlink(fs, destd, 0, dest_name, target);
++  if (retval == EXT2_ET_DIR_NO_SPACE)
++    {
++      if (0 == (retval = ext2fs_expand_dir(fs, destd)))
++        retval = ext2fs_symlink(fs, destd, 0, dest_name, target);
++    }
++
++  if (retval)
++    {
++      fprintf(stderr, "%s: while creating symlink %s\n", error_message(retval),
++              dest_name);
++      ext2fs_close(fs);
++      return(retval);
++    }
++
++  if (verbose)
++    printf("Linked %s:%s/%s -> %s\n", cur_filesys,
++           (dest_dir == NULL) ? "." : dest_dir, dest_name, target);
++
++  if ((retval = ext2fs_close(fs)))
++    {
++      fprintf(stderr, "%s\n", error_message(retval));
++      return retval;
++    }
++
++  return(0);
++
++} /* end of create_symlink */

@@ -51,8 +51,12 @@ done
 for s in $PAYLOAD_SRCS; do
   [ -f "$FW/$s" ] || { echo "Missing payload source: firmware/$s"; exit 1; }
 done
-for t in e2cp e2ls e2ln e2mkdir; do
-  command -v "$t" >/dev/null || { echo "Need e2tools ($t). macOS: brew install e2tools"; exit 1; }
+# the patched e2tools, never the stock ones: stock e2rm frees a symlink's target string as block
+# numbers and leaks removed directories, and both corrupt the image silently
+E2DIR="$REPO/tools/e2tools"
+PATH="$E2DIR:$PATH"
+for t in e2cp e2ls e2ln e2mkdir e2rm; do
+  [ -x "$E2DIR/$t" ] || { echo "Need patched e2tools ($t). Run: ./build-e2tools.sh"; exit 1; }
 done
 for t in curl patch tar; do
   command -v "$t" >/dev/null || { echo "Need $t (DKMS source fetch)"; exit 1; }

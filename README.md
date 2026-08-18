@@ -103,7 +103,8 @@ inherited; the numbers behind each ✅ are in the board docs.
 Needs a **microSD** (8 GB+) and a stock ROCK 2F `.img.xz` (tested: `minimal` vendor 6.1).
 
 ```bash
-brew install e2tools xz coreutils            # macOS  ·  apt install e2tools xz-utils on Debian
+brew install xz coreutils                    # macOS  ·  apt install xz-utils on Debian
+./build-e2tools.sh                           # once — stock e2tools corrupts an image on delete
 ./build-image.sh Armbian_..._Rock-2f_..._minimal.img.xz h96max      # board: r69 | h96max
 ```
 

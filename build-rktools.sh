@@ -14,7 +14,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
 TOOLS="$REPO/tools"                               # gitignored output dir
-BUILD="$TOOLS/src"                                # scratch clone
+BUILD="$TOOLS/src/rktools"                        # scratch clone, one per tool
 RKBIN="$REPO/uboot-build/rkbin"                   # shared with build-uboot.sh, gitignored
 
 # --- pinned dependencies (bump deliberately, never float) ---

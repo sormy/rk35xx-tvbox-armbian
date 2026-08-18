@@ -1,0 +1,52 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] rm: do not free blocks for inodes that have no block pointers
+
+delete_file() walks i_block[] unconditionally and hands every word to
+ext2fs_block_alloc_stats(..., -1). For a fast symlink that array is not
+block pointers at all -- it holds the target path inline -- so the target's
+own bytes are freed as if they were blocks.
+
+Deleting a symlink to /lib/systemd/system/serial-getty@.service frees
+i_block[10], the trailing "e\0\0\0" of ".service", as block 101. Words that
+land out of range print "Illegal block number" and are ignored; one that
+lands in range is silently cleared in the block bitmap. The next file
+written to the image is then handed a block that filesystem metadata still
+owns, and the kernel remounts the filesystem read-only on first mount.
+
+debugfs, which this code is derived from, guards the same call with
+ext2fs_inode_has_valid_blocks2(). Restore that guard. It also covers
+device nodes, FIFOs, sockets and inline-data inodes, which have no block
+pointers either.
+
+Reproducer, on a fresh image:
+
+    mke2fs -q -t ext4 -F t.img 16384
+    debugfs -w -R "symlink /link /lib/systemd/system/serial-getty@.service" t.img
+    e2rm t.img:/link
+    fsck.ext4 -fn t.img          # Block bitmap differences: +101
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/src/util.c b/src/util.c
+index 1111111..2222222 100644
+--- a/src/util.c
++++ b/src/util.c
+@@ -206,12 +206,15 @@ delete_file(ext2_filsys fs, ext2_ino_t inode)
+       return(retval);
+     }
+
+-  if ((retval = ext2fs_block_iterate(fs, inode, 0, NULL,
+-                                     release_blocks_proc, NULL)))
++  /* i_block[] holds the target path, not block pointers, for a fast symlink;
++     the same is true of device nodes, FIFOs, sockets and inline data. */
++  if (ext2fs_inode_has_valid_blocks2(fs, &inode_buf) &&
++      (retval = ext2fs_block_iterate(fs, inode, 0, NULL,
++                                     release_blocks_proc, NULL)))
+     {
+       fprintf(stderr, "%s\n", error_message(retval));
+       return(retval);
+     }
+
+   ext2fs_inode_alloc_stats(fs, inode, -1);
+
+   return(0);
