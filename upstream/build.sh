@@ -27,9 +27,22 @@ cp $B/board.dts $B/armbian.dts
 patch -s $B/armbian.dts < $B/armbian.patch
 $DTC -@ -I dts -O dtb -o $B/armbian.dtb $B/armbian.dts 2>/dev/null
 
-# what boots in overlay mode; firmware/ is the only tracked copy of this tree
-cp $B/armbian.dts firmware/$STOCK/board.dts
-cp $B/armbian.dtb firmware/$STOCK/board.dtb
+# The overlay ships firmware/<board>/board.dtb, which may deliberately differ from the submission:
+# a downstream workaround for a kernel fix that has not merged yet. Never overwrite it silently.
+set +x
+if cmp -s $B/armbian.dtb firmware/$STOCK/board.dtb; then
+	echo "firmware/$STOCK: matches the submission"
+elif [ "${SYNC:-0}" = 1 ]; then
+	cp $B/armbian.dts firmware/$STOCK/board.dts
+	cp $B/armbian.dtb firmware/$STOCK/board.dtb
+	echo "firmware/$STOCK: synced from the submission"
+else
+	echo "firmware/$STOCK: DIFFERS from the submission, left alone (SYNC=1 to overwrite)"
+	diff <($DTC -I dtb -O dts -s $B/armbian.dtb 2>/dev/null) \
+	     <($DTC -I dtb -O dts -s firmware/$STOCK/board.dtb 2>/dev/null) \
+	  | grep -E '^[<>]' | sed 's/^/    /' | head -20 || true
+fi
+set -x
 
 if [ ! -d "$BINDINGS" ]; then
 	git init -q "$KERNEL"

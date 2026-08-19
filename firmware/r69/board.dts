@@ -1423,11 +1423,15 @@
 		pinctrl-0 = <&uart2m0_xfer &uart2m0_ctsn>;
 		phandle = <0xf6>;
 
-		/* binds the AIC8800 to the H:4 serdev driver on this uart */
-		bluetooth {
-			compatible = "aicsemi,aic8800-bt";
-			max-speed = <0x16e360>;
-		};
+		/* Commented out until armbian/linux-rockchip#526 (hci_h4 serdev) lands: declaring this
+		 * child hands the uart to the serdev bus, which then has no driver to bind - no hci0,
+		 * and no ttyS2 for hciattach to fall back on.
+		 *
+		 * bluetooth {
+		 *	compatible = "aicsemi,aic8800-bt";
+		 *	max-speed = <0x16e360>;
+		 * };
+		 */
 	};
 
 	uart3: serial@ffa08000 {

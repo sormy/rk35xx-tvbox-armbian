@@ -1,58 +1,63 @@
-# R69 firmware payload — the files copied verbatim into the rootfs. Single source of truth, shared by
-# build-image.sh (stages into the offline image via e2cp) and r69-update (installs into the live / ).
-# One line per file:  <mode> <src-under-firmware/> <dest-absolute>.  Blank lines and #comments ignored.
-# The DKMS driver *sources* (.c/.h) are NOT here — they're fetched by fetch-dkms-src.sh.
+# R69 firmware payload — files copied verbatim into the rootfs (mode src dest, src under firmware/).
+# Mechanism scripts are family-level (rk35xx-*, firmware/common/); this list is mostly board data.
+# DKMS *sources* are fetched by board.conf's board_stage_dkms, built by rk35xx-firstboot.
 
-# first-boot setup + per-boot MAC pin (services enabled via a multi-user.target drop-in, image-only)
-0755 r69/r69-firstboot                          /usr/local/sbin/r69-firstboot
-0644 r69/r69-firstboot.service                  /etc/systemd/system/r69-firstboot.service
-0755 r69/r69-mac-pin                            /usr/local/sbin/r69-mac-pin
-0644 r69/r69-mac-pin.service                    /etc/systemd/system/r69-mac-pin.service
+# family first boot (enabled via a multi-user.target drop-in at image build), plus the board's own
+# first-boot work: the AIC8800 Wi-Fi stack and Bluetooth policy
+0755 common/rk35xx-firstboot                        /usr/local/sbin/rk35xx-firstboot
+0644 common/rk35xx-firstboot.service                /etc/systemd/system/rk35xx-firstboot.service
+0755 r69/rk35xx-firstboot-board                     /usr/local/sbin/rk35xx-firstboot-board
 
-# IR-remote DKMS (setup script + build files; .c/.h fetched by fetch-dkms-src.sh)
-0755 r69/rockchip-pwm-remotectl-r69-setup /usr/local/sbin/rockchip-pwm-remotectl-r69-setup
+# per-boot MAC pin: factory address from eMMC vendor storage, else derived from the SoC id.
+# mac-oui lists this board's interfaces; a board without it opts out.
+0755 common/rk35xx-vendor-storage                   /usr/local/sbin/rk35xx-vendor-storage
+0755 common/rk35xx-mac-pin                          /usr/local/sbin/rk35xx-mac-pin
+0644 common/rk35xx-mac-pin.service                  /etc/systemd/system/rk35xx-mac-pin.service
+0644 r69/mac-oui                                    /usr/local/share/rk35xx/mac-oui
 
-# RK630 Ethernet-PHY DKMS
-0755 r69/rk630-phy-r69-setup /usr/local/sbin/rk630-phy-r69-setup
+# Bluetooth attach — stands in for hci_h4 serdev until the kernel binds uart2's bluetooth child
+0755 r69/rk35xx-bt                                  /usr/local/sbin/rk35xx-bt
+0644 r69/rk35xx-bt.service                          /etc/systemd/system/rk35xx-bt.service
 
-# standby-LED hooks (red-on/blue-off at poweroff + suspend)
-0755 common/rk35xx-led-shutdown                      /usr/lib/systemd/system-shutdown/r69-led
-0755 common/rk35xx-led-sleep                         /usr/lib/systemd/system-sleep/r69-led
+# DKMS build files (sources fetched at image build; rk35xx-firstboot builds whatever is staged)
+0644 common/rockchip-pwm-remotectl-rk35xx/Makefile  /usr/src/rockchip-pwm-remotectl-rk35xx-1.0/Makefile
+0644 common/rockchip-pwm-remotectl-rk35xx/dkms.conf /usr/src/rockchip-pwm-remotectl-rk35xx-1.0/dkms.conf
 
-# power-button behaviour (zz- prefix so these drop-ins win)
-0644 common/rk35xx-suspend.conf                   /etc/systemd/sleep.conf.d/zz-r69-suspend.conf
-0644 common/rk35xx-powerkey.conf                  /etc/systemd/logind.conf.d/zz-r69-powerkey.conf
+# family module autoload (IR remote + Ethernet PHY)
+0644 common/rk35xx-modules.conf                     /etc/modules-load.d/rk35xx.conf
 
-# Bluetooth attach + login hint
-0755 r69/r69-bt                                 /usr/local/sbin/r69-bt
-0644 r69/r69-bt.service                         /etc/systemd/system/r69-bt.service
-0755 r69/r69-motd-bluetooth                     /etc/update-motd.d/99-r69-bluetooth
+# standby-LED hooks + power-button behaviour
+0755 common/rk35xx-led-shutdown                     /usr/lib/systemd/system-shutdown/rk35xx-led
+0755 common/rk35xx-led-sleep                        /usr/lib/systemd/system-sleep/rk35xx-led
+0644 common/rk35xx-suspend.conf                     /etc/systemd/sleep.conf.d/zz-rk35xx-suspend.conf
+0644 common/rk35xx-powerkey.conf                    /etc/systemd/logind.conf.d/zz-rk35xx-powerkey.conf
 
-# login-banner board name: armbian-bsp upgrades reset BOARD_NAME in /etc/armbian-release; this
-# apt Post-Invoke hook puts "R69" back after every apt run (BOARD=rock-2f stays for the tooling)
-0755 r69/r69-boardname                          /usr/local/sbin/r69-boardname
-0644 r69/r69-boardname.apt                      /etc/apt/apt.conf.d/99-r69-boardname
+# login-banner board name (reads /usr/local/share/rk35xx/board-name)
+0755 common/rk35xx-boardname                        /usr/local/sbin/rk35xx-boardname
+0644 common/rk35xx-boardname.apt                    /etc/apt/apt.conf.d/99-rk35xx-boardname
+0644 r69/board-name                                 /usr/local/share/rk35xx/board-name
+# board key (= firmware/<board>/), so rk35xx-update knows which payload to install
+0644 r69/board-id                                   /usr/local/share/rk35xx/board-id
 
-# DTB master copy + kernel postinst.d hooks (persist our DTB, prep headers so DKMS builds)
-0644 r69/board.dtb                              /usr/local/share/r69/board.dtb
-0755 r69/r69-dtb-persist                        /etc/kernel/postinst.d/r69-dtb-persist
-0755 common/rk35xx-kernel-prepare                  /etc/kernel/postinst.d/00-r69-kernel-prepare
+# DTB master copy + kernel postinst.d hooks
+0644 r69/board.dtb                                  /usr/local/share/rk35xx/board.dtb
+0755 common/rk35xx-dtb-persist                      /etc/kernel/postinst.d/rk35xx-dtb-persist
+0755 common/rk35xx-kernel-prepare                   /etc/kernel/postinst.d/00-rk35xx-kernel-prepare
 
-# R69 loader pair + write_uboot_platform override: armbian-install (and any other bootloader
-# write) flashes these instead of the ROCK-2F blobs that soft-brick the box (issue #6)
-0644 r69/factory_idbloader.bin                  /usr/local/share/r69/factory_idbloader.bin
-0644 common/u-boot.itb                          /usr/local/share/r69/u-boot.itb
-0644 r69/r69-platform-install                   /usr/lib/u-boot/platform_install.sh
+# board loader pair + write_uboot_platform override (armbian-install soft-brick guard)
+0644 r69/factory_idbloader.bin                      /usr/local/share/rk35xx/factory_idbloader.bin
+0644 common/u-boot.itb                              /usr/local/share/rk35xx/u-boot.itb
+0644 common/rk35xx-platform-install                 /usr/lib/u-boot/platform_install.sh
 
 # hardware watchdog: systemd pings it, the SoC resets the box if it stops (node enabled in board.dtb)
-0644 common/rk35xx-watchdog.conf                /etc/systemd/system.conf.d/zz-r69-watchdog.conf
+0644 common/rk35xx-watchdog.conf                    /etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf
 
 # hardware video codec: open the MPP/RGA/dma-heap nodes to group video (see docs/codec.md)
-0644 common/rk35xx-vpu.rules                    /etc/udev/rules.d/99-r69-vpu.rules
+0644 common/rk35xx-vpu.rules                        /etc/udev/rules.d/99-rk35xx-vpu.rules
 
-# in-place updater, so `r69-update --pull` works on the box without a checkout
-0755 ../rk35xx-update                           /usr/local/sbin/rk35xx-update
-0755 ../r69-update                              /usr/local/sbin/r69-update
+# stable names for the integrated inputs, and clear the Android-style BT rfkill soft block
+0644 common/rk35xx-input-names.rules                /etc/udev/rules.d/60-rk35xx-input-names.rules
+0644 common/rk35xx-rfkill-bt.rules                  /etc/udev/rules.d/60-rk35xx-rfkill-bt.rules
 
-# kill the base image's getty on ttyFIQ0 (device can't exist here) — else boot stalls 90 s
-0644 common/rk35xx-ttyfiq0-getty.service      /etc/systemd/system/serial-getty@ttyFIQ0.service
+# in-place updater, so `rk35xx-update --pull` works on the box without a checkout
+0755 ../rk35xx-update                               /usr/local/sbin/rk35xx-update

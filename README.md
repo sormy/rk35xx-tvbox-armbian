@@ -1,10 +1,5 @@
 # Armbian for RK35xx TV boxes
 
-> **Being folded into Armbian as native boards.** R69:
-> **[armbian/build#10440](https://github.com/armbian/build/pull/10440)**, under review; H96 Max
-> pending. Images then come from Armbian's CI, with the fixes in the kernel instead of DKMS modules
-> and systemd units.
-
 Run Debian on a **$35 RK3518 Android TV box**. Silent, fanless, complete in the box: case, PSU, HDMI
 cable, IR + Bluetooth remote.
 
@@ -17,7 +12,11 @@ fixups. Kernel and userspace keep coming from `apt upgrade`.
 
 **Why an overlay and not an Armbian board?** An evening's work, and a board stays just data.
 Upstreaming means merging every change into one shared kernel without side effects for the other
-boards on it, hunk by reviewed hunk: high investment up front, maintenance after.
+boards on it, hunk by reviewed hunk: high investment up front, maintenance after. Tried anyway and
+withdrawn — [build#10440](https://github.com/armbian/build/pull/10440) and
+[linux-rockchip#528](https://github.com/armbian/linux-rockchip/pull/528) — so these stay downstream.
+Nothing is lost by it: the device tree and board config install onto a stock Armbian image, and the
+kernel fixes are board-independent and go upstream on their own.
 
 ## Boxes
 
@@ -26,6 +25,7 @@ boards on it, hunk by reviewed hunk: high investment up front, maintenance after
 | Box        | <img src="docs/r69/image1.jpg" width="300"> | <img src="docs/h96max/image1.jpg" width="300"> |
 | Board      | <img src="docs/r69/board.jpg" width="300">  | <img src="docs/h96max/board.jpg" width="300">  |
 | Board key  | `r69`                                       | `h96max`                                       |
+| Silkscreen | `XR821_V1.1`                                | `3518_ZX_V01 20250818`                         |
 | SoC        | RK3518                                      | RK3518                                         |
 | RAM        | 2 GB (1.5 GB usable)                        | 2 GB                                           |
 | eMMC       | 16 GB Samsung                               | 16 GB Micron                                   |
@@ -68,8 +68,8 @@ inherited; the numbers behind each ✅ are in the board docs.
 | **Network**                                   |     |         |
 | Ethernet 10/100                               | ✅  |   ✅    |
 | Wire speed under 4-core load                  | ✅  |   🟡    |
-| Wi-Fi 2.4 GHz                                 | ✅  |   🟡    |
-| Wi-Fi 5 GHz                                   | 🟡  |   ✅    |
+| Wi-Fi 2.4 GHz                                 | ✅  |   ✅    |
+| Wi-Fi 5 GHz                                   | ✅  |   ✅    |
 | Bluetooth                                     | ✅  |   ✅    |
 | Bundled remote pairs over BLE                 | ✅  |   ✅    |
 | Wake-on-LAN                                   | ➖  |   ➖    |
@@ -141,6 +141,16 @@ the eMMC first.
 > storage (`SSKR`, 8192 — HDCP/DRM keys) with them; that part is fixed upstream, but only for those
 > two stores. None of it regenerates.
 
+> **The fix has not shipped yet.** Until it does, assume the install zeroed sectors 7168–16383 and
+> put them back from your dump. `end0` coming up on a derived address instead of the label one is
+> the tell. Safe on the running system — it touches neither the loaders (64, 16384) nor the rootfs.
+>
+> ```sh
+> dd if=emmc-stock.img bs=512 skip=7168 count=9216 of=window.bin          # on the host
+> sudo dd if=window.bin of=/dev/mmcblkX bs=512 seek=7168 count=9216 conv=notrunc,fsync
+> sudo rk35xx-vendor-storage lan                                          # expect the label address
+> ```
+
 **Boot from SD, dump the whole chip somewhere durable, then install.** In that order:
 
 ```sh
@@ -180,7 +190,11 @@ sudo rk35xx-update --pull         # …or on the box, fetching the repo itself
 ```
 
 Installs the payload, rebuilds DKMS, reinstalls the DTB, restarts what changed; reboots only if
-`board.dtb` did, never touches the bootloader. On the R69, `r69-update` / `r69-deploy` still work.
+`board.dtb` did, never touches the bootloader.
+
+> **R69 boxes deployed before the naming was unified**: the `r69-*` commands are gone. Run
+> `sudo rk35xx-update --pull` once — it still recognises the old layout, and removes the `r69-`
+> units, hooks and DKMS copies it replaces.
 
 > Updating **overwrites the files it ships** — keep customisations elsewhere.
 

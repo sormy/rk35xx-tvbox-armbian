@@ -1,0 +1,4 @@
+# <iface> <prefix> — derivation fallback only; vendor storage wins when it holds an address.
+# Locally administered (bit 0x02 set): these are invented, not assigned.
+end0 c6:2a:fe
+wlan0 8a:00:33

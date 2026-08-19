@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# r69-deploy — the historical entry point for pushing this repo to an R69 over SSH. The logic lives
-# in rk35xx-deploy; this only pins the board so the name keeps working as documented.
-#   usage: ./r69-deploy [user@]host [--reboot | --no-reboot]
-exec "$(dirname "$0")/rk35xx-deploy" "$@" --board r69

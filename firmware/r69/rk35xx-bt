@@ -1,0 +1,26 @@
+#!/bin/sh
+# Attach the AIC8800 as hci0 when the kernel has not already bound uart2's bluetooth child.
+set -e
+
+[ -e /sys/class/bluetooth/hci0 ] && exit 0
+command -v hciattach >/dev/null 2>&1 || exit 0
+
+tty=$(ls /sys/devices/platform/ffa00000.serial/tty/ 2>/dev/null | head -1)
+[ -n "$tty" ] || { echo "rk35xx-bt: ffa00000.serial not found" >&2; exit 1; }
+dev="/dev/$tty"
+
+systemctl mask --now "serial-getty@$tty.service" 2>/dev/null || true
+fuser -k "$dev" 2>/dev/null || true
+sleep 1
+
+# the controller drops the first HCI reset often enough to need one retry
+for attempt in 1 2; do
+  hciattach -s 1500000 "$dev" any 1500000 flow nosleep 2>/dev/null || true
+  sleep 2
+  [ -e /sys/class/bluetooth/hci0 ] && { logger -t rk35xx-bt "hci0 on $dev (try $attempt)"; exit 0; }
+  pkill -f "hciattach.*$dev" 2>/dev/null || true
+  sleep 1
+done
+
+echo "rk35xx-bt: hci0 did not appear on $dev" >&2
+exit 1

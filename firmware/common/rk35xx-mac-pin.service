@@ -1,12 +1,13 @@
 [Unit]
-Description=Pin wlan0 + end0 MACs (vendor OUI + cpuid)
+Description=Pin per-unit MACs (factory address from vendor storage, else derived)
 After=systemd-modules-load.service
 Before=network-pre.target wpa_supplicant.service
 Wants=network-pre.target
+ConditionPathExists=/usr/local/share/rk35xx/mac-oui
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/sbin/r69-mac-pin
+ExecStart=/usr/local/sbin/rk35xx-mac-pin
 RemainAfterExit=yes
 
 [Install]

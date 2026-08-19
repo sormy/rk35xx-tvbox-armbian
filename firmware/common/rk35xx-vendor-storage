@@ -1,0 +1,72 @@
+#!/bin/sh
+# Read an item from Rockchip vendor storage on the eMMC.
+#   usage: rk35xx-vendor-storage lan|wifi|bt|sn|<id>      (RK_VS_DEV overrides the device)
+# MAC items print as aa:bb:cc:dd:ee:ff, others as text. Nothing printed, exit 1, if absent.
+# Locally-administered MACs are rejected: those are U-Boot's inventions, not the factory's.
+
+VNVM_SECTOR=7168
+VNVM_COPIES=4
+VNVM_COPY_SIZE=65536
+VS_DATA=1024                  # 16-byte header + 126 8-byte item slots
+
+case "${1:-}" in
+  sn)   want=1; kind=text ;;
+  wifi) want=2; kind=mac ;;
+  lan)  want=3; kind=mac ;;
+  bt)   want=4; kind=mac ;;
+  ''|*[!0-9]*) echo "usage: $0 lan|wifi|bt|sn|<id>" >&2; exit 2 ;;
+  *)    want=$1; kind=text ;;
+esac
+
+emmc="${RK_VS_DEV:-}"
+for d in /dev/mmcblk[0-9]; do
+  [ -n "$emmc" ] && break
+  [ -e "${d}boot0" ] && [ -e "${d}boot1" ] && { emmc="$d"; break; }
+done
+[ -n "$emmc" ] || exit 1
+
+le() {
+  s=$1; v=0; m=1; i=1
+  while [ "$i" -lt "${#s}" ]; do
+    b=$(printf %s "$s" | cut -c"$i"-$((i+1)))
+    v=$(( v + 0x$b * m )); m=$((m * 256)); i=$((i + 2))
+  done
+  echo "$v"
+}
+
+hex() { dd if="$emmc" bs=1 skip="$1" count="$2" 2>/dev/null | od -An -tx1 -v | tr -d ' \n'; }
+
+best_ver=-1; best=""
+c=0
+while [ "$c" -lt "$VNVM_COPIES" ]; do
+  base=$(( VNVM_SECTOR * 512 + c * VNVM_COPY_SIZE )); c=$((c + 1))
+  h=$(hex "$base" 16)
+  [ "$(printf %s "$h" | cut -c1-8)" = "44564b52" ] || continue    # DVKR
+  ver=$(le "$(printf %s "$h" | cut -c9-16)")
+  num=$(le "$(printf %s "$h" | cut -c21-24)")
+  [ "$ver" -gt "$best_ver" ] 2>/dev/null || continue
+  [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le 126 ] || continue
+  items=$(hex $((base + 16)) $((num * 8)))
+  i=0
+  while [ "$i" -lt "$num" ]; do
+    f=$(( i * 16 + 1 )); i=$((i + 1))
+    [ "$(le "$(printf %s "$items" | cut -c$f-$((f+3)))")" = "$want" ] || continue
+    off=$(le "$(printf %s "$items" | cut -c$((f+4))-$((f+7)))")
+    size=$(le "$(printf %s "$items" | cut -c$((f+8))-$((f+11)))")
+    at=$((base + VS_DATA + off))
+    if [ "$kind" = mac ]; then
+      m=$(dd if="$emmc" bs=1 skip="$at" count=6 2>/dev/null \
+          | od -An -tx1 -v | tr -d '\n' | sed 's/^ *//; s/  */:/g; s/:$//')
+      case "$m" in ??:??:??:??:??:??) ;; *) continue ;; esac
+      [ $(( $((0x${m%%:*})) & 2 )) -eq 0 ] || continue
+      [ "$m" = "00:00:00:00:00:00" ] && continue
+      best_ver=$ver; best=$m
+    else
+      best_ver=$ver
+      best=$(dd if="$emmc" bs=1 skip="$at" count="$size" 2>/dev/null | tr -d '\000')
+    fi
+  done
+done
+
+[ -n "$best" ] || exit 1
+echo "$best"

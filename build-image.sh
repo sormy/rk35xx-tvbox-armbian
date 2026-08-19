@@ -42,17 +42,21 @@ IDBLOADER_SEEK=64
 UBOOT_SEEK=16384
 # serial console on ff9f0000/ttyS0, not Armbian's stock ttyS2 (= a data UART on these boards)
 SERIALCON="earlycon=uart8250,mmio32,0xff9f0000 console=ttyS0,1500000"
+# the kernel builds rockchip_pwm_remotectl in, without the shared-IRQ fix: it storms the group
+# IRQ and drops IR wake. Suppress it so our patched module owns the receiver.
+IR_BLACKLIST="initcall_blacklist=rk_pwm_driver_init"
+BOARD_CMA="${BOARD_CMA:-256M}"   # the tree reserves 8 MiB, too little for one 4K frame
+BOARD_NAME_FILE="$FW/$BOARD/board-name"   # same file the apt hook restores from
 
 # every static payload file (mode src dest) must exist
 PAYLOAD_SRCS="$(sed -E 's/^[[:space:]]*#.*//; /^[[:space:]]*$/d' "$PAYLOAD" | awk '{print $2}')"
-for f in "$BASE" "$IDBLOADER" "$UBOOT" "$DTB" "$PAYLOAD" "$FW/common/fetch-dkms-src.sh"; do
+for f in "$BASE" "$IDBLOADER" "$UBOOT" "$DTB" "$PAYLOAD" "$BOARD_NAME_FILE" "$FW/common/fetch-dkms-src.sh"; do
   [ -f "$f" ] || { echo "Missing: $f"; exit 1; }
 done
 for s in $PAYLOAD_SRCS; do
   [ -f "$FW/$s" ] || { echo "Missing payload source: firmware/$s"; exit 1; }
 done
-# the patched e2tools, never the stock ones: stock e2rm frees a symlink's target string as block
-# numbers and leaks removed directories, and both corrupt the image silently
+# patched e2tools only: stock e2rm corrupts an image on delete
 E2DIR="$REPO/tools/e2tools"
 PATH="$E2DIR:$PATH"
 for t in e2cp e2ls e2ln e2mkdir e2rm; do
@@ -97,6 +101,17 @@ else
 fi
 echo "      rootfs partition: $FS"
 
+# every payload path assumes the ROCK 2F kernel, dtb-<ver> layout and module set
+REL="$(mktemp)"
+BASE_BOARD=""
+e2cp "$FS:/etc/armbian-release" "$REL" 2>/dev/null && BASE_BOARD="$(sed -n 's/^BOARD=//p' "$REL" | tr -d '"' | tr -d '\r')"
+rm -f "$REL"
+if [ "$BASE_BOARD" != "${EXPECT_BASE_BOARD:-rock-2f}" ]; then
+  echo "Base image is BOARD='${BASE_BOARD:-unknown}', expected '${EXPECT_BASE_BOARD:-rock-2f}'."
+  echo "Use an Armbian ROCK 2F image, or set EXPECT_BASE_BOARD to override."
+  exit 1
+fi
+
 # ---- 4. install the board device tree + console --------------------------------------
 echo "[4/5] Installing $BOARD DTB + console"
 VERDIR="$(e2ls "$FS:/boot" | tr -s ' \t' '\n' | grep '^dtb-' | head -1)"
@@ -106,9 +121,11 @@ e2cp "$DTB" "$FS:/boot/$VERDIR/$FDT"
 
 ENV="$(mktemp)"
 e2cp "$FS:/boot/armbianEnv.txt" "$ENV"
-# console=display drops boot.cmd's stray console=ttyS2; ours goes via extraargs
+# console=display drops boot.cmd's stray console=ttyS2; ours goes via extraargs. tty1 stays last,
+# as boot.cmd puts it for console=both, so /dev/console is HDMI and serial still gets the kernel log.
 grep -v -E '^fdtfile=|^extraargs=|^console=' "$ENV" > "$ENV.new" || true
-printf 'fdtfile=%s\nconsole=display\nextraargs=%s\n' "$FDT" "$SERIALCON" >> "$ENV.new"
+printf 'fdtfile=%s\nconsole=display\nextraargs=%s cma=%s %s console=tty1\n' \
+  "$FDT" "$SERIALCON" "$BOARD_CMA" "$IR_BLACKLIST" >> "$ENV.new"
 e2cp "$ENV.new" "$FS:/boot/armbianEnv.txt"
 rm -f "$ENV" "$ENV.new"
 
@@ -128,7 +145,9 @@ printf '[Unit]\nWants=%s\n' "$BOARD_WANTS" > "$TMP/10-$BOARD_HOSTNAME.conf"
 e2mkdir "$FS:/etc/systemd/system/multi-user.target.d" 2>/dev/null || true
 e2cp "$TMP/10-$BOARD_HOSTNAME.conf" "$FS:/etc/systemd/system/multi-user.target.d/10-$BOARD_HOSTNAME.conf"
 
-# (the ttyFIQ0 getty override now ships in payload.list, so updates install it too)
+# the base enables a getty on ttyFIQ0; that device cannot exist here (fiq-debugger is off), and
+# systemd would wait out the full 90 s device timeout on every boot
+e2rm "$FS:/etc/systemd/system/getty.target.wants/serial-getty@ttyFIQ0.service" 2>/dev/null || true
 
 # --- board-specific drop-ins + DKMS source staging (hooks from board.conf) ---
 board_image_tweaks "$FS" "$TMP"
@@ -159,7 +178,7 @@ if [ -n "$OLDH" ] && e2cp "$FS:/etc/hosts" "$TMP/hosts" 2>/dev/null; then
 fi
 # relabel the login MOTD board name (display only; BOARD= identifier stays for armbian tooling)
 if e2cp "$FS:/etc/armbian-release" "$TMP/arel" 2>/dev/null; then
-  sed "s/^BOARD_NAME=.*/BOARD_NAME=\"$BOARD_NAME_LABEL\"/" "$TMP/arel" > "$TMP/arel.new"
+  sed "s/^BOARD_NAME=.*/BOARD_NAME=\"$(cat "$BOARD_NAME_FILE")\"/" "$TMP/arel" > "$TMP/arel.new"
   e2cp "$TMP/arel.new" "$FS:/etc/armbian-release"
 fi
 rm -rf "$TMP"

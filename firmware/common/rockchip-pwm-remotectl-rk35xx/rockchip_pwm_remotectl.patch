@@ -1,0 +1,92 @@
+# shared-irq — bind the bundled IR remote's PWM-capture receiver (pwm3) on RK3518/RK3528 boxes.
+#
+# Authored against pristine upstream, pinned by commit (not the moving branch):
+#   repo:   armbian/linux-rockchip
+#   branch: rk-6.1-rkr5.1
+#   commit: 31cd4f11b5ec31fc361256a04237416f278b62b2
+#   file:   drivers/input/remotectl/rockchip_pwm_remotectl.c
+# (the .h is used pristine — unpatched.)
+#
+#   1. Share the capture IRQ: IRQF_NO_SUSPEND -> | IRQF_SHARED on the rk_pwm_irq request
+#      (dev_id is already ddata, which IRQF_SHARED requires).
+#   2. Drop the non-exported irq_to_desc(): use exported irq_get_irq_data()/irqd_to_hwirq().
+#   3. Share the pwrmatch IRQ and mark it as a wake source; the power key arrives there, not on
+#      the capture IRQ that probe arms.
+#   4. Rename the driver, both .name and the platform_driver symbol. The symbol matters: the
+#      kernel now builds this driver in, and initcall_blacklist= matches by initcall name, so
+#      rk_pwm_driver_init must belong to the built-in alone or blacklisting kills both.
+#
+# Apply with: patch -p1 < shared-irq.patch
+--- a/rockchip_pwm_remotectl.c
++++ b/rockchip_pwm_remotectl.c
+@@ -513,11 +513,17 @@
+ 		goto end;
+ 	}
+ 	ret = devm_request_irq(&pdev->dev, pwr_irq, rockchip_pwm_pwrirq,
+-			IRQF_NO_SUSPEND, "rk_pwm_pwr_irq", ddata);
++			IRQF_NO_SUSPEND | IRQF_SHARED, "rk_pwm_pwr_irq", ddata);
+ 	if (ret) {
+ 		dev_err(&pdev->dev, "cannot claim PWR_IRQ!!!\n");
+ 		goto end;
+ 	}
++	/* remotectl_suspend() masks the capture channel and leaves PWM_PWR_INT_ENABLE
++	 * set, so the power key arrives here, not on the capture IRQ probe arms for
++	 * wake. IRQF_NO_SUSPEND keeps it delivered but is not a wake source.
++	 */
++	if (enable_irq_wake(pwr_irq))
++		dev_warn(&pdev->dev, "cannot set PWR_IRQ as wake source\n");
+ 	val = readl_relaxed(ddata->base + PWM_REG_INT_EN(pwm_id));
+ 	val = (val & 0xFFFFFF7F) | PWM_PWR_INT_ENABLE;
+ 	writel_relaxed(val, ddata->base + PWM_REG_INT_EN(pwm_id));
+@@ -754,7 +760,7 @@
+ {
+ 	struct rkxx_remotectl_drvdata *ddata = platform_get_drvdata(pdev);
+ 	struct device_node *np = pdev->dev.of_node;
+-	struct irq_desc *desc;
++	struct irq_data *irqd;
+ 	int support_psci = 0;
+ 	int irq;
+ 	int hwirq;
+@@ -771,10 +777,10 @@
+ 	if (!support_psci)
+ 		goto end;
+ 	irq = ddata->irq;
+-	desc = irq_to_desc(irq);
+-	if (!desc || !desc->irq_data.domain)
++	irqd = irq_get_irq_data(irq);
++	if (!irqd || !irqd->domain)
+ 		goto end;
+-	hwirq = desc->irq_data.hwirq;
++	hwirq = irqd_to_hwirq(irqd);
+ 	ret = sip_smc_remotectl_config(REMOTECTL_SET_IRQ, hwirq);
+ 	if (ret) {
+ 		dev_err(&pdev->dev, "set irq err, set support_psci to 0 !!\n");
+@@ -978,7 +984,7 @@
+ 	cpumask_set_cpu(cpu_id, &cpumask);
+ 	irq_set_affinity_hint(irq, &cpumask);
+ 	ret = devm_request_irq(&pdev->dev, irq, ddata->pwm_data->funcs.irq_handler,
+-			       IRQF_NO_SUSPEND, "rk_pwm_irq", ddata);
++			       IRQF_NO_SUSPEND | IRQF_SHARED, "rk_pwm_irq", ddata);
+ 	if (ret) {
+ 		dev_err(&pdev->dev, "cannot claim IRQ %d\n", irq);
+ 		goto error_irq;
+@@ -1071,9 +1077,9 @@
+ 	remotectl_suspend(&pdev->dev);
+ }
+ 
+-static struct platform_driver rk_pwm_driver = {
++static struct platform_driver rk_pwm_driver_rk35xx = {
+ 	.driver = {
+-		.name = "remotectl-pwm",
++		.name = "remotectl-pwm-rk35xx",
+ 		.of_match_table = rk_pwm_of_match,
+ #ifdef CONFIG_PM
+ 		.pm = &remotectl_pm_ops,
+@@ -1083,6 +1089,6 @@
+ 	.shutdown = rk_pwm_remotectl_shutdown,
+ };
+ 
+-module_platform_driver_probe(rk_pwm_driver, rk_pwm_probe);
++module_platform_driver_probe(rk_pwm_driver_rk35xx, rk_pwm_probe);
+ 
+ MODULE_LICENSE("GPL");

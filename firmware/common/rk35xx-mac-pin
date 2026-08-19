@@ -1,0 +1,43 @@
+#!/bin/sh
+# Factory address from vendor storage, else derived from the SoC serial. Never random.
+
+OUIS=/usr/local/share/rk35xx/mac-oui
+VS=/usr/local/sbin/rk35xx-vendor-storage
+
+[ -r "$OUIS" ] || exit 0
+
+cpuid=$(tr -d '\000' < /proc/device-tree/serial-number 2>/dev/null)
+
+derive() {
+  [ -n "$cpuid" ] || return 1
+  h=$(printf '%s-%s' "$cpuid" "$1" | sha256sum | cut -c1-6)
+  a=${2%%:*}; r=${2#*:}; b=${r%%:*}; c=${r#*:}
+  a=$(printf '%02x' $(( 0x$a | 2 )))          # invented, so locally administered
+  printf '%s:%s:%s:%s:%s:%s\n' "$a" "$b" "$c" "$(printf %s "$h" | cut -c1-2)" \
+    "$(printf %s "$h" | cut -c3-4)" "$(printf %s "$h" | cut -c5-6)"
+}
+
+apply() {
+  n=0
+  while [ ! -e "/sys/class/net/$1" ] && [ "$n" -lt 50 ]; do sleep 0.2; n=$((n + 1)); done
+  [ -e "/sys/class/net/$1" ] || return 0
+  [ "$(cat "/sys/class/net/$1/address" 2>/dev/null)" = "$2" ] && return 0
+  ip link set "$1" down 2>/dev/null
+  ip link set "$1" address "$2" \
+    && logger -t rk35xx-mac-pin "$1=$2 ($3)" \
+    || logger -t rk35xx-mac-pin "FAILED $1=$2 ($3)"
+  ip link set "$1" up 2>/dev/null
+}
+
+while read -r iface oui; do
+  case "$iface" in ''|\#*) continue ;; esac
+  case "$iface" in
+    end0|eth*) item=lan ;;
+    wlan*)     item=wifi ;;
+    *)         item="" ;;
+  esac
+  mac=""
+  [ -n "$item" ] && mac=$("$VS" "$item" 2>/dev/null) || mac=""
+  if [ -n "$mac" ]; then src=vendor; else mac=$(derive "$iface" "$oui") && src=derived; fi
+  [ -n "$mac" ] && apply "$iface" "$mac" "$src"
+done < "$OUIS"

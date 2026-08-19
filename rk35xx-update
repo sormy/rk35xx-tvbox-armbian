@@ -6,8 +6,8 @@
 #   usage: sudo rk35xx-update [--board <id>] [--pull] [--reboot | --no-reboot]
 #
 # The board is auto-detected from the identity dir; --board overrides. Every installed name derives
-# from the board's BOARD_PREFIX, so the R69 keeps its historical r69- names while every other board
-# uses the neutral rk35xx- ones (see firmware/<board>/board.conf).
+# from the board's BOARD_PREFIX (see firmware/<board>/board.conf), which is rk35xx- on every board.
+# R69 boxes deployed before that used r69- names; those are removed on the next run — see migrate().
 #
 # Deliberately does NOT redo the one-time image-build steps (rebrand, the unit-enable drop-in, the
 # console/armbianEnv edit, board drop-ins) — those are already in place on a booted box, and the
@@ -71,10 +71,46 @@ P="${BOARD_PREFIX:?board.conf must set BOARD_PREFIX}"
 
 SHARE=/usr/local/share/$P
 DKMS_IR=/usr/src/rockchip-pwm-remotectl-$P-1.0
-DKMS_PHY=/usr/src/rk630-phy-$P-1.0
 
 dtbsum() { [ -f "$SHARE/board.dtb" ] && md5sum "$SHARE/board.dtb" | cut -d' ' -f1 || echo none; }
 OLD_DTB="$(dtbsum)"
+
+# pre-rename r69- units and hooks run alongside the rk35xx- ones if left in place.
+# /usr/local/share/r69 stays: the running checkout may live under it.
+migrate() {
+	old_units="r69-firstboot.service r69-mac-pin.service r69-bt.service"
+	for u in $old_units; do
+		[ -e "/etc/systemd/system/$u" ] || continue
+		echo "  migrating: removing $u"
+		systemctl disable --now "$u" >/dev/null 2>&1 || true
+		rm -f "/etc/systemd/system/$u"
+	done
+	for f in /usr/local/sbin/r69-firstboot /usr/local/sbin/r69-mac-pin /usr/local/sbin/r69-bt \
+		/usr/local/sbin/r69-boardname /usr/local/sbin/r69-update \
+		/usr/local/sbin/rockchip-pwm-remotectl-r69-setup /usr/local/sbin/rk630-phy-r69-setup \
+		/usr/lib/systemd/system-shutdown/r69-led /usr/lib/systemd/system-sleep/r69-led \
+		/etc/systemd/sleep.conf.d/zz-r69-suspend.conf /etc/systemd/logind.conf.d/zz-r69-powerkey.conf \
+		/etc/systemd/system.conf.d/zz-r69-watchdog.conf /etc/udev/rules.d/99-r69-vpu.rules \
+		/etc/apt/apt.conf.d/99-r69-boardname /etc/update-motd.d/99-r69-bluetooth \
+		/etc/kernel/postinst.d/r69-dtb-persist /etc/kernel/postinst.d/00-r69-kernel-prepare; do
+		if [ -e "$f" ]; then echo "  migrating: removing $f"; rm -f "$f"; fi
+	done
+	# rk630phy ships in-tree now, so its DKMS package is gone from the payload
+	for m in rockchip-pwm-remotectl-r69/1.0 rk630-phy-r69/1.0 rk630-phy-rk35xx/1.0; do
+		dkms status "$m" 2>/dev/null | grep -q . || continue
+		echo "  migrating: removing DKMS $m"
+		dkms remove "$m" --all >/dev/null 2>&1 || true
+	done
+	rm -rf /usr/src/rockchip-pwm-remotectl-r69-1.0 /usr/src/rk630-phy-r69-1.0 /usr/src/rk630-phy-rk35xx-1.0
+
+	# the ttyFIQ0 getty is now deleted at image build, not shadowed by a no-op unit
+	for f in /etc/systemd/system/getty.target.wants/serial-getty@ttyFIQ0.service \
+		/etc/systemd/system/serial-getty@ttyFIQ0.service; do
+		if [ -e "$f" ]; then echo "  migrating: removing $f"; rm -f "$f"; fi
+	done
+	return 0
+}
+migrate
 
 echo "[1/5] installing firmware payload ($BOARD)"
 while read -r mode src dest; do
@@ -84,13 +120,8 @@ done < "$FW/$BOARD_PAYLOAD"
 "/usr/local/sbin/$P-boardname"   # re-assert the login-banner name (apt upgrades reset it)
 
 echo "[2/5] refreshing DKMS driver sources + rebuilding"
-"$FW/common/fetch-dkms-src.sh" "$DKMS_IR" "$DKMS_PHY"
-# the sources are rk35xx-named; rewriting them to $P is a no-op on every board except the R69
-sed -i "s/remotectl-pwm-rk35xx/remotectl-pwm-$P/" "$DKMS_IR/rockchip_pwm_remotectl.c"
-sed "s/rk35xx/$P/g" "$FW/common/ir/Makefile"      > "$DKMS_IR/Makefile"
-sed "s/rk35xx/$P/g" "$FW/common/ir/dkms.conf"     > "$DKMS_IR/dkms.conf"
-sed "s/rk35xx/$P/g" "$FW/common/ethphy/dkms.conf" > "$DKMS_PHY/dkms.conf"
-printf 'obj-m += rk630phy.o\n'                    > "$DKMS_PHY/Makefile"
+# Makefile and dkms.conf come from payload.list; only the sources are fetched
+"$FW/common/fetch-dkms-src.sh" "$DKMS_IR"
 
 # rebuild so a changed source or a new kernel actually takes: remove --all, then add/build/install.
 # Boards that ship per-driver setup scripts (the R69) go through those, keeping their exact behavior.
@@ -106,7 +137,6 @@ dkms_rebuild() {
   dkms install -m "$name" -v 1.0 || echo "  ($name dkms install failed; continuing)"
 }
 dkms_rebuild "$DKMS_IR"
-dkms_rebuild "$DKMS_PHY"
 
 echo "[3/5] installing the DTB into the running kernel"
 "/etc/kernel/postinst.d/$P-dtb-persist" "$(uname -r)"

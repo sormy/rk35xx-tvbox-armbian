@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
-# Build patched e2tools into tools/e2tools (gitignored). build-image.sh puts that directory ahead of
-# PATH, so every e2cp/e2rm in the build uses these and never the stock ones.
+# Build patched e2tools into tools/e2tools (gitignored); build-image.sh puts it ahead of PATH.
+# Stock e2rm corrupts an image on delete, so the self-test below gates every build.
 #
-# Usage: ./build-e2tools.sh            # fetch, patch, build, self-test
-#        ./build-e2tools.sh --test     # re-run the self-test against what is already built
-#
-# Stock e2tools cannot safely edit an image: deleting a symlink frees its target string as block
-# numbers, and removing a directory leaks the inode. Both corrupt the rootfs, both are silent until
-# the box mounts it read-only. patches/e2tools/ fixes them and implements `e2ln -s`, which upstream
-# has always answered with "Not implemented yet". Upstream's own suite is one test that never
-# deletes anything, so the gate below is ours.
+# Usage: ./build-e2tools.sh [--test]
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
@@ -26,14 +19,13 @@ TOOLNAMES="e2cp e2ls e2ln e2mkdir e2mv e2rm e2tail"
 
 need() { command -v "$1" >/dev/null || { echo "missing: $1 — $2"; exit 1; }; }
 
-# e2fsprogs supplies both libext2fs (to build against) and mke2fs/debugfs/fsck.ext4 (to test with).
-# Homebrew keeps it keg-only, so it is on no default search path.
+# e2fsprogs supplies libext2fs plus mke2fs/debugfs/fsck.ext4; Homebrew keeps it keg-only
 for p in /opt/homebrew/opt/e2fsprogs /usr/local/opt/e2fsprogs; do
 	[ -d "$p" ] && { export PKG_CONFIG_PATH="$p/lib/pkgconfig:${PKG_CONFIG_PATH:-}"; PATH="$p/sbin:$p/bin:$PATH"; break; }
 done
 export PATH
 
-# --- the gate: prove the tool cannot corrupt an image before anything uses it ---
+# --- the gate ---
 selftest() {
 	local img tmp fail=0
 	for t in mke2fs fsck.ext4 debugfs; do need "$t" "install e2fsprogs"; done
@@ -46,8 +38,7 @@ selftest() {
 	head -c 40960 /dev/urandom > "$tmp/payload"
 
 	fresh() { rm -f "$img"; head -c 16777216 /dev/zero > "$img"; mke2fs -q -t ext4 -F "$img"; }
-	# every case must land back on the byte count of an untouched filesystem: a leak shows up as a
-	# higher count, a double-free as an fsck complaint
+	# a leak reads as a higher block count, a double-free as an fsck complaint
 	fresh; local base; base="$(fsck.ext4 -fn "$img" 2>&1 | tail -1 | sed 's/.*), //')"
 
 	check() {
@@ -71,7 +62,7 @@ selftest() {
 	fresh; "$OUT/e2mkdir" "$img:/a" >/dev/null; "$OUT/e2mkdir" "$img:/a/b" >/dev/null
 	       "$OUT/e2cp" "$tmp/payload" "$img:/a/b/f" >/dev/null; "$OUT/e2rm" -r "$img:/a";     check "rm -r nested"
 
-	# and the symlink must survive as a symlink, not just leave fsck quiet
+	# the symlink must also survive as one, not merely leave fsck quiet
 	fresh; "$OUT/e2ln" -s "$short" "$img:/L"
 	if [ "$(debugfs -R "stat /L" "$img" 2>/dev/null | sed -n 's/.*Fast link dest: "\(.*\)".*/\1/p')" = "$short" ]; then
 		printf '  PASS  %-22s target reads back\n' "e2ln -s"
@@ -106,7 +97,7 @@ else
 	rm -rf "$BUILD"
 	git clone --quiet "$E2TOOLS_REPO" "$BUILD"
 fi
-# discard the previous run's patches before reapplying, so a rebuild is not cumulative
+# discard the previous run's patches so a rebuild is not cumulative
 git -C "$BUILD" checkout --quiet --force "$E2TOOLS_VERSION"
 git -C "$BUILD" clean -qfd
 
@@ -121,7 +112,7 @@ autoreconf -i >/dev/null 2>&1
 # upstream builds with a warning of its own; keep the log and show it only if the build fails
 make -j"$(getconf _NPROCESSORS_ONLN)" >build.log 2>&1 || { tail -20 build.log; exit 1; }
 
-# one binary that dispatches on argv[0]; the tool names are links to it, as the install would make
+# one binary dispatching on argv[0]
 install -m 755 "$BUILD/e2tools" "$OUT/e2tools"
 for t in $TOOLNAMES; do ln -sf e2tools "$OUT/$t"; done
 

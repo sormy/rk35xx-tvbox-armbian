@@ -1,6 +1,0 @@
-#!/bin/sh
-# r69-update — the historical entry point for deployed R69 boxes, kept forever: boxes in the field
-# invoke exactly this path (/usr/local/share/r69/repo/r69-update). The logic lives in rk35xx-update;
-# the R69's r69- naming comes from firmware/r69/board.conf (BOARD_PREFIX), so behavior is unchanged.
-#   usage: sudo r69-update [--pull] [--reboot | --no-reboot]
-exec "$(dirname "$0")/rk35xx-update" --board r69 "$@"

@@ -1,0 +1,5 @@
+# <iface> <prefix> — derivation fallback only; vendor storage wins when it holds an address.
+# Locally administered (bit 0x02 set): these are invented, not assigned.
+# fe:fd:fc is the Seekwave driver's own fallback prefix; we make the tail deterministic.
+end0 02:ef:00
+wlan0 fe:fd:fc

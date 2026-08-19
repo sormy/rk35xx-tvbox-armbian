@@ -1,8 +1,0 @@
-#!/bin/sh
-# kernel postinst.d hook: a kernel upgrade ships stock DTBs only — reinstall ours into the new dir
-version="$1"
-src=/usr/local/share/r69/board.dtb
-fdt=$(sed -n 's/^fdtfile=//p' /boot/armbianEnv.txt 2>/dev/null)
-[ -n "$version" ] && [ -f "$src" ] && [ -n "$fdt" ] || exit 0
-dst="/boot/dtb-$version/$fdt"
-mkdir -p "$(dirname "$dst")" && cp "$src" "$dst"
