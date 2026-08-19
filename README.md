@@ -284,11 +284,11 @@ has USB-C), trying both ports — only the OTG one enumerates. Hold the recessed
 jack, plug in the power cable, then release:
 
 ```sh
-./build-rktools.sh <r69|h96max>                         # rkdeveloptool + USB loader → tools/
-./tools/rkdeveloptool ld                                # Vid=0x2207,Pid=0x350c  Maskrom
-./tools/rkdeveloptool db tools/rk3528_spl_loader.bin    # loader into RAM; nothing works before it
-./tools/rkdeveloptool wl 0 emmc-stock.img               # restore the whole eMMC
-./tools/rkdeveloptool rd                                # reboot
+./build-rktools.sh                                     # rkdeveloptool + a loader per board
+./tools/rktools/rkdeveloptool ld                       # Vid=0x2207,Pid=0x350c  Maskrom
+./tools/rktools/rkdeveloptool db tools/rktools/rk3528_spl_loader-<board>.bin   # into RAM; nothing works first
+./tools/rktools/rkdeveloptool wl 0 emmc-stock.img      # restore the whole eMMC
+./tools/rktools/rkdeveloptool rd                       # reboot
 ```
 
 ✅ `ld` on the R69 (2026-08-14) · 🟡 H96 Max, and everything past `db`, untested here.

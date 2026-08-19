@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# Build the maskrom recovery kit into tools/ (gitignored): rkdeveloptool, plus the USB loader its
+# Build the maskrom recovery kit into tools/rktools (gitignored): rkdeveloptool, plus the USB loader its
 # `db` verb needs. Both are required when a box won't boot — hold the AV-jack button at power-on,
 # plug USB-A-to-A into a real host port, and the SoC enumerates as 2207:350c. Procedure:
 # README.md#recovery.
 #
-# Usage: ./build-rktools.sh <board>        # r69 | h96max
+# Usage: ./build-rktools.sh              # rkdeveloptool + one loader per board
+#        ./build-rktools.sh --test       # re-check what is already built
 #
-# The loader is the board's own DDR init + Rockchip's usbplug. Only the DDR half exists on the eMMC,
-# so a backup alone can never stand in for it.
+# A loader is the board's own DDR init + Rockchip's usbplug, so it is not portable between boards —
+# one is built per board, named for it. Only the DDR half exists on the eMMC, so a backup alone can
+# never stand in for it.
 # Built natively, never in a container: USB devices do not pass through to containers on macOS, so a
 # containerised binary could compile but never reach the box.
 set -euo pipefail
@@ -15,6 +17,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 TOOLS="$REPO/tools"                               # gitignored output dir
 BUILD="$TOOLS/src/rktools"                        # scratch clone, one per tool
+OUT="$TOOLS/rktools"
 RKBIN="$REPO/uboot-build/rkbin"                   # shared with build-uboot.sh, gitignored
 
 # --- pinned dependencies (bump deliberately, never float) ---
@@ -25,9 +28,30 @@ RKBIN_SHA="ecb4fcbe954edf38b3ae037d5de6d9f5bccf81f4"
 USBPLUG="bin/rk35/rk3528_usbplug_v1.04.bin"       # serves rl/wl over USB; maskrom-only, never flashed
 SPL="bin/rk35/rk3528_spl_v1.06.bin"               # matches the factory spl-v1.06 banner
 
-BOARD="${1:-}"
-IDB="$REPO/firmware/$BOARD/factory_idbloader.bin"
-[ -r "$IDB" ] || { echo "usage: $0 <board>   # $(cd "$REPO/firmware" && ls */factory_idbloader.bin | cut -d/ -f1 | tr '\n' ' ')"; exit 1; }
+# --- the gate. `pack` obfuscates the blobs, so the DDR init cannot be seen in the packed file;
+# that it came from this board's idbloader is checked at carve time instead. Here: structure. ---
+selftest() {
+	local fail=0 n=0 L b
+	[ -x "$OUT/rkdeveloptool" ] || { echo "nothing built yet — run $0 first"; exit 1; }
+	printf '  rkdeveloptool  %s\n' "$("$OUT/rkdeveloptool" -v 2>/dev/null | head -1)"
+	for L in "$OUT"/rk3528_spl_loader-*.bin; do
+		[ -s "$L" ] || continue
+		n=$((n + 1)); b="$(basename "$L" .bin)"; b="${b#rk3528_spl_loader-}"
+		if [ "$(head -c 4 "$L")" = BOOT ] && head -c 64 "$L" | strings | grep -q 8253; then
+			printf '  PASS  %-8s %s bytes, BOOT header, RK3528\n' "$b" "$(wc -c < "$L" | tr -d ' ')"
+		else
+			printf '  FAIL  %-8s not an RK3528 BOOT loader\n' "$b"; fail=1
+		fi
+	done
+	[ "$n" -gt 0 ] || { echo "  FAIL  no loaders in $OUT"; return 1; }
+	[ "$fail" = 0 ] || return 1
+	echo "rktools verified: $n board loader(s), rkdeveloptool runs"
+}
+
+if [ "${1:-}" = "--test" ]; then selftest; exit; fi
+
+BOARDS="$(cd "$REPO/firmware" && ls */factory_idbloader.bin 2>/dev/null | cut -d/ -f1 | tr '\n' ' ')"
+[ -n "$BOARDS" ] || { echo "no firmware/*/factory_idbloader.bin to build a loader from"; exit 1; }
 
 need() { command -v "$1" >/dev/null || { echo "missing: $1 — $2"; exit 1; }; }
 
@@ -49,7 +73,7 @@ case "$(uname -s)" in
 	*) echo "unsupported host: $(uname -s)"; exit 1 ;;
 esac
 
-mkdir -p "$TOOLS"
+mkdir -p "$TOOLS/src" "$OUT"
 if [ -d "$BUILD/.git" ]; then
 	git -C "$BUILD" fetch --quiet origin "$RKDEV_SHA" || true
 else
@@ -63,7 +87,7 @@ autoreconf -i >/dev/null
 ./configure "${CONFIGURE_ARGS[@]:-}" >/dev/null
 make -j"$(getconf _NPROCESSORS_ONLN)" >/dev/null
 
-install -m 755 "$BUILD/rkdeveloptool" "$TOOLS/rkdeveloptool"
+install -m 755 "$BUILD/rkdeveloptool" "$OUT/rkdeveloptool"
 
 # --- the USB loader: rkdeveloptool packs it itself, so this needs no x86 boot_merger ---
 if [ ! -e "$RKBIN/$USBPLUG" ]; then
@@ -71,6 +95,9 @@ if [ ! -e "$RKBIN/$USBPLUG" ]; then
 		git init -q && git remote add origin "$RKBIN_REPO"
 		git fetch -q --depth 1 origin "$RKBIN_SHA" && git checkout -q FETCH_HEAD )
 fi
+
+for BOARD in $BOARDS; do
+IDB="$REPO/firmware/$BOARD/factory_idbloader.bin"
 
 # CODE471 is the box's own DDR init, carved from its factory idbloader rather than guessed from
 # rkbin's variants — the IDB entry table at byte 0x78 is u16 start sector + u16 sector count.
@@ -105,12 +132,14 @@ strings "$RKBIN/$DDR" | grep -q "^ddr-v" || { echo "no DDR blob at sector $SEC o
 		[OUTPUT]
 		PATH=rk3528_spl_loader.bin
 	EOF
-	"$TOOLS/rkdeveloptool" pack > /dev/null
-	mv rk3528_spl_loader*.bin "$TOOLS/rk3528_spl_loader.bin"
+	"$OUT/rkdeveloptool" pack > /dev/null
+	mv rk3528_spl_loader*.bin "$OUT/rk3528_spl_loader-$BOARD.bin"
 	rm -f config.ini "$DDR" )
+echo "  loader $BOARD: $((CNT * 512)) B of DDR init"
+done
 
-echo "built: tools/rkdeveloptool  ·  tools/rk3528_spl_loader.bin ($BOARD DDR init, $((CNT * 512)) B)"
-"$TOOLS/rkdeveloptool" -v 2>/dev/null || true
+echo "built: tools/rktools/rkdeveloptool + $(echo $BOARDS | wc -w | tr -d ' ') loaders"
+selftest
 echo
 echo "Box in maskrom (AV-jack button held at power-on, USB-A-to-A to a real port):"
-echo "  tools/rkdeveloptool ld            # list devices — should show a Maskrom entry"
+echo "  tools/rktools/rkdeveloptool ld     # list devices — should show a Maskrom entry"

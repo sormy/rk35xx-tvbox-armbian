@@ -53,5 +53,13 @@ Upstream's own suite is a single test that never deletes anything, which is how 
 
 ## Upstream
 
-Neither fix is upstream (checked against `master`, 2026-08); the tarball and `master` carry the same
-unguarded call. Each patch here is formatted to send.
+| What            | Where                                                              |
+| --------------- | ------------------------------------------------------------------ |
+| `0001` + `0002` | reported as issue #38, submitted as PR #39 (applies to `master`)   |
+| `0003`          | superseded by PR #37, which does the same and updates the man page |
+
+`0003` stays here because we build `v0.1.2`, which predates #37. Drop it when a release carries that
+PR; drop `0001`/`0002` when a release carries #39.
+
+The project is dormant — last commit 2024-09-15, PRs open since 2020 — so assume the patches stay
+local and keep building them.

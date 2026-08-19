@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the board overrides that turn an included reference tree into this box's tree.
 
-Both inputs are decompiled with dtcx (-P -n), so references are already &labels and survive the
+Both inputs are decompiled with the patched dtc (-P -n), so references are already &labels and survive the
 copy. Emits, for each difference: a node override for changed properties, the whole node for one
 the base lacks, /delete-node/ for one the base has and the box does not.
 

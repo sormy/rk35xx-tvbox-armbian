@@ -16,9 +16,11 @@ DTS_DIR=${DTS_DIR:-$KERNEL/arch/arm64/boot/dts}
 
 set -ex
 
+[ -x tools/dtc/dtc ] || { echo "Need patched dtc. Run: ./build-dtc.sh"; exit 1; }
+
 cd "$(dirname "$0")/.."
 B=upstream/$BOARD
-DTC=dtcx/dtcx
+DTC=tools/dtc/dtc
 cpp_dts() { cc -E -nostdinc -undef -D__DTS__ -x assembler-with-cpp -I "$KERNEL/include" -I "$DTS_DIR" -I "$DTS_DIR/rockchip" "$1" -o "$2"; }
 
 cp stock/$STOCK/board.dtb $B/board.dtb

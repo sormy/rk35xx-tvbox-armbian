@@ -1,16 +1,16 @@
-# dtcx — dtc that can round-trip a vendor DTB
+# dtc — patches to round-trip a vendor DTB
 
-Vanilla `dtc` v1.8.1 plus five patches. Decompiling a blob normally gives raw numbers; `dtcx` gives
-references:
+Vanilla `dtc` v1.8.1 plus five patches, built by `../../build-dtc.sh` into `tools/dtc/`. Decompiling
+a blob normally gives raw numbers; this gives references:
 
 ```
 dtc  :  clocks = <0x02 0xaf>;
-dtcx :  clocks = <&cru 0xaf>;          # -P
+dtc  :  clocks = <&cru 0xaf>;          # -P
 ```
 
 ```sh
-make          # fetch, patch, build -> ./dtcx
-make test     # every reference resolved, byte-identical round trip, on firmware/*/board.dtb
+./build-dtc.sh          # fetch, patch, build -> tools/dtc/dtc, then gate
+./build-dtc.sh --test   # re-run the gate on firmware/*/board.dtb
 ```
 
 | Flag | Does                                                                  |
@@ -50,6 +50,6 @@ Do not ship a sorted tree — `-s` reorders the blob and breaks that. It is for 
 ## Upstream
 
 None of this is in dtc (checked against master, 2026-08); `add_phandle_marker()` exists but is only
-wired to overlay `__local_fixups__`, which a board DTB has none of. Each patch in `patches/` is
-formatted to send. 0003 is a plain round-trip bug — `add_label()` prepends, so a blob decompiled and
-recompiled with `-@` comes back with its labels reversed — and stands alone.
+wired to overlay `__local_fixups__`, which a board DTB has none of. Each patch here is formatted to
+send. 0003 is a plain round-trip bug — `add_label()` prepends, so a blob decompiled and recompiled
+with `-@` comes back with its labels reversed — and stands alone.

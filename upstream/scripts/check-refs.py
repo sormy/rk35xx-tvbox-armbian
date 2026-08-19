@@ -2,7 +2,7 @@
 """Fail if any phandle reference survived decompilation as a bare number.
 
 A number that means a node is only valid for the allocation it was dumped from: copy it into a
-tree that numbers its nodes differently and it silently points somewhere else. dtcx converts the
+tree that numbers its nodes differently and it silently points somewhere else. the patched dtc converts the
 properties it knows to `&label`; one it does not know stays numeric and looks like ordinary data.
 
 The tell needs no hand-maintained list. A property that holds a phandle is written `<&label>`
@@ -56,7 +56,7 @@ def main():
             bad += 1
 
     if bad:
-        print(f"{bad} unresolved reference(s): teach dtcx the property, then rebuild",
+        print(f"{bad} unresolved reference(s): teach dtc the property, then rebuild",
               file=sys.stderr)
     return 1 if bad else 0
 

@@ -8,7 +8,8 @@ the submission itself, and verifies it.
 
 1. Carve the DTB from the eMMC dump, never off a running box — u-boot rewrites the tree it hands to
    Linux. Find it by its `d00dfeed` magic in the `boot` partition. → `stock/<board>/board.dtb`
-2. Decompile: `dtcx -I dtb -O dts -P -n` (`-P` phandles → `&label`, `-n` drops `__symbols__`).
+2. Decompile: `tools/dtc/dtc -I dtb -O dts -P -n` (`-P` phandles → `&label`, `-n` drops
+   `__symbols__`).
 3. Edit into the Armbian tree; comment each change with the consumer that needs it. Then:
    ```sh
    cd <board> && diff -u --label board.dts --label armbian.dts board.dts armbian.dts > armbian.patch
@@ -67,9 +68,9 @@ BT/Wi-Fi GPIOs, regulator wiring, voltage binning. Generating the overrides from
 
 ## Requirements
 
-`dtcx` (`make -C ../dtcx`). Steps 5 and 6 also need the kernel's `dt-bindings` and reference dtsi;
-`build.sh` fetches them sparsely at a pinned commit. Without them it still builds the submission and
-exits 0.
+the patched `dtc` (`./build-dtc.sh`). Steps 5 and 6 also need the kernel's `dt-bindings` and
+reference dtsi; `build.sh` fetches them sparsely at a pinned commit. Without them it still builds
+the submission and exits 0.
 
 | Variable                               | Default                                            |
 | -------------------------------------- | -------------------------------------------------- |
@@ -77,4 +78,4 @@ exits 0.
 | `BOARD` / `STOCK` / `SOC` / `BASE`     | board dir, `stock/` dir, SoC, reference dtsi       |
 
 `build.sh` builds `$BOARD`; a second board is another directory with its patch, built by overriding
-`BOARD`, `STOCK`, `SOC` and `BASE`. Nothing in `dtcx` or `scripts/` is board-specific.
+`BOARD`, `STOCK`, `SOC` and `BASE`. Nothing in the patched `dtc` or `scripts/` is board-specific.
