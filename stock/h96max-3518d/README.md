@@ -63,7 +63,7 @@ part's.
 **The full eMMC image is not here** — it is `backup/h96max-3518d/emmc-full.img`, gitignored like
 every other board's. Take the reserved window from there, not from this directory: it is the only
 copy of this box's `SSKR` at sector 8192, and the source of the `FACTORY_DUMP` a full-image write
-needs. `docs/todo/h96max-3518d-bringup.md` has how it was finally captured.
+needs. `docs/h96max-3518d/worklog.md` has how it was finally captured.
 
 ## Hardware, as the running system reported it
 

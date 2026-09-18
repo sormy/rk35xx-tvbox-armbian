@@ -1,0 +1,399 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 13 Sep 2026 01:40:00 -0400
+Subject: [PATCH] skw: decide what deserves a wakeup instead of waking for
+ everything
+
+The chip pulls host-wake for anything it has to deliver and the host cannot see
+what that is until it is already awake, so on a board whose only input is a BLE
+remote every piece of link maintenance ends the suspend. Filtering needs a
+moment between the interrupt and the wakeup, and only suspend-to-idle has one:
+the CPU services interrupts throughout, and s2idle_loop() exits on
+pm_wakeup_pending() rather than on the interrupt itself.
+
+Four things stand in the way, and this takes them in order.
+
+The chip interrupt is armed with enable_irq_wake(), so suspend_device_irq()
+marks it IRQD_WAKEUP_ARMED and irq_pm_check_wakeup() takes it instead of the
+driver - the handler never runs. Under s2idle_wake_filter it is requested with
+IRQF_NO_SUSPEND instead, which is the opposite bargain: the handler runs while
+asleep and wakes nothing. The two must never both be set, so with this on
+Bluetooth cannot wake a deep suspend at all, and the mode is read-only after
+load for that reason.
+
+Reading the packet needs the SDIO host, and dw_mmc-rockchip gates both its
+clocks from a system-suspend callback that runs long before the sleep starts.
+pm_runtime_force_resume() in suspend_late brings them back once the MMC driver
+has finished suspending, and pm_runtime_force_suspend() in resume_early hands
+the device back in the state the PM core left it - its own resume callback is
+pm_runtime_force_resume(), which only balances against a matching force_suspend.
+
+Completions come from the MMC controller's own interrupt, which
+suspend_device_irqs() disables for the whole sleep. It was requested by another
+driver without IRQF_SHARED, so a second action cannot be attached, and
+__enable_irq() refuses outright on a suspended line. Incrementing its
+no_suspend_depth is what is left, reached through irq_get_irq_data() because
+irq_to_desc() is exported only under CONFIG_KVM_BOOK3S_64_HV_MODULE. The line is kept masked from the moment the
+clocks are gated until they are back, because dw_mci_interrupt() reads
+controller registers.
+
+skw_resume_check() waits on a resume_flag that only skw_sdio_resume() sets, so
+every transfer helper would stall for 35 s. It returns at once while the filter
+is active.
+
+A remote whose link drops answers with directed advertising within seconds, and
+that is the same PDU a keypress sends - what separates them is that the reconnect
+hunt follows suspend entry and a keypress does not. wake_grace_ms ignores
+advertising reports for the first ten seconds of a suspend; data on a live link
+always wakes.
+
+That leaves btseekwave_rx_complete() holding the packet with the system still
+asleep, which is the whole point: ACL data is a HID report from a connected
+remote and an advertising report is a keypress after the link dropped, so those
+call pm_system_wakeup(); a payload timeout expiring, a disconnect or a
+completed-packet count reaches the stack as normal and simply does not count as
+a wakeup. Nothing is masked, so the host's connection state stays consistent -
+the difference from masking Disconnect Complete, which left the box unwakeable
+for 19.6 h because the host re-enables accept-list scanning in response to that
+event.
+
+PROVEN AND UNSAFE - do not ship. Measured on an H96 Max 3518D: six chip
+interrupts taken while asleep, read over SDIO and classified, Disconnect
+Complete refused a wake and an Extended Advertising Report took one. The
+mechanism is not in doubt.
+
+What blocks it is the platform. In real use the box had trouble entering
+suspend, trouble leaving it, and reset itself unprompted. The obvious suspect
+was this patch, and a control run cleared it: with the module unloaded, a plain
+s2idle suspend still logs "rockchip-pm rockchip-suspend: Runtime PM usage count
+underflow!". rockchip_pm_config.c computes its state as
+mem_sleep_current - PM_SUSPEND_MEM into an unsigned enum, so under
+suspend-to-idle pm_config_prepare() takes its out-of-range early return - the
+matching pm_runtime_resume_and_get() never runs while pm_config_complete()
+still puts. That warning is cosmetic - the skipped SMC configuration only
+matters for a suspend ATF performs, and s2idle never reaches
+suspend_ops->enter() - so it explains nothing user-visible, and the control that
+found it ran at pm_test=platform, which returns before s2idle_loop() and so
+never entered the idle path.
+
+The instability is therefore unattributed. The two liberties this patch takes -
+driving another driver's device through
+pm_runtime_force_resume()/pm_runtime_force_suspend(), and incrementing an
+interrupt descriptor's no_suspend_depth behind the interrupt core's back -
+remain the leading suspects. Reverted the same day.
+
+The trace is in the worklog; the reasoning behind each obstacle, and where that
+reasoning fails, is in s2idle-feasibility.md. Needs mem_sleep=s2idle and
+skw_sdio_lite.s2idle_wake_filter=1. Supersedes 0008, which had the first
+obstacle wrong; the two must not both be applied. Wi-Fi rides the same
+transport, so check it before concluding anything about Bluetooth.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ drivers/seekwaveplatform_lite/sdio/skw_sdio.h      |   2 +
+ drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c | 101 +++++++++++++++++++-
+ drivers/swtbt4l/skw_btdriver.c                     |  58 ++++++++++++
+ 3 files changed, 159 insertions(+), 2 deletions(-)
+
+--- a/drivers/seekwaveplatform_lite/sdio/skw_sdio.h	2026-09-13 01:18:21
++++ b/drivers/seekwaveplatform_lite/sdio/skw_sdio.h	2026-09-13 01:18:38
+@@ -197,6 +197,8 @@
+ 	int multi_sdio_drivers;
+ 	u8 cp_downloaded_flag;
+ 	bool is_host_nonremovable;	/* back Host capabilities */
++	int s2idle_filter;
++	int host_ctrl_irq;
+ };
+ 
+ struct debug_vars {
+--- a/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c	2026-09-13 01:18:21
++++ b/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c	2026-09-13 10:40:47
+@@ -26,6 +26,9 @@
+ #include <linux/of_device.h>
+ #include <linux/of_gpio.h>
+ #include <linux/pm_runtime.h>
++#include <linux/irqdesc.h>
++#include <linux/platform_device.h>
++#include <linux/suspend.h>
+ #include <linux/mmc/card.h>
+ #include <linux/mmc/core.h>
+ #include <linux/mmc/host.h>
+@@ -49,6 +52,11 @@
+ module_param(bind_device, int, S_IRUGO);
+ module_param(test_debug, uint, S_IRUGO);
+ module_param(skw_use_sdma, int, S_IRUGO);
++
++static bool s2idle_wake_filter;
++module_param(s2idle_wake_filter, bool, S_IRUGO);
++MODULE_PARM_DESC(s2idle_wake_filter,
++	"Keep the chip interrupt and the SDIO host running through a suspend-to-idle, so the Bluetooth driver can read what arrived and decide whether it deserves a wakeup. Needs mem_sleep=s2idle; with this set Bluetooth cannot wake a deep suspend at all. Default off.");
+ 
+ #ifndef MMC_CAP2_SDIO_IRQ_NOTHREAD
+ #define MMC_CAP2_SDIO_IRQ_NOTHREAD (1 << 17)
+@@ -144,6 +152,12 @@
+ {
+ 	struct skw_sdio_data_t *skw_sdio = skw_sdio_get_data();
+ 	unsigned int timeout;
++
++	/* Nothing is going to set resume_flag while the system is still asleep, and under the
++	 * s2idle filter the transfer this guards is the whole point of being awake.
++	 */
++	if (skw_sdio->s2idle_filter)
++		return;
+ 
+ 	timeout = 0;
+ 	while((!atomic_read(&skw_sdio->resume_flag)) && (timeout++ < 20000))
+@@ -704,8 +718,19 @@
+ 	skw_sdio_info("gpio_In:%d,gpio_out:%d irq %d\n",skw_sdio->gpio_in,
+ 		skw_sdio->gpio_out, skw_sdio->irq_num);
+ 	if (skw_sdio->irq_num) {
++		unsigned long flags = skw_sdio->irq_trigger_type | IRQF_ONESHOT;
++
++		/* A wake-armed interrupt is taken by irq_pm_check_wakeup() instead of by us: it
++		 * disables the line and wakes the system without the handler ever running, so
++		 * there is no point at which anything could judge what arrived. IRQF_NO_SUSPEND
++		 * is the opposite bargain - the handler runs while asleep and wakes nothing - and
++		 * the two must never be set on one interrupt.
++		 */
++		if (s2idle_wake_filter)
++			flags |= IRQF_NO_SUSPEND;
++
+ 		ret = request_irq(skw_sdio->irq_num, skw_gpio_irq_handler,
+-				skw_sdio->irq_trigger_type | IRQF_ONESHOT, "skw-gpio-irq", NULL);
++				flags, "skw-gpio-irq", NULL);
+ 		if (ret != 0) {
+ 			free_irq(skw_sdio->irq_num, NULL);
+ 			skw_sdio_err(" request gpio irq fail ret=%d\n", ret);
+@@ -716,7 +741,8 @@
+ 					skw_sdio->irq_num, skw_sdio->device_active);
+ 		}
+ 	}
+-	enable_irq_wake(skw_sdio->irq_num);
++	if (!s2idle_wake_filter)
++		enable_irq_wake(skw_sdio->irq_num);
+ 	skw_sdio_rx_up(skw_sdio);
+ 	return ret;
+ }
+@@ -809,6 +835,52 @@
+ }
+ 
+ #ifdef CONFIG_PM_SLEEP
++static struct device *skw_sdio_host_dev(struct skw_sdio_data_t *skw_sdio)
++{
++	struct sdio_func *func = skw_sdio->sdio_func[FUNC_1];
++
++	if (!func || !func->card || !func->card->host)
++		return NULL;
++	return mmc_dev(func->card->host);
++}
++
++static int skw_sdio_host_ctrl_irq(struct skw_sdio_data_t *skw_sdio)
++{
++	struct device *dev = skw_sdio_host_dev(skw_sdio);
++
++	if (!dev || !dev_is_platform(dev))
++		return 0;
++	return platform_get_irq(to_platform_device(dev), 0);
++}
++
++/* suspend_device_irq() consults no_suspend_depth before anything else and leaves the line alone
++ * when it is set, which is the only way to keep an interrupt live through a suspend-to-idle
++ * without also arming it as a wake source - and arming it is exactly what we are trying to avoid.
++ * The flag belongs at request_irq() time, but the controller interrupt is the MMC driver's.
++ * irq_to_desc() is not exported to modules; irq_get_irq_data() is, and the rest is a header inline.
++ */
++static void skw_sdio_host_ctrl_irq_exempt(struct skw_sdio_data_t *skw_sdio, bool exempt)
++{
++	struct irq_data *data = irq_get_irq_data(skw_sdio->host_ctrl_irq);
++	struct irq_desc *desc = data ? irq_data_to_desc(data) : NULL;
++
++	if (!desc)
++		return;
++	if (exempt)
++		desc->no_suspend_depth++;
++	else
++		desc->no_suspend_depth--;
++}
++
++static bool skw_sdio_s2idle_pending(void)
++{
++#ifdef CONFIG_SUSPEND
++	return pm_suspend_target_state == PM_SUSPEND_TO_IDLE;
++#else
++	return false;
++#endif
++}
++
+ int skw_sdio_set_suspend_indication(void)
+ {
+ 	int ret = 0;
+@@ -890,9 +962,57 @@
+ 	 */
+ 	if (!ret)
+ 		skw_sdio->suspend_wake_unlock_enable = 1;
++
++	/* Masked rather than left live: the MMC driver gates the SDIO clocks in this same phase,
++	 * just after us, and its handler reads controller registers.
++	 */
++	if (!ret && s2idle_wake_filter && skw_sdio_s2idle_pending()) {
++		if (!skw_sdio->host_ctrl_irq)
++			skw_sdio->host_ctrl_irq = skw_sdio_host_ctrl_irq(skw_sdio);
++		if (skw_sdio->host_ctrl_irq > 0) {
++			disable_irq(skw_sdio->host_ctrl_irq);
++			skw_sdio_host_ctrl_irq_exempt(skw_sdio, true);
++			skw_sdio->s2idle_filter = 1;
++		} else {
++			skw_sdio_warn("no MMC controller irq, s2idle filter off\n");
++		}
++	}
+ 	return ret;
++}
++
++/* Runs after the MMC driver has suspended, which is the earliest the SDIO host can be brought
++ * back up and the latest anything can still run before the system idles.
++ */
++static int skw_sdio_suspend_late(struct device *dev)
++{
++	struct skw_sdio_data_t *skw_sdio = skw_sdio_get_data();
++	int ret;
++
++	if (!skw_sdio->s2idle_filter)
++		return 0;
++
++	ret = pm_runtime_force_resume(skw_sdio_host_dev(skw_sdio));
++	if (ret)
++		skw_sdio_err("SDIO host stays down, nothing can be read while asleep: %d\n", ret);
++	enable_irq(skw_sdio->host_ctrl_irq);
++	return 0;
+ }
+ 
++/* Hand the MMC device back in the state the PM core suspended it in - its own resume callback is
++ * pm_runtime_force_resume(), and that only balances against a matching force_suspend().
++ */
++static int skw_sdio_resume_early(struct device *dev)
++{
++	struct skw_sdio_data_t *skw_sdio = skw_sdio_get_data();
++
++	if (!skw_sdio->s2idle_filter)
++		return 0;
++
++	disable_irq(skw_sdio->host_ctrl_irq);
++	pm_runtime_force_suspend(skw_sdio_host_dev(skw_sdio));
++	return 0;
++}
++
+ static int skw_sdio_resume(struct device *dev)
+ {
+ 	struct sdio_func *func = container_of(dev, struct sdio_func, dev);
+@@ -903,6 +1023,11 @@
+ #if defined(SKW_BOOT_DEBUG)
+ 	skw_dloader(2);
+ #endif
++	if (skw_sdio->s2idle_filter) {
++		skw_sdio->s2idle_filter = 0;
++		enable_irq(skw_sdio->host_ctrl_irq);
++		skw_sdio_host_ctrl_irq_exempt(skw_sdio, false);
++	}
+ 	skw_sdio_set_resume_indication();
+ 	skw_sdio->suspend_wake_unlock_enable =0;
+ 	if (SKW_CARD_ONLINE(skw_sdio))
+@@ -1179,6 +1304,7 @@
+ 
+ static const struct dev_pm_ops skw_sdio_pm_ops = {
+ 	SET_SYSTEM_SLEEP_PM_OPS(skw_sdio_suspend, skw_sdio_resume)
++	SET_LATE_SYSTEM_SLEEP_PM_OPS(skw_sdio_suspend_late, skw_sdio_resume_early)
+ };
+ 
+ static const struct sdio_device_id skw_sdio_ids[] = {
+--- a/drivers/swtbt4l/skw_btdriver.c	2026-09-13 01:18:21
++++ b/drivers/swtbt4l/skw_btdriver.c	2026-09-13 11:54:34
+@@ -116,6 +116,20 @@
+     "Keep the BLE link across system suspend, so a paired remote that answers the suspend-time "
+     "disconnect with directed advertising cannot wake the host straight back up. Default off.");
+ 
++/* A remote whose link drops answers with directed advertising within a few seconds, and that is
++ * indistinguishable from a keypress - both are an advertising report from a bonded device. What
++ * separates them is when they arrive: the reconnect hunt follows suspend entry, a keypress does
++ * not. Waking on an advert only once the hunt is over costs a press if someone reaches for the
++ * remote inside the window, and buys a suspend that survives its own teardown.
++ */
++static unsigned int wake_grace_ms = 10000;
++module_param(wake_grace_ms, uint, 0644);
++MODULE_PARM_DESC(wake_grace_ms,
++    "Ignore advertising reports for this long after suspend entry, so a reconnecting remote does "
++    "not wake the host straight back up. Data on a live link always wakes. 0 disables.");
++
++static unsigned long skwbt_suspend_started;
++
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+ static struct hci_dev *skwbt_pm_hdev;
+ 
+@@ -132,9 +146,14 @@
+     struct hci_dev *hdev = skwbt_pm_hdev;
+     struct sk_buff *skb;
+ 
+-    if (action != PM_SUSPEND_PREPARE || !hdev)
++    if (action != PM_SUSPEND_PREPARE)
+         return NOTIFY_DONE;
+ 
++    skwbt_suspend_started = jiffies;
++
++    if (!hdev)
++        return NOTIFY_DONE;
++
+     skb = hci_cmd_sync(hdev, HCI_OP_SET_EVENT_MASK_PAGE_2,
+                        sizeof(skwbt_evt_mask_page2_off), skwbt_evt_mask_page2_off,
+                        HCI_CMD_TIMEOUT);
+@@ -338,6 +357,35 @@
+ #endif
+ 
+     return 0;
++}
++
++/* The chip pulls host-wake for anything it has to deliver, so this is the first and only place
++ * where input can be told from link maintenance. ACL data is a HID report from a connected remote;
++ * an advertising report is a keypress arriving after the link has dropped. A payload timeout
++ * expiring, a disconnect or a completed-packet count still reaches the stack - none of them is a
++ * reason to end the sleep.
++ */
++static bool skwbt_advert_is_input(void)
++{
++    if(!wake_grace_ms)
++        return true;
++
++    return time_after(jiffies, skwbt_suspend_started + msecs_to_jiffies(wake_grace_ms));
++}
++
++static bool skwbt_wake_worthy(const u8 *buf, int size)
++{
++    if(size < 2)
++        return false;
++
++    if(HCI_ACLDATA_PKT == buf[0])
++        return true;
++
++    if((HCI_EVENT_PKT == buf[0]) && (HCI_EV_LE_META == buf[1]) && (size >= 4))
++        return ((HCI_EV_LE_ADVERTISING_REPORT == buf[3]) || (HCI_EV_LE_EXT_ADV_REPORT == buf[3])) &&
++               skwbt_advert_is_input();
++
++    return false;
+ }
+ 
+ int btseekwave_rx_complete(int portno, struct scatterlist *priv, int size, void *buf)
+@@ -369,6 +417,14 @@
+         return 0;
+     }
+ 
++#ifdef CONFIG_SUSPEND
++    /* Restricted to a suspend-to-idle in progress. Awake this would only arm an abort for whatever
++     * suspend comes next, and on the way into a deep suspend the wake was already decided by the
++     * interrupt core, long before the packet reached us.
++     */
++    if((PM_SUSPEND_TO_IDLE == pm_suspend_target_state) && skwbt_wake_worthy((const u8 *)buf, size))
++        pm_system_wakeup();
++#endif
+ 
+     if((HCI_EVENT_PKT == pkt_type) || (HCI_ACLDATA_PKT == pkt_type) || (HCI_SCODATA_PKT == pkt_type))
+     {
+-- 
+2.55.0

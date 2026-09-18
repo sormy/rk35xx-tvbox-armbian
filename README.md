@@ -74,7 +74,7 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 | Power button on the remote                  | ✅  |      ✅      |      ✅       |
 | Front LEDs                                  | ✅  |      ✅      |      ✅       |
 | **Power and recovery**                      |     |              |               |
-| Suspend to RAM, wake on the remote          | ✅  |      ✅      |      ❌       |
+| Sleep/Wake from Remote                      | ✅  |      ✅      |      ❌       |
 | Hardware watchdog                           | ✅  |      ✅      |      ✅       |
 | Serial console                              | ✅  |      ✅      |      ✅       |
 | Maskrom recovery over USB                   | ✅  |      ✅      |      ✅       |

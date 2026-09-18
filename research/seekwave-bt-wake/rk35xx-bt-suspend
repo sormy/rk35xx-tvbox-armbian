@@ -1,0 +1,61 @@
+#!/bin/sh
+# Tell a HoG remote the host is suspending, and do not suspend while its power key is still held.
+#
+# HID-over-GATT mandates a HID Control Point (0x2A4C): 0x00 means "host entering Suspend", 0x01
+# "leaving". A remote that honours it drops its scan rate and stops driving the link. Nothing in a
+# stock stack ever writes it — BlueZ defines the UUID but puts the trigger behind an opt-in backend,
+# because a UPower suspend signal arrives after the connection is already gone. So the handset has
+# always believed the host was awake, including while it hunted to reconnect and while it timed out.
+#
+# The key wait is a separate fault: the power button sends press and release ~360 ms apart, logind
+# suspends on the press, and the release then lands on the far side of the suspend and resumes the
+# box. Measured 0.37 s of sleep against a 364 ms gap. Waiting costs a few hundred ms.
+[ "$1" = "pre" ] || [ "$1" = "post" ] || exit 0
+command -v bluetoothctl >/dev/null 2>&1 || exit 0
+
+HID_CONTROL_POINT=00002a4c-0000-1000-8000-00805f9b34fb
+
+# every connected device's HID Control Point, one object path per line
+control_points() {
+	for mac in $(bluetoothctl devices Connected 2>/dev/null | awk '{print $2}'); do
+		# bluetoothctl indents object paths with a tab, so anchor on the path itself
+		bluetoothctl gatt.list-attributes "$mac" 2>/dev/null |
+			awk -v u="$HID_CONTROL_POINT" '
+				/\/org\/bluez\// { path = $1 }
+				index($0, u) && path { print path; path = "" }'
+	done
+}
+
+write_control_point() {
+	for path in $(control_points); do
+		bluetoothctl >/dev/null 2>&1 <<-EOF
+			gatt.select-attribute $path
+			gatt.write $1
+		EOF
+		logger -t rk35xx-bt-suspend "wrote $1 to $path"
+	done
+}
+
+if [ "$1" = "pre" ]; then
+	# Wait out a held power key. 3 s cap: a stuck or absent key must never block suspend.
+	i=0
+	while [ $i -lt 60 ]; do
+		held=0
+		for dev in /dev/input/event*; do
+			evtest --query "$dev" EV_KEY KEY_POWER >/dev/null 2>&1 || [ $? -ne 10 ] || held=1
+		done
+		[ $held -eq 0 ] && break
+		i=$((i + 1))
+		sleep 0.05
+	done
+
+	write_control_point 0x00
+	# let the write and any trailing report drain while the system is still awake
+	sleep 0.25
+else
+	# The remote is usually still disconnected here; the write then finds no attribute and is a
+	# no-op, which is correct — it reconnects in its normal state.
+	write_control_point 0x01
+fi
+
+exit 0

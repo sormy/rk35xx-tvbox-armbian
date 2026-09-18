@@ -2813,19 +2813,19 @@ Finalising the board at a defined readiness level rather than leaving a half-wor
 - `skwbt-options.conf`: quirk **disabled**. It worked (3598 s), but one run with it active ended in
   a hang and an unsupported feature should not carry that risk.
 - `board.md`: suspend marked ❌ with the two unfixed faults stated plainly.
-- `research/h96max-3518d-bt-wake/` holds the full analysis: seven faults, five fixed, two not, plus
-  the rejected approaches, what mainstream does, and everything parked with it. Indexed in AGENTS.md
-  as `research/<experiment>/`, alongside `seekwave-tx-latch-bug`.
+- `research/seekwave-bt-wake/` holds the full analysis: seven faults, five fixed, two not, plus the
+  rejected approaches, what mainstream does, and everything parked with it. Indexed in AGENTS.md as
+  `research/<experiment>/`, alongside `seekwave-tx-latch-bug`.
 
 The two unfixed faults are the power-key release arriving after the suspend, and the remote going
 silent after ~1 h. Neither is a hard dead end; both need work that was not worth continuing now.
 
 ### 2026-09-11 (later) — patches without a consumer parked, and a distinction I had wrong
 
-`research/h96max-3518d-bt-wake/` now holds `0004` and `0006`. `fetch-seekwave-src.sh` globs
-`*.patch` in the parent directory only, so a subdirectory is excluded from every build with no code
-change. Verified both ways against the pinned source: the shipped three apply cleanly alone, and the
-parked pair still applies on top in numeric order.
+`research/seekwave-bt-wake/` now holds `0004` and `0006`. `fetch-seekwave-src.sh` globs `*.patch` in
+the parent directory only, so a subdirectory is excluded from every build with no code change.
+Verified both ways against the pinned source: the shipped three apply cleanly alone, and the parked
+pair still applies on top in numeric order.
 
 Shipped: `0002` and `0003`, both Wi-Fi fixes with upstream PRs.
 
@@ -2843,8 +2843,8 @@ because BT is its only wake path.
 **Correction:** the analysis was first written to `docs/research/`, a directory invented for it, and
 the patches to `patches/seekwave-swt6621s/experimental/`. The repo already had a top-level
 `research/<experiment>/` convention — `seekwave-tx-latch-bug` has used it since August. Both
-duplicates removed; everything now lives in `research/h96max-3518d-bt-wake/` with the analysis
-merged into its `README.md`, matching the existing layout.
+duplicates removed; everything now lives in `research/seekwave-bt-wake/` with the analysis merged
+into its `README.md`, matching the existing layout.
 
 ### 2026-09-12 — loaders pack natively, and the stall is not thermal
 
@@ -2894,3 +2894,219 @@ cold session sampled at 60 s. Warm sessions do slide before dying — 18 MB/s to
 13-30 MB/s to 1.7 MB/s on an earlier run. The accurate statement is that decay is a real warning
 when it appears, but its absence means nothing: a cold session can hold full rate to the last
 second. Both shapes are now in `docs/maskrom.md`.
+
+### 2026-09-12 — minimal BT wake attempt, built around the message nobody was sending
+
+Restored `0004` and `0005` to the shipped set and added two hooks. `0006` deliberately stays parked:
+it prevents the suspend-time disconnect, and this design depends on that disconnect happening.
+
+**The insight.** HID-over-GATT mandates a HID Control Point (`0x2A4C`) — the host writes `0x00` for
+"entering Suspend", `0x01` for leaving. Across every capture taken in this investigation it is
+written **zero times**. BlueZ defines the UUID but puts the trigger behind an opt-in backend (the
+reference is a FIFO), because a UPower suspend signal arrives after the connection is already gone.
+So the remote has always believed the host was awake — while it hunted to reconnect, while the
+controller pinged it, and while it timed out at the hour.
+
+**Shape of the fix.** Let the core disconnect as upstream intends, but tell the remote first:
+
+- `rk35xx-bt-suspend` (`system-sleep`): waits out a held power key, writes `0x00` on `pre`, `0x01`
+  on `post`.
+- `rk35xx-bt-wake` + `bt-wake.conf`: strips the remote's IRK so the kernel will accept-list it,
+  which is what makes the reconnect advert a wake source at all.
+- `0004` for the accept list, `0005` so the chip is told the host went down.
+
+If the remote honours the control point this handles all three open faults at once: no reconnect
+hunt (fault 3), no link to drop at the hour (fault B), and the key release consumed while awake plus
+no open link to deliver it over (fault A).
+
+**Untested, and gated on one unknown.** `research/seekwave-bt-wake/gate-test-hid-control-point.sh`
+writes `0x00` while awake and watches whether the remote goes quiet and still wakes on a keypress.
+Cheap handsets routinely expose `0x2A4C` and ignore it, so presence proves nothing. If it is
+ignored, fault 3 returns and the only known answer is `0006` — the configuration that hung the box.
+
+The power key stays `ignore` until the gate passes.
+
+### 2026-09-12 (later) — the minimal design failed, tested properly
+
+`rk35xx-bt-suspend` deployed and confirmed running (journal shows `0x00` written on `pre`, `0x01` on
+`post`, to `service0023/char004c`). Two suspends, both ended at **2.00 s** by
+
+```
+LE Extended Advertising Report — ADV_DIRECT_IND (0x0015), 74:CC:23:DE:9D:33
+```
+
+so the remote hunts back exactly as it does without the write.
+
+**First attempt at this was weak and the owner caught it:** the hook writes `0x00` and suspends 0.25
+s later, so a remote acting lazily would never have had the chance, and "went quiet" was measured on
+an already-idle link. Retested awake, no suspend, with a 10 s delay before forcing the disconnect by
+hand — still one `ADV_DIRECT_IND`, reconnected within 5 s. The characteristic is present and the
+write errors on nothing; the behaviour simply does not change.
+
+**Disconnect reason code, the last cheap idea, also failed.** `0x16` and `0x15` both hunt back. The
+asymmetry that motivated it — quiet after its own ~1 h drop, hunting after ours — is still
+unexplained.
+
+Also visible in the same capture, and worth keeping: `Authenticated Payload Timeout Expired` fires
+every ~31 s **while awake**, so this handset never answers LE Ping at all. That is the same root as
+the one-hour drop, observable without suspending.
+
+Power key back to `ignore` on both presses, `0006` stays parked, board.md back to ❌. Three levers
+tried, three closed with evidence.
+
+#### A near miss worth recording
+
+The gate test first reported "FAIL: no HID Control Point exposed". That was **my bug**, not the
+remote: `bluetoothctl` indents object paths with a tab and the matcher anchored on `^/`. The whole
+approach was nearly abandoned on a bad regex, before the raw attribute dump showed `00002a4c`
+sitting there. Check the tool before believing the result.
+
+## 2026-09-13 — the media stack probed: V4L2 gate confirmed, the video plane found, gst-rockchip stale
+
+Read-only sweep over ssh. HDMI was unplugged throughout, so nothing here involved a display, and the
+KMS half of the chain is still untested. A deep-sleep experiment was running on the box in the same
+window; its traces are below, and it changed none of these results.
+
+### The V4L2 request API is off — read off the box, not inferred
+
+`/boot/config-6.1.115-vendor-rk35xx` is a full config, so an absent symbol is genuinely unset.
+
+| symbol                                 | state  |
+| -------------------------------------- | ------ |
+| `CONFIG_MEDIA_CONTROLLER_REQUEST_API`  | absent |
+| `CONFIG_V4L2_H264` · `CONFIG_V4L2_VP9` | absent |
+| `CONFIG_VIDEO_ROCKCHIP_VDEC`           | absent |
+| `CONFIG_MEDIA_CONTROLLER`              | `y`    |
+| `CONFIG_VIDEO_DEV`                     | `y`    |
+| `CONFIG_V4L2_MEM2MEM_DEV`              | `y`    |
+| `CONFIG_DRM_LIMA`                      | `m`    |
+
+No `/dev/video*` and no `/dev/media*`. `/dev/cec0`, `/dev/mpp_service`, `/dev/dri/card0` (the VOP)
+and `/dev/dri/card1` (`ff700000.gpu`) are all present. The infrastructure a stateless decoder wants
+is half-built: videodev and m2m arrive with the camera and RGA drivers, the request API and the
+codec helpers do not.
+
+### The video plane is DRM plane 266
+
+`modetest -M rockchip -p` lists **14 planes**, which is the arithmetic of the `[02]` graft —
+Esmart0, Esmart2 and Esmart3 contribute four areas each (`WIN_FEATURE_MULTI_AREA`), the two Cluster
+windows one each: 4+4+4+1+1. Esmart1 is absent, exactly as `vop3_ignore_plane()` says it should be.
+
+| planes         | window        | crtcs   | type    | of note                                      |
+| -------------- | ------------- | ------- | ------- | -------------------------------------------- |
+| 57,122,138,154 | Esmart0       | vp0     | Primary | the console                                  |
+| 73,170,186,202 | Esmart2       | vp0+vp1 | Cursor  |                                              |
+| 99,218,234,250 | Esmart3       | vp1     | Primary | vp1 drives nothing on this board             |
+| **266**        | Cluster0-win0 | vp0     | Overlay | NV12 NV21 NV16 NV61 NV24 NV42 NV15 NV20 NV30 |
+| 282            | Cluster0-win1 | vp0     | Overlay | RGB and packed YUV only — no NV12            |
+
+Plane 266 is the one to hand video: the only vp0 overlay taking both 8-bit and 10-bit semi-planar
+YUV, and 10-bit RGB besides. `modetest` printed the `IN_FORMATS` blob empty, so AFBC remains the
+kernel's claim rather than a read-back.
+
+### Decode is 110 fps when nothing copies the frame
+
+```sh
+/usr/lib/jellyfin-ffmpeg/ffmpeg -nostdin -hwaccel rkmpp -hwaccel_output_format drm_prime \
+  -i clip4k.hevc.mp4 -an -f null -
+```
+
+480 frames of 3840x2160 HEVC at **110 fps**, speed 1.84x. The same clip through the documented
+`scale_rkrga` + `hwdownload` + `fbdev` pipeline reaches the screen at 27. Decode is not close to
+being the limit; the copy costs about four fifths of the rate.
+
+### gst-rockchip is 1.14.4 against a 1.26.2 core
+
+`mppvideodec` and `kmssink` are both installed — the whole zero-copy chain, in packages. It does not
+run:
+
+```
+gst_video_decoder_negotiate_default: assertion 'GST_VIDEO_INFO_WIDTH (&state->info) != 0' failed
+```
+
+Identical on 1080p H.264 and 4K HEVC, through `h264parse`/`h265parse` and through `decodebin`, and
+with `video/x-raw,format=NV12` forced downstream. MPP itself opens each stream first
+(`h264d_api: is_avcC=1`, `h265d: extradata is encoded as hvcC format`), so the failure is in caps
+negotiation, not in the decoder.
+
+`libgstrockchipmpp.so` reports **version 1.14.4, source module `gst-rockchip`**, against a
+**GStreamer 1.26.2** core — eight years of `GstVideoDecoder` drift. It is owned by no dpkg package.
+`kmssink` is core, and current. Rebuilding the plugin against 1.26 is the obvious next move, and
+ffmpeg's rkmpp path decoding at 110 fps minutes later on the same box rules out the hardware.
+
+### Wi-Fi does AP, and AP+STA together
+
+`iw phy phy0 info` — supported modes include **AP**, P2P-GO, monitor and IBSS, and the combinations
+allow `#{managed} <= 1, #{AP} <= 1, total <= 3, #channels <= 2`. Keyboard-free onboarding has a
+mechanism: hold the station link and raise an AP for a phone at the same time. The TDD antenna cost
+of doing so is still unmeasured.
+
+`wireguard.ko` ships with the kernel. `kodi` is in apt at `2:21.2+dfsg-4`, not installed.
+
+### The deep-sleep traces, and why they change nothing
+
+`dmesg` shows a decode in flight when a suspend landed:
+
+```
+mpp_rkvdec2 ff740100.rkvdec: session 12 task 3552 timeout 0 abort 0 force_dequeue 1
+mpp_rkvdec2 ff740100.rkvdec: resetting...  /  reset done
+PM: suspend entry (deep)
+rkvdec2_link_wait_result:1336: wait task break by signal
+```
+
+The VPU reset itself and recovered — ffmpeg decoded 480 frames at 110 fps afterwards. Everything
+else measured here is a config file, a driver capability table or a package version, none of which a
+suspend cycle touches.
+
+## 2026-09-13 — sleep and wake on the remote, shipped
+
+The board sleeps on the remote's power key and wakes on any key. Measured here: **4075 s** asleep
+through the hour-long link teardown that had ended every previous attempt at 3598 s, with the
+remote's HID devices enumerated 0.4 s after resume; an earlier **5934 s** run; and nineteen
+consecutive short cycles where every wake carried HID data rather than a reconnect advertisement.
+
+The reasoning that unlocked it: deep suspend cannot filter a wake, because the SoC resumes in
+hardware before any instruction runs — but it does not have to. The chip pulls host-wake only when
+it has something to deliver, so the fix is to stop the controller producing anything that is not
+input. The link is held instead of dropped, and the two events that used to end a sleep are masked
+at the controller with a core-spec command.
+
+An earlier conclusion in `research/seekwave-bt-wake` said masking "is not the answer" and marked it
+confident. That was wrong and expensive. Masking `Disconnect Complete` did leave the box unwakeable
+for 19.6 h, but from a side effect with a fixable cause: the host re-enables accept-list scanning
+only in response to that same event, so masking it left the controller deaf. Arming the scan before
+suspending is all it needed.
+
+Six faults folded into one patch, because the fix is a sequence and any subset still leaves the
+board unable to sleep on its remote.
+
+Two things stay open:
+
+- A key event within about half a second of the suspend request still wakes the box — 0.44 s
+  measured, a HID report on a healthy link. `settle_ms` waits for the link to fall quiet first,
+  which closes the common case, but a report arriving after that wait cannot be ignored.
+
+The suspend-to-idle route explored first is parked in `research/seekwave-bt-wake` as `0008` and
+`0009`: the classification works and is proven on hardware, but it destabilised the box, and s2idle
+is not a supported path on this vendor kernel.
+
+## 2026-09-14 — parked, and why
+
+The sleep/wake work is not shipped. Everything lives in `research/seekwave-bt-wake/` and nothing is
+wired into a build: no patch in `patches/`, no payload entry, `HandlePowerKey` back to `ignore`.
+
+The six faults it addresses all have measured fixes — 27564 s asleep through the hour-long teardown,
+woken by a keypress, HID back 0.4 s after resume, nineteen consecutive short cycles on the power
+key. The seventh is why it stays parked: a later suspend can reach `Filesystems sync` and never
+reach `Freezing user space processes`, leaving the box neither running nor asleep and needing its
+power pulled.
+
+That one is not in this driver. With the notifier logging its own entry, `pm: prepare, settling` —
+its first statement — never prints on a failing cycle, so the block is ahead of it in
+`suspend_prepare()`. It is also not load-dependent as first assumed: one occurrence followed a
+resume by a second, another by eighteen idle minutes.
+
+Three causes were named from missing evidence during this work and all three were wrong. `/var/log`
+is on zram, so every power cut took the trace with it: catching the backtrace needs a persistent
+journal and a watchdog firing `sysrq-w` when a suspend sits in prepare. The box is back on stock
+logging, so that goes back up when the work resumes.

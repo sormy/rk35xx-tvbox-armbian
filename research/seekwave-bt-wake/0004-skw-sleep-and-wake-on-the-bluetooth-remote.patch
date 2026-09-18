@@ -1,0 +1,592 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 13 Sep 2026 16:40:00 -0400
+Subject: [PATCH] skw: sleep and wake on the Bluetooth remote
+
+A board whose only input is a BLE remote has to suspend on its power key and
+wake on any key. This one could do neither: every suspend ended within seconds,
+and nothing the remote did could bring the box back.
+
+Deep suspend cannot filter a wake. The SoC resumes in hardware before any
+instruction runs, so there is no point at which a packet can be examined and
+judged. It does not need to be. The chip pulls host-wake only when it has
+something to hand over, so the question is not which wakes to allow but which
+packets the controller should ever produce - and that is configurable from the
+host with commands the core spec already defines.
+
+Six faults, one path:
+
+  hdev->wakeup was never set, so hci_suspend_sync() took its early return and
+  armed nothing. Bluetooth could not wake the host at all.
+
+  send_host_suspend_indication() sampled the chip's "traffic pending" GPIO once,
+  and suspend generates traffic of its own, so the single sample was taken at
+  the moment the line was most likely high. The chip was never told the host had
+  gone down and kept asserting it. Measured low 88% of the time while idle, yet
+  high at every suspend; now it waits up to 200 ms for the line to settle.
+
+  hci_suspend_sync() disconnects every link, and this handset answers with
+  directed advertising within about three seconds. Waking on a bonded device's
+  advertisement is upstream's design and cannot be told apart from a keypress,
+  because it is the same PDU. keep_link_suspended borrows
+  HCI_QUIRK_NO_SUSPEND_NOTIFIER to leave the link alone instead - off-label, as
+  the quirk exists for controllers that leave the bus during suspend.
+
+  Authenticated Payload Timeout Expired fired 655 s after the last keypress and
+  capped every sleep there. The bit lives in event mask page 2, which HCI_INIT
+  writes once and no suspend path revisits, so the page is cleared - nothing
+  here consumes the event.
+
+  The remote stops answering after roughly an hour and the controller times the
+  link out; Disconnect Complete then pulls host-wake. Masking it is the whole
+  fix, and masking it alone left this board unwakeable for 19.6 h, because the
+  host re-enables accept-list scanning only in response to that same event. So
+  presuspend_scan arms the scan first, while the link is still up, and
+  mask_disconnect hides the event. The scan must use the extended commands where
+  the core does - the two sets cannot be mixed, and the legacy ones are then
+  refused with Command Disallowed - and the accept-list filter policy, or every
+  advertiser in range becomes a wake source.
+
+  The power key sends press and release about 360 ms apart, so suspending on the
+  press left the release to arrive on the held link and end the sleep after
+  0.37 s. A link that has only just been re-established is busy in the same way
+  and does not survive being suspended into. settle_ms waits for quiet on any
+  received packet - data alone sails through the gaps between setup events.
+
+Everything the notifier sends runs under hdev->req_lock taken with a trylock
+loop rather than mutex_lock. hci_cmd_sync() bounds the command but not the lock,
+and a notifier that blocks there never returns: a second after a resume the core
+still holds it for its own reconnect work. A suspend that finds the stack busy
+goes down unarmed, which costs an early wake; one that blocks costs a power cut.
+
+On resume the mask is restored and the stack reconciled: the host still believes
+in a link the controller has forgotten, so the handle is probed with Read RSSI
+and a Disconnect Complete synthesised when it is gone. Unknown Connection
+Identifier arrives as ERR_PTR(-ENOTCONN), so the command failing is the answer.
+
+Measured on an H96 Max 3518D: 5934 s asleep against the 3598 s that had ended
+every previous attempt, and nineteen consecutive suspend/wake cycles on the
+power key where every wake carried HID data rather than a reconnect advert.
+
+Not for merge as it stands. Masking a core event and driving the controller's
+scan state behind the stack's back are both liberties, and every part is behind
+a parameter that defaults off.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ drivers/swtbt4l/skw_btdriver.c | 353 +++++++++++++
+ 3 files changed
+
+--- a/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c	2026-07-16 08:58:24
++++ b/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c	2026-09-13 22:10:03
+@@ -882,6 +882,14 @@
+ 		skw_sdio->power_off = 1;
+ #endif
+ 	skw_sdio->resume_com = 0;
++	/* Only skw_sdio_irq_ops(1) sets this, and the suspend path never gets there - its caller
++	 * bails out when gpio_in is high. Left clear, every GPIO interrupt taken while suspended
++	 * grabs a wakelock, so even a spurious wake then holds the system up instead of letting
++	 * it go back down. Set it only on the way out clean: resume is what clears it, and the
++	 * PM core does not resume a device whose suspend returned an error.
++	 */
++	if (!ret)
++		skw_sdio->suspend_wake_unlock_enable = 1;
+ 	return ret;
+ }
+ 
+--- a/drivers/seekwaveplatform_lite/sdio/skw_sdio_rx.c	2026-09-13 22:09:36
++++ b/drivers/seekwaveplatform_lite/sdio/skw_sdio_rx.c	2026-09-13 22:10:03
+@@ -1718,9 +1718,19 @@
+ {
+ 	uint32_t value = 0;
+ 	uint32_t timeout = 2000, timeout1 = 20;
++	unsigned long deadline;
+ 	if(skw_sdio->gpio_out>=0 && skw_sdio->gpio_in>=0 && skw_sdio->resume_com) {
+ 		skw_sdio_dbg("%s enter gpio=0\n", __func__);
+ 		skw_sdio->host_active = 0;
++		/* The chip raises gpio_in whenever it has traffic for us, and suspend generates some
++		 * of its own - the Bluetooth disconnect, anything still in flight. Sampling the line
++		 * once therefore loses a race it would otherwise win: measured low 88% of the time
++		 * while idle, yet high at every single suspend. Lose it and the handshake below is
++		 * skipped, the chip is never told the host went down, and it keeps waking it.
++		 */
++		deadline = jiffies + msecs_to_jiffies(200);
++		while (gpio_get_value(skw_sdio->gpio_in) && time_before(jiffies, deadline))
++			msleep(1);
+ 		if (gpio_get_value(skw_sdio->gpio_in) == 0) {
+ 			udelay(10);
+ 			if (gpio_get_value(skw_sdio->gpio_in) == 0) {
+--- a/drivers/swtbt4l/skw_btdriver.c	2026-07-16 08:58:24
++++ b/drivers/swtbt4l/skw_btdriver.c	2026-09-14 21:35:02
+@@ -32,6 +32,7 @@
+ #include <linux/platform_device.h>
+ #include <net/bluetooth/bluetooth.h>
+ #include <net/bluetooth/hci_core.h>
++#include <linux/suspend.h>
+ //#include <linux/platform_data/skw_platform_data.h>
+ #include <skw_platform_data.h>
+ #include <linux/fs.h>
+@@ -107,6 +108,367 @@
+ module_param_named(firmware_dir, skwbt_firmware_dir, charp, 0644);
+ MODULE_PARM_DESC(firmware_dir, "Firmware subdirectory under standard firmware path (e.g. \"seekwave\"). Empty means root directory.");
+ 
++/* Off by default: it changes core suspend behaviour for every user of the driver, so a board opts
++ * in rather than everyone inheriting it. */
++static bool keep_link_suspended;
++module_param(keep_link_suspended, bool, 0444);
++MODULE_PARM_DESC(keep_link_suspended,
++    "Keep the BLE link across system suspend, so a paired remote that answers the suspend-time "
++    "disconnect with directed advertising cannot wake the host straight back up. Default off.");
++
++/* Nothing can filter a wake in deep suspend, but a masked event is never sent, so it never reaches
++ * host-wake either. Masking the disconnect alone left this board unwakeable for 19.6 h: the host
++ * re-enables accept-list scanning only in response to that same event. Hence two knobs - the second
++ * is survivable only with the first.
++ */
++static bool presuspend_scan;
++module_param(presuspend_scan, bool, 0444);
++MODULE_PARM_DESC(presuspend_scan,
++    "Before suspending, put the connected remote on the controller's accept list and start passive "
++    "scanning, so a keypress is still heard once the link has died. Default off.");
++
++static bool mask_disconnect;
++module_param(mask_disconnect, bool, 0444);
++MODULE_PARM_DESC(mask_disconnect,
++    "Mask Disconnect Complete across suspend, so the link timing out does not wake the host. "
++    "Leaves the box deaf unless presuspend_scan is also set. Default off.");
++
++/* Press and release are ~360 ms apart, so suspending on the press let the release wake the box
++ * again - 0.37 s of sleep. A link that has only just re-established is busy in the same way, and
++ * suspending into that loses it. Waiting for quiet covers both.
++ */
++static unsigned int settle_ms = 500;
++module_param(settle_ms, uint, 0644);
++MODULE_PARM_DESC(settle_ms,
++    "Before suspending, wait for the link to be quiet this long, so the release of the key that "
++    "asked for the suspend does not immediately end it. 0 disables.");
++
++static unsigned long skwbt_last_rx;
++static u8 skwbt_event_mask[8];
++static bool skwbt_event_mask_seen;
++static bool skwbt_writing_event_mask;
++static u16 skwbt_masked_handle;
++static bool skwbt_masked;
++
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
++static struct hci_dev *skwbt_pm_hdev;
++
++/* Authenticated Payload Timeout Expired lives in event mask page 2, written once at controller init
++ * and revisited by no suspend path. Left on it fires `hdev->auth_payload_timeout` after the last
++ * authenticated payload and caps every suspend there - measured at exactly 655 s with the timeout
++ * at its 0xffff maximum, so tuning cannot reach it. Clear the page instead; nothing here consumes
++ * the event, and it is left cleared on resume for the same reason.
++ */
++static const u8 skwbt_evt_mask_page2_off[8] = { 0 };
++
++/* hci_cmd_sync() bounds the command but takes hdev->req_lock with a plain mutex_lock, and a PM
++ * notifier that blocks there never returns - a second after a resume the core still holds it for
++ * its own reconnect work, and the box goes nowhere. Everything here runs under a lock the caller
++ * took without waiting, so the worst case is a suspend that goes unarmed rather than one that hangs.
++ */
++static bool skwbt_trylock_stack(struct hci_dev *hdev, unsigned int ms)
++{
++    unsigned long deadline = jiffies + msecs_to_jiffies(ms);
++
++    if (!test_bit(HCI_UP, &hdev->flags))
++        return false;
++
++    do {
++        if (mutex_trylock(&hdev->req_lock))
++            return true;
++        msleep(20);
++    } while (time_before(jiffies, deadline));
++
++    return false;
++}
++
++static int skwbt_cmd(struct hci_dev *hdev, u16 opcode, u8 plen, const void *param)
++{
++    struct sk_buff *skb = __hci_cmd_sync(hdev, opcode, plen, param, HCI_CMD_TIMEOUT);
++
++    if (IS_ERR(skb))
++    {
++        SKWBT_INFO("opcode 0x%04x failed: %ld", opcode, PTR_ERR(skb));
++        return PTR_ERR(skb);
++    }
++
++    kfree_skb(skb);
++    return 0;
++}
++
++static struct hci_conn *skwbt_le_conn(struct hci_dev *hdev)
++{
++    struct hci_conn_hash *h = &hdev->conn_hash;
++    struct hci_conn *c, *found = NULL;
++
++    rcu_read_lock();
++    list_for_each_entry_rcu(c, &h->list, list)
++    {
++        if (c->type == LE_LINK)
++        {
++            found = c;
++            break;
++        }
++    }
++    rcu_read_unlock();
++
++    return found;
++}
++
++/* Setting scan parameters is refused while a scan is enabled, so each of these disables first.
++ * A passive scan never transmits, so the own-address type is inert; public keeps it simple.
++ */
++static int skwbt_scan_legacy(struct hci_dev *hdev, bool on)
++{
++    struct hci_cp_le_set_scan_param param;
++    struct hci_cp_le_set_scan_enable en;
++
++    memset(&en, 0, sizeof(en));
++    en.enable = LE_SCAN_DISABLE;
++    skwbt_cmd(hdev, HCI_OP_LE_SET_SCAN_ENABLE, sizeof(en), &en);
++    if (!on)
++        return 0;
++
++    memset(&param, 0, sizeof(param));
++    param.type = LE_SCAN_PASSIVE;
++    param.interval = cpu_to_le16(0x0060);
++    param.window = cpu_to_le16(0x0030);
++    param.own_address_type = 0x00;
++    param.filter_policy = HCI_LE_USE_ACCEPT_LIST;
++    skwbt_cmd(hdev, HCI_OP_LE_SET_SCAN_PARAM, sizeof(param), &param);
++
++    en.enable = LE_SCAN_ENABLE;
++    en.filter_dup = LE_SCAN_FILTER_DUP_ENABLE;
++    return skwbt_cmd(hdev, HCI_OP_LE_SET_SCAN_ENABLE, sizeof(en), &en);
++}
++
++/* Mixing the legacy and extended scan commands is not allowed: once the core has used the extended
++ * ones, the controller answers the legacy ones with Command Disallowed and the scan is never armed.
++ */
++static int skwbt_scan_ext(struct hci_dev *hdev, bool on)
++{
++    struct {
++        struct hci_cp_le_set_ext_scan_params p;
++        struct hci_cp_le_scan_phy_params phy;
++    } __packed params;
++    struct hci_cp_le_set_ext_scan_enable en;
++
++    memset(&en, 0, sizeof(en));
++    en.enable = LE_SCAN_DISABLE;
++    skwbt_cmd(hdev, HCI_OP_LE_SET_EXT_SCAN_ENABLE, sizeof(en), &en);
++    if (!on)
++        return 0;
++
++    memset(&params, 0, sizeof(params));
++    params.p.own_addr_type = 0x00;
++    params.p.filter_policy = HCI_LE_USE_ACCEPT_LIST;
++    params.p.scanning_phys = LE_SCAN_PHY_1M;
++    params.phy.type = LE_SCAN_PASSIVE;
++    params.phy.interval = cpu_to_le16(0x0060);
++    params.phy.window = cpu_to_le16(0x0030);
++    skwbt_cmd(hdev, HCI_OP_LE_SET_EXT_SCAN_PARAMS, sizeof(params), &params);
++
++    en.enable = LE_SCAN_ENABLE;
++    en.filter_dup = LE_SCAN_FILTER_DUP_ENABLE;
++    return skwbt_cmd(hdev, HCI_OP_LE_SET_EXT_SCAN_ENABLE, sizeof(en), &en);
++}
++
++/* The add is normally refused as a duplicate - the kernel keeps the peer listed even while
++ * connected - and stays as insurance. The scan is what is genuinely off, and once the disconnect is
++ * masked nothing will prompt the host to start it.
++ */
++static void skwbt_arm_scan(struct hci_dev *hdev, struct hci_conn *conn)
++{
++    struct hci_cp_le_add_to_accept_list add;
++    bool ext = use_ext_scan(hdev);
++    int ret;
++
++    add.bdaddr_type = conn->dst_type;
++    bacpy(&add.bdaddr, &conn->dst);
++    skwbt_cmd(hdev, HCI_OP_LE_ADD_TO_ACCEPT_LIST, sizeof(add), &add);
++
++    ret = ext ? skwbt_scan_ext(hdev, true) : skwbt_scan_legacy(hdev, true);
++
++    SKWBT_INFO("accept-list scan for %pMR (type %u): %s, enable ret %d",
++               &conn->dst, conn->dst_type, ext ? "extended" : "legacy", ret);
++}
++
++/* There is no command to read the event mask back, so the only faithful restore is the value the
++ * core last wrote, snooped on its way through this driver.
++ */
++static void skwbt_set_event_mask(struct hci_dev *hdev, bool hide_disconnect)
++{
++    u8 mask[sizeof(skwbt_event_mask)];
++
++    if (!skwbt_event_mask_seen)
++    {
++        SKWBT_INFO("never saw the core set an event mask, leaving it alone");
++        return;
++    }
++
++    memcpy(mask, skwbt_event_mask, sizeof(mask));
++    if (hide_disconnect)
++        mask[0] &= ~0x10;
++
++    skwbt_writing_event_mask = true;
++    if (skwbt_cmd(hdev, HCI_OP_SET_EVENT_MASK, sizeof(mask), mask) && !hide_disconnect)
++    {
++        /* Losing this one leaves Disconnect Complete masked for good, and everything downstream
++         * looks healthy while the host never hears another disconnect.
++         */
++        SKWBT_ERROR("event mask restore failed, retrying");
++        skwbt_cmd(hdev, HCI_OP_SET_EVENT_MASK, sizeof(mask), mask);
++    }
++    skwbt_writing_event_mask = false;
++}
++
++static void skwbt_disconn_complete(struct hci_dev *hdev, u16 handle)
++{
++    uint8_t pkt[6] = { HCI_EV_DISCONN_COMPLETE, 0x04, 0x00,
++                       (uint8_t)(handle & 0xff), (uint8_t)(handle >> 8),
++                       HCI_ERROR_CONNECTION_TIMEOUT };
++    struct sk_buff *skb = alloc_skb(sizeof(pkt), GFP_ATOMIC);
++
++    if (!skb)
++    {
++        SKWBT_ERROR("%s: failed to allocate mem", __func__);
++        return;
++    }
++
++    memcpy(skb_put(skb, sizeof(pkt)), pkt, sizeof(pkt));
++    bt_cb(skb)->pkt_type = HCI_EVENT_PKT;
++    hci_recv_frame(hdev, skb);
++}
++
++/* Ask the controller whether it still knows the handle. Unknown Connection Identifier arrives as
++ * ERR_PTR(-ENOTCONN), so a failed command is the answer rather than a reason to give up.
++ */
++static bool skwbt_handle_alive(struct hci_dev *hdev, u16 handle)
++{
++    struct hci_cp_read_rssi cp;
++    struct sk_buff *skb;
++    u8 status;
++
++    cp.handle = cpu_to_le16(handle);
++    skb = __hci_cmd_sync(hdev, HCI_OP_READ_RSSI, sizeof(cp), &cp, HCI_CMD_TIMEOUT);
++    if (IS_ERR(skb))
++        return false;
++
++    status = skb->data[0];
++    kfree_skb(skb);
++
++    return status == 0;
++}
++
++
++static void skwbt_wait_link_quiet(void)
++{
++    unsigned long deadline;
++
++    if (!settle_ms)
++        return;
++
++    deadline = jiffies + msecs_to_jiffies(settle_ms * 4);
++    while (time_before(jiffies, deadline) &&
++           time_before(jiffies, skwbt_last_rx + msecs_to_jiffies(settle_ms)))
++        msleep(50);
++}
++
++static int skwbt_pm_notify(struct notifier_block *nb, unsigned long action, void *unused)
++{
++    struct hci_dev *hdev = skwbt_pm_hdev;
++    struct hci_conn *conn;
++    struct sk_buff *skb;
++
++    if (!hdev)
++        return NOTIFY_DONE;
++
++    if (action == PM_POST_SUSPEND)
++    {
++        /* The scan is deliberately left running. It was started behind the core's back, possibly
++         * over one the core already owned, so switching it off here kills a scan the core believes
++         * is still up and nothing listens for the remote again. A spare accept-list scan costs a
++         * little power; a deaf controller costs the only way back into the box.
++         */
++        if (skwbt_masked)
++        {
++            u16 handle = skwbt_masked_handle;
++            bool gone;
++
++            skwbt_masked = false;
++
++            /* More patient than the suspend side: leaving the mask on is permanent, and the host
++             * would never hear another disconnect.
++             */
++            if (!skwbt_trylock_stack(hdev, 5000))
++            {
++                SKWBT_ERROR("stack busy at resume, Disconnect Complete left masked");
++                return NOTIFY_DONE;
++            }
++
++            skwbt_set_event_mask(hdev, false);
++            gone = !skwbt_handle_alive(hdev, handle);
++            mutex_unlock(&hdev->req_lock);
++
++            /* Outside the lock: this is fed to the core, which will want it. */
++            if (gone)
++            {
++                SKWBT_INFO("handle 0x%04x is gone, synthesising the disconnect", handle);
++                skwbt_disconn_complete(hdev, handle);
++            }
++        }
++
++        return NOTIFY_DONE;
++    }
++
++    if (action != PM_SUSPEND_PREPARE)
++        return NOTIFY_DONE;
++
++    SKWBT_INFO("pm: prepare, settling");
++    skwbt_wait_link_quiet();
++    SKWBT_INFO("pm: settled, taking the stack");
++
++    if (!skwbt_trylock_stack(hdev, 1000))
++    {
++        SKWBT_INFO("stack busy at suspend, going down unarmed");
++        return NOTIFY_DONE;
++    }
++
++    skb = __hci_cmd_sync(hdev, HCI_OP_SET_EVENT_MASK_PAGE_2,
++                         sizeof(skwbt_evt_mask_page2_off), skwbt_evt_mask_page2_off,
++                         HCI_CMD_TIMEOUT);
++    if (IS_ERR(skb))
++        SKWBT_INFO("clearing event mask page 2 failed: %ld", PTR_ERR(skb));
++    else
++        kfree_skb(skb);
++
++    conn = skwbt_le_conn(hdev);
++    if (!conn)
++    {
++        SKWBT_INFO("no LE link at suspend, leaving scan and event mask alone");
++        mutex_unlock(&hdev->req_lock);
++        return NOTIFY_DONE;
++    }
++
++    if (presuspend_scan)
++        skwbt_arm_scan(hdev, conn);
++
++    if (mask_disconnect)
++    {
++        skwbt_masked_handle = conn->handle;
++        skwbt_masked = true;
++        skwbt_set_event_mask(hdev, true);
++    }
++
++    mutex_unlock(&hdev->req_lock);
++
++    SKWBT_INFO("pm: armed, going down");
++    return NOTIFY_DONE;
++}
++
++static struct notifier_block skwbt_pm_nb = { .notifier_call = skwbt_pm_notify };
++#endif
++
+ static char skwbt_board_id[64] = "";
+ 
+ static int skwbt_request_firmware(const struct firmware **fw,
+@@ -273,6 +635,11 @@
+ #endif
+ 
+     pkt_type = *((u8 *)buf);
++    /* Every packet, not just data: a freshly established link is still exchanging events, and a
++     * wait keyed on data alone sails through the gaps between them.
++     */
++    skwbt_last_rx = jiffies;
++
+     if(HCI_EVENT_SKWLOG == pkt_type)
+     {
+ #if BT_CP_LOG_EN
+@@ -869,6 +1236,18 @@
+     u8 *d = skb_push(skb, 1);
+     *d = pkt_type;
+ 
++    /* There is no command to read the event mask back, so the only faithful restore is the value
++     * the core last set. Read past the type byte just pushed: opcode, length, then the mask.
++     */
++    if (pkt_type == HCI_COMMAND_PKT && !skwbt_writing_event_mask &&
++        skb->len >= 4 + sizeof(skwbt_event_mask) &&
++        (skb->data[1] | (skb->data[2] << 8)) == HCI_OP_SET_EVENT_MASK &&
++        skb->data[3] == sizeof(skwbt_event_mask))
++    {
++        memcpy(skwbt_event_mask, skb->data + 4, sizeof(skwbt_event_mask));
++        skwbt_event_mask_seen = true;
++    }
++
+     if(data->pdata == NULL)
+     {
+         SKWBT_ERROR("%s pointer is null", __func__);
+@@ -984,6 +1363,16 @@
+     return NOTIFY_OK;
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
++/* Without this the core takes the !hdev->wakeup branch in hci_suspend_sync(), stopping after it
++ * has disconnected everything: no event filter, no accept list, so nothing can wake the host.
++ */
++static bool btseekwave_wakeup(struct hci_dev *hdev)
++{
++    return hdev->dev.parent && device_may_wakeup(hdev->dev.parent);
++}
++#endif
++
+ static int btseekwave_probe(struct platform_device *pdev)
+ {
+     struct btseekwave_data *data;
+@@ -1040,15 +1429,28 @@
+     hdev->send     = btseekwave_send_frame_lv;
+ #endif
+     hdev->setup    = btseekwave_setup;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
++    device_init_wakeup(dev, true);
++    hdev->wakeup   = btseekwave_wakeup;
++#endif
+ 
+     atomic_set(&hdev->promisc, 0);
+ 
+     //set_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks);
+-    //set_bit(HCI_QUIRK_NO_SUSPEND_NOTIFIER, &hdev->quirks);
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
++    if (keep_link_suspended) {
++        set_bit(HCI_QUIRK_NO_SUSPEND_NOTIFIER, &hdev->quirks);
++        skwbt_pm_hdev = hdev;
++        register_pm_notifier(&skwbt_pm_nb);
++    }
++#endif
+ 
+     err = hci_register_dev(hdev);
+     if (err < 0)
+     {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
++        device_init_wakeup(dev, false);
++#endif
+         hci_free_dev(hdev);
+         return err;
+     }
+@@ -1116,6 +1518,15 @@
+ 
+         hci_free_dev(hdev);
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
++        if (keep_link_suspended) {
++            unregister_pm_notifier(&skwbt_pm_nb);
++            skwbt_pm_hdev = NULL;
++        }
++
++        device_init_wakeup(&pdev->dev, false);
++#endif
++
+ #if SKWBT_LOG_PORT_EN
+         skwbt_log_port_exit();
+ #endif
+-- 
+2.55.0

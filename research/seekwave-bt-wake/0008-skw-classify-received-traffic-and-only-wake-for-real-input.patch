@@ -1,0 +1,165 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 13 Sep 2026 02:30:00 -0400
+Subject: [PATCH] skw: classify received traffic and only wake the host for
+ real input
+
+The chip pulls host-wake for anything it has to deliver, and the host cannot
+see what that is until it is already awake. That is why filtering spurious
+Bluetooth wakes from the host has never worked here: in a deep suspend the SoC
+resumes in hardware before a single instruction of ours runs, so there is no
+moment in which to decide.
+
+Suspend-to-idle has that moment. The CPU services the interrupt while the
+sleep continues and s2idle_loop() only exits on pm_wakeup_pending(), so the
+packet can be classified first and the sleep ended only when it was real input.
+
+Two parts:
+
+  no_irq_wake drops the chip GPIO from the system wake sources, but only when
+  pm_suspend_target_state is PM_SUSPEND_TO_IDLE, and re-arms it on resume. In a
+  deep suspend the flag is ignored - dropping the wake there would merely make
+  the chip unable to wake the host at all.
+
+  btseekwave_rx_complete() calls pm_system_wakeup() for ACL data, which is a HID
+  report from a connected remote, and for an LE advertising report, which is what
+  a keypress produces once the link has dropped. Payload-timeout expiry,
+  disconnect and completed-packet counts reach the host as normal and simply do
+  not count as wakeups. Nothing is masked, so the host's connection state stays
+  consistent.
+
+INCOMPLETE, and superseded - kept as the record of an attempt built on a wrong
+root cause. Measured on an H96 Max 3518D: the box held the suspend through the
+traffic that previously ended it after two seconds, and nothing woke it either.
+
+That was read at the time as skw_resume_check() blocking the RX thread. It does
+block it, but the thread was never reached. disable_irq_wake() does not make an
+interrupt filterable - it moves it from the wake-armed case of
+suspend_device_irq() to the plain one, where the line is marked IRQS_SUSPENDED
+and disabled outright, so the handler does not run and nothing wakes. The flag
+that keeps a handler running through a suspend-to-idle is IRQF_NO_SUSPEND, at
+request_irq() time.
+
+The classifier below is the part worth keeping. See s2idle-feasibility.md for
+the full trace of what stands between the chip raising host-wake and this
+function getting to see the packet.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ drivers/seekwaveplatform_lite/sdio/skw_sdio.h      |  1 +
+ drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c | 24 ++++++++++++
+ drivers/swtbt4l/skw_btdriver.c                     | 30 +++++++++++++++
+ 3 files changed, 55 insertions(+), 3 deletions(-)
+
+--- a/drivers/swtbt4l/skw_btdriver.c
++++ b/drivers/swtbt4l/skw_btdriver.c
+@@ -33,6 +33,33 @@
+ #include <net/bluetooth/bluetooth.h>
+ #include <net/bluetooth/hci_core.h>
+ #include <linux/suspend.h>
++
++/* Which received traffic is worth ending a suspend for.
++ *
++ * The chip pulls host-wake for anything it has to deliver, and the host cannot see what that is
++ * until it is already awake - which is why every attempt to filter spurious wakes from the host has
++ * failed. Under suspend-to-idle it can: the interrupt is serviced without leaving the idle loop, so
++ * the packet can be classified first and the sleep only ended when it was real input.
++ *
++ * Wake-worthy is ACL data - a HID report from a connected remote - and an LE advertising report,
++ * which is what a keypress produces once the link has dropped. Everything else the controller sends
++ * unprompted (payload-timeout expiry, disconnect, completed-packet counts) is delivered normally and
++ * simply does not count as a wakeup.
++ */
++static bool skwbt_wake_worthy(const u8 *buf, int size)
++{
++    if (size < 2)
++        return false;
++
++    if (buf[0] == HCI_ACLDATA_PKT)
++        return true;
++
++    /* HCI event: [0] type, [1] event code, [2] plen, [3] LE subevent */
++    if (buf[0] == HCI_EVENT_PKT && buf[1] == 0x3e && size >= 4)
++        return buf[3] == 0x02 || buf[3] == 0x0d;
++
++    return false;
++}
+ //#include <linux/platform_data/skw_platform_data.h>
+ #include <skw_platform_data.h>
+ #include <linux/fs.h>
+@@ -360,6 +387,9 @@
+     skwbt_log_port_data_write(1, (uint8_t *)buf, (uint16_t)size);
+ #endif
+ 
++    if (keep_link_suspended && skwbt_wake_worthy((const u8 *)buf, size))
++        pm_system_wakeup();
++
+     pkt_type = *((u8 *)buf);
+     if(HCI_EVENT_SKWLOG == pkt_type)
+     {
+--- a/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c
++++ b/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c
+@@ -35,6 +35,7 @@
+ #include "skw_sdio_host.h"
+ #include "skw_sdio_debugfs.h"
+ #include "skw_sdio.h"
++#include <linux/suspend.h>
+ int bind_device=0;
+ 
+ extern unsigned int test_debug;
+@@ -49,6 +50,15 @@
+ module_param(bind_device, int, S_IRUGO);
+ module_param(test_debug, uint, S_IRUGO);
+ module_param(skw_use_sdma, int, S_IRUGO);
++
++/* Leave the chip's GPIO out of the system wake sources. Only useful with suspend-to-idle, where the
++ * interrupt is still serviced while asleep, so the Bluetooth driver can look at what arrived and
++ * decide whether it was worth waking for. In a deep suspend this simply makes the chip unable to
++ * wake the host at all.
++ */
++static bool skw_sdio_no_irq_wake;
++module_param_named(no_irq_wake, skw_sdio_no_irq_wake, bool, 0644);
++MODULE_PARM_DESC(no_irq_wake, "Do not arm the chip GPIO as a system wake source. Default off.");
+ 
+ #ifndef MMC_CAP2_SDIO_IRQ_NOTHREAD
+ #define MMC_CAP2_SDIO_IRQ_NOTHREAD (1 << 17)
+@@ -876,6 +886,16 @@
+ 		sdio_release_host(func);
+ 		skw_sdio_dbg("%s sdio_release_irq ret = %d\n", __func__, ret);
+ 	} 
++	/* Only suspend-to-idle can filter wakes: there the interrupt is still serviced while asleep,
++	 * so the Bluetooth driver gets to see what arrived and decide. A deep suspend resumes in
++	 * hardware before any code runs, so dropping the wake there would only make the chip unable
++	 * to wake the host at all - hence the explicit state check rather than a bare flag.
++	 */
++	if (skw_sdio_no_irq_wake && pm_suspend_target_state == PM_SUSPEND_TO_IDLE) {
++		disable_irq_wake(skw_sdio->irq_num);
++		skw_sdio->irq_wake_dropped = 1;
++	}
++
+ 	atomic_set(&skw_sdio->suspending, 1);
+ #ifdef CONFIG_NO_SERVICE_PD
+ 	if (!skw_sdio->cp_state && skw_sdio->service_state_map==0)
+@@ -904,6 +924,10 @@
+ 	skw_dloader(2);
+ #endif
+ 	skw_sdio_set_resume_indication();
++	if (skw_sdio->irq_wake_dropped) {
++		enable_irq_wake(skw_sdio->irq_num);
++		skw_sdio->irq_wake_dropped = 0;
++	}
+ 	skw_sdio->suspend_wake_unlock_enable =0;
+ 	if (SKW_CARD_ONLINE(skw_sdio))
+ 		func->card->host->pm_flags &= ~MMC_PM_KEEP_POWER;
+--- a/drivers/seekwaveplatform_lite/sdio/skw_sdio.h
++++ b/drivers/seekwaveplatform_lite/sdio/skw_sdio.h
+@@ -191,6 +191,7 @@
+ 	int power_off;
+ 	unsigned int sdio_exti_gpio_state;
+ 	int suspend_wake_unlock_enable;
++	int irq_wake_dropped;
+ 	int service_index_map;
+ 	wait_queue_head_t wq;
+ 	u8  cp_fifo_status;
+-- 
+2.55.0

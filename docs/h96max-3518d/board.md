@@ -4,7 +4,7 @@ A stick-form RK3518 box. Sibling to `docs/h96max/`, which is the same SoC and th
 different PCB (`3518_ZX_V01` there, `3518_DG_ZX_V01` here).
 
 **Runs Armbian since 2026-09-06**, reachable over SSH. Every number below was measured on this unit
-**with the heatsink fitted**. `docs/todo/h96max-3518d-bringup.md` holds what is still open.
+**with the heatsink fitted**. Known gaps are listed below; `docs/todo/` holds the open questions.
 
 ## Identity — check yours matches before flashing
 
@@ -63,7 +63,7 @@ tested and broken · ➖ not on this board. Nothing is inherited from the siblin
 | Serial console             |  ✅   | `ttyFIQ0` at 1500000, root shell                                                 |
 | Maskrom over USB           |  ✅   | button via the tiny USB-C hole → `Maskrom` on **our** U-Boot; `db` ok            |
 | `wl` write over maskrom    |  ✅   | 64 MiB written, read back identical, original restored and re-verified           |
-| Suspend to RAM + BT wake   |  ❌   | wakes itself in ~3 s; the quirk that fixes it is off pending evidence            |
+| Sleep/wake from remote     |  ❌   | fixes exist and are measured, but a later suspend can hang — see below           |
 | CPU + thermal              |  ✅   | 5 min 4-core, no throttling, 27 °C below the first trip point                    |
 | Memory                     |  ✅   | `stress-ng --vm --verify` clean                                                  |
 | MAC / `BD_ADDR`            |  ✅   | both stable across reboot; `LAN_MAC` matches the sticker                         |
@@ -386,32 +386,35 @@ and the restore commands are all in `docs/maskrom.md`; what is board-specific:
 - **Hardware decode is proven; smooth 4K display is a userspace problem.** 4K HEVC decodes at 51 fps
   but displays at 27 fps / 48% CPU because `fbdev` copies every frame. A zero-copy player is out of
   scope for this repo.
-- **BT wake is proven but not yet persistent** — the driver patch ships, but two runtime steps are
-  undone by a reboot. See the suspend section.
+- **AV1 has no hardware decode** ➖. Software `dav1d` gives 40.6 fps at 1080p with all four cores
+  pegged, so 1080p60 or 4K AV1 is out of reach. Pin players to VP9, which YouTube serves to anything
+  not advertising AV1.
+- **`ddc read failed` ×15 at every boot.** EDID still parses — 256 B, 40 modes — and everything
+  works, so it is cosmetic. Inherited from the factory tree, not from our graft.
+- **AVS1/AVS+ decode never confirmed** ❓. FFmpeg's FATE `cavs.mpg`, demuxed to an elementary
+  stream, makes MPP spin — endless `loop again`, no frame — under both `vdpu2` codings. Either the
+  stream is unclean or the legacy path does not really do AVS1 here. AVS2, the one that appears in
+  modern content, works at 357 fps.
+- **DCI 4K (4096x2160) skipped deliberately** ➖. The panel-native `3840x2160p60` works; DCI is a
+  cinema mode nothing here needs, and `docs/hdmi-edid-override.md` covers banning it if a client
+  picks it by area.
 
-## Suspend ✅ · BT remote wake ❌
+## Suspend ✅ · sleep and wake on the remote ❌
 
 **Suspend works.** It enters `deep`, resumes with the same `boot_id`, and survives longer than the
 watchdog window — `dw_wdt_suspend()` gates the counter clock, so sleep costs nothing from it.
 
-**Waking it from the BLE remote does not, and BT is the only wake path here** — no RTC, no
-`wakealarm`, no IR receiver. So a suspended box may not come back, and recovery is pulling the
-power. For that reason the power key is `ignore` on both short and long press: the remote cannot
-reach suspend. `systemctl suspend` still works and is unsupported.
+**The remote cannot be relied on to sleep or wake it, so the power key is `ignore` on both
+presses.** BT is the only path — no RTC, no `wakealarm`, no IR receiver.
 
-Five of seven faults were fixed. Two are not:
+Six of the seven faults behind that have working fixes, measured: the board has slept 27564 s
+through the hour-long link teardown that used to end every sleep at 3598 s, and woken on a keypress
+with the remote's HID devices back 0.4 s later. What is not solved is stability — a later suspend
+can hang before the Bluetooth driver's PM notifier is even entered, and the box then needs its power
+pulled.
 
-- The remote's power-key **release** arrives ~360 ms after the press, on the far side of the
-  suspend, and resumes the box immediately.
-- The remote **stops responding after ~1 h idle**; the link dies and `Disconnect Complete` wakes the
-  host. Masking that event makes the box unwakeable, because the host re-enables accept-list
-  scanning in response to it.
-
-Full analysis, measurements and rejected approaches: `research/h96max-3518d-bt-wake`.
-
-> The quirk that made BT wake nearly work (`keep_link_suspended`) is parked in
-> `research/h96max-3518d-bt-wake/` and not applied. It reached 3598 s of sleep, but one run with it
-> active ended with the box hung.
+`research/seekwave-bt-wake` carries the patch, the measurements and the open failure. Nothing from
+it is wired into a build.
 
 **Every software state lights exactly one LED, and that makes the LEDs a diagnostic.**
 
