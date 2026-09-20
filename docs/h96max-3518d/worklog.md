@@ -3110,3 +3110,14 @@ Three causes were named from missing evidence during this work and all three wer
 is on zram, so every power cut took the trace with it: catching the backtrace needs a persistent
 journal and a watchdog firing `sysrq-w` when a suspend sits in prepare. The box is back on stock
 logging, so that goes back up when the work resumes.
+
+## 2026-09-20 — 0005 was anchored on context the parked patch supplied
+
+Redeploying the no-sleep/wake tree applied `0005` with `fuzz 2` at offset -319. Its hunks quoted
+`skwbt_pm_nb`, which exists only once `0004` is applied — the patch had been generated on top of the
+sleep/wake stack, so against the stock tree `patch` was discarding context and placing the hunks by
+luck. It placed them correctly, which is not a property worth shipping.
+
+Regenerated against the tree `0002` and `0003` actually leave behind. The hunks now anchor on
+`module_param_named(firmware_dir, ...)`, apply at zero fuzz and zero offset, and produce a
+byte-identical `skw_btdriver.c` — verified by diffing the result against the fuzz-applied build.

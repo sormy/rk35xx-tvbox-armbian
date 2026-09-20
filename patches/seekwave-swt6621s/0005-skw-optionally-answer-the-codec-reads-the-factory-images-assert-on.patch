@@ -26,14 +26,14 @@ silent opcode filter should be asked for rather than inherited.
 
 Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 ---
- drivers/swtbt4l/skw_btdriver.c | 63 ++++++++++++++
+ drivers/swtbt4l/skw_btdriver.c | 62 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed
 
---- a/drivers/swtbt4l/skw_btdriver.c	2026-09-14 18:38:28
-+++ b/drivers/swtbt4l/skw_btdriver.c	2026-09-14 18:38:28
-@@ -426,6 +426,52 @@
- static struct notifier_block skwbt_pm_nb = { .notifier_call = skwbt_pm_notify };
- #endif
+--- a/drivers/swtbt4l/skw_btdriver.c
++++ b/drivers/swtbt4l/skw_btdriver.c
+@@ -107,6 +107,52 @@
+ module_param_named(firmware_dir, skwbt_firmware_dir, charp, 0644);
+ MODULE_PARM_DESC(firmware_dir, "Firmware subdirectory under standard firmware path (e.g. \"seekwave\"). Empty means root directory.");
  
 +/* The factory chip images assert on the codec reads - BSPASSERT:hci_tl.c-386, delivered as
 + * HCI_EV_HARDWARE_ERROR, which kills init before the controller is usable. They advertise support
@@ -84,7 +84,7 @@ Signed-off-by: Artem Butusov <art.sormy@gmail.com>
  static char skwbt_board_id[64] = "";
  
  static int skwbt_request_firmware(const struct firmware **fw,
-@@ -1190,7 +1236,22 @@
+@@ -866,7 +912,22 @@
  {
      struct btseekwave_data *data = hci_get_drvdata(hdev);
      u8 pkt_type = bt_cb(skb)->pkt_type;
@@ -107,6 +107,4 @@ Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 +    d = skb_push(skb, 1);
      *d = pkt_type;
  
-     /* There is no command to read the event mask back, so the only faithful restore is the value
--- 
-2.55.0
+     if(data->pdata == NULL)

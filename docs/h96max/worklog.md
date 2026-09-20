@@ -2065,3 +2065,25 @@ sustained 150 MB uplinks: 64.2, 68.8, 70.1 Mbit/s against a 63.8 Mbit/s K3B base
 Mbit/s latch reads ~1.2. `hci0` comes up with zero `BSPASSERT`.
 
 Reverting is the two blobs; git history holds the K3B build.
+
+## 2026-09-20 — 0005 confirmed load-bearing on this board, and 0x100e is what kills it
+
+Reloaded `skwbt` with `skip_codec_reads=0` to check the patch is still earning its place. It is.
+`hci0` stalls at `DOWN INIT RUNNING` and never completes init:
+
+    [SKWSDIO ERROR] skw_sdio2_handle_packet:  bsp assert !!!
+    [SKWBT_INFO] btseekwave_hci_hardware_error enter
+    Bluetooth: hci0: command 0x100e tx timeout
+    Bluetooth: hci0: Failed to read codec capabilities (-110)
+
+repeating, with every subsequent TX failing `-5`. Reloading without the override brings it back to
+`UP RUNNING`, `errors:0`.
+
+The assert is on **`0x100e`**, Read Local Supported Codec Capabilities — not on the codec list. With
+the override on, `0x100d` is answered locally, the core logs
+`Failed to read local supported codecs (-56)` and never proceeds to `0x100e`, which is why the log
+shows only `0x100d` intercepted. Cutting at `0x100d` is the cheaper of the two stops; `0x100b` is
+the legacy path and defensive.
+
+6.1.115 has no narrower route: there is no codec quirk in `hci.h`, and the one candidate,
+`HCI_QUIRK_BROKEN_LOCAL_COMMANDS`, zeroes the whole supported-commands bitmap.
