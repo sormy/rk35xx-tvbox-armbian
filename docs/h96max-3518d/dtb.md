@@ -112,6 +112,29 @@ The value is read straight from the DT — `of_property_read_u8(dev->of_node, "e
 runtime override (the VOP cannot be unbound while it drives the console). It needs a DTB and a
 reboot.
 
+**What `[02]` costs.** `vop3_ignore_plane()` drops a window outright under some modes and
+`vop3_esmart_linebuffer_size()` halves it under others. Per-window width on this SoC
+(`max_output.width` = 4096):
+
+| `esmart_lb_mode`   | Esmart0  | Esmart1     | Esmart2 | Esmart3 |
+| ------------------ | -------- | ----------- | ------- | ------- |
+| `[00]` 8K          | 4096     | dropped     | dropped | dropped |
+| `[01]` 4K_4K       | 4096     | dropped     | 4096    | dropped |
+| **`[02]` ours**    | **4096** | **dropped** | 2048    | 2048    |
+| `[03]` factory     | 2048     | 2048        | 2048    | 2048    |
+| `[04]` 4K_4K_4K    | 4096     | 4096        | 4096    | dropped |
+| `[05]` 4K_4K_2K_2K | 4096     | 4096        | 2048    | 2048    |
+
+**Cluster windows are exempt** — that function returns the full width for them under every mode, so
+`Cluster0-win0` stays a 4K-capable overlay whatever this property says.
+
+🟡 **`[04]` and `[05]` are probably not this SoC's.** The first four modes each sum to 8K of line
+buffer; those two sum to 12K, and `rk3576` — the only VOP3 carrying an `esmart_lb_mode_map` — is the
+likelier owner. Read off the arithmetic, not the TRM.
+
+`[01]` is the only alternative leaving two 4K planes on vp0, Esmart0 and Esmart2. It costs Esmart3,
+which is vp1's primary — the TVE output this board does not have.
+
 **Refresh rate is a red herring.** 4K30 (297 MHz, half the pixel clock of 4K60) failed in exactly
 the same way. The limit is line width, not bandwidth or TMDS rate — which is what rules out the HDMI
 PHY, the DMC and every clock as suspects.
