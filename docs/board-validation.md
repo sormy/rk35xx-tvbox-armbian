@@ -83,12 +83,21 @@ payload and an upstreamed board skips it.
 - [ ] Throughput idle **and** under 4-core load, both bands
 - [ ] No latch — after the load stops, baseline returns at once or within 60 s
 - [ ] MAC stable across three reboots, and again after eMMC migration
+- [ ] MAC is **this unit's own** — from the Wi-Fi part's own eFUSE, not the SoC's id and not a
+      constant in a shipped blob, which every board off the image would share. Check against a
+      second unit, or against the blob: `od -A x -t x1 -j 4 -N 6 <eeprom>.bin` returning the running
+      address means it came from the file
+- [ ] Shipped firmware is named for its scope: a generic image takes no board suffix, a per-board
+      file — EEPROM, calibration, NVRAM — takes one. An unsuffixed per-board blob is how a shared
+      MAC ships in the first place
 
 ## Bluetooth
 
 - [ ] `hci0` `UP RUNNING`, `errors:0`, not rfkill-blocked on a fresh image
 - [ ] `btmgmt find` returns devices
-- [ ] `BD_ADDR` identical across three reboots
+- [ ] `BD_ADDR` identical across three reboots, and **unique to the unit** on the same terms as the
+      Wi-Fi address, derived from the Bluetooth part itself. On a combo part the two usually differ
+      by one, which is a quick check that both came from the same place
 - [ ] The bundled remote pairs, works, and the pairing survives a reboot
 - [ ] A2DP to a speaker, or recorded as untested
 
@@ -303,15 +312,33 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
 - A valid but **wrong** address wins, and `dwmac-rk` takes any valid address it is handed. On these
   images that address comes from mainline's `rockchip_setup_macaddr()` — SHA256 of the OTP `cpuid#`,
   multicast cleared, LA bit set — because our U-Boot has no vendor-storage driver to read `LAN_MAC`
-  with. Deterministic, so it will not churn; still not the sticker. Check against the sticker, not
-  against the last boot.
-- Order of truth: vendor storage `LAN_MAC` (the sticker) → chip efuse → SoC OTP id. Random is the
-  bug, never the fallback; derive the tail from the SoC serial instead. Never a rootfs file, never a
-  rename-after-the-fact unit.
-- **A derived address is locally administered** — bit `0x02` of the first octet. Neither `C4:2A:FE`
-  nor `88:00:33` is a registered OUI, so deriving under them squats on space that is not ours;
-  `rk35xx-mac-pin` sets the bit whatever `mac-oui` says. Addresses read from vendor storage are
-  assigned and stay untouched.
+  with. Deterministic, so it will not churn; still step 4 on an interface that has a step 1. Check
+  against the sticker, not against the last boot.
+- **Order of truth, best first.** Each step is a weaker claim to being this unit's address, and the
+  first two are assigned where the last two are only pseudo-unique:
+
+  1. **The printed label**, with vendor storage as its readable copy — one path, not two.
+  2. **The eFUSE on the chip that carries the interface.**
+  3. **Derived from that same chip's id.**
+  4. **Derived from the SoC's id** — last resort, and only for an interface with no id of its own.
+
+  In practice Ethernet starts at 1 and a radio on its own chip starts at 2. Sourcing across that — a
+  radio derived from the SoC while its eFUSE holds an address, an Ethernet address invented from a
+  chip id — is the fault this section exists to catch. Random is not step 5; it is the bug. Never a
+  rootfs file, never a rename-after-the-fact unit, never one constant shared by every board.
+
+- **Step 1 can disagree with itself.** `LAN_MAC` appears in several copies at different versions —
+  one board's two stale copies hold a locally-administered address the live copy does not. The label
+  settles which is real, and matched the live copy on every board here.
+- **Step 1 does not exist for a radio.** `WIFI_MAC` and `BT_MAC` are ids 2 and 4 in the schema and
+  `rk35xx-vendor-storage` reads them, but they are unpopulated on every board measured here. 🟡 the
+  label and vendor storage look like one path rather than two — no box seen here prints a Wi-Fi or
+  Bluetooth address on its label either, so there is likely nothing assigned at manufacture to write
+  into either place. So a radio is checked against a second unit or the blob, never the label.
+- **A derived address — steps 3 and 4 — is locally administered**, bit `0x02` of the first octet.
+  Neither `C4:2A:FE` nor `88:00:33` is a registered OUI, so deriving under them squats on space that
+  is not ours; `rk35xx-mac-pin` sets the bit whatever `mac-oui` says. Addresses read from vendor
+  storage are assigned and stay untouched.
 - Bluetooth has the same requirement and a worse failure — a wandering `BD_ADDR` invalidates every
   pairing on every boot, and nothing in the logs says why.
 
