@@ -12,3 +12,5 @@
 /*.log
 /.claude/
 /log
+# python bytecode from the host-side build helpers
+__pycache__/
