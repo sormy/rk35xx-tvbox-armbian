@@ -625,3 +625,23 @@ that pyamlboot lacks the protocol.
   `setenv bootcmd run usb_on recovery_from_udisk storeboot` (55 bytes). `setenv` joins its extra
   arguments and `run` takes several names, so the stock `recovery_from_udisk` runs the stick's
   `aml_autoscript`, which does the full rewrite. Not yet run.
+
+## 2026-09-26 — the first boot without serial, run twice
+
+- From the factory `env` partition written back from the eMMC backup: `amlcmd connect` started
+  first, then the OTG cable plugged in to power the box. It identified inside the stock cold boot's
+  700 ms `try_auto_burn` window, with no button held.
+- The recipe's `setenv try_auto_burn`, `setenv usb_on usb start 0`,
+  `setenv bootcmd run usb_on recovery_from_udisk storeboot` and `saveenv` all answered `success`;
+  after `reset` the box booted the stick, and its `aml_autoscript` left `armbian_autoboot=1` and its
+  own `bootcmd`. A cold power-on with nothing attached then booted the stick again.
+- Run twice from the factory environment, with the same result; Armbian answered ssh 35 s after
+  `reset`. In the second run a `connect` started by hand held the gadget, so a scripted one beside
+  it failed with `claim interface: Access denied`.
+- `reset` hung in the first two runs and returned in the third: another process held the gadget in
+  both - a stale Python `connect --daemon` from the prototype, then a `connect` started by hand.
+- A sector `backup` timed out in every run, after flushing 8 stranded bytes. It was never the
+  recipe: `backup` always runs eMMC discovery, and discovery read the size with an 8-byte upload. A
+  transfer shorter than one 512-byte packet times out on this gadget. It now fetches the whole
+  sector the size sits at the start of; `probe` finds 30777344 sectors at dev 1, and `backup` reads
+  the saved environment back before and after the recipe.

@@ -20,6 +20,8 @@ On the host:
 ./build-amltools.sh          # needs libusb and OpenSSL
 ```
 
+❓ Only macOS has run it so far.
+
 Linux needs write access to the device, as root or with a rule:
 
 ```sh
@@ -33,11 +35,12 @@ sudo udevadm control --reload
 Start `amlcmd connect` **before** triggering the box: it abandons burning mode unless identified
 within 750 ms, and once identified the link holds with no host process attached.
 
-| From              | Do this                      |
-| ----------------- | ---------------------------- |
-| a powered-off box | hold the button, apply power |
-| an Android shell  | `su -c 'reboot update'`      |
-| a U-Boot prompt   | `update`                     |
+| From              | Do this                                                      |
+| ----------------- | ------------------------------------------------------------ |
+| a stock box, off  | apply power; its `try_auto_burn` opens the gadget for 700 ms |
+| a powered-off box | hold the button, apply power                                 |
+| an Android shell  | `su -c 'reboot update'`                                      |
+| a U-Boot prompt   | `update`                                                     |
 
 ```sh
 amlcmd connect               # start first, then trigger the box
@@ -100,7 +103,7 @@ amlcmd backup probe.img 0 8                                    # prove it before
 
 `probe` names the gadget, sizes the boot device, checks the staging address reads back, and picks
 the eMMC out. `backup` and `restore` run the same discovery when `AML_MMC_DEV` is unset; a restore
-stops rather than guess. ❓ The discovery sequence has not been run on a box.
+stops rather than guess. On the M20 it finds the 30777344-sector eMMC at dev 1.
 
 | Value               | Default           | Set it when                         |
 | ------------------- | ----------------- | ----------------------------------- |
@@ -139,6 +142,11 @@ amlcmd rom read 0xd9000000 0x1000 sram.bin
 - The addresses are GX-family; `pyamlboot`'s board directories have the others.
 - Not implemented: bulk memory (`0x11` `0x12`), the AMLC handover G12 uses, ADNL. `pyamlboot` has
   them.
+
+## Known gaps
+
+- A second process holding the gadget makes every other one fail with
+  `claim interface: Access denied`, and can hang one mid-command.
 
 ## Recovering
 

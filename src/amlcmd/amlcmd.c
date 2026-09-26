@@ -347,8 +347,10 @@ static uint64_t emmc_sectors(void) {
     if (cached) return cached;
     snprintf(cmd, sizeof cmd, "amlmmc size wholeDev 0x%x", cfg.stage_addr);
     if (command(cmd, NULL) != 0) return 0;
+    /* a transfer shorter than one packet times out and strands its bytes, so fetch
+       the whole sector the 8-byte size sits at the start of */
     FILE *tmp = tmpfile();
-    upload("mem", stage, 8, tmp);
+    upload("mem", stage, SECTOR, tmp);
     rewind(tmp);
     if (fread(&n, 1, 8, tmp) != 8) die("size readback", 0);
     fclose(tmp);
