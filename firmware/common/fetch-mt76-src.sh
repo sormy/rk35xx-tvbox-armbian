@@ -5,9 +5,9 @@
 # The chip is an MT7663 sibling whose firmware owns the MAC; patches/mt76-mt7668 teaches mt7663s
 # to drive it, so the vendor driver need not be carried.
 #
-# Only the SDIO leaf is built, under its own name, so it loads beside the in-tree mt76 stack
-# instead of replacing it - everything it needs is already exported by mt76, mt76-sdio,
-# mt76-connac-lib and mt7615-common.
+# The whole SDIO stack is built - mt76, mt76-sdio, mt76-connac-lib, mt7615-common,
+# mt7663-usb-sdio-common and mt7663s - since the patches change the core, and it installs over the
+# in-tree modules through updates/.
 set -e
 DIR="${1:?usage: fetch-mt76-src.sh <src-dir> [kernel-version]}"
 KVER="${2:-6.18.44}"   # must match the base image's kernel: mt76 tracks its own mac80211

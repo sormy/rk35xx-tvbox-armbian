@@ -20,7 +20,7 @@ register map, connac descriptors and firmware download - whose firmware owns the
 | 0009 | mt7615: loading and resetting a firmware that owns the MAC | yes      |
 | 0010 | mt7615: running a part whose firmware owns the MAC         | yes      |
 | 0011 | mt7615: the MT7668S's sdio id and profile                  | yes      |
-| 0012 | build only the SDIO leaf, out of tree                      | no       |
+| 0012 | build the SDIO stack out of tree, over the in-tree modules | no       |
 
 Each patch builds on its own at `W=1`. `cover-letter.txt` introduces the set for submission.
 
