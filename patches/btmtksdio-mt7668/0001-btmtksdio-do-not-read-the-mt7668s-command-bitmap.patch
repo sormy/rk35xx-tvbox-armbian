@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sat, 19 Sep 2026 01:30:00 -0400
+Subject: [PATCH] Bluetooth: btmtksdio: do not read the MT7668's command bitmap
+
+The MT7668's supported-command bitmap claims LE Set Default PHY, which its
+firmware rejects as unknown. The command is an HCI_INIT step, so the
+failure aborts hci_init_sync() and the controller never reaches the
+management layer: btmgmt lists no index.
+
+Nothing lets a driver retract one claimed command, and
+HCI_QUIRK_BROKEN_LE_CODED masks only the coded-PHY bit, so skip reading the
+bitmap. The core then treats every optional command as absent; BR/EDR and
+LE come up and discovery works.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ drivers/bluetooth/btmtksdio.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/bluetooth/btmtksdio.c b/drivers/bluetooth/btmtksdio.c
+index d2583bc..5ee35d1 100644
+--- a/drivers/bluetooth/btmtksdio.c
++++ b/drivers/bluetooth/btmtksdio.c
+@@ -1159,6 +1159,12 @@ static int btmtksdio_setup(struct hci_dev *hdev)
+ 		err = mt76xx_setup(hdev, bdev->data->fwname);
+ 		if (err < 0)
+ 			return err;
++		/* The MT7668's supported-command bitmap claims LE Set Default
++		 * PHY and its firmware answers Unknown HCI Command, which aborts
++		 * hci_init4. Skip reading the bitmap so the core never asks.
++		 */
++		if (bdev->data->chipid == 0x7668)
++			hci_set_quirk(hdev, HCI_QUIRK_BROKEN_LOCAL_COMMANDS);
+ 		break;
+ 	default:
+ 		return -ENODEV;

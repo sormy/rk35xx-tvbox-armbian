@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Thu, 24 Sep 2026 22:00:00 -0400
+Subject: [PATCH] Bluetooth: btmtksdio: drop the firmware's debug channel
+ quietly
+
+The combo firmware sends packet type 0x80 down the Bluetooth function when
+it has something to report, core dumps included: after a Wi-Fi firmware
+assert, several hundred packets in seconds. btmtksdio logs each as an
+error, and on a 115200 serial console every line takes milliseconds spent
+holding the SDIO host the Wi-Fi function shares, long enough to stall it.
+
+Drop the channel quietly, and log one error a minute when a core dump is
+seen, which vendor event 0xfc6f marks.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ drivers/bluetooth/btmtksdio.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/bluetooth/btmtksdio.c b/drivers/bluetooth/btmtksdio.c
+index 5ee35d1..fbf72ec 100644
+--- a/drivers/bluetooth/btmtksdio.c
++++ b/drivers/bluetooth/btmtksdio.c
+@@ -445,6 +445,12 @@ static const struct h4_recv_pkt mtk_recv_pkts[] = {
+ 	{ H4_RECV_EVENT,    .recv = btmtksdio_recv_event },
+ };
+ 
++/* The MT7668 combo firmware's debug channel, which its own driver drops. A
++ * core dump comes down it, each packet opening with a vendor event, 0xfc6f.
++ */
++#define MTK_SDIO_FW_DEBUG	0x80
++#define MTK_SDIO_FW_DUMP	0xfc6f
++
+ static int btmtksdio_rx_packet(struct btmtksdio_dev *bdev, u16 rx_size)
+ {
+ 	const struct h4_recv_pkt *pkts = mtk_recv_pkts;
+@@ -485,6 +491,21 @@ static int btmtksdio_rx_packet(struct btmtksdio_dev *bdev, u16 rx_size)
+ 	/* Remove MediaTek SDIO header */
+ 	skb_pull(skb, sizeof(*sdio_hdr));
+ 
++	if (bdev->data->chipid == 0x7668 &&
++	    sdio_hdr->bt_type == MTK_SDIO_FW_DEBUG) {
++		static DEFINE_RATELIMIT_STATE(dump_rs, 60 * HZ, 1);
++
++		/* logged per packet, a dump holds the shared host long
++		 * enough to starve the other function
++		 */
++		if (skb->len >= 6 &&
++		    get_unaligned_le16(skb->data + 4) == MTK_SDIO_FW_DUMP &&
++		    __ratelimit(&dump_rs))
++			bt_dev_err(bdev->hdev, "firmware core dump");
++		kfree_skb(skb);
++		return 0;
++	}
++
+ 	/* We have to dig into the packet to get payload size and then know how
+ 	 * many padding bytes at the tail, these padding bytes should be removed
+ 	 * before the packet is indicated to the core layer.
