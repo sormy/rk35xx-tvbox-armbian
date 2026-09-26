@@ -2,7 +2,7 @@
 
 All of it came from **one root shell on the running stock Android**, over the serial console on
 2026-09-05, before anything on the box was modified. `su` is present (`/system/xbin/su`,
-`ro.build.type=userdebug`, `ro.debuggable=1`), so unlike `stock/h96max/` nothing here is inferred
+`ro.build.type=userdebug`, `ro.debuggable=1`), so unlike `stock/h96max-h313/` nothing here is inferred
 from a boot log.
 
 Binaries were pulled as `dd | gzip | base64` per 1 MiB chunk over the 1.5 Mbaud console; gzip's
@@ -13,7 +13,7 @@ Every file below matched.
 
 | Property            | Value                                                                          |
 | ------------------- | ------------------------------------------------------------------------------ |
-| `ro.product.name`   | `rk3518_box_32` — same as `stock/h96max/`; `_32` is the vendor's 32-bit target |
+| `ro.product.name`   | `rk3518_box_32` — same as `stock/h96max-h313/`; `_32` is the vendor's 32-bit target |
 | `ro.product.model`  | `H96_Max_3518_TS`                                                              |
 | `ro.board.platform` | `rk3528`                                                                       |
 | Build               | `RZX.V01.20260608.1237`, Android 14, kernel 6.1.118 `#147` (armv7l)            |
@@ -97,13 +97,13 @@ needs. `docs/h96max-3518d/worklog.md` has how it was finally captured.
 
 ### Radio
 
-`swt6621s_wifi` + `skw_sdio_lite` — the **same Seekwave SWT6621S** as `firmware/h96max/`, driver
+`swt6621s_wifi` + `skw_sdio_lite` — the **same Seekwave SWT6621S** as `firmware/h96max-h313/`, driver
 `VERSION: 2.0.250319-250618.eececbe`. SDIO on `mmc@ffc20000`, control GPIOs off `/seekwcn_boot`
 (`seekwave,sv6160lite`).
 
 **Its factory blobs are byte-identical to the other H96 Max's**, except the NV. Measured:
 `SWT6621S_DRAM_SDIO.bin` (192816 B), `SWT6621S_IRAM_SDIO.bin` (358776 B) and
-`SWT6621S_SEEKWAVE_R00001.bin` (2372 B) all match `stock/h96max/firmware/` exactly.
+`SWT6621S_SEEKWAVE_R00001.bin` (2372 B) all match `stock/h96max-h313/firmware/` exactly.
 `SWT6621S_NV_SDIO.bin` differs in **two bytes**, at offsets `0x20` and `0x24` — `0x00` here, `0x01`
 there. Neither looks like a MAC; they read as flags.
 

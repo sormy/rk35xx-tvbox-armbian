@@ -52,8 +52,8 @@ regenerate with `SYNC=1`, and drop `rk35xx-bt` + its unit.
 
 ## Rebuild
 
-`BOARD=r69-xr821 STOCK=r69 ./upstream/build.sh`. It regenerates the submission set and then compares
-it against `firmware/r69/board.dts` and `.dtb`; `SYNC=1` overwrites them. The tree round-trips
+`./upstream/build.sh`. It regenerates the submission set and then compares it against
+`firmware/r69/board.dts` and `.dtb`; `SYNC=1` overwrites them. The tree round-trips
 byte-identically; `tools/dtc/dtc` is what reads back the `&label` references this file is written
 with.
 

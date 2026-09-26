@@ -3,7 +3,7 @@
 Reverse engineering of the Wi-Fi firmware on the H96 Max (RK3518) box, to explain why the TX rate
 latches at 6.0 Mbit/s and never recovers without re-association.
 
-Symptom, measurements and workaround history: `../../docs/h96max/wifi-tx-latch.md`.
+Symptom, measurements and workaround history: `../../docs/h96max-h313/wifi-tx-latch.md`.
 
 ## Result — a firmware bug the driver fails to notice
 

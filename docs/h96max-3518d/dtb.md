@@ -11,7 +11,7 @@ Factory tree: `stock/h96max-3518d/board.dtb`, carved from the `boot` partition (
 ## It is four lines away from the H96 Max
 
 Both boxes ship the same vendor tree, `rockchip,rk3518-evb1-ddr4-v10`, same `model` string. Diffing
-`stock/h96max/board.dtb` against `stock/h96max-3518d/board.dtb` with phandles normalised gives
+`stock/h96max-h313/board.dtb` against `stock/h96max-3518d/board.dtb` with phandles normalised gives
 **four differences in 4640 lines**:
 
 | Node                     | H96 Max                                       | 3518D                                   | Consequence                                                                                                                                                                                      |
@@ -31,7 +31,7 @@ here has to be measured with `evtest`, not inferred.
 
 ## What that means for the grafts
 
-`firmware/h96max/board.patch` is 47 changed lines. Every hunk except two lands on a region that is
+`firmware/h96max-h313/board.patch` is 47 changed lines. Every hunk except two lands on a region that is
 **byte-identical** in this board's tree, so it should apply essentially verbatim:
 
 | Graft                                                        | Transfers?                                                    |

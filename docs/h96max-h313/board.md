@@ -96,8 +96,9 @@ The R69 measures within noise of every number above — same silicon, so neither
 ## Names on disk
 
 Every installed path is `rk35xx-`, the same as every other board: scripts under `/usr/local/sbin/`,
-identity under `/usr/local/share/rk35xx/` (`board-id` = `h96max`), and two systemd drop-ins named to
-sort last — `logind.conf.d/zz-rk35xx-powerkey.conf` and `system.conf.d/zz-rk35xx-watchdog.conf`.
+identity under `/usr/local/share/rk35xx/` (`board-id` = `h96max-h313`), and two systemd drop-ins
+named to sort last — `logind.conf.d/zz-rk35xx-powerkey.conf` and
+`system.conf.d/zz-rk35xx-watchdog.conf`.
 
 ## LEDs
 
@@ -116,7 +117,7 @@ Early boot briefly shows both LEDs dimly lit, until the kernel driver takes the 
 
 **Over IR, with no pairing at all** — every button works out of the box. The receiver is input
 device `ffa90030.pwm` at the stable path `/dev/input/ir-remote`; scancodes come from
-`rockchip,usercode = <0xfb04>` in `firmware/h96max/board.dts`:
+`rockchip,usercode = <0xfb04>` in `firmware/h96max-h313/board.dts`:
 
 | Button            | Key event                                        |
 | ----------------- | ------------------------------------------------ |
@@ -282,8 +283,8 @@ echo $EMMC    # sanity-check: ~16 GB, NOT your SD
 
 ```sh
 for i in 0 1 2 3 4; do   # the BootROM scans five slots 1024 sectors apart
-  sudo dd if=firmware/h96max/factory_idbloader.bin of=$EMMC bs=512 \
+  sudo dd if=firmware/h96max-h313/factory_idbloader.bin of=$EMMC bs=512 \
     seek=$((64 + i * 1024)) count=1024 conv=notrunc
 done
-sudo dd if=firmware/h96max/uboot.itb of=$EMMC seek=16384 conv=notrunc; sync
+sudo dd if=firmware/h96max-h313/uboot.itb of=$EMMC seek=16384 conv=notrunc; sync
 ```

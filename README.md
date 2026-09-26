@@ -10,9 +10,9 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 
 |            | **R69**                                     | **H96 Max H313**                               | **H96 Max 3518D**                                    |
 | ---------- | ------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
-| Box        | <img src="docs/r69/image1.jpg" width="300"> | <img src="docs/h96max/image1.jpg" width="300"> | <img src="docs/h96max-3518d/image1.png" width="300"> |
-| Board      | <img src="docs/r69/board.jpg" width="300">  | <img src="docs/h96max/board.jpg" width="300">  | <img src="docs/h96max-3518d/board.jpg" width="300">  |
-| Board key  | `r69`                                       | `h96max`                                       | `h96max-3518d`                                       |
+| Box        | <img src="docs/r69/image1.jpg" width="300"> | <img src="docs/h96max-h313/image1.jpg" width="300"> | <img src="docs/h96max-3518d/image1.png" width="300"> |
+| Board      | <img src="docs/r69/board.jpg" width="300">  | <img src="docs/h96max-h313/board.jpg" width="300">  | <img src="docs/h96max-3518d/board.jpg" width="300">  |
+| Board key  | `r69`                                       | `h96max-h313`                                  | `h96max-3518d`                                       |
 | Silkscreen | `XR821_V1.1`                                | `3518_ZX_V01 20250818`                         | `3518_DG_ZX_V01 20250401`                            |
 | SoC        | RK3518                                      | RK3518                                         | RK3518                                               |
 | RAM        | 2 GB (1.5 GB usable)                        | 2 GB                                           | 2 GB                                                 |
@@ -25,7 +25,7 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 | Details    | [board doc][r69]                            | [board doc][h96]                               | [board doc][h96d]                                    |
 
 [r69]: docs/r69/board.md
-[h96]: docs/h96max/board.md
+[h96]: docs/h96max-h313/board.md
 [h96d]: docs/h96max-3518d/board.md
 [rock2f]: https://www.armbian.com/rock-2f/
 
@@ -87,7 +87,7 @@ boxes that have a slot — the rest take the same image over USB, below.
 ```bash
 brew install xz coreutils                    # macOS  ·  apt install xz-utils on Debian
 ./build-e2tools.sh                           # once — stock e2tools corrupts an image on delete
-./build-image.sh Armbian_..._Rock-2f_..._minimal.img.xz h96max   # r69 | h96max | h96max-3518d
+./build-image.sh Armbian_..._Rock-2f_..._minimal.img.xz h96max-h313   # r69 | h96max-h313 | h96max-3518d
 ```
 
 ~1 minute, no Docker, no kernel build. Output: `Armbian_..._-<board>.img`.

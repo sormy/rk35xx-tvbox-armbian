@@ -60,7 +60,7 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                   |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too         |
 | `docs/<board>/worklog.md`             | dated history, wrong turns included                                   |
-| `docs/h96max/wifi-tx-latch.md`        | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest          |
+| `docs/h96max-h313/wifi-tx-latch.md`        | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest          |
 | `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why         |
 | `upstream/README.md`                  | turning the grafts into something upstreamable                        |
 | `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there      |

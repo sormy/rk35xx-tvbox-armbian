@@ -63,7 +63,8 @@ else
   echo "not in a repo checkout (no firmware/$BOARD/payload.list next to me); re-run with --pull"; exit 1
 fi
 FW="$REPO/firmware"
-[ -f "$FW/$BOARD/board.conf" ] || { echo "unknown board '$BOARD' (no firmware/$BOARD/board.conf)"; exit 1; }
+[ -f "$FW/$BOARD/board.conf" ] || {
+  echo "unknown board '$BOARD'; pass --board, one of: $(cd "$FW" && ls -d */board.conf | cut -d/ -f1 | tr '\n' ' ')"; exit 1; }
 # shellcheck source=/dev/null
 . "$FW/$BOARD/board.conf"
 P="${BOARD_PREFIX:?board.conf must set BOARD_PREFIX}"

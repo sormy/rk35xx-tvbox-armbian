@@ -72,7 +72,7 @@ is in this image — that is reachable. Host-wake assertion for Bluetooth is not
 
 The BT stack is ROM, but its **configuration** is host-supplied, so it is worth knowing exactly what
 is adjustable. The vendor ships a decoder for the NV format:
-`stock/h96max/firmware/SWT6621S_NV_SDIO.ini`.
+`stock/h96max-h313/firmware/SWT6621S_NV_SDIO.ini`.
 
 `SWT6621S_NV_SDIO.bin` is 220 bytes with a 32-byte header of offset/size pairs:
 

@@ -9,7 +9,7 @@ The factory images advertise the HCI codec-read commands in their own supported-
 then assert when one is sent — `BSPASSERT:hci_tl.c-386`, delivered to the host as
 `HCI_EV_HARDWARE_ERROR`, which ends controller init before anything is usable. Traced on an H96 Max
 3518D in August 2026: roughly eighty init commands answered perfectly, then Read Local Supported
-Codec Capabilities (`0x100e`) kills it. `docs/h96max/worklog.md` has the original trace.
+Codec Capabilities (`0x100e`) kills it. `docs/h96max-h313/worklog.md` has the original trace.
 
 The core cannot know. It gates those reads on the bitmap the controller itself supplied, so a
 firmware that lies is indistinguishable from one that works.

@@ -1,6 +1,6 @@
 # H96 Max 3518D — board details
 
-A stick-form RK3518 box. Sibling to `docs/h96max/`, which is the same SoC and the same radio on a
+A stick-form RK3518 box. Sibling to `docs/h96max-h313/`, which is the same SoC and the same radio on a
 different PCB (`3518_ZX_V01` there, `3518_DG_ZX_V01` here).
 
 **Runs Armbian since 2026-09-06**, reachable over SSH. Every number below was measured on this unit
@@ -107,7 +107,7 @@ fill-rate bound (565 Mpix/s measured, near-identical at every resolution). Same 
 workload. Compare the offscreen Mpix/s figure instead.
 
 **No latch on either band** — no sag under 4-core load, immediate recovery after. The sibling's 6
-Mbit/s TX latch (`docs/h96max/wifi-tx-latch.md`) does not reproduce; retest after a driver bump.
+Mbit/s TX latch (`docs/h96max-h313/wifi-tx-latch.md`) does not reproduce; retest after a driver bump.
 
 **It roams bands** — check `iw dev wlan0 link` before trusting a throughput figure.
 
@@ -340,7 +340,7 @@ Worked first attempt on 2026-09-05 — that refers to the **wiring** being right
 needed; it says nothing about how fiddly the contact was.
 
 > **A board photo is still missing**, which `docs/board-bringup.md` asks for and both `docs/r69/`
-> and `docs/h96max/` have. The pinout above is unambiguous without one, but nothing else is
+> and `docs/h96max-h313/` have. The pinout above is unambiguous without one, but nothing else is
 > illustrated.
 
 ## Recovery — read this before writing anything

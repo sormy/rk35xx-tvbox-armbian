@@ -5,8 +5,8 @@
 # The include-based extras need the kernel's dt-bindings and the reference board dtsi. Pinned to
 # the commit our work branches from, fetched sparsely (50M of a 1.8G tree). Set KERNEL to reuse a
 # checkout you already have.
-BOARD=${BOARD:-r69-xr821}
-STOCK=${STOCK:-r69}				# the factory blob is stock/$STOCK/board.dtb
+BOARD=${BOARD:-r69}
+STOCK=${STOCK:-$BOARD}				# the factory blob is stock/$STOCK/board.dtb
 SOC=${SOC:-rk3528}
 BASE=${BASE:-rk3528-evb1-ddr4-v10.dtsi}		# the reference design this box derives from
 KERNEL_URL=${KERNEL_URL:-https://github.com/armbian/linux-rockchip.git}

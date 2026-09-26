@@ -42,9 +42,8 @@ from the factory tree are `firmware/<stock>/board.patch`, and go in `header.dts`
 
 ## Files
 
-One directory per board, named after the installed dtb — `r69-xr821/`, `h96max-zx/`; `<stock>` is
-that board's `firmware/` and `stock/` name (`r69`, `h96max`). Only `header.dts` is source here; the
-rest is generated and gitignored.
+One directory per board, named by its board key, as in `firmware/` and `stock/`. Only `header.dts`
+is source here; the rest is generated and gitignored.
 
 | File                                 | What                                                 |
 | ------------------------------------ | ---------------------------------------------------- |
