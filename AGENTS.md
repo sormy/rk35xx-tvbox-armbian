@@ -54,6 +54,7 @@ another, so nothing rots when one is rewritten.
 | `docs/watchdog.md`                    | why it cannot be stopped, and why a soft reboot can strand the box    |
 | `docs/hdmi-edid-override.md`          | banning a display mode the panel advertises but nothing should pick   |
 | `docs/remote-keymap.md`               | validating IR and BLE keymaps separately; the `hwdb` override         |
+| `docs/mt7668-sdio-protocol.md`        | the MT7668's SDIO host protocol, as its vendor driver speaks it       |
 | `research/<experiment>/`              | dead ends and partial results, kept so nobody re-walks them           |
 | `docs/todo/`                          | open questions — `rk35xx-` is family-wide, `<board>-` is one box      |
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                   |
