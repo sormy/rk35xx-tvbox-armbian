@@ -17,7 +17,7 @@ behind it, in one C file against libusb.
 On the host:
 
 ```sh
-./build-amltools.sh          # needs brew install libusb
+./build-amltools.sh          # needs libusb and OpenSSL
 ```
 
 Linux needs write access to the device, as root or with a rule:

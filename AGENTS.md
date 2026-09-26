@@ -29,8 +29,8 @@ hook, or a unit for hardware only it has (the R69's `rk35xx-bt`).
 
 **Tools we build, and must:** `dtc` (`./build-dtc.sh` — vanilla cannot round-trip a vendor blob with
 `&label`s) · `e2tools` (`./build-e2tools.sh` — the stock one corrupts an image on delete) ·
-`rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd`
-(`./build-amltools.sh` — Amlogic's own is closed and x86-64 Linux only) · a per-board `uboot.dts`
+`rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd` and `gxlimg`
+(`./build-amltools.sh` — Amlogic's own are closed and x86-64 Linux only) · a per-board `uboot.dts`
 (`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all three at
 once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only on
 Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier`. **On the box:** `evtest`,
