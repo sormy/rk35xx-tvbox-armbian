@@ -1,0 +1,51 @@
+I: Bus=0010 Vendor=0001 Product=0001 Version=0100
+N: Name="gpio_keypad"
+P: Phys=gpio_keypad/input0
+S: Sysfs=/devices/platform/gpio_keypad/input/input0
+U: Uniq=
+H: Handlers=kbd event0 
+B: PROP=0
+B: EV=3
+B: KEY=20 0 0
+
+I: Bus=0010 Vendor=0001 Product=0001 Version=0100
+N: Name="aml_keypad"
+P: Phys=keypad/input0
+S: Sysfs=/devices/platform/c8100580.rc/input/input1
+U: Uniq=
+H: Handlers=kbd mouse0 event1 
+B: PROP=0
+B: EV=7
+B: KEY=ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 0 0 70000 ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff fffffffe
+B: REL=103
+
+I: Bus=0000 Vendor=0001 Product=0001 Version=0100
+N: Name="aml_vkeypad"
+P: Phys=keypad/input0
+S: Sysfs=/devices/platform/rtc/input/input2
+U: Uniq=
+H: Handlers=kbd event2 
+B: PROP=0
+B: EV=3
+B: KEY=100000 0 0 0
+
+I: Bus=0010 Vendor=1b8e Product=0cec Version=0001
+N: Name="cec_input"
+P: Phys=
+S: Sysfs=/devices/virtual/input/input3
+U: Uniq=
+H: Handlers=kbd event3 
+B: PROP=0
+B: EV=3
+B: KEY=1 0 0 0 0 100000 0 0 0
+
+I: Bus=0010 Vendor=0001 Product=0001 Version=0100
+N: Name="input_btrcu"
+P: Phys=input_btrcu/input0
+S: Sysfs=/devices/platform/bt-dev/input/input4
+U: Uniq=
+H: Handlers=kbd event4 
+B: PROP=0
+B: EV=3
+B: KEY=20 100000 0 0 0
+

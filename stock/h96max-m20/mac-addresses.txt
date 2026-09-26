@@ -1,0 +1,25 @@
+# Read on stock Android over the serial console, 2026-09-14.
+# Boot 1 and 2 are the captured vendor boots; boot 3 is a reboot issued during the sweep.
+
+eth0   62:b4:4d:3b:72:e6   kernel mac= arg, identical on boots 1, 2 and 3
+wlan0  b2:14:26:85:16:d0   /sys/class/net/wlan0/address, identical on boot 3
+p2p0   b2:14:26:85:16:d0   same address as wlan0
+ap0    b6:14:26:85:16:d0   wlan0 with the locally-administered nibble stepped
+bdaddr 72:76:68:48:3f:07   settings get secure bluetooth_address; matches
+                           /data/misc/bluedroid/bt_config.conf "Address ="
+
+# Every one of them has the locally-administered bit set in the first octet:
+#   0x62 0xb2 0xb6 0x72 -> bit 1 set. None is a real OUI assignment.
+# The bdaddr embeds the chip id: octets 2 and 3 are 76 68 = MT7668.
+# persist.service.bdroid.bdaddr reads 22:22:dd:bb:f2:58 and is NOT what the stack uses.
+# qcom.bluetooth.soc=rome_uart is stale vendor-image cruft; there is no Qualcomm part here.
+
+# EEPROM_MT7668.bin, offset 0x00: 68 76        -> chip id 0x7668, little-endian
+# EEPROM_MT7668.bin, offset 0x04: 00 0c 43 26 60 48 -> 00:0c:43:26:60:48
+#   00:0C:43 is MediaTek's own OUI. That address is the shipped template default and is
+#   NOT what wlan0 comes up with, so the driver does not take its MAC from this file.
+
+# CORRECTION, same session: eth0's address is NOT derived. The unifykey store has it.
+#   /sys/class/unifykeys -> name=mac, read -> 62:b4:4d:3b:72:e6   (exist, 17 bytes)
+#   /sys/class/unifykeys -> name=usid, read -> b0c2d423446fbbe    (exist, 15 bytes)
+# mac_wifi and mac_bt are exist=none, so wlan0 and the bdaddr are driver-derived, not stored.

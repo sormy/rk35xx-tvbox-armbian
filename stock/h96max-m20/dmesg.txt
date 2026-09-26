@@ -1,0 +1,1999 @@
+[    0.000000] Booting Linux on physical CPU 0x0
+[    0.000000] Linux version 4.9.113-g209e59b9-dirty (builder02@builder02-PowerEdge-R730) (gcc version 6.3.1 20170109 (Linaro GCC 6.3-2017.02) ) #98 SMP PREEMPT Wed Jun 10 09:10:38 CST 2026
+[    0.000000] CPU: ARMv7 Processor [410fd034] revision 4 (ARMv7), cr=10c5383d
+[    0.000000] CPU: div instructions available: patching division code
+[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+[    0.000000] Machine model: Amlogic
+[    0.000000] \x0907400000 - 07500000,     1024 KB, ramoops@0x07400000
+[    0.000000] \x0910000000 - 10400000,     4096 KB, linux,secmon
+[    0.000000] \x097f800000 - 80000000,     8192 KB, linux,meson-fb
+[    0.000000] \x097b400000 - 7f800000,    69632 KB, linux,di_cma
+[    0.000000] \x0973800000 - 7b400000,   126976 KB, linux,ion-dev
+[    0.000000] Reserved memory: regions without no-map are not yet supported
+[    0.000000] \x0963400000 - 73800000,   266240 KB, linux,codec_mm_cma
+[    0.000000] \x0963400000 - 63400000,        0 KB, linux,codec_mm_reserved
+[    0.000000] \x0962400000 - 63400000,    16384 KB, linux,vdin1_cma
+[    0.000000] cma: Reserved 8 MiB at 0x61c00000
+[    0.000000] Memory policy: Data cache writealloc
+[    0.000000] On node 0 totalpages: 524032
+[    0.000000] free_area_init_node: node 0, pgdat c183c780, node_mem_map eeff9000
+[    0.000000] Normal zone: 1534 pages used for memmap
+[    0.000000] Normal zone: 0 pages reserved
+[    0.000000] Normal zone: 196352 pages, LIFO batch:31
+[    0.000000] HighMem zone: 327680 pages, LIFO batch:31
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv0.2 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: Trusted OS migration not required
+[    0.000000] percpu: Embedded 15 pages/cpu @eef90000 s32140 r8192 d21108 u61440
+[    0.000000] pcpu-alloc: s32140 r8192 d21108 u61440 alloc=15*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 522498
+[    0.000000] Kernel command line: rootfstype=ramfs init=/init console=ttyS0,115200 no_console_suspend earlyprintk=aml-uart,0xc81004c0 ramoops.pstore_en=1 ramoops.record_size=0x8000 ramoops.console_size=0x4000 use_cma_first=1 androidboot.selinux=permissive logo=osd0,loaded,0x3d800000,576cvbs vout=576cvbs,enable hdmimode=1080p60hz cvbsmode=576cvbs hdmitx=0 cvbsdrv=0 androidboot.firstboot=0 jtag=apee androidboot.hardware=amlogic androidboot.boardid=11 androidboot.serialno=b0c2d423446fbbe mac=62:b4:4d:3b:72:e6 androidboot.mac=62:b4:4d:3b:72:e6 selinux=1 androidboot.selinux=permissive androidboot.dtbo_idx=0 buildvariant=userdebug
+[    0.000000] fb: osd0
+[    0.000000] fb: loaded
+[    0.000000] fb: 0x3d800000
+[    0.000000] fb: 576cvbs
+[    0.000000] vout: 576cvbs
+[    0.000000] vout: enable: 1
+[    0.000000] uboot setup mac-addr: 62:b4:4d:3b:72:e6
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Memory: 1552056K/2096128K available (14336K kernel code, 1329K rwdata, 5044K rodata, 1024K init, 1355K bss, 44360K reserved, 499712K cma-reserved, 815104K highmem)
+[    0.000000] Virtual kernel memory layout:\x0a    vector  : 0xffff0000 - 0xffff1000   (   4 kB)\x0a    fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)\x0a    vmalloc : 0xf0800000 - 0xff800000   ( 240 MB)\x0a    lowmem  : 0xc0000000 - 0xf0000000   ( 768 MB)\x0a    pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)\x0a    modules : 0xbc000000 - 0xbfe00000   (  62 MB)\x0a      .text : 0xc0108000 - 0xc1000000   (15328 kB)\x0a      .init : 0xc1600000 - 0xc1700000   (1024 kB)\x0a      .data : 0xc1700000 - 0xc184c570   (1330 kB)\x0a       .bss : 0xc184e000 - 0xc19a0f04   (1356 kB)
+[    0.000000] 0, addr:c0c46e48 +  154, aml_cma_alloc_post_hook
+[    0.000000] 1, addr:c06a1e68 +   4c, dma_alloc_from_contiguous
+[    0.000000] 2, addr:c039cdac +  390, cma_alloc
+[    0.000000] 3, addr:c0397064 +  304, __kmalloc_track_caller
+[    0.000000] 4, addr:c0394240 +  2a8, kmem_cache_alloc
+[    0.000000] 5, addr:c0393edc +  2c0, kmem_cache_alloc_trace
+[    0.000000] 6, addr:c0393bd8 +  304, __kmalloc
+[    0.000000] 7, addr:c0393b40 +   98, __slab_alloc.constprop.10
+[    0.000000] 8, addr:c03937a8 +  398, ___slab_alloc.constprop.11
+[    0.000000] 9, addr:c0391694 +  3e0, new_slab
+[    0.000000] 10, addr:c0385a44 +   44, vmalloc
+[    0.000000] 11, addr:c0385a00 +   44, vzalloc
+[    0.000000] 12, addr:c0385464 +  258, __vmalloc_node_range
+[    0.000000] 13, addr:c036c260 +  114, kmalloc_order_trace
+[    0.000000] 14, addr:c036c10c +  154, kmalloc_order
+[    0.000000] 15, addr:c034e2f0 +  164, __alloc_page_frag
+[    0.000000] 16, addr:c034e2ac +   44, alloc_pages_exact
+[    0.000000] 17, addr:c034e288 +   24, get_zeroed_page
+[    0.000000] 18, addr:c034e24c +   3c, __get_free_pages
+[    0.000000] 19, addr:c034d2b8 +  f94, __alloc_pages_nodemask
+[    0.000000] 20, addr:c02198d4 +   4c, cma_allocator_alloc
+[    0.000000] 21, addr:c02197ec +   e8, __alloc_from_contiguous
+[    0.000000] 22, addr:c0219374 +   58, arm_dma_alloc
+[    0.000000] 23, addr:c0218fc8 +  360, __dma_alloc
+[    0.000000] zone:Normal, spaned pages:196352, total:196352
+[    0.000000] zone:HighMem, spaned pages:327680, total:524032
+[    0.000000] page_trace_pre_work, trace buffer:ee800000, size:200000, used:eea00000, end:eea00000
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000] Preemptible hierarchical RCU implementation.
+[    0.000000] \x09Build-time adjustment of leaf fanout to 32.
+[    0.000000] \x09RCU restricting CPUs from NR_CPUS=8 to nr_cpu_ids=4.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=32, nr_cpu_ids=4
+[    0.000000] NR_IRQS:16 nr_irqs:16 16
+[    0.000000] amlogic_init_sdemmc: register amlogic sdemmc clk
+[    0.000000] amlogic_init_sdemmc: register amlogic sdemmc clk
+[    0.000000] amlogic_init_gpu: register meson gpu clk
+[    0.000000] amlogic_init_media: register meson media clk
+[    0.000000] amlogic_init_misc: register meson misc clk
+[    0.000000] gxl_clkc_init initialization complete
+[    0.000000] GIC: PPI11 is secure or misconfigured
+[    0.000000] arm_arch_timer: WARNING: Invalid trigger for IRQ19, assuming level low
+[    0.000000] arm_arch_timer: WARNING: Please fix your firmware
+[    0.000000] arm_arch_timer: Architected cp15 timer(s) running at 24.00MHz (virt).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x588fe9dc0, max_idle_ns: 440795202592 ns
+[    0.000005] sched_clock: 56 bits at 24MHz, resolution 41ns, wraps every 4398046511097ns
+[    0.000015] Switching to timer-based delay loop, resolution 41ns
+[    0.000069] meson_bc_timer: mclk->mux_reg =f0806990,mclk->reg =f0808994
+[    0.000651] Console: colour dummy device 80x30
+[    0.000678] Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=96000)
+[    0.000694] pid_max: default: 32768 minimum: 301
+[    0.000751] thread_stack_cache_init, vmap:c012d500, bitmap:c0120800, cache page:61800
+[    0.000765] thread_stack_cache_init, allocation vm area:c012cf00, addr:bc000000, size:3001000
+[    0.000859] Security Framework initialized
+[    0.000869] SELinux:  Initializing.
+[    0.000903] SELinux:  Starting in permissive mode
+[    0.000943] Mount-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.000958] Mountpoint-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.001714] CPU: Testing write buffer coherency: ok
+[    0.001764] ftrace: allocating 44779 entries in 132 pages
+[    0.081052] sched-energy: CPU device node has no sched-energy-costs
+[    0.081077] CPU0: update cpu_capacity 1024
+[    0.081086] CPU0: thread -1, cpu 0, socket 0, mpidr 80000000
+[    0.081117] Setting up static identity map for 0x200000 - 0x200058
+[    0.123608] secmon: can't fine clear_range
+[    0.124051] Meson chip version = RevE (2A:E - C5:0)
+[    0.169419] CPU1: update cpu_capacity 1024
+[    0.169425] CPU1: thread -1, cpu 1, socket 0, mpidr 80000001
+[    0.201518] CPU2: update cpu_capacity 1024
+[    0.201524] CPU2: thread -1, cpu 2, socket 0, mpidr 80000002
+[    0.233625] CPU3: update cpu_capacity 1024
+[    0.233631] CPU3: thread -1, cpu 3, socket 0, mpidr 80000003
+[    0.233747] Brought up 4 CPUs
+[    0.233779] SMP: Total of 4 processors activated (192.00 BogoMIPS).
+[    0.233787] CPU: All CPU(s) started in SVC mode.
+[    0.234592] addr:bc045cce is in kernel, size fix 4096->10, data:mode=0755
+[    0.234736] devtmpfs: initialized
+[    0.257459] VFP support v0.3: implementor 41 architecture 3 part 40 variant 3 rev 4
+[    0.258096] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.258131] futex hash table entries: 1024 (order: 4, 65536 bytes)
+[    0.258340] pinctrl core: initialized pinctrl subsystem
+[    0.259803] NET: Registered protocol family 16
+[    0.262906] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.262924] schedtune: init normalization constants...
+[    0.262932] schedtune: no energy model data
+[    0.262938] schedtune: disabled!
+[    0.281569] cpuidle: using governor menu
+[    0.281727] register canvas platform driver
+[    0.281766] register rdma platform driver
+[    0.284404] hw-breakpoint: found 5 (+1 reserved) breakpoint and 4 watchpoint registers.
+[    0.284415] hw-breakpoint: maximum watchpoint size is 8 bytes.
+[    0.284777] clkmsr: clkmsr: driver init
+[    0.284787] codec_mm_module_init
+[    0.284838] media_configs_system_init
+[    0.285169] aml_watch_point_probe, in, wp:4
+[    0.285719] pstore: using zlib compression
+[    0.286666] console [pstore-1] enabled
+[    0.286712] pstore: Registered ramoops as persistent store backend
+[    0.286727] ramoops: attached 0x100000@0x7400000, ecc: 0/0
+[    0.286739] ramoops: ramoops_io_en:0 1 old:0x0 ftrace_size:0x40000
+[    0.286752] ramoops_io_dump=0, buffer=f092b000 ftrace_old_log=  (null), size=0
+[    0.287840] irq: type mismatch, failed to map hwirq-27 for /interrupt-controller@2c001000!
+[    0.289952] aml_iomap: amlogic iomap probe done
+[    0.297950] clkmsr: msr_clk_reg0=f0a8575c,msr_clk_reg2=f0a87764
+[    0.297980] clkmsr c110875c.meson_clk_msr: failed to get msr ring reg0
+[    0.300689] aml_vdac_config_probe: cpu_id:3, name:meson-gxlx-vdac
+[    0.300977] aml_vdac_probe: ok
+[    0.304334] cvbs_out: cvbsout_probe, cpu_id:8,name:meson-gxlx-cvbsout
+[    0.304496] cvbs_out: find performance_pal config
+[    0.304519] vout: vout1: register server: cvbs_vout_server
+[    0.304529] cvbs_out: register cvbs module server ok
+[    0.304540] vout: vout2: register server: cvbs_vout2_server
+[    0.304550] cvbs_out: register cvbs module vout2 server ok
+[    0.304563] cvbs_out: chrdev devno 264241152 for disp
+[    0.304854] cvbs_out: create cdev cvbs
+[    0.304871] cvbs_out: cvbsout_probe OK
+[    0.306359] codec_mm codec_mm: assigned reserved memory node linux,codec_mm_cma
+[    0.306483] codec_mm codec_mm: assigned reserved memory node linux,codec_mm_cma
+[    0.306494] codec_mm_probe ok
+[    0.306817] canvas_probe reg=c8838000,size=400
+[    0.306852] canvas maped reg_base =f0aa1000
+[    0.318871] vpu: driver version: v20200619(2-gxl)
+[    0.318899] vpu: load vpu_clk: 666666667Hz(7)
+[    0.319146] vpu: clktree_init
+[    0.319246] vpu: vpu_probe OK
+[    0.319569] rdma_probe,cpu_type:1, ver:0, len:8
+[    0.319586] vpu: switch_vpu_mem_pd: unsupport vpu mod: 57
+[    0.319862] rdma_register, rdma_table_addr f0aa3000 rdma_table_addr_phy 61c40000 reg_buf ee110000
+[    0.319875] rdma_register success, handle 1 table_size 32768
+[    0.319885] set_rdma_handle video rdma handle = 1.
+[    0.319938] classs created ok
+[    0.319959] classs file created ok
+[    0.711124] vgaarb: loaded
+[    0.711545] SCSI subsystem initialized
+[    0.712011] usbcore: registered new interface driver usbfs
+[    0.712119] usbcore: registered new interface driver hub
+[    0.712276] usbcore: registered new device driver usb
+[    0.712840] Linux video capture interface: v2.00
+[    0.713001] pps_core: LinuxPPS API ver. 1 registered
+[    0.713018] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.713056] PTP clock support registered
+[    0.714137] secmon: reserve_mem_size:0x200000
+[    0.714229] secmon secmon: assigned reserved memory node linux,secmon
+[    0.714562] secmon: get page:ef1f7000, 10000
+[    0.714578] secmon: share in base: 0xd00fe000, share out base: 0xd00ff000
+[    0.714589] secmon: phy_in_base: 0x100fe000, phy_out_base: 0x100ff000
+[    0.714942] fb: osd_init_module
+[    0.715367] fb: viu vsync irq: 41
+[    0.715424] 0x000000d8:Y=d8,U=0,V=0
+[    0.715435] 0x000000d9:Y=d9,U=0,V=0
+[    0.715926] fb: osd_rdma_init: rdma_table p=0x61c48000,op=0x61c48000 , v=0xf0aac000
+[    0.715987] rdma_register, rdma_table_addr f0aae000 rdma_table_addr_phy 61c49000 reg_buf eeb74000
+[    0.715997] rdma_register success, handle 2 table_size 4096
+[    0.716007] fb: osd_rdma_init:osd reset rdma handle = 2.
+[    0.716054] rdma_register, rdma_table_addr f0ab0000 rdma_table_addr_phy 61c4a000 reg_buf eeb75000
+[    0.716064] rdma_register success, handle 3 table_size 4096
+[    0.716074] fb: osd_rdma_init:osd rdma handle = 3.
+[    0.716099] fb: mem_size: 0x800000
+[    0.716108] fb: mem_size: 0x1800000
+[    0.716117] fb: mem_size: 0x100000
+[    0.716126] fb: mem_size: 0x0
+[    0.716134] fb: mem_size: 0x0
+[    0.716212] meson-fb meson-fb: assigned reserved memory node linux,meson-fb
+[    0.716225] fb: reserved memory base:0x7f800000, size:800000
+[    0.716715] fb: init fbdev bpp is:32
+[    0.717835] fb: set osd0 reverse as NONE
+[    0.722611] fb: osd probe OK
+[    0.723515] hdmitx: system: Ver: 20190815
+[    0.723673] hdmitx: system: hpd irq = 61
+[    0.724489] hdmitx: hdmitx20: Mapped PHY: 0xc1109800
+[    0.724521] hdmitx: hdmitx20: Mapped PHY: 0xc8834400
+[    0.724535] hdmitx: hdmitx20: Mapped PHY: 0xd0100000
+[    0.724553] hdmitx: hdmitx20: Mapped PHY: 0xc8100000
+[    0.724565] hdmitx: hdmitx20: Mapped PHY: 0xc883c000
+[    0.724577] hdmitx: hdmitx20: Mapped PHY: 0xc1104400
+[    0.724588] hdmitx: hdmitx20: Mapped PHY: 0xda808000
+[    0.724600] hdmitx: hdmitx20: Mapped PHY: 0xda800000
+[    0.724612] hdmitx: hdmitx20: Mapped PHY: 0xd0044000
+[    0.724629] hdmitx: hw: hdmitx_get_format:0x0
+[    0.724638] hdmitx: hw: P_HHI_HDMI_CLK_CNTL :0x100
+[    0.724648] hdmitx: hw: P_HHI_HDMI_PLL_CNTL :0xc000027b
+[    0.724882] hdmitx: hw: avmute set to 1
+[    0.724905] vout: vout1: register server: hdmitx_vout_server
+[    0.724916] vout: vout2: register server: hdmitx_vout2_server
+[    0.725815] hdmitx: system: fmt_attr default
+[    0.727044] vout: create vout attribute OK
+[    0.727303] vout: vout_fops_create OK
+[    0.727320] vout: vout1: register server: nulldisp_vout_server
+[    0.727509] cvbs_out: mode is 1,sync_duration_den=1,sync_duration_num=50
+[    0.727551] \x0avdac_enable: 1, module_sel:0x8, private_flag:0x0
+[    0.727567] cvbs_out: cvbs_vdac_output: 1
+[    0.727576] cvbs_out: already display in uboot
+[    0.727587] vout: init mode 576cvbs set ok
+[    0.727596] vout: aml_vout_probe OK
+[    0.728923] chip type:0x2a
+[    0.729002] bytes_per_cycle:16, reg:20005b
+[    0.730123] Advanced Linux Sound Architecture Driver Initialized.
+[    0.730939] Bluetooth: Core ver 2.22
+[    0.731033] NET: Registered protocol family 31
+[    0.731044] Bluetooth: HCI device and connection manager initialized
+[    0.731065] Bluetooth: HCI socket layer initialized
+[    0.731081] Bluetooth: L2CAP socket layer initialized
+[    0.731123] Bluetooth: SCO socket layer initialized
+[    0.731817] NetLabel: Initializing
+[    0.731838] NetLabel:  domain hash size = 128
+[    0.731848] NetLabel:  protocols = UNLABELED CIPSOv4
+[    0.731950] NetLabel:  unlabeled traffic allowed by default
+[    0.735117] clocksource: Switched to clocksource arch_sys_counter
+[    0.813146] VFS: Disk quotas dquot_6.6.0
+[    0.813236] VFS: Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+[    0.828198] dtv_dmd:[amldtvdemod..]aml_dtvdemod_init.
+[    0.828595] NET: Registered protocol family 2
+[    0.829246] TCP established hash table entries: 8192 (order: 3, 32768 bytes)
+[    0.829326] TCP bind hash table entries: 8192 (order: 4, 65536 bytes)
+[    0.829427] TCP: Hash tables configured (established 8192 bind 8192)
+[    0.829503] UDP hash table entries: 512 (order: 2, 16384 bytes)
+[    0.829537] UDP-Lite hash table entries: 512 (order: 2, 16384 bytes)
+[    0.829705] NET: Registered protocol family 1
+[    0.829741] PCI: CLS 0 bytes, default 64
+[    0.832550] aml_wifi wifi: [wifi_dev_probe] no reset_pin
+[    0.832575] wifi: power_on_pin_OD = 0;
+[    0.832587] aml_wifi wifi: [wifi_dev_probe] no power_on_pin2
+[    0.832599] not match wifi_pwm_config node
+[    0.832610] aml_wifi wifi: [wifi_dev_probe] pwm_double_channel_conf_dt error
+[    0.832623] aml_wifi wifi: [wifi_dev_probe] dhd_static_buf setup
+[    0.832633] Wifi: bcmdhd_init_wlan_mem: bcmdhd_init_wlan_mem(): 100.10.545.3
+[    0.833642] Wifi: bcmdhd_init_wlan_mem: bcmdhd_init_wlan_mem prealloc ok
+[    0.833659] aml_wifi wifi: [wifi_dev_probe] interrupt_pin=498
+[    0.833671] aml_wifi wifi: [wifi_dev_probe] irq_num=0, irq_trigger_type=0
+[    0.833682] aml_wifi wifi: [wifi_dev_probe] power_on_pin=486
+[    0.833693] aml_wifi wifi: [wifi_dev_probe] clock_32k_pin=0
+[    0.834025] aml_wifi wifi: [wifi_setup_dt] wifi_setup_dt
+[    0.834086] meson-gxlx-pinctrl pinctrl@4b0: invalid device node of gpio INTC
+[    0.834098] aml_wifi wifi: [wifi_setup_dt] irq num is:(-22)
+[    0.834110] aml_wifi wifi: [wifi_setup_dt] interrupt_pin(498)
+[    0.834145] aml_wifi wifi: [wifi_setup_dt] power_on_pin(486)
+[    0.835260] Trying to unpack rootfs image as initramfs...
+[    0.889561] Freeing initrd memory: 1452K
+[    0.892337] enable_pmuserenr_all() start
+[    0.892369] enable_pmuserenr_all() end
+[    0.892395] hw perfevents: clusterb_enabled = 0
+[    0.892407] hw perfevents: read prop cpumasks failed, ret = -22
+[    0.892421] hw perfevents: amlpmu_init() failed
+[    0.892446] armv7-pmu: probe of arm_pmu failed with error 1
+[    0.896271] audit: initializing netlink subsys (disabled)
+[    0.896364] audit: type=2000 audit(0.844:1): initialized
+[    0.897199] workingset: timestamp_bits=30 max_order=19 bucket_order=0
+[    0.908914] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.909294] exFAT: Version 1.2.9
+[    0.910785] Registering sdcardfs 0.1
+[    0.911197] ntfs: driver 2.1.32 [Flags: R/O].
+[    0.911677] jffs2: version 2.2. (NAND) (SUMMARY)  \xc2\xa9 2001-2006 Red Hat, Inc.
+[    0.912747] fuse init (API version 7.26)
+[    0.913890] SELinux:  Registering netfilter hooks
+[    0.918775] NET: Registered protocol family 38
+[    0.918809] Key type asymmetric registered
+[    0.918821] Asymmetric key parser 'x509' registered
+[    0.919058] bounce: pool size: 64 pages
+[    0.919426] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 243)
+[    0.919447] io scheduler noop registered (default)
+[    0.919458] io scheduler deadline registered
+[    0.919497] io scheduler cfq registered
+[    0.933039] random: fast init done
+[    0.933105] random: crng init done
+[    0.949474] brd: module loaded
+[    0.958396] loop: module loaded
+[    0.959811] zram: Added device: zram0
+[    0.960327] mtdoops: mtd device (mtddev=name/number) must be supplied
+[    0.961517] libphy: Fixed MDIO Bus: probed
+[    0.961930] tun: Universal TUN/TAP device driver, 1.6
+[    0.961952] tun: (C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>
+[    0.963339] mac from uboot 62:b4:4d:3b:72:e6
+[    0.963619] ee eth reset:Addr = f0edd408
+[    0.963904] meson6-dwmac c9410000.ethernet: no reset control found
+[    0.963935] stmmac - user ID: 0x11, Synopsys ID: 0x37
+[    0.963945] Ring mode enabled
+[    0.963955] DMA HW capability register supported
+[    0.963965] Normal descriptors
+[    0.963975] RX Checksum Offload Engine supported
+[    0.963984] \x09COE Type 2
+[    0.963993] TX Checksum insertion supported
+[    0.964002] Wake-Up On Lan supported
+[    0.964078] Enable RX Mitigation via HW Watchdog Timer
+[    0.967162] libphy: stmmac: probed
+[    0.967187] eth%d: PHY ID 01814400 at 8 IRQ POLL (stmmac-0:08) active
+[    0.968838] PPP generic driver version 2.4.2
+[    0.969156] PPP BSD Compression module registered
+[    0.969177] PPP Deflate Compression module registered
+[    0.969210] PPP MPPE Compression module registered
+[    0.969222] NET: Registered protocol family 24
+[    0.969357] usbcore: registered new interface driver asix
+[    0.969486] usbcore: registered new interface driver ax88179_178a
+[    0.969569] usbcore: registered new interface driver cdc_ether
+[    0.969651] usbcore: registered new interface driver net1080
+[    0.969734] usbcore: registered new interface driver cdc_subset
+[    0.969820] usbcore: registered new interface driver zaurus
+[    0.969950] usbcore: registered new interface driver cdc_ncm
+[    0.970852] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[    0.970874] ehci-pci: EHCI PCI platform driver
+[    0.970993] ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+[    0.971035] ohci-pci: OHCI PCI platform driver
+[    0.971960] usbcore: registered new interface driver cdc_acm
+[    0.971985] cdc_acm: USB Abstract Control Model driver for USB modems and ISDN adapters
+[    0.972109] usbcore: registered new interface driver usb-storage
+[    0.972276] usbcore: registered new interface driver usbserial
+[    0.972827] mousedev: PS/2 mouse device common for all mice
+[    0.973287] usbcore: registered new interface driver xpad
+[    0.973514] i2c /dev entries driver
+[    0.973867] IR NEC protocol handler initialized
+[    0.973887] IR RC5(x/sz) protocol handler initialized
+[    0.973897] IR RC6 protocol handler initialized
+[    0.973907] IR JVC protocol handler initialized
+[    0.973916] IR Sony protocol handler initialized
+[    0.973926] IR SANYO protocol handler initialized
+[    0.973936] IR Sharp protocol handler initialized
+[    0.973946] IR MCE Keyboard/mouse protocol handler initialized
+[    0.973955] IR XMP protocol handler initialized
+[    0.974118] usbcore: registered new interface driver uvcvideo
+[    0.974130] USB Video Class driver (1.1.1)
+[    0.974213] usbcore: registered new interface driver cx231xx
+[    0.974228] md: linear personality registered for level -1
+[    0.974959] device-mapper: ioctl: 4.35.0-ioctl (2016-06-23) initialised: dm-devel@redhat.com
+[    0.975262] Bluetooth: HCI UART driver ver 2.3
+[    0.975282] Bluetooth: HCI UART protocol H4 registered
+[    0.976446] cpu cpu0: bL_cpufreq_init: CPU 0 initialized
+[    0.977720] arm_big_little: bL_cpufreq_register: Registered platform driver: scpi
+[    0.979937] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.980655] hidraw: raw HID events driver (C) Jiri Kosina
+[    0.981181] usbcore: registered new interface driver usbhid
+[    0.981203] usbhid: USB HID core driver
+[    0.981456] ashmem: initialized
+[    0.982910] c11084c0.serial: clock gate not found
+[    0.983005] meson_uart c11084c0.serial: ==uart1 reg addr = f0ef14c0
+[    0.983074] c11084c0.serial: ttyS1 at MMIO 0xc11084c0 (irq = 37, base_baud = 10416666) is a meson_uart
+[    0.983610] c81004c0.serial: clock gate not found
+[    0.983678] meson_uart c81004c0.serial: ==uart0 reg addr = f0ef34c0
+[    0.983758] c81004c0.serial: ttyS0 at MMIO 0xc81004c0 (irq = 38, base_baud = 1500000) is a meson_uart
+[    0.983783] meson_uart c81004c0.serial: ttyS0 use xtal(8M) 24000000 change 0 to 115200
+[    2.949091] console [ttyS0] enabled
+[    2.954435] amlogic-new-usb2 d0078000.usb2phy: USB2 phy probe:phy_mem:0xd0078000, iomap phy_base:0xf0ef5000
+[    2.963006] amlogic-new-usb3 d0078080.usb3phy: This phy has no usb port
+[    2.969277] amlogic-new-usb3 d0078080.usb3phy: USB3 phy probe:phy_mem:0xd0078080, iomap phy_base:0xf0ef9080
+[    2.981056] spicc c1108d80.spicc: dma_auto_param=0
+[    2.984099] spicc c1108d80.spicc: irq = 0x24
+[    2.988366] spicc c1108d80.spicc: delay_control=21
+[    2.993280] spicc c1108d80.spicc: enhance=1
+[    2.997602] spicc c1108d80.spicc: get pinctrl fail
+[    3.002511] spicc c1108d80.spicc: of error=-19
+[    3.007981] Error: Driver 'meson_reset' is already registered, aborting...
+[    3.016287] gpio-keypad gpio_keypad: f11 key(69) registed.
+[    3.019979] input: gpio_keypad as /devices/platform/gpio_keypad/input/input0
+[    3.027503] meson-remote: Driver init
+[    3.030929] meson-remote: remote_probe
+[    3.034565] meson-remote c8100580.rc: protocol = 0x1
+[    3.039618] meson-remote c8100580.rc: don't find the node <led_blink>
+[    3.046221] meson-remote c8100580.rc: led_blink = 0
+[    3.051172] meson-remote c8100580.rc: don't find the node <led_blink_frq>
+[    3.058052] meson-remote c8100580.rc: led_blink_frq  = 100
+[    3.063735] meson-remote c8100580.rc: platform_data irq =40
+[    3.069400] meson-remote c8100580.rc: custom_number = 7
+[    3.074725] meson-remote c8100580.rc: ptable->map_size = 28
+[    3.080418] input input0: key 69 down.
+[    3.084363] meson-remote c8100580.rc: ptable->custom_name = amlogic-remote-1
+[    3.091436] meson-remote c8100580.rc: ptable->custom_code = 0xfeaa
+[    3.097728] meson-remote c8100580.rc: ptable->release_delay = 65
+[    3.103927] meson-remote c8100580.rc: ptable->map_size = 28
+[    3.109545] meson-remote c8100580.rc: ptable->custom_name = amlogic-remote-2
+[    3.116703] meson-remote c8100580.rc: ptable->custom_code = 0xfe01
+[    3.123033] meson-remote c8100580.rc: ptable->release_delay = 80
+[    3.129148] meson-remote c8100580.rc: ptable->map_size = 12
+[    3.134816] meson-remote c8100580.rc: ptable->custom_name = amlogic-remote-3
+[    3.141973] meson-remote c8100580.rc: ptable->custom_code = 0x7f80
+[    3.148302] meson-remote c8100580.rc: ptable->release_delay = 80
+[    3.154417] meson-remote c8100580.rc: ptable->map_size = 34
+[    3.160087] meson-remote c8100580.rc: ptable->custom_name = amlogic-remote-4
+[    3.167277] meson-remote c8100580.rc: ptable->custom_code = 0xfb04
+[    3.173541] meson-remote c8100580.rc: ptable->release_delay = 80
+[    3.179689] meson-remote c8100580.rc: ptable->map_size = 28
+[    3.185391] meson-remote c8100580.rc: ptable->custom_name = amlogic-remote-5
+[    3.192517] meson-remote c8100580.rc: ptable->custom_code = 0xdf00
+[    3.198811] meson-remote c8100580.rc: ptable->release_delay = 80
+[    3.204995] meson-remote c8100580.rc: ptable->map_size = 34
+[    3.210629] meson-remote c8100580.rc: ptable->custom_name = amlogic-remote-6
+[    3.217787] meson-remote c8100580.rc: ptable->custom_code = 0x212
+[    3.224030] meson-remote c8100580.rc: ptable->release_delay = 80
+[    3.230148] meson-remote c8100580.rc: ptable->map_size = 28
+[    3.235814] meson-remote c8100580.rc: ptable->custom_name = amlogic-remote-7
+[    3.243004] meson-remote c8100580.rc: ptable->custom_code = 0xff00
+[    3.249268] meson-remote c8100580.rc: ptable->release_delay = 80
+[    3.255398] meson-remote c8100580.rc: fn_key_scancode not config yet
+[    3.261860] meson-remote c8100580.rc: cursor_left_scancode not config yet
+[    3.268793] meson-remote c8100580.rc: cursor_right_scancode not config yet
+[    3.275747] meson-remote c8100580.rc: cursor_up_scancode not config yet
+[    3.282480] meson-remote c8100580.rc: cursor_down_scancode not config yet
+[    3.289407] meson-remote c8100580.rc: cursor_ok_scancode not config yet
+[    3.296117] meson-remote c8100580.rc: default protocol = 0x1 and id = 0
+[    3.302862] meson-remote c8100580.rc: reg=0x0, val=0x1f40190
+[    3.308611] meson-remote c8100580.rc: reg=0x4, val=0x12c00c8
+[    3.314387] meson-remote c8100580.rc: reg=0x8, val=0x960050
+[    3.320078] meson-remote c8100580.rc: reg=0xc, val=0x480028
+[    3.325804] meson-remote c8100580.rc: reg=0x10, val=0x70fa0013
+[    3.331726] meson-remote c8100580.rc: reg=0x18, val=0x8616800
+[    3.337587] meson-remote c8100580.rc: reg=0x1c, val=0x9f00
+[    3.343225] meson-remote c8100580.rc: reg=0x20, val=0x0
+[    3.348541] meson-remote c8100580.rc: reg=0x24, val=0x0
+[    3.353889] meson-remote c8100580.rc: reg=0x28, val=0x0
+[    3.360070] input: aml_keypad as /devices/platform/c8100580.rc/input/input1
+[    3.367253] meson-remote: IR XMP protocol handler initialized
+[    3.375962] ion_dev ion_dev: assigned reserved memory node linux,ion-dev
+[    3.379857] ge2d: ge2d_init_module
+[    3.382944] ge2d: ge2d_dev major:237
+[    3.386690] ge2d: clock source clk_ge2d_gate ee0c8180
+[    3.391484] ge2d: clock clk_ge2d source ee0c8d00
+[    3.396171] ge2d: clock source clk_vapb_0 ee0c8d40
+[    3.401077] ge2d: ge2d init clock is 400000000 HZ, VPU clock is 666666666 HZ
+[    3.408404] ge2d: ge2d clock is 400 MHZ
+[    3.412215] ge2d: reserved mem init failed
+[    3.416420] ge2d: ge2d: pdev=ee08fc00, irq=45, clk=ee0c8180
+[    3.422179] ge2d: ge2d start monitor
+[    3.426033] ge2d: ge2d workqueue monitor start
+[    3.426513] meson_ion_delay_alloc call init
+[    3.428002] [tsync_pcr_init]init success.
+[    3.428369] [vts:tunnel_sync_probe:1403]tunnel_sync_probe called
+[    3.429511] amvideom vsync irq: 41, cpu_type:1
+[    3.429582] create_ge2d_work_queue video task ok
+[    3.431249] create_video_receiver video_render.0  ed0a4000, path_id:2 success
+[    3.431257] create_video_receiver video_render.1  ed0a1000, path_id:3 success
+[    3.431364] hdmitx: hdcp: hdmitx_hdcp_init
+[    3.432569] DI: di_module_init ok.
+[    3.432844] DI: di_probe:
+[    3.432942] DI: di_probe: major 511
+[    3.433430] deinterlace deinterlace: assigned reserved memory node linux,di_cma
+[    3.433442] di:flag_cma=4
+[    3.433445] DI: CMA size 0x4400000.
+[    3.433481] pre_irq:51
+[    3.433496] post_irq:52
+[    3.433500] DI: di_probe allocate rdma channel 0.
+[    3.433529] 0x000000dd:Y=dd,U=0,V=0
+[    3.433532] 0x000000de:Y=de,U=0,V=0
+[    3.433535] 0x000000df:Y=df,U=0,V=0
+[    3.433538] 0x000000e0:Y=e0,U=0,V=0
+[    3.433540] 0x000000e1:Y=e1,U=0,V=0
+[    3.433543] 0x000000e2:Y=e2,U=0,V=0
+[    3.433546] 0x000000e3:Y=e3,U=0,V=0
+[    3.433549] 0x000000f0:Y=f0,U=0,V=0
+[    3.433552] 0x000000f1:Y=f1,U=0,V=0
+[    3.433555] 0x000000f2:Y=f2,U=0,V=0
+[    3.433566] 0x000000f3:Y=f3,U=0,V=0
+[    3.433568] 0x000000f4:Y=f4,U=0,V=0
+[    3.433571] 0x000000f5:Y=f5,U=0,V=0
+[    3.433574] 0x000000f6:Y=f6,U=0,V=0
+[    3.433577] 0x000000f7:Y=f7,U=0,V=0
+[    3.433580] 0x000000f8:Y=f8,U=0,V=0
+[    3.433590] 0x000000f9:Y=f9,U=0,V=0
+[    3.433593] 0x000000fa:Y=fa,U=0,V=0
+[    3.433596] 0x000000fb:Y=fb,U=0,V=0
+[    3.433599] 0x000000fc:Y=fc,U=0,V=0
+[    3.433601] 0x000000fd:Y=fd,U=0,V=0
+[    3.433604] 0x000000fe:Y=fe,U=0,V=0
+[    3.433611] 0x000000ff:Y=ff,U=0,V=0
+[    3.433614] 0x0000003a:Y=3a,U=0,V=0
+[    3.433617] 0x0000003b:Y=3b,U=0,V=0
+[    3.433621] DI: support multi decoding 255~58~59.
+[    3.433880] DI: di_probe:Di use HRTIMER
+[    3.434102] di_patch_post_update_mc_sw:0x0->0x4
+[    3.434106] DI: di_probe:ok
+[    3.434355] dim:dim_module_init
+[    3.434922] dim:dim_module_init finish
+[    3.434929] dil:dil_init.
+[    3.435434] dil:dil_init ok.
+[    3.435508] vdin_drv_init: major 510
+[    3.436001] vdin_drv_init: vdin driver init done
+[    3.436007] [viuin..]viuin_init_module viuin module init
+[    3.436605] [viuin..]viuin_probe probe ok.
+[    3.437618] [RX]-hdmirx: hdmirx_init.
+[    3.437624] ESM HLD: Initializing...
+[    3.439248] amvdec_csi module: init.
+[    3.439261] amvdec_csi_init_module:major 508
+[    3.439714] amvdec_csi module: init. ok
+[    3.439726] amlvid:info: amlvideo_init called
+[    3.439726] amlvid:info: amlvideo_create_instance called
+[    3.439733] amlvid:info: v4l2_dev.name=:amlvideo-000
+[    3.440116] amlvideo-000: V4L2 device registered as video10
+[    3.440121] amlvid:info: amlvideo_create_instance called
+[    3.440127] amlvid:info: v4l2_dev.name=:amlvideo-001
+[    3.440410] amlvideo-001: V4L2 device registered as video23
+[    3.440965] PPMGRDRV: warn: ppmgr module init func called
+[    3.441238] PPMGRDRV: info: ppmgr_driver_probe called
+[    3.441344] PPMGRDRV: info: ppmgr_dev major:507
+[    3.441849] ppmgr: probe of ppmgr failed with error -22
+[    3.443563] ionvideo-000: V4L2 device registered as video13
+[    3.445560] ionvideo-008: V4L2 device registered as video21
+[    3.446220] picdec: picdec_driver_probe called.
+[    3.446708] picdec: probe of picdec failed with error -22
+[    3.447479] videosync_create_instance dev_s ee157800,dev_s->dev ed0efb00
+[    3.447484] videosync_create_instance reg videosync.0
+[    3.447634] videosync_thread started
+[    3.448301] v4lvideo-000: V4L2 device registered as video30
+[    3.450271] v4lvideo-008: V4L2 device registered as video38
+[    3.450280] video_composer_module_init_1
+[    3.450859] video_composer_probe_3.1:ports[i].name=video_composer.0, i=0
+[    3.451170] video_composer_probe_3.1:ports[i].name=video_composer.1, i=1
+[    3.451457] video_composer_probe num=2
+[    3.451692] videotunnel init
+[    3.452618] aml_vecm_init:module init
+[    3.453050] \x0a VECM probe start
+[    3.453665] Can't find  detect_colorbar.
+[    3.453670] Can't find  detect_face.
+[    3.453673] Can't find  detect_corn.
+[    3.453691] amlogic, vecm
+[    3.453692] vlock dt support: 1
+[    3.453694] vlock dt new_fsm: 0
+[    3.453696] vlock dt hwver: 0
+[    3.453698] vlock dt phlock_en: 0
+[    3.453703] Can't find  vlock_en.
+[    3.453706] Can't find  vlock_mode.
+[    3.453710] Can't find  vlock_pll_m_limit.
+[    3.453714] Can't find  vlock_line_limit.
+[    3.453770] param_config vlock_en:1 md=0x4
+[    3.453778] vlock: maxLine 524,maxPixel 1715
+[    3.453781] vlock_status_init vlock_en:1
+[    3.453784] pixel_probe: vpp probe func error!
+[    3.453796] aml_vecm_probe: ok probe_ok=1
+[    3.454090] amdolby_vision_init:module init
+[    3.454752] prime_sl module init
+[    3.455751] vm_init .
+[    3.457676] meson-mmc: mmc driver version: 3.02, 2017-05-15: New Emmc Host Controller
+[    3.462498] meson-mmc: >>>>>>>>hostbase f102c000, dmode 
+[    3.463239] meson-mmc: actual_clock :400000, HHI_nand: 0x80
+[    3.463246] meson-mmc: [meson_mmc_clk_set_rate_v3] after clock: 0x1000033c
+[    3.509276] meson-mmc: meson_mmc_probe() : success!
+[    3.514496] meson-mmc: >>>>>>>>hostbase f1036000, dmode 
+[    3.514664] meson-mmc: gpio_cd = 1c1
+[    3.552214] meson-mmc: meson_mmc_probe() : success!
+[    3.554312] meson-mmc: >>>>>>>>hostbase f1040000, dmode 
+[    3.554924] meson-mmc: actual_clock :400000, HHI_nand: 0x80
+[    3.554931] meson-mmc: [meson_mmc_clk_set_rate_v3] after clock: 0x1000033c
+[    3.591235] meson-mmc: meson_mmc_probe() : success!
+[    3.591621] amlogic mtd driver init
+[    3.593242] aml_vrtc rtc: rtc core: registered aml_vrtc as rtc0
+[    3.593582] input: aml_vkeypad as /devices/platform/rtc/input/input2
+[    3.595534] cectx c810023c.aocec: cec driver date:2020/04/09:fix cec a recursive call\x0a
+[    3.596042] cectx c810023c.aocec: compatible:amlogic, amlogic-aocec
+[    3.596047] cectx c810023c.aocec: cecb_ver:0x0
+[    3.596051] cectx c810023c.aocec: line_reg:0x0
+[    3.596055] cectx c810023c.aocec: line_bit:0x8
+[    3.596059] cectx c810023c.aocec: ee_to_ao:0x0
+[    3.596351] input: cec_input as /devices/virtual/input/input3
+[    3.596630] cectx c810023c.aocec: not find 'port_num'
+[    3.596637] cectx c810023c.aocec: using cec:0
+[    3.596650] cectx c810023c.aocec: get sleep state error!
+[    3.596684] cectx c810023c.aocec: no hdmirx regs
+[    3.596689] cectx c810023c.aocec: no hhi regs
+[    3.596695] cectx c810023c.aocec: no periphs regs
+[    3.596704] cectx c810023c.aocec: not find 'output'
+[    3.599899] irq cnt:1, a:62, b62
+[    3.600525] cectx c810023c.aocec: wakeup_reason:0x0
+[    3.600645] cectx c810023c.aocec: cev val1: 0x0;val2: 0x0
+[    3.600652] cectx c810023c.aocec: aml_cec_probe success end
+[    3.601862] unifykey: no efuse-version set, use default value: -1
+[    3.602614] unifykey: aml_unifykeys_init done!
+[    3.603481] audio_dsp: [dsp]register dsp to char divece(257)
+[    3.603981] amaudio: amaudio: driver amaudio init!
+[    3.604800] amaudio: amaudio_init - amaudio: driver amaudio succuess!
+[    3.606216] sysled: module init
+[    3.606925] meson_wdt c11098d0.watchdog: start watchdog
+[    3.606930] meson_wdt c11098d0.watchdog: creat work queue for watch dog
+[    3.607610] meson_wdt c11098d0.watchdog: AML Watchdog Timer probed done
+[    3.609380] not get gpio_hostwake
+[    3.609385] not get gpio_btwakeup
+[    3.697409] meson-mmc: actual_clock :50000000, HHI_nand: 0x80
+[    3.697415] meson-mmc: [meson_mmc_clk_set_rate_v3] after clock: 0x10000354
+[    3.698215] emmc: new high speed MMC card at address 0001
+[    3.699368] emmc: clock 50000000, 8-bit-bus-width\x0a 
+[    3.699369] mmcblk0: emmc:0001 DF4016 14.7 GiB 
+[    3.699772] mmcblk0boot0: emmc:0001 DF4016 partition 1 4.00 MiB
+[    3.700050] mmcblk0boot1: emmc:0001 DF4016 partition 2 4.00 MiB
+[    3.700350] mmcblk0rpmb: emmc:0001 DF4016 partition 3 4.00 MiB
+[    3.703368] meson-mmc: Enter aml_emmc_partition_ops
+[    3.704375] meson-mmc: [mmc_read_partition_tbl] mmc read partition OK!
+[    3.704379] meson-mmc: add_emmc_partition
+[    3.704744] meson-mmc: [mmcblk0p01]           bootloader  offset 0x000000000000, size 0x000000400000 
+[    3.705097] meson-mmc: [mmcblk0p02]             reserved  offset 0x000002400000, size 0x000004000000 
+[    3.705381] meson-mmc: [mmcblk0p03]                cache  offset 0x000006c00000, size 0x000046000000 
+[    3.705696] meson-mmc: [mmcblk0p04]                  env  offset 0x00004d400000, size 0x000000800000 
+[    3.705975] meson-mmc: [mmcblk0p05]                 logo  offset 0x00004e400000, size 0x000000800000 
+[    3.706246] meson-mmc: [mmcblk0p06]             recovery  offset 0x00004f400000, size 0x000001800000 
+[    3.706539] meson-mmc: [mmcblk0p07]                 misc  offset 0x000051400000, size 0x000000800000 
+[    3.706815] meson-mmc: [mmcblk0p08]                 dtbo  offset 0x000052400000, size 0x000000800000 
+[    3.707269] meson-mmc: [mmcblk0p09]             cri_data  offset 0x000053400000, size 0x000000800000 
+[    3.707718] meson-mmc: [mmcblk0p10]                param  offset 0x000054400000, size 0x000001000000 
+[    3.708048] meson-mmc: [mmcblk0p11]                 boot  offset 0x000055c00000, size 0x000001000000 
+[    3.708390] meson-mmc: [mmcblk0p12]                  rsv  offset 0x000057400000, size 0x000001000000 
+[    3.708702] meson-mmc: [mmcblk0p13]             metadata  offset 0x000058c00000, size 0x000001000000 
+[    3.709043] meson-mmc: [mmcblk0p14]               vbmeta  offset 0x00005a400000, size 0x000000200000 
+[    3.709393] meson-mmc: [mmcblk0p15]                  tee  offset 0x00005ae00000, size 0x000002000000 
+[    3.709724] meson-mmc: [mmcblk0p16]               vendor  offset 0x00005d600000, size 0x000014000000 
+[    3.710028] meson-mmc: [mmcblk0p17]                  odm  offset 0x000071e00000, size 0x000008000000 
+[    3.710338] meson-mmc: [mmcblk0p18]               system  offset 0x00007a600000, size 0x000060000000 
+[    3.710701] meson-mmc: [mmcblk0p19]              product  offset 0x0000dae00000, size 0x000008000000 
+[    3.711021] meson-mmc: [mmcblk0p20]                 data  offset 0x0000e3600000, size 0x0002c7e00000 
+[    3.711056] card key: card_blk_probe.
+[    3.711064] emmc_key_init:183 emmc key lba_start:0x12020,lba_end:0x12220
+[    3.711069] emmc key: emmc_key_init:205 ok.
+[    3.717791] meson-mmc: amlmmc_dtb_init: register dtb chardev
+[    3.717792] meson-mmc: calc 74a83725, store 74a83725
+[    3.724303] meson-mmc: calc 74a83725, store 74a83725
+[    3.724307] meson-mmc: total valid 2
+[    3.725000] meson-mmc: amlmmc_dtb_init: register dtb chardev OK
+[    3.725001] meson-mmc: Exit aml_emmc_partition_ops OK.
+[    3.809825] aml_wifi wifi: [usb_power_control] Set BT power down
+[    3.809831] meson-mmc: [sdio_notify] finish
+[    3.831452] [bt_probe] request_irq error ret=-22
+[    3.831521] [bt_probe] dev_pm_set_wake_irq failed: -22
+[    3.831793] input: input_btrcu as /devices/platform/bt-dev/input/input4
+[    3.833156] meson-saradc 0.saradc: can't request region for resource [mem 0x00000000-0xc110867f]
+[    3.833189] meson-saradc: probe of 0.saradc failed with error -16
+[    3.833796] dmc_monitor_probe
+[    3.834271] page_trace_module_init, create sysfs failed
+[    3.840164] usbcore: registered new interface driver snd-usb-audio
+[    3.842770] aml_codec_T9015 c8832000.t9015: aml_T9015_audio_codec_probe
+[    3.842822] T9015 acodec used by meson, tdmout:0
+[    3.846481] snd_i2s_dai: clock source gate top_glue : ee204cc0
+[    3.846525] snd_i2s_dai: clock source gate aud_buf : ee204d40
+[    3.846565] snd_i2s_dai: clock source gate i2s_out : ee204dc0
+[    3.846611] snd_i2s_dai: clock source gate amclk_measure : ee204e40
+[    3.846662] snd_i2s_dai: clock source gate aififo2 : ee204ec0
+[    3.846720] snd_i2s_dai: clock source gate aud_mixer : ee204f40
+[    3.846784] snd_i2s_dai: clock source gate mixer_reg : ee204fc0
+[    3.846856] snd_i2s_dai: clock source gate adc : ee204b80
+[    3.846931] snd_i2s_dai: clock source gate top_level : ee204a80
+[    3.847013] snd_i2s_dai: clock source gate aoclk : ee204ac0
+[    3.847180] snd_i2s_dai: clock source gate aud_in : ee204a40
+[    3.847193] snd_i2s_dai: ignore aud_buf/vdac_clk gate
+[    3.847516] aml-i2s-dai I2S: I2S Mic is in platform!
+[    3.848656] snd_pcm_dai: aml audio pcm dai pinmux set error!
+[    3.848663] snd_pcm_dai: pcm mode detection =1
+[    3.849045] snd_pcm_dai: tdm config: 0x1, 0x1, 2, 16
+[    3.850037] snd_spdif_dai: enterd aml_spdif_play,set_clock:-1,sample_rate=4
+[    3.850198] snd_spdif_dai: set normal 512 fs /4 fs
+[    3.850201] snd_spdif_dai: set 958 audio clk div 4
+[    3.850218] hdmitx: audio: aout notify format CT_PCM
+[    3.851608] spdif-dit spdif_codec: audio_spdif_out_mute can't get pinctrl
+[    3.851698] spdif-dit spdif_codec: audio_spdif_in_mute can't get pinctrl
+[    3.851704] spdif-dit spdif_codec: audio_spdif_in can't get pinctrl
+[    3.852695] snd_card_meson: aml_card_dai_parse_of codec_node count:1
+[    3.852820] snd_card_meson: aml_card_dai_parse_of codec_node count:1
+[    3.852972] snd_card_meson: aml_card_dai_parse_of codec_node count:1
+[    4.055606] snd_card_meson: headphone detection disable=1
+[    4.055615] snd_card_meson: no spk event delay time set
+[    4.057232] aml_meson_snd_card aml_sound_meson: T9015-audio-hifi <-> I2S mapping ok
+[    4.058707] aml_meson_snd_card aml_sound_meson: dit-hifi <-> SPDIF mapping ok
+[    4.058894] snd_pcm: enter aml_pcm_new dai->name: PCM dai->id: 0
+[    4.059735] aml_meson_snd_card aml_sound_meson: pcm2bt-pcm <-> PCM mapping ok
+[    4.059774] aml_meson_snd_card aml_sound_meson: ASoC: no source widget found for LOUTL
+[    4.059779] aml_meson_snd_card aml_sound_meson: ASoC: Failed to add route LOUTL -> direct -> Ext Spk
+[    4.059785] aml_meson_snd_card aml_sound_meson: ASoC: no source widget found for LOUTR
+[    4.059790] aml_meson_snd_card aml_sound_meson: ASoC: Failed to add route LOUTR -> direct -> Ext Spk
+[    4.060011] aml-spdif-dai SPDIF: ASoC: Failed to create S/PDIF Playback debugfs file
+[    4.060017] aml-spdif-dai SPDIF: ASoC: Failed to create S/PDIF Capture debugfs file
+[    4.062834] snd_card_meson: enable i2sclk in startup
+[    4.070292] Register vad
+[    4.071271] GACT probability NOT on
+[    4.071293] Mirror/redirect action on
+[    4.071305] u32 classifier
+[    4.071306] Actions configured
+[    4.071316] Netfilter messages via NETLINK v0.30.
+[    4.071731] nf_conntrack version 0.5.0 (16384 buckets, 65536 max)
+[    4.072183] ctnetlink v0.93: registering with nfnetlink.
+[    4.073349] xt_time: kernel timezone is -0000
+[    4.073489] ipip: IPv4 and MPLS over IPv4 tunneling driver
+[    4.074377] IPv4 over IPsec tunneling driver
+[    4.088256] ip_tables: (C) 2000-2006 Netfilter Core Team
+[    4.088658] arp_tables: arp_tables: (C) 2002 David S. Miller
+[    4.101635] Initializing XFRM netlink socket
+[    4.102466] NET: Registered protocol family 10
+[    4.104766] mip6: Mobile IPv6
+[    4.104808] ip6_tables: (C) 2000-2006 Netfilter Core Team
+[    4.115926] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[    4.117855] NET: Registered protocol family 17
+[    4.117893] NET: Registered protocol family 15
+[    4.117952] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+[    4.118162] Bluetooth: RFCOMM TTY layer initialized
+[    4.118182] Bluetooth: RFCOMM socket layer initialized
+[    4.118227] Bluetooth: RFCOMM ver 1.11
+[    4.118239] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    4.118242] Bluetooth: BNEP filters: protocol multicast
+[    4.118253] Bluetooth: BNEP socket layer initialized
+[    4.118257] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    4.118266] Bluetooth: HIDP socket layer initialized
+[    4.118307] l2tp_core: L2TP core driver, V2.0
+[    4.118324] l2tp_ppp: PPPoL2TP kernel driver, V2.0
+[    4.118326] l2tp_ip: L2TP IP encapsulation support (L2TPv3)
+[    4.118357] l2tp_netlink: L2TP netlink interface
+[    4.118415] l2tp_eth: L2TP ethernet pseudowire support (L2TPv3)
+[    4.118438] l2tp_debugfs: L2TP debugfs support
+[    4.118441] l2tp_ip6: L2TP IP encapsulation support for IPv6 (L2TPv3)
+[    4.118500] NET: Registered protocol family 35
+[    4.118589] Key type dns_resolver registered
+[    4.121275] Registering SWP/SWPB emulation handler
+[    4.121320] disable EAS feature
+[    4.151687] registered taskstats version 1
+[    4.164602] dwc3 c9000000.dwc3: Configuration mismatch. dr_mode forced to host
+[    4.668973] xhci-hcd xhci-hcd.0.auto: xHCI Host Controller
+[    4.669008] xhci-hcd xhci-hcd.0.auto: new USB bus registered, assigned bus number 1
+[    4.669633] xhci-hcd xhci-hcd.0.auto: hcc params 0x0228f664 hci version 0x100 quirks 0x02010010
+[    4.669715] xhci-hcd xhci-hcd.0.auto: irq 59, io mem 0xc9000000
+[    4.671256] hub 1-0:1.0: USB hub found
+[    4.671342] hub 1-0:1.0: 2 ports detected
+[    4.671968] xhci-hcd xhci-hcd.0.auto: xHCI Host Controller
+[    4.671988] xhci-hcd xhci-hcd.0.auto: new USB bus registered, assigned bus number 2
+[    4.672085] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[    4.673258] hub 2-0:1.0: USB hub found
+[    4.673311] hub 2-0:1.0: config failed, hub doesn't have any ports! (err -19)
+[    4.673440] usb usb2: Unsupported the hub
+[    4.681277] aml_vrtc rtc: setting system clock to 2020-01-01 00:00:08 UTC (1577836808)
+[    4.682067] dwc_otg c9100000.dwc2_a: dwc_otg_driver_probe(ee109a00)
+[    4.682130] dwc_otg: usb0: type: 2 speed: 0, config: 0, dma: 0, id: 0, phy: d0078000, ctrl: 0
+[    4.682135] dwc_otg_driver_probe host only, not probe usb_otg!!!
+[    4.685924] cpucore_cooling_register, max_cpu_core_num:4
+[    4.692400] gxbb_pm: enter meson_pm_probe!
+[    4.692422] gxbb_pm: get system suspend level fail!
+[    4.692444] pm-meson: probe of pm failed with error -1
+[    4.693159] ALSA device list:
+[    4.693163] #0: Loopback 1
+[    4.693166] #1: AML-MESONAUDIO
+[    5.056036] meson_uart c81004c0.serial: ttyS0 use xtal(8M) 24000000 change 115200 to 115200
+[    5.060273] Freeing unused kernel memory: 1024K
+[    5.072468] init: init first stage started!
+[    5.073030] init: Using Android DT directory /proc/device-tree/firmware/android/
+[    5.083644] init: [libfs_mgr]fs_mgr_read_fstab_default(): failed to find device default fstab
+[    5.156412] EXT4-fs (mmcblk0p17): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    5.161157] init: [libfs_mgr]__mount(source=/dev/block/odm,target=/odm,type=ext4)=0: Success
+[    5.172645] EXT4-fs (mmcblk0p19): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    5.179549] init: [libfs_mgr]__mount(source=/dev/block/product,target=/product,type=ext4)=0: Success
+[    5.195516] EXT4-fs (mmcblk0p18): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    5.200118] init: [libfs_mgr]__mount(source=/dev/block/system,target=/system,type=ext4)=0: Success
+[    5.214465] EXT4-fs (mmcblk0p16): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    5.219159] init: [libfs_mgr]__mount(source=/dev/block/vendor,target=/vendor,type=ext4)=0: Success
+[    5.228500] init: Skipped setting INIT_AVB_VERSION (not in recovery mode)
+[    5.235410] init: Loading SELinux policy
+[    5.271567] SELinux: 8192 avtab hash slots, 20088 rules.
+[    5.289189] SELinux: 8192 avtab hash slots, 20088 rules.
+[    5.289230] SELinux:  1 users, 4 roles, 1455 types, 0 bools, 1 sens, 1024 cats
+[    5.289245] SELinux:  93 classes, 20088 rules
+[    5.293905] SELinux:  Completing initialization.
+[    5.293913] SELinux:  Setting up existing superblocks.
+[    5.442769] vpu: switch_vpu_mem_pd: unsupport vpu mod: 12
+[    5.502254] audit: type=1403 audit(1577836809.324:2): policy loaded auid=4294967295 ses=4294967295
+[    5.506064] selinux: SELinux: Loaded policy from /odm/etc/selinux/precompiled_sepolicy\x0a
+[    5.534019] init: 1 output lines suppressed due to ratelimiting
+[    5.539359] init: init second stage started!
+[    5.574865] init: Using Android DT directory /proc/device-tree/firmware/android/
+[    5.578878] init: Init cannot set 'ro.boot.selinux' to 'permissive': Read-only property was already set
+[    5.593611] selinux: SELinux: Loaded file_contexts\x0a
+[    5.594649] init: Running restorecon...
+[    5.611268] init: waitid failed: No child processes
+[    5.619771] init: Couldn't load property file '/odm/default.prop': open() failed: No such file or directory: No such file or directory
+[    5.631502] init: Created socket '/dev/socket/property_service', mode 666, user 0, group 0
+[    5.636081] init: Forked subcontext for 'u:r:vendor_init:s0' with pid 2465
+[    5.642874] init: Forked subcontext for 'u:r:vendor_init:s0' with pid 2466
+[    5.803515] ueventd: ueventd started!
+[    5.810352] selinux: SELinux: Loaded file_contexts\x0a
+[    5.811643] ueventd: Parsing file /ueventd.rc...
+[    5.819800] ueventd: Parsing file /vendor/ueventd.rc...
+[    5.829262] ueventd: /vendor/ueventd.rc: 26: /sys/ lines must have 5 entries
+[    5.830933] ueventd: /vendor/ueventd.rc: 28: /sys/ lines must have 5 entries
+[    5.833571] mali: loading out-of-tree module taints kernel.
+[    5.839600] mali-utgard d00c0000.mali: set min pp to default 1
+[    5.839608] mali-utgard d00c0000.mali: set min clk default to 0
+[    5.839847] mali-utgard d00c0000.mali: max clk set 4
+[    5.839853] mali-utgard d00c0000.mali: turbo clk set to 5
+[    5.839859] mali-utgard d00c0000.mali: default clk set to 2
+[    5.855826] gpu cooling register okay with err=0
+[    5.858680] gpu core cooling register okay with err=0
+[    5.859371] Mali: Mali device driver loaded
+[    5.867672] PPMGRVPP: info: RegisterTB_Function: gfunc   (null), func: bf061024, ver:TB detect: v2016.11.15a *** [ Tue Mar 19 19:21:39 CST 2019]-[ renjiang.han]-[* master]-[67f03d41e0612a58d1edd96db9bc8b92de1a59b1]-[Date: Wed Jul 4 00:44:57 2018 +0800]-[2]
+[    5.909562] ueventd: /vendor/ueventd.rc: 103: /sys/ lines must have 5 entries
+[    5.916462] ueventd: Parsing file /odm/ueventd.rc...
+[    5.921404] ueventd: Unable to read config file '/odm/ueventd.rc': open() failed: No such file or directory
+[    5.931414] ueventd: Parsing file /ueventd.amlogic.rc...
+[    6.363203] lcd vlock_en=1, vlock_mode=0x4
+[    6.741532] EXT4-fs (mmcblk0p20): Ignoring removed nomblk_io_submit option
+[    6.862460] EXT4-fs (mmcblk0p20): 5 orphan inodes deleted
+[    6.862502] EXT4-fs (mmcblk0p20): recovery complete
+[    6.885689] EXT4-fs (mmcblk0p20): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[    7.701822] e2fsck: e2fsck 1.43.3 (04-Sep-2016)\x0a
+[    7.702596] e2fsck: Pass 1: Checking inodes, blocks, and sizes\x0a
+[    7.710239] e2fsck: Pass 2: Checking directory structure\x0a
+[    7.717245] e2fsck: Pass 3: Checking directory connectivity\x0a
+[    7.724649] e2fsck: Pass 4: Checking reference counts\x0a
+[    7.731378] e2fsck: Pass 5: Checking group summary information\x0a
+[    7.738958] e2fsck: /dev/block/data: 2779/729088 files (10.8% non-contiguous), 276993/2915840 blocks\x0a
+[    7.754581] EXT4-fs (mmcblk0p20): Ignoring removed nomblk_io_submit option
+[    7.768081] EXT4-fs (mmcblk0p20): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    7.776643] EXT4-fs (mmcblk0p3): Ignoring removed nomblk_io_submit option
+[    7.788860] EXT4-fs (mmcblk0p3): recovery complete
+[    7.789518] EXT4-fs (mmcblk0p3): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[    7.918264] e2fsck: e2fsck 1.43.3 (04-Sep-2016)\x0a
+[    7.919045] e2fsck: Pass 1: Checking inodes, blocks, and sizes\x0a
+[    7.926682] e2fsck: Pass 2: Checking directory structure\x0a
+[    7.935262] EXT4-fs (mmcblk0p3): Ignoring removed nomblk_io_submit option
+[    7.944858] EXT4-fs (mmcblk0p3): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    7.954614] EXT4-fs (mmcblk0p13): Ignoring removed nomblk_io_submit option
+[    7.967227] EXT4-fs (mmcblk0p13): recovery complete
+[    7.967918] EXT4-fs (mmcblk0p13): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[    8.058009] EXT4-fs (mmcblk0p13): Ignoring removed nomblk_io_submit option
+[    8.062515] EXT4-fs (mmcblk0p13): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    8.154404] EXT4-fs (mmcblk0p10): Ignoring removed nomblk_io_submit option
+[    8.159736] EXT4-fs (mmcblk0p10): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    8.241279] EXT4-fs (mmcblk0p15): Ignoring removed nomblk_io_submit option
+[    8.246092] EXT4-fs (mmcblk0p15): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    8.255245] init: 27 output lines suppressed due to ratelimiting
+[    8.284109] No find node.
+[    8.284154] register clk_set_setting cpu[42]
+[    8.297866] Registered firmware driver success.
+[    8.300526] Try to load video/h264_enc.bin  ...
+[    8.306630] load firmware size : 76288, Name : video/h264_enc.bin.
+[    8.308920] Try to load video/video_ucode.bin  ...
+[    8.349048] load firmware size : 1698816, Name : video/video_ucode.bin.
+[    8.475512] Amlogic A/V streaming port init
+[    8.481339] get gate demux control ok ecf32bc0
+[    8.481412] get gate parser_top control ok ecf32c40
+[    8.485754] get gate vdec control ok ecf32cc0
+[    8.490006] get gate clk_81 control ok ecf32d40
+[    8.494726] get gate clk_vdec_mux control ok ecf32dc0
+[    8.499866] get gate clk_hcodec_mux control ok ecf32e40
+[    8.505414] get gate clk_hevc_mux control ok ecf32780
+[    8.510313] get gate clk_hevcb_mux control failed   (null)
+[    8.515891] get gate ahbarb0 control failed   (null)
+[    8.521046] get gate asyncfifo control failed   (null)
+[    8.543286] amvdec_avs module init
+[    8.558127] amvdec_h264 module init
+[    8.587550] ammvdec_h264 module init
+[    8.622112] amvdec_h265 module init
+[    8.670266] ammvdec_mpeg12 module init
+[    8.694103] ammvdec_mpeg4_driver_init_module 
+[    8.715445] amvdec_vc1 module init
+[    8.735546] amvdec_vp9 module init
+[    8.772475] amvenc_avc_probe -- reserved memory config fail.
+[    8.772684] amvenc_avc - cma memory pool size: 60 MB
+[    8.777907] encode_wq_init.
+[    8.780741] encode start monitor.
+[    8.784339] encode workqueue monitor start.
+[    8.798425] vpu_init
+[    8.798840] vpu_probe
+[    8.798872] HevcEnc reserved memory config fail.
+[    8.802477] HevcEnc - cma memory pool size: 64 MB
+[    8.807245] HevcEnc - wave420l_irq: 53
+[    8.811146] vpu base address get from platform driver physical base addr=0xc8810000, virtual base=0xf1e18000
+[    8.821429] success to probe vpu device with video memory from cma
+[    8.843422] ammvdec_avs module init
+[    9.016373] logd.auditd: start
+[    9.236036] vdc: Waited 50ms for vold
+[    9.391323] hdr10_tmo_alg: disagrees about version of symbol module_layout
+[    9.392759] hdr10_tmo_alg: module license 'unspecified' taints kernel.
+[    9.399535] Disabling lock debugging due to kernel taint
+[    9.405070] hdr10_tmo_alg: disagrees about version of symbol param_ops_uint
+[    9.412733] hdr10_tmo_alg: hdr10_tmo_alg_driver_init insmod ok. v1.0_2020-12-24
+[    9.421547] logd.daemon: reinit
+[    9.468012] aml dvb init
+[   10.034048] healthd: No battery devices found
+[   10.064758] android.hardware.health@2.0-impl: wakealarm_init: timerfd_create failed
+[   10.070048] healthd: battery none chg=
+[   10.368585] hdmitx: system: hdmitx: set rxsense_policy as 1
+[   10.372835] VID: VD1 off
+[   10.374461] hdmitx: system: set hdcp_pwr 1
+[   10.393821] unifykey: amlkey_init_gen() enter!
+[   10.418163] capability: warning: `daemonsu' uses 32-bit capabilities (legacy support in use)
+[   10.565504] fb: osd_open, 1507, fb_index=0,fb_rmem_size=25165824
+[   10.573569] fb: osd_open, 1507, fb_index=1,fb_rmem_size=1048576
+[   10.574296] fb: malloc_osd_memory, cma:c18f1f0c
+[   10.578773] fb: malloc_osd_memory, 1201, base:0x7f800000, size:8388608
+[   10.585419] fb: use ion buffer for fb memory, fb_index=1
+[   10.592097] meson-fb meson-fb: create ion_client ecef4100, handle=ecfee2c0
+[   10.597897] meson-fb meson-fb: ion memory(1): created fb at 0x73800000, size 1 MiB
+[   10.605523] fb: Frame buffer memory assigned at
+[   10.609980] fb:  1, phy: 0x73800000, vir:0xf3794000, size=1024K\x0a
+[   10.617672] fb: logo_index=0,fb_index=1
+[   10.621606] fb: ---------------clear fb1 memory f3794000
+[   10.627614] fb: osd[1] canvas.idx =0x43
+[   10.630965] fb: osd[1] canvas.addr=0x73800000
+[   10.635496] fb: osd[1] canvas.width=1024
+[   10.639585] fb: osd[1] canvas.height=256
+[   10.643603] fb: osd[1] frame.width=256
+[   10.647471] fb: osd[1] frame.height=256
+[   10.651436] fb: osd[1] out_addr_id =0x0
+[   10.663092] video_composer_open iminor(inode) =0
+[   10.663605] video_composer_open iminor(inode) =1
+[   10.669254] vout: vout_io_open
+[   10.670268] vout: vout_ioctl: cmd_dir = 0x2, cmd_nr = 0x0
+[   10.675830] vout: vout_io_release
+[   10.962390] emmc_key_read:114, read ok
+[   10.962511] unifykey: amlkey_init_gen() storagekey_info.buffer=d0080000, storagekey_info.size = 40000!
+[   10.973851] init: Could not find service hosting interface vendor.amlogic.hardware.hdmicec@1.0::IDroidHdmiCEC/default
+[   10.992894] hdmitx: system: restore hdcp_pwr 0
+[   10.995743] init: Could not find service hosting interface vendor.amlogic.hardware.systemcontrol@1.1::ISystemControl/default
+[   11.004742] init: Could not find service hosting interface vendor.amlogic.hardware.hdmicec@1.0::IDroidHdmiCEC/default
+[   11.020245] init: Could not find service hosting interface vendor.amlogic.hardware.systemcontrol@1.0::ISystemControl/default
+[   11.027629] init: Could not find service hosting interface vendor.amlogic.hardware.systemcontrol@1.1::ISystemControl/default
+[   11.039366] init: Could not find service hosting interface vendor.amlogic.hardware.hdmicec@1.0::IDroidHdmiCEC/default
+[   11.049823] init: Could not find service hosting interface vendor.amlogic.hardware.systemcontrol@1.0::ISystemControl/default
+[   11.060557] init: Could not find service hosting interface vendor.amlogic.hardware.systemcontrol@1.1::ISystemControl/default
+[   11.078981] vfm_map_store:rm default
+[   11.080981] vfm_map_store:add default decoder ppmgr deinterlace amvideo
+[   11.085007] vout: vout_io_open
+[   11.107320] init: Could not find service hosting interface vendor.amlogic.hardware.hdmicec@1.0::IDroidHdmiCEC/default
+[   11.124453] init: Could not find service hosting interface vendor.amlogic.hardware.systemcontrol@1.0::ISystemControl/default
+[   11.203645] [DI] load 0x3e00 pq table len 308 later.
+[   11.222284] file system registered
+[   11.256814] assign_ffs_buffer FFS_BUFFER_MAX=100!!!
+[   11.351898] [btmtk_info] BTMTK_init: begin
+[   11.351952] [btmtk_info] btmtk_proc_create_new_entry: proc initialized
+[   11.364047] [btmtk_info] BTMTK_init: major number:495
+[   11.364093] [btmtk_info] BTMTK_init: BT_majorfwlog number: 494
+[   11.376520] [btmtk_info] BTMTK_init: BT_chrdev driver(major 495) installed.
+[   11.380653] [btmtk_info] BTMTK_init: BT_chrdevfwlog driver(major 494) installed.
+[   11.401733] [btmtk_info] BTMTK_init: BT_major 495, BT_majorfwlog 494
+[   11.402628] [btmtk_info] BTMTK_init: devID 519045120, devIDfwlog 517996544
+[   11.422414] [btmtk_info] btmtk_fops_set_state: btmtk_fops_set_state: FOPS_UNKNOWN(0) -> FOPS_INIT(1)
+[   11.428471] [btmtk_info] btmtk_sdio_init_module: SDIO Driver Registration Success
+[   11.485346] meson-remote c8100580.rc: default protocol = 0x1 and id = 0
+[   11.486499] meson-remote c8100580.rc: reg=0x0, val=0x1f40190
+[   11.492289] meson-remote c8100580.rc: reg=0x4, val=0x12c00c8
+[   11.498050] meson-remote c8100580.rc: reg=0x8, val=0x960050
+[   11.503741] meson-remote c8100580.rc: reg=0xc, val=0x480028
+[   11.509455] meson-remote c8100580.rc: reg=0x10, val=0x70fa0013
+[   11.515403] meson-remote c8100580.rc: reg=0x18, val=0x8616800
+[   11.521270] meson-remote c8100580.rc: reg=0x1c, val=0x9f00
+[   11.526856] meson-remote c8100580.rc: reg=0x20, val=0x0
+[   11.532222] meson-remote c8100580.rc: reg=0x24, val=0x0
+[   11.537577] meson-remote c8100580.rc: reg=0x28, val=0x0
+[   11.711719] read descriptors
+[   11.711776] read strings
+[   12.002381] meson-remote c8100580.rc: default protocol = 0x1 and id = 0
+[   12.003534] meson-remote c8100580.rc: reg=0x0, val=0x1f40190
+[   12.009324] meson-remote c8100580.rc: reg=0x4, val=0x12c00c8
+[   12.015105] meson-remote c8100580.rc: reg=0x8, val=0x960050
+[   12.020796] meson-remote c8100580.rc: reg=0xc, val=0x480028
+[   12.026488] meson-remote c8100580.rc: reg=0x10, val=0x70fa0013
+[   12.032440] meson-remote c8100580.rc: reg=0x18, val=0x8616800
+[   12.038284] meson-remote c8100580.rc: reg=0x1c, val=0x9f00
+[   12.043909] meson-remote c8100580.rc: reg=0x20, val=0x0
+[   12.049237] meson-remote c8100580.rc: reg=0x24, val=0x0
+[   12.054606] meson-remote c8100580.rc: reg=0x28, val=0x0
+[   12.508591] meson-remote c8100580.rc: default protocol = 0x1 and id = 0
+[   12.509743] meson-remote c8100580.rc: reg=0x0, val=0x1f40190
+[   12.515535] meson-remote c8100580.rc: reg=0x4, val=0x12c00c8
+[   12.521312] meson-remote c8100580.rc: reg=0x8, val=0x960050
+[   12.527005] meson-remote c8100580.rc: reg=0xc, val=0x480028
+[   12.532697] meson-remote c8100580.rc: reg=0x10, val=0x70fa0013
+[   12.538630] meson-remote c8100580.rc: reg=0x18, val=0x8616800
+[   12.544513] meson-remote c8100580.rc: reg=0x1c, val=0x9f00
+[   12.550100] meson-remote c8100580.rc: reg=0x20, val=0x0
+[   12.555447] meson-remote c8100580.rc: reg=0x24, val=0x0
+[   12.560796] meson-remote c8100580.rc: reg=0x28, val=0x0
+[   12.870436] meson-remote c8100580.rc: default protocol = 0x1 and id = 0
+[   12.871608] meson-remote c8100580.rc: reg=0x0, val=0x1f40190
+[   12.877368] meson-remote c8100580.rc: reg=0x4, val=0x12c00c8
+[   12.883160] meson-remote c8100580.rc: reg=0x8, val=0x960050
+[   12.888853] meson-remote c8100580.rc: reg=0xc, val=0x480028
+[   12.894552] meson-remote c8100580.rc: reg=0x10, val=0x70fa0013
+[   12.900483] meson-remote c8100580.rc: reg=0x18, val=0x8616800
+[   12.906346] meson-remote c8100580.rc: reg=0x1c, val=0x9f00
+[   12.911953] meson-remote c8100580.rc: reg=0x20, val=0x0
+[   12.917300] meson-remote c8100580.rc: reg=0x24, val=0x0
+[   12.922667] meson-remote c8100580.rc: reg=0x28, val=0x0
+[   12.986635] aml_wifi wifi: [usb_power_control] Set WiFi power down
+[   12.987400] meson-mmc: [sdio_notify] finish
+[   13.162231] meson-remote c8100580.rc: default protocol = 0x1 and id = 0
+[   13.163402] meson-remote c8100580.rc: reg=0x0, val=0x1f40190
+[   13.169161] meson-remote c8100580.rc: reg=0x4, val=0x12c00c8
+[   13.174952] meson-remote c8100580.rc: reg=0x8, val=0x960050
+[   13.180646] meson-remote c8100580.rc: reg=0xc, val=0x480028
+[   13.186323] meson-remote c8100580.rc: reg=0x10, val=0x70fa0013
+[   13.192274] meson-remote c8100580.rc: reg=0x18, val=0x8616800
+[   13.198159] meson-remote c8100580.rc: reg=0x1c, val=0x9f00
+[   13.203745] meson-remote c8100580.rc: reg=0x20, val=0x0
+[   13.209116] meson-remote c8100580.rc: reg=0x24, val=0x0
+[   13.214459] meson-remote c8100580.rc: reg=0x28, val=0x0
+[   13.338671] aml_wifi wifi: [usb_power_control] Set WiFi power on !
+[   13.363426] meson-remote c8100580.rc: default protocol = 0x1 and id = 0
+[   13.364585] meson-remote c8100580.rc: reg=0x0, val=0x1f40190
+[   13.370358] meson-remote c8100580.rc: reg=0x4, val=0x12c00c8
+[   13.376135] meson-remote c8100580.rc: reg=0x8, val=0x960050
+[   13.381847] meson-remote c8100580.rc: reg=0xc, val=0x480028
+[   13.387519] meson-remote c8100580.rc: reg=0x10, val=0x70fa0013
+[   13.393470] meson-remote c8100580.rc: reg=0x18, val=0x8616800
+[   13.399335] meson-remote c8100580.rc: reg=0x1c, val=0x9f00
+[   13.404942] meson-remote c8100580.rc: reg=0x20, val=0x0
+[   13.410289] meson-remote c8100580.rc: reg=0x24, val=0x0
+[   13.415636] meson-remote c8100580.rc: reg=0x28, val=0x0
+[   13.548692] meson-mmc: [sdio_notify] finish
+[   13.550188] meson-mmc: sdio: resp_timeout,vstat:0xa3ff2800,virqc:3fff
+[   13.554010] meson-mmc: sdio: err: wait for irq service, bus_fsm:0x8
+[   13.560233] healthd: battery none chg=
+[   13.564586] meson-mmc: meson_mmc_irq_thread_v3 634 sdio: cmd:52
+[   13.571391] meson-mmc: sdio: resp_timeout,vstat:0xa3ff2800,virqc:3fff
+[   13.576853] meson-mmc: sdio: err: wait for irq service, bus_fsm:0x8
+[   13.583510] meson-mmc: meson_mmc_irq_thread_v3 634 sdio: cmd:52
+[   13.594113] meson-mmc: sdio: resp_timeout,vstat:0xa3ff2800,virqc:3fff
+[   13.595826] meson-mmc: sdio: err: wait for irq service, bus_fsm:0x8
+[   13.602311] meson-mmc: meson_mmc_irq_thread_v3 634 sdio: cmd:8
+[   13.631518] meson-mmc: actual_clock :400000, HHI_nand: 0x80
+[   13.631638] meson-mmc: [meson_mmc_clk_set_rate_v3] after clock: 0x1000033c
+[   13.644308] mmc_sdio_init_card  ocr = 1200000
+[   13.647281] logd: logdr: UID=0 GID=0 PID=3358 n tail=50 logMask=8 pid=3237 start=0ns timeout=0ns
+[   13.649890] logd: logdr: UID=0 GID=0 PID=3358 n tail=50 logMask=1 pid=3237 start=0ns timeout=0ns
+[   13.649939] uhs = 1000000
+[   13.652117] logd: logdr: UID=0 GID=0 PID=3358 n tail=0 logMask=8 pid=3237 start=0ns timeout=0ns
+[   13.654845] logd: logdr: UID=0 GID=0 PID=3358 n tail=0 logMask=1 pid=3237 start=0ns timeout=0ns
+[   13.681605] meson-mmc: actual_clock :50000000, HHI_nand: 0x80
+[   13.681903] meson-mmc: [meson_mmc_clk_set_rate_v3] after clock: 0x10000354
+[   13.689189] meson-mmc: Data 1 aligned delay is 0
+[   13.694052] meson-mmc: sdio: clk 50000000 tuning start
+[   13.699404] EXT4-fs (mmcblk0p18): re-mounted. Opts: (null)
+[   13.740254] meson-mmc: sdio: adj_win: < 0 1 2 3 4 5 6 8 9 10 11 12 13 14 15 16 17 18 19 >
+[   13.743081] meson-mmc: sdio: best_win_start =8, best_win_size =19
+[   13.749465] meson-mmc: sdio: sd_emmc_regs->gclock=0x10000354,sd_emmc_regs->gadjust=0x112000
+[   13.757752] meson-mmc: delay1:0x0, delay2:0x0
+[   13.767050] sdio: new ultra high speed SDR50 SDIO card at address 0001
+[   13.768950] sdio: clock 50000000, 4-bit-bus-width\x0a 
+[   13.775690] [btmtk_info] btmtk_sdio_probe: Mediatek Bluetooth driver Version=v0.0.1.13_2020092401
+[   13.782778] [btmtk_info] btmtk_sdio_probe: vendor=0x37a, device=0x7668, class=255, fn=2, support func_num 2
+[   13.792853] [btmtk_info] btmtk_sdio_probe: chip_id is 7668
+[   13.798288] [btmtk_info] btmtk_sdio_initialize_cfg_items: begin
+[   13.804343] [btmtk_info] btmtk_sdio_initialize_cfg_items: end
+[   13.810097] [btmtk_info] btmtk_sdio_load_setting_files: begin setting_file_name = bt.cfg
+[   13.852559] [btmtk_info] btmtk_sdio_load_code_from_setting_files: setting file request_firmware size 1019 success
+[   13.857549] [btmtk_info] btmtk_sdio_load_code_from_setting_files: cfg_file len (1019) assign done
+[   13.866618] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_unify_woble = 1
+[   13.875076] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_legacy_woble = 0
+[   13.883824] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_woble_by_eint = 0
+[   13.892630] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->dongle_reset_gpio_pin = 220
+[   13.901612] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->save_fw_dump_in_kernel = 0
+[   13.910459] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_dongle_reset = 1
+[   13.919214] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_full_fw_dump = 1
+[   13.927854] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_woble_wakelock = 0
+[   13.936808] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_woble_for_bt_disable = 1
+[   13.946147] [btmtk_info] btmtk_sdio_load_bt_cfg_item: btmtk_sdio_load_bt_cfg_item: bt_cfg_content->reset_stack_after_woble = 0
+[   13.957619] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->sys_log_file_name = /sdcard/bt_sys_log
+[   13.967539] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->fw_dump_file_name = /sdcard/bt_fw_dump
+[   13.977536] [btmtk_info] btmtk_sdio_load_bt_cfg_item: bt_cfg_content->support_auto_picus = 0
+[   13.986069] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: WMT_CMD000: found
+[   13.998371] [btmtk_info] btmtk_eeprom_bin_file: 7668 series
+[   14.106514] avc open
+[   14.106552] amvenc_avc  check CMA pool success, max instance: 3.
+[   14.112037] allocating phys 0x63400000, size 20480k, wq:ec441c00.
+[   14.115752] amvenc_avc  memory config success, buff start:0x63400000, size is 0x1400000, wq:ec441c00.
+[   14.116010] [btmtk_warn] btmtk_set_pa_and_duplex: Can't find BtUseExternalPA
+[   14.116028] [btmtk_info] btmtk_set_keep_full_pwr: Read KeepFullPwr on: 1
+[   14.116042] [btmtk_warn] btmtk_parse_efuse_mode: It's EEPROM bin mode: 1
+[   14.132279] EXT4-fs (mmcblk0p18): re-mounted. Opts: (null)
+[   14.151565] avc release, wq:ec441c00
+[   14.155087] remove  encode_work_queue ec441c00 success, _destroy_encode_work_queue line 3724.
+[   14.164402] [+] vpu_open, open_count=0
+[   14.167653] vpu_open, calling process: 3302:omx@1.0-service
+[   14.174909] [btmtk_info] btmtk_add_card: begin
+[   14.177910] [btmtk_info] btmtk_add_card: Starting kthread...
+[   14.177954] allocating phys 0x63400000, virt addr 0x0, size 65536k
+[   14.178448] the vdec            clock on, ref cnt: 1
+[   14.178496] [-] vpu_open, ret: 0
+[   14.178553] vpu_release, calling process: 3302:omx@1.0-service
+[   14.178557] vpu_release, ret = 0
+[   14.178559] vpu_free_buffers
+[   14.178562] vpu_free_instances
+[   14.178565] vpu_release, decrease open_count from 1
+[   14.178569] vpu_release: s_interrupt_flag(0), reason(0x00000000)
+[   14.178572] vpu_release, s_video_memory 0x63400000
+[   14.179797] the vdec            clock off, ref cnt: 0
+[   14.225098] btmtk_sdio sdio:0001:2: Direct firmware load for BtTxPwrLimit.bin failed with error -2
+[   14.233980] [btmtk_info] btmtk_requset_power_limit_callback: begin
+[   14.234014] [btmtk_info] btmtk_service_main_thread: main_thread begin 50
+[   14.247191] [btmtk_info] btmtk_requset_power_limit_callback: pwr_fw is NULL
+[   14.254272] [btmtk_info] btmtk_sdio_register_dev: before claim irq read SDIO_CCCR_IENx 0, func num 2
+[   14.263906] [btmtk_info] btmtk_sdio_register_dev: sdio_claim_irq success: ret=0
+[   14.270900] [btmtk_info] btmtk_sdio_register_dev: after claim irq read SDIO_CCCR_IENx 0
+[   14.279521] [btmtk_info] btmtk_sdio_register_dev: SDIO FUNC2 IO port: 0xf07668
+[   14.287134] [btmtk_info] btmtk_sdio_enable_host_int: read CSDIOCSR is 0x1
+[   14.293281] [btmtk_info] btmtk_sdio_enable_host_int: write CSDIOCSR is 0x5
+[   14.300157] [btmtk_info] btmtk_sdio_download_fw: begin
+[   14.306669] [btmtk_info] btmtk_sdio_bt_memRegister_read: read cr 80000004
+[   14.322948] [btmtk_info] btmtk_sdio_bt_memRegister_read: retrytime 2
+[   14.323915] [btmtk_info] btmtk_sdio_bt_memRegister_read: ger cr 0x80000004 value 0x8b01
+[   14.332144] [btmtk_info] btmtk_sdio_download_rom_patch: Fw Version 0x8b01
+[   14.339004] [btmtk_info] btmtk_sdio_bt_memRegister_read: read cr 80000008
+[   14.361360] [btmtk_info] btmtk_sdio_bt_memRegister_read: retrytime 2
+[   14.362340] [btmtk_info] btmtk_sdio_bt_memRegister_read: ger cr 0x80000008 value 0x7668
+[   14.370496] [btmtk_info] btmtk_sdio_download_rom_patch: Chip Id 0x7668
+[   14.377162] [btmtk_info] btmtk_sdio_download_rom_patch: request_firmware(firmware name mt7668_patch_e2_hdr.bin)
+[   14.417459] [btmtk_info] btmtk_sdio_send_wohci: return  0x0
+[   14.420912] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] =============== Patch Info ==============
+[   14.427422] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] Built Time = 20190106180149f\x0a
+[   14.437639] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] Hw Ver = 0x3138
+[   14.444958] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] Sw Ver = 0x3032
+[   14.452394] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] Patch Ver = 0x009a
+[   14.460049] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] Platform = mp2_
+[   14.467530] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] Patch start addr = 6f7f
+[   14.475611] [btmtk_info] btmtk_sdio_download_rom_patch: [btmtk] =========================================
+[   14.485265] [btmtk_info] btmtk_sdio_download_rom_patch: loading ILM rom patch...
+[   14.492759] [btmtk_info] btmtk_sdio_download_partial_rom_patch: Downloading FW image (178752 bytes)
+[   14.678574] snd_pcm: enter aml_pcm_open, stream:1
+[   14.678622] snd_pcm: aml_pcm_timer_create
+[   14.682953] snd_pcm: enter aml_pcm_close type: 1
+[   14.688542] snd_spdif_dai: enterd aml_spdif_play,set_clock:4,sample_rate=4
+[   14.693852] snd_spdif_dai: set 958 audio clk div 2
+[   15.128515] [btmtk_info] btmtk_sdio_download_rom_patch: loading ILM rom patch... Done
+[   15.131199] [btmtk_info] btmtk_sdio_send_wohci: return  0x0
+[   15.136984] [btmtk_info] btmtk_sdio_download_rom_patch: patchdownload is done by BT
+[   15.144539] [btmtk_info] btmtk_sdio_send_wmt_reset: begin
+[   15.153424] [btmtk_info] btmtk_sdio_download_rom_patch: read chipid =  f07668
+[   15.157501] [btmtk_info] btmtk_sdio_set_write_clear: write CHCR 0x00000002
+[   15.164314] [btmtk_info] btmtk_sdio_set_write_clear: read CHCR 0x00000002
+[   15.171165] [btmtk_info] btmtk_sdio_set_write_clear: write clear
+[   15.177678] [btmtk_info] btmtk_sdio_download_rom_patch: success
+[   15.193423] [btmtk_info] btmtk_sdio_load_setting_files: begin setting_file_name = woble_setting_7668.bin
+[   15.197578] [btmtk_info] btmtk_sdio_load_setting_files: request woble_setting_7668.bin file success(0)
+[   15.206924] [btmtk_info] btmtk_sdio_probe: normal end
+[   15.212194] meson-mmc: [sdio_reinit] finish
+[   15.212518] btmtk_sdio sdio:0001:2: Direct firmware load for woble_setting_7668.bin failed with error -2
+[   15.212531] [btmtk_err] btmtk_sdio_load_woble_setting_callback: fw_data is NULL callback request_firmware fail or can't find file!!
+[   15.212535] [btmtk_info] btmtk_sdio_load_woble_setting_callback: begin load orignial woble_setting_file_name = woble_setting.bin
+[   15.233041] [btmtk_info] btmtk_sdio_load_woble_setting_callback: woble_setting callback request_firmware size 1264 success
+[   15.233185] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: APCF00: found
+[   15.233223] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: APCF01: found
+[   15.233401] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: APCF_ADD_MAC00: found
+[   15.233417] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: APCF_ADD_MAC01: found
+[   15.233539] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: APCF_ADD_MAC_LOCATION00: found
+[   15.233554] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: APCF_ADD_MAC_LOCATION01: found
+[   15.233721] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: RADIOOFF00: found
+[   15.233855] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: RADIOOFF_STATUS_EVENT00: found
+[   15.233990] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: RADIOOFF_COMPLETE_EVENT00: found
+[   15.234127] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: RADIOON00: found
+[   15.234260] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: RADIOON_STATUS_EVENT00: found
+[   15.234394] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: RADIOON_COMPLETE_EVENT00: found
+[   15.234574] [btmtk_info] btmtk_sdio_load_fw_cfg_setting: APCF_RESMUE00: found
+[   15.234861] [btmtk_info] btmtk_sdio_load_woble_setting_callback: result success
+[   15.365958] aml_wifi wifi: [usb_power_control] Set WiFi power on !
+[   15.436427] fb: osd[1] enable: 0 scale:0x0 (composer@2.2-se)
+[   15.436634] fb: osd[0] enable: 1 scale:0x10001 (composer@2.2-se)
+[   15.462645] fb: free_scale_switch to fb0, mode: 0x10001
+[   15.462789] fb: set logo loaded
+[   15.572355] aml_wifi wifi: [pci_reinit] pci wifi reinit!
+[   15.572412] aml_wifi wifi: [wifi_power_ioctl] Set sdio wifi power up!
+[   15.579001] aml_wifi wifi: [wifi_power_ioctl] wifi interface dev type: sdio, length = 4
+[   15.718261] [wlan][3303]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00000000
+[   16.896646] [wlan][3303]wlanAdapterStart:(INIT WARN) Send a Dummy CMD as workaround
+[   16.899411] [wlan][3303]wlanQueryNicCapability:(INIT WARN) wlanQueryNicCapability: skip unexpected event ID[0x27]
+[   16.917642] [wlan][3303]wlanAdapterStart:(INIT WARN) wlanAdapterStart: load manufacture data fail
+[   16.921324] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =13
+[   16.929585] [wlan][3443]wlanSendSetQueryExtCmd:(REQ TRACE) ucCmdSeqNum =14
+[   17.111355] [wlan][3303]mtk_reg_notify:(RLM WARN) County Code is not assigned. Use default WW.
+[   17.114919] [wlan][3303]rlmDomainSearchRegdomainFromLocalDataBase:(RLM ERROR) rlmDomainSearchRegdomainFromLocalDataBase(): Error, Cannot find the correct RegDomain. country = 00.
+[   17.131384] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =15
+[   17.144315] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =16
+[   17.146083] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =17
+[   17.152806] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =18
+[   17.159848] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =19
+[   17.172966] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =20
+[   17.174149] [wlan][3443]p2pDevFsmStateTransition:(P2P STATE) [P2P_DEV]TRANSITION: [P2P_DEV_STATE_IDLE] -> [P2P_DEV_STATE_IDLE]
+[   17.185705] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =21
+[   17.192490] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =22
+[   17.199127] [wlan][3443]wlanBindBssIdxToNetInterface:(INIT ERROR) Array index out of bound, ucBssIndex=4
+[   17.208822] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =23
+[   17.215411] [wlan][3443]p2pRoleFsmStateTransition:(P2P STATE) [P2P_ROLE][0]TRANSITION(Bss1): [P2P_ROLE_STATE_IDLE] -> [P2P_ROLE_STATE_IDLE]
+[   17.228133] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =24
+[   17.234778] [wlan][3443]p2pDevFsmStateTransition:(P2P STATE) [P2P_DEV]TRANSITION: [P2P_DEV_STATE_IDLE] -> [P2P_DEV_STATE_IDLE]
+[   17.246197] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =25
+[   17.252951] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =26
+[   17.259660] [wlan][3443]wlanBindBssIdxToNetInterface:(INIT ERROR) Array index out of bound, ucBssIndex=4
+[   17.269340] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =27
+[   17.275953] [wlan][3443]p2pRoleFsmStateTransition:(P2P STATE) [P2P_ROLE][1]TRANSITION(Bss2): [P2P_ROLE_STATE_IDLE] -> [P2P_ROLE_STATE_IDLE]
+[   17.288639] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[27]
+[   17.298143] [wlan][3444]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[   17.304791] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =28
+[   17.304823] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =29
+[   17.304833] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =30
+[   17.304849] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =31
+[   17.304857] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =32
+[   17.304868] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =33
+[   17.304875] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[27]
+[   17.304878] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =34
+[   17.304888] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =35
+[   17.304891] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[27]
+[   17.304897] [wlan][3303]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =36
+[   17.304900] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[27]
+[   17.304909] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[27]
+[   17.304991] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =37
+[   17.305020] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[27]
+[   17.417495] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.424215] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.430365] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.437258] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.443586] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.449829] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x70] SEQ[34]
+[   17.450704] [wlan][3444]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[   17.450775] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE005324A
+[   17.450838] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.450902] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE4
+[   17.450965] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.451031] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DEA
+[   17.499414] [wlan][3444]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[   17.508102] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.514413] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   17.520984] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   17.527608] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   17.533714] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   17.541043] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =38
+[   17.547280] [wlan][3443]wlanoidSetGtkRekeyData:(REQ INFO) wlanoidSetGtkRekeyData
+[   17.554331] [wlan][3443]wlanoidSetGtkRekeyData:(REQ INFO) ucCmdSeqNum = 39
+[   17.564050] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =40
+[   17.568628] [wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter
+[   17.568629] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready
+[   17.582738] [wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   17.591284] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =41
+[   17.598159] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   17.605996] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =42
+[   17.613342] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =43
+[   17.620558] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   17.620812] IPv6: ADDRCONF(NETDEV_UP): p2p0: link is not ready
+[   17.621629] IPv6: ADDRCONF(NETDEV_CHANGE): p2p0: link becomes ready
+[   17.623387] selinux: avc:  denied  { set } for property=vendor.bcm_wifi pid=3303 uid=0 gid=1000 scontext=u:r:wifi_preload:s0 tcontext=u:object_r:vendor_default_prop:s0 tclass=property_service permissive=1\x0a
+[   17.660057] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =44
+[   17.667268] [wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter[wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   17.682888] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =45
+[   17.689806] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   17.697625] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =46
+[   17.922571] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =47
+[   17.932767] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   17.935202] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =48
+[   17.942549] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   17.950394] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =49
+[   22.291309] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =50
+[   22.292506] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =51
+[   22.299286] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =52
+[   22.306026] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =53
+[   22.312804] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =54
+[   22.319481] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =55
+[   22.326216] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =56
+[   22.332967] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =57
+[   22.339729] [wlan][3443]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x14] SEQ[57]
+[   22.349209] [wlan][3444]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[   22.358089] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DF6
+[   22.363833] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   22.370323] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   22.376808] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   22.383294] [wlan][3444]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   25.639531] healthd: battery none chg=
+[   25.641468] healthd: battery none chg=
+[   27.121491] acc_open
+[   27.121547] acc_release
+[   27.495960] [wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter[wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   27.506120] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =58
+[   27.536661] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   27.539027] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =59
+[   27.546375] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   27.554329] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =60
+[   27.664690] internal phy init
+[   27.736712] internal phy init
+[   27.748943] meson6-dwmac c9410000.ethernet eth0: fail to init PTP.
+[   27.751598] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+[   27.756215] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   27.763632] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =61
+[   27.773604] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   27.778835] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =62
+[   27.786118] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   27.794012] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =63
+[   27.851372] wol_reg12[12]==0, error
+[   28.215884] sdcardfs version 2.0
+[   28.215938] sdcardfs: dev_name -> /data/media
+[   28.220251] sdcardfs: options -> fsuid=1023,fsgid=1023,multiuser,derive_gid,default_normal,mask=6,userid=0,gid=1015
+[   28.233210] sdcardfs: mnt -> ec44d410
+[   28.234461] sdcardfs: mounted on top of /data/media type ext4
+[   28.276346] Remount options were mask=23,gid=9997 for vfsmnt ec217e10.
+[   28.280160] sdcardfs : options - debug:1
+[   28.281535] sdcardfs : options - gid:9997
+[   28.310706] sdcardfs : options - mask:23
+[   28.311806] Remount options were mask=7,gid=9997 for vfsmnt ec3dea10.
+[   28.321685] sdcardfs : options - debug:1
+[   28.321729] sdcardfs : options - gid:9997
+[   28.325110] sdcardfs : options - mask:7
+[   28.337499] [wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter[wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   28.347676] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =64
+[   28.354702] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =65
+[   28.361566] [wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter
+[   28.363721] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready
+[   28.375678] [wlan][3443]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   28.384204] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =66
+[   28.391332] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   28.398879] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =67
+[   28.409273] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   28.414104] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =68
+[   28.646058] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   28.648573] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =69
+[   28.657818] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   28.663709] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =70
+[   28.692543] [wlan][3443]wlanoidSetPmkid:(REQ INFO) wlanoidSetPmkid
+[   28.693282] [wlan][3443]wlanoidSetPmkid:(REQ INFO) Count 0
+[   29.812648] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =71
+[   30.487951] audio_dsp: dts_dec_control/0x0
+[   30.591205] amstream_open:1659
+[   30.591250] amstream_open:1666
+[   30.592064] amstream_open:1676
+[   30.595251] amstream_open:1683
+[   30.598434] the demux           clock on, ref cnt: 1
+[   30.598445] the parser_top      clock on, ref cnt: 1
+[   30.598453] the vdec            clock on, ref cnt: 1
+[   30.598485] the clk_hevc_mux    clock on, ref cnt: 1
+[   30.598499] hevc mux clock is 500000000 Hz
+[   30.598543] Not supported bus type 6 or addr 34 to read.
+[   30.605466] read reset reg d error -1
+[   30.609900] The hevcb clock limit to 333MHz.
+[   30.613081] the mux clk err.
+[   30.615053] hevc back mux clock is 0 Hz
+[   30.615084] amstream_open:1723
+[   30.618422] amstream_open:1742
+[   30.621690] vdec_create instance f6112000, total 1
+[   30.621700] amstream_open:1767
+[   30.625655] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.633166] vdec_disable_DMC input->target= 0x0
+[   30.633176] vdec_release instance f6112000, total 1
+[   30.633243] the clk_hevc_mux    clock off, ref cnt: 0
+[   30.633258] the vdec            clock off, ref cnt: 0
+[   30.633268] the parser_top      clock off, ref cnt: 0
+[   30.633276] the demux           clock off, ref cnt: 0
+[   30.633282] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.638796] amstream_open:1659
+[   30.640763] amstream_open:1666
+[   30.644849] amstream_open:1676
+[   30.648880] amstream_open:1683
+[   30.651645] the demux           clock on, ref cnt: 1
+[   30.651658] the parser_top      clock on, ref cnt: 1
+[   30.651666] the vdec            clock on, ref cnt: 1
+[   30.651697] the clk_vdec_mux    clock on, ref cnt: 1
+[   30.651717] vdec mux clock is 500000000 Hz
+[   30.651724] amstream_open:1723
+[   30.653429] amstream_open:1742
+[   30.656953] vdec_create instance f6125000, total 1
+[   30.656965] amstream_open:1767
+[   30.659914] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.667273] vdec_disable_DMC input->target= 0x0
+[   30.667281] vdec_release instance f6125000, total 1
+[   30.667342] the clk_vdec_mux    clock off, ref cnt: 0
+[   30.667353] the vdec            clock off, ref cnt: 0
+[   30.667361] the parser_top      clock off, ref cnt: 0
+[   30.667368] the demux           clock off, ref cnt: 0
+[   30.667374] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.673967] ionvid: dbg: ionvideo open
+[   30.674003] ionvid: dbg: vidioc_close!!!!
+[   30.674034] ionvid: dbg: vidioc_close
+[   30.683229] aml_wifi wifi: [usb_power_control] Set BT power on !
+[   30.734735] amstream_open:1659
+[   30.734772] amstream_open:1666
+[   30.735629] amstream_open:1676
+[   30.739055] amstream_open:1683
+[   30.742130] the demux           clock on, ref cnt: 1
+[   30.742141] the parser_top      clock on, ref cnt: 1
+[   30.742149] the vdec            clock on, ref cnt: 1
+[   30.742179] the clk_hevc_mux    clock on, ref cnt: 1
+[   30.742460] hevc mux clock is 500000000 Hz
+[   30.742473] Not supported bus type 6 or addr 34 to read.
+[   30.747588] read reset reg d error -1
+[   30.751222] The hevcb clock limit to 333MHz.
+[   30.755674] the mux clk err.
+[   30.758678] hevc back mux clock is 0 Hz
+[   30.758711] amstream_open:1723
+[   30.761913] amstream_open:1742
+[   30.765231] vdec_create instance f6138000, total 1
+[   30.765241] amstream_open:1767
+[   30.768477] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.774631] vdec_disable_DMC input->target= 0x0
+[   30.774641] vdec_release instance f6138000, total 1
+[   30.774761] the clk_hevc_mux    clock off, ref cnt: 0
+[   30.774773] the vdec            clock off, ref cnt: 0
+[   30.774782] the parser_top      clock off, ref cnt: 0
+[   30.774790] the demux           clock off, ref cnt: 0
+[   30.774795] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.781421] amstream_open:1659
+[   30.784313] amstream_open:1666
+[   30.787493] amstream_open:1676
+[   30.790596] amstream_open:1683
+[   30.793900] the demux           clock on, ref cnt: 1
+[   30.793913] the parser_top      clock on, ref cnt: 1
+[   30.793922] the vdec            clock on, ref cnt: 1
+[   30.793955] the clk_vdec_mux    clock on, ref cnt: 1
+[   30.793974] vdec mux clock is 500000000 Hz
+[   30.793980] amstream_open:1723
+[   30.797086] amstream_open:1742
+[   30.800562] vdec_create instance f614b000, total 1
+[   30.800577] amstream_open:1767
+[   30.803404] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.809772] vdec_disable_DMC input->target= 0x0
+[   30.809782] vdec_release instance f614b000, total 1
+[   30.809882] the clk_vdec_mux    clock off, ref cnt: 0
+[   30.809894] the vdec            clock off, ref cnt: 0
+[   30.809902] the parser_top      clock off, ref cnt: 0
+[   30.809910] the demux           clock off, ref cnt: 0
+[   30.809916] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.816753] ionvid: dbg: ionvideo open
+[   30.816812] ionvid: dbg: vidioc_close!!!!
+[   30.816848] ionvid: dbg: vidioc_close
+[   30.837050] amstream_open:1659
+[   30.837090] amstream_open:1666
+[   30.837850] amstream_open:1676
+[   30.841861] amstream_open:1683
+[   30.845442] the demux           clock on, ref cnt: 1
+[   30.845452] the parser_top      clock on, ref cnt: 1
+[   30.845460] the vdec            clock on, ref cnt: 1
+[   30.845491] the clk_hevc_mux    clock on, ref cnt: 1
+[   30.845505] hevc mux clock is 500000000 Hz
+[   30.845527] Not supported bus type 6 or addr 34 to read.
+[   30.850922] read reset reg d error -1
+[   30.854924] The hevcb clock limit to 333MHz.
+[   30.858046] the mux clk err.
+[   30.861021] hevc back mux clock is 0 Hz
+[   30.861051] amstream_open:1723
+[   30.864223] amstream_open:1742
+[   30.867608] vdec_create instance f615e000, total 1
+[   30.867619] amstream_open:1767
+[   30.870497] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.876873] vdec_disable_DMC input->target= 0x0
+[   30.876882] vdec_release instance f615e000, total 1
+[   30.876963] the clk_hevc_mux    clock off, ref cnt: 0
+[   30.876974] the vdec            clock off, ref cnt: 0
+[   30.876983] the parser_top      clock off, ref cnt: 0
+[   30.876991] the demux           clock off, ref cnt: 0
+[   30.876996] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.883859] amstream_open:1659
+[   30.886514] amstream_open:1666
+[   30.889802] amstream_open:1676
+[   30.893118] amstream_open:1683
+[   30.896168] the demux           clock on, ref cnt: 1
+[   30.896178] the parser_top      clock on, ref cnt: 1
+[   30.896186] the vdec            clock on, ref cnt: 1
+[   30.896214] the clk_vdec_mux    clock on, ref cnt: 1
+[   30.896229] vdec mux clock is 500000000 Hz
+[   30.896235] amstream_open:1723
+[   30.899333] amstream_open:1742
+[   30.902629] vdec_create instance f6174000, total 1
+[   30.902639] amstream_open:1767
+[   30.906306] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.912114] vdec_disable_DMC input->target= 0x0
+[   30.912123] vdec_release instance f6174000, total 1
+[   30.912193] the clk_vdec_mux    clock off, ref cnt: 0
+[   30.912204] the vdec            clock off, ref cnt: 0
+[   30.912213] the parser_top      clock off, ref cnt: 0
+[   30.912220] the demux           clock off, ref cnt: 0
+[   30.912225] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.922088] ionvid: dbg: ionvideo open
+[   30.922122] ionvid: dbg: vidioc_close!!!!
+[   30.922149] ionvid: dbg: vidioc_close
+[   30.923525] zram0: detected capacity change from 0 to 268435456
+[   30.946878] ---------------------init----start--------------------------
+[   30.953184] amstream_open:1659
+[   30.953188] amstream_open:1666
+[   30.953191] amstream_open:1676
+[   30.953194] amstream_open:1683
+[   30.953210] the demux           clock on, ref cnt: 1
+[   30.953217] the parser_top      clock on, ref cnt: 1
+[   30.953222] the vdec            clock on, ref cnt: 1
+[   30.953251] the clk_hevc_mux    clock on, ref cnt: 1
+[   30.953262] hevc mux clock is 500000000 Hz
+[   30.953268] Not supported bus type 6 or addr 34 to read.
+[   30.953270] read reset reg d error -1
+[   30.953273] The hevcb clock limit to 333MHz.
+[   30.953275] the mux clk err.
+[   30.953278] hevc back mux clock is 0 Hz
+[   30.953292] amstream_open:1723
+[   30.953295] amstream_open:1742
+[   30.953460] vdec_create instance f618f000, total 1
+[   30.953464] amstream_open:1767
+[   30.953496] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.953515] vdec_disable_DMC input->target= 0x0
+[   30.953519] vdec_release instance f618f000, total 1
+[   30.953575] the clk_hevc_mux    clock off, ref cnt: 0
+[   30.953583] the vdec            clock off, ref cnt: 0
+[   30.953588] the parser_top      clock off, ref cnt: 0
+[   30.953594] the demux           clock off, ref cnt: 0
+[   30.953597] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.953751] amstream_open:1659
+[   30.953754] amstream_open:1666
+[   30.953756] amstream_open:1676
+[   30.953760] amstream_open:1683
+[   30.953770] the demux           clock on, ref cnt: 1
+[   30.953867] the parser_top      clock on, ref cnt: 1
+[   30.953872] the vdec            clock on, ref cnt: 1
+[   30.953898] the clk_vdec_mux    clock on, ref cnt: 1
+[   30.953913] vdec mux clock is 500000000 Hz
+[   30.953917] amstream_open:1723
+[   30.953920] amstream_open:1742
+[   30.954074] vdec_create instance f61a2000, total 1
+[   30.954079] amstream_open:1767
+[   30.954118] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   30.954137] vdec_disable_DMC input->target= 0x0
+[   30.954141] vdec_release instance f61a2000, total 1
+[   30.954201] the clk_vdec_mux    clock off, ref cnt: 0
+[   30.954208] the vdec            clock off, ref cnt: 0
+[   30.954214] the parser_top      clock off, ref cnt: 0
+[   30.954219] the demux           clock off, ref cnt: 0
+[   30.954222] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   30.954442] ionvid: dbg: ionvideo open
+[   30.954468] ionvid: dbg: vidioc_close!!!!
+[   30.954499] ionvid: dbg: vidioc_close
+[   31.001125] [wlan][3298]mtk_cfg80211_scan:(REQ INFO) scan channel num = 39
+[   31.001132] [wlan][3298]mtk_cfg80211_scan:(REQ WARN) scan channel num (39) exceeds 32, do a full scan instead
+[   31.001262] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SCAN]
+[   31.001288] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =72
+[   31.001335] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [IDLE] -> [SCANNING]
+[   31.001344] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =73
+[   31.007774] mkswap: Swapspace size: 262140k, UUID=4bd69b44-8c66-49bf-8279-19d6e86ed440
+[   31.015466] Adding 262140k swap on /dev/block/zram0.  Priority:-1 extents:1 across:262140k SS
+[   31.019258] cpufreq_interactive: cpufreq_hmp_boost_start()
+[   31.019262] cpufreq_interactive: no need to active hmp boost!
+[   31.029468] selinux: SELinux: Skipping restorecon_recursive(/data/system_ce/0)\x0a
+[   31.198128] logd: logdr: UID=1000 GID=1007 PID=3837 n tail=0 logMask=80 pid=0 start=0ns timeout=0ns
+[   31.333842] selinux: SELinux: Skipping restorecon_recursive(/data/misc_ce/0)\x0a
+[   31.484409] read descriptors
+[   31.484504] read strings
+[   31.502468] amstream_open:1659
+[   31.502514] amstream_open:1666
+[   31.503431] amstream_open:1676
+[   31.506928] amstream_open:1683
+[   31.511561] the demux           clock on, ref cnt: 1
+[   31.511572] the parser_top      clock on, ref cnt: 1
+[   31.511579] the vdec            clock on, ref cnt: 1
+[   31.511614] the clk_hevc_mux    clock on, ref cnt: 1
+[   31.511630] hevc mux clock is 500000000 Hz
+[   31.511638] Not supported bus type 6 or addr 34 to read.
+[   31.515422] read reset reg d error -1
+[   31.519031] The hevcb clock limit to 333MHz.
+[   31.523767] the mux clk err.
+[   31.529198] hevc back mux clock is 0 Hz
+[   31.529227] amstream_open:1723
+[   31.529496] amstream_open:1742
+[   31.533381] vdec_create instance f61d0000, total 1
+[   31.533391] amstream_open:1767
+[   31.537130] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   31.545301] vdec_disable_DMC input->target= 0x0
+[   31.545309] vdec_release instance f61d0000, total 1
+[   31.545373] the clk_hevc_mux    clock off, ref cnt: 0
+[   31.545383] the vdec            clock off, ref cnt: 0
+[   31.545392] the parser_top      clock off, ref cnt: 0
+[   31.545399] the demux           clock off, ref cnt: 0
+[   31.545406] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   31.550863] amstream_open:1659
+[   31.552535] amstream_open:1666
+[   31.555607] amstream_open:1676
+[   31.559594] amstream_open:1683
+[   31.561552] the demux           clock on, ref cnt: 1
+[   31.561562] the parser_top      clock on, ref cnt: 1
+[   31.561571] the vdec            clock on, ref cnt: 1
+[   31.561599] the clk_vdec_mux    clock on, ref cnt: 1
+[   31.561616] vdec mux clock is 500000000 Hz
+[   31.561622] amstream_open:1723
+[   31.568569] amstream_open:1742
+[   31.568763] vdec_create instance f61e3000, total 1
+[   31.568771] amstream_open:1767
+[   31.571189] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   31.580089] vdec_disable_DMC input->target= 0x0
+[   31.580098] vdec_release instance f61e3000, total 1
+[   31.580159] the clk_vdec_mux    clock off, ref cnt: 0
+[   31.580171] the vdec            clock off, ref cnt: 0
+[   31.580179] the parser_top      clock off, ref cnt: 0
+[   31.580187] the demux           clock off, ref cnt: 0
+[   31.580193] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   31.584234] ionvid: dbg: ionvideo open
+[   31.584258] ionvid: dbg: vidioc_close!!!!
+[   31.584289] ionvid: dbg: vidioc_close
+[   31.763184] amstream_open:1659
+[   31.763260] amstream_open:1666
+[   31.764046] amstream_open:1676
+[   31.771235] amstream_open:1683
+[   31.771286] the demux           clock on, ref cnt: 1
+[   31.771295] the parser_top      clock on, ref cnt: 1
+[   31.771303] the vdec            clock on, ref cnt: 1
+[   31.771333] the clk_hevc_mux    clock on, ref cnt: 1
+[   31.771347] hevc mux clock is 500000000 Hz
+[   31.771355] Not supported bus type 6 or addr 34 to read.
+[   31.776045] read reset reg d error -1
+[   31.782050] The hevcb clock limit to 333MHz.
+[   31.787333] the mux clk err.
+[   31.787376] hevc back mux clock is 0 Hz
+[   31.787401] amstream_open:1723
+[   31.790468] amstream_open:1742
+[   31.793653] vdec_create instance f7381000, total 1
+[   31.793660] amstream_open:1767
+[   31.799321] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   31.807262] vdec_disable_DMC input->target= 0x0
+[   31.807272] vdec_release instance f7381000, total 1
+[   31.807339] the clk_hevc_mux    clock off, ref cnt: 0
+[   31.807350] the vdec            clock off, ref cnt: 0
+[   31.807358] the parser_top      clock off, ref cnt: 0
+[   31.807365] the demux           clock off, ref cnt: 0
+[   31.807371] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   31.809670] amstream_open:1659
+[   31.812997] amstream_open:1666
+[   31.823183] amstream_open:1676
+[   31.823223] amstream_open:1683
+[   31.824077] the demux           clock on, ref cnt: 1
+[   31.824087] the parser_top      clock on, ref cnt: 1
+[   31.824095] the vdec            clock on, ref cnt: 1
+[   31.824123] the clk_vdec_mux    clock on, ref cnt: 1
+[   31.824140] vdec mux clock is 500000000 Hz
+[   31.824146] amstream_open:1723
+[   31.827251] amstream_open:1742
+[   31.830520] vdec_create instance f7394000, total 1
+[   31.830530] amstream_open:1767
+[   31.839284] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   31.840032] vdec_disable_DMC input->target= 0x0
+[   31.840085] vdec_release instance f7394000, total 1
+[   31.840154] the clk_vdec_mux    clock off, ref cnt: 0
+[   31.840166] the vdec            clock off, ref cnt: 0
+[   31.840174] the parser_top      clock off, ref cnt: 0
+[   31.840182] the demux           clock off, ref cnt: 0
+[   31.840187] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   31.847287] ionvid: dbg: ionvideo open
+[   31.847323] ionvid: dbg: vidioc_close!!!!
+[   31.847366] ionvid: dbg: vidioc_close
+[   31.942341] amstream_open:1659
+[   31.942377] amstream_open:1666
+[   31.943204] amstream_open:1676
+[   31.946343] amstream_open:1683
+[   31.952690] the demux           clock on, ref cnt: 1
+[   31.952700] the parser_top      clock on, ref cnt: 1
+[   31.952709] the vdec            clock on, ref cnt: 1
+[   31.952739] the clk_hevc_mux    clock on, ref cnt: 1
+[   31.952753] hevc mux clock is 500000000 Hz
+[   31.952761] Not supported bus type 6 or addr 34 to read.
+[   31.958080] read reset reg d error -1
+[   31.960131] The hevcb clock limit to 333MHz.
+[   31.966185] the mux clk err.
+[   31.966224] hevc back mux clock is 0 Hz
+[   31.966247] amstream_open:1723
+[   31.972329] amstream_open:1742
+[   31.974249] vdec_create instance f73a7000, total 1
+[   31.974261] amstream_open:1767
+[   31.975949] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   31.982416] vdec_disable_DMC input->target= 0x0
+[   31.982426] vdec_release instance f73a7000, total 1
+[   31.982481] the clk_hevc_mux    clock off, ref cnt: 0
+[   31.982492] the vdec            clock off, ref cnt: 0
+[   31.982501] the parser_top      clock off, ref cnt: 0
+[   31.982508] the demux           clock off, ref cnt: 0
+[   31.982513] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   31.992579] amstream_open:1659
+[   31.992619] amstream_open:1666
+[   31.997159] amstream_open:1676
+[   31.998182] amstream_open:1683
+[   32.003788] the demux           clock on, ref cnt: 1
+[   32.003798] the parser_top      clock on, ref cnt: 1
+[   32.003806] the vdec            clock on, ref cnt: 1
+[   32.003834] the clk_vdec_mux    clock on, ref cnt: 1
+[   32.003848] vdec mux clock is 500000000 Hz
+[   32.003855] amstream_open:1723
+[   32.004655] amstream_open:1742
+[   32.008312] vdec_create instance f73ba000, total 1
+[   32.008322] amstream_open:1767
+[   32.010982] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   32.017632] vdec_disable_DMC input->target= 0x0
+[   32.017641] vdec_release instance f73ba000, total 1
+[   32.017699] the clk_vdec_mux    clock off, ref cnt: 0
+[   32.017710] the vdec            clock off, ref cnt: 0
+[   32.017719] the parser_top      clock off, ref cnt: 0
+[   32.017727] the demux           clock off, ref cnt: 0
+[   32.017732] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   32.024394] ionvid: dbg: ionvideo open
+[   32.024419] ionvid: dbg: vidioc_close!!!!
+[   32.024451] ionvid: dbg: vidioc_close
+[   32.043681] amstream_open:1659
+[   32.043720] amstream_open:1666
+[   32.044597] amstream_open:1676
+[   32.047843] amstream_open:1683
+[   32.050891] the demux           clock on, ref cnt: 1
+[   32.050901] the parser_top      clock on, ref cnt: 1
+[   32.050909] the vdec            clock on, ref cnt: 1
+[   32.050940] the clk_hevc_mux    clock on, ref cnt: 1
+[   32.050956] hevc mux clock is 500000000 Hz
+[   32.050964] Not supported bus type 6 or addr 34 to read.
+[   32.056554] read reset reg d error -1
+[   32.060620] The hevcb clock limit to 333MHz.
+[   32.064907] the mux clk err.
+[   32.067668] hevc back mux clock is 0 Hz
+[   32.067696] amstream_open:1723
+[   32.070713] amstream_open:1742
+[   32.074516] vdec_create instance f73cd000, total 1
+[   32.074526] amstream_open:1767
+[   32.077335] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   32.083639] vdec_disable_DMC input->target= 0x0
+[   32.083648] vdec_release instance f73cd000, total 1
+[   32.083710] the clk_hevc_mux    clock off, ref cnt: 0
+[   32.083720] the vdec            clock off, ref cnt: 0
+[   32.083728] the parser_top      clock off, ref cnt: 0
+[   32.083736] the demux           clock off, ref cnt: 0
+[   32.083741] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   32.090383] amstream_open:1659
+[   32.093218] amstream_open:1666
+[   32.096441] amstream_open:1676
+[   32.099572] amstream_open:1683
+[   32.102912] the demux           clock on, ref cnt: 1
+[   32.102923] the parser_top      clock on, ref cnt: 1
+[   32.102931] the vdec            clock on, ref cnt: 1
+[   32.102956] the clk_vdec_mux    clock on, ref cnt: 1
+[   32.102983] vdec mux clock is 500000000 Hz
+[   32.102990] amstream_open:1723
+[   32.106060] amstream_open:1742
+[   32.109406] vdec_create instance f73e0000, total 1
+[   32.109415] amstream_open:1767
+[   32.112399] CTC_KPI::Stage 1_3_2 video codec close cost,close_time
+[   32.118755] vdec_disable_DMC input->target= 0x0
+[   32.118765] vdec_release instance f73e0000, total 1
+[   32.118826] the clk_vdec_mux    clock off, ref cnt: 0
+[   32.118837] the vdec            clock off, ref cnt: 0
+[   32.118846] the parser_top      clock off, ref cnt: 0
+[   32.118853] the demux           clock off, ref cnt: 0
+[   32.118858] CTC_KPI::Stage 1_3_2 video codec close cost,close_endtime
+[   32.125720] ionvid: dbg: ionvideo open
+[   32.125746] ionvid: dbg: vidioc_close!!!!
+[   32.125774] ionvid: dbg: vidioc_close
+[   32.429574] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [SCANNING] -> [IDLE]
+[   32.432632] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SCAN] -> [IDLE]
+[   32.439779] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =74
+[   32.446452] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =75
+[   32.455949] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   32.461108] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =76
+[   32.468370] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   32.476302] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =77
+[   32.483492] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   32.491415] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =78
+[   32.511330] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [REQ_REMAIN_ON_CHANNEL]
+[   32.514867] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =79
+[   32.548713] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REQ_REMAIN_ON_CHANNEL] -> [REMAIN_ON_CHANNEL]
+[   32.553478] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =80
+[   32.567424] [wlan][3443]rlmProcessPublicAction:(P2P ERROR) prSwRfb->prStaRec is null.
+[   32.578132] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REMAIN_ON_CHANNEL] -> [IDLE]
+[   32.581420] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =81
+[   32.588226] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =82
+[   32.594844] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =83
+[   32.633250] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [REQ_REMAIN_ON_CHANNEL]
+[   32.636919] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =84
+[   32.648794] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REQ_REMAIN_ON_CHANNEL] -> [REMAIN_ON_CHANNEL]
+[   32.653800] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =85
+[   32.666059] [wlan][3443]rlmProcessPublicAction:(P2P ERROR) prSwRfb->prStaRec is null.
+[   32.672593] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REMAIN_ON_CHANNEL] -> [IDLE]
+[   32.677221] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =86
+[   32.683967] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =87
+[   32.690822] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =88
+[   32.702965] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [REQ_REMAIN_ON_CHANNEL]
+[   32.706680] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =89
+[   32.718524] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REQ_REMAIN_ON_CHANNEL] -> [REMAIN_ON_CHANNEL]
+[   32.723451] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =90
+[   32.745686] [wlan][3443]rlmProcessPublicAction:(P2P ERROR) prSwRfb->prStaRec is null.
+[   32.750198] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REMAIN_ON_CHANNEL] -> [IDLE]
+[   32.756931] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =91
+[   32.763583] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =92
+[   32.770344] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =93
+[   32.777098] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [REQ_REMAIN_ON_CHANNEL]
+[   32.786270] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =94
+[   33.213169] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REQ_REMAIN_ON_CHANNEL] -> [REMAIN_ON_CHANNEL]
+[   33.217075] [btmtk_info] btmtk_fops_open: begin
+[   33.217082] [btmtk_info] btmtk_fops_open: Mediatek Bluetooth SDIO driver ver v0.0.1.13_2020092401
+[   33.217095] [btmtk_info] btmtk_fops_open: major 495 minor 0 (pid 3791), probe counter: 1
+[   33.217103] [btmtk_info] btmtk_fops_set_state: btmtk_fops_set_state: FOPS_INIT(1) -> FOPS_OPENING(2)
+[   33.217111] [btmtk_info] btmtk_sdio_bt_set_power: onoff 1
+[   33.218602] [btmtk_info]btmtk_sdio_card_to_host: event_need_compare:
+[   33.218611] btmtk_sdio_card_to_host:4150 - Length(7):  E4 05 02 06 01 00 00
+[   33.218617] [btmtk_info]btmtk_sdio_card_to_host: skb->data:
+[   33.218621] btmtk_sdio_card_to_host:4152 - Length(7):  E4 05 02 07 01 00 00
+[   33.280929] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =95
+[   33.293427] [wlan][3443]rlmProcessPublicAction:(P2P ERROR) prSwRfb->prStaRec is null.
+[   33.296466] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REMAIN_ON_CHANNEL] -> [IDLE]
+[   33.304644] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =96
+[   33.311302] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =97
+[   33.318196] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =98
+[   33.323252] [btmtk_info] btmtk_sdio_set_sleep: begin
+[   33.431268] [btmtk_info] btmtk_sdio_set_audio_slave: 
+[   33.431349] [btmtk_info] btmtk_sdio_set_audio_slave: set mode = 0x8
+[   33.543193] [btmtk_info] btmtk_sdio_read_pin_mux_setting: 
+[   33.759229] [btmtk_info] btmtk_sdio_write_pin_mux_setting: begin, value = 0x22220000
+[   33.867221] [btmtk_info] btmtk_sdio_read_pin_mux_setting: 
+[   33.975258] [btmtk_info] btmtk_sdio_set_audio_pin_mux: confirm pinmux 22220000
+[   33.977028] [btmtk_info] btmtk_sdio_send_vendor_cfg: begin
+[   34.087229] [btmtk_info] btmtk_sdio_send_apcf_reserved: ret 0
+[   34.087524] [btmtk_info] btmtk_clean_queue: enter
+[   34.092513] [btmtk_info] btmtk_clean_queue: end
+[   34.097302] [btmtk_info] btmtk_fops_set_state: btmtk_fops_set_state: FOPS_OPENING(2) -> FOPS_OPENED(3)
+[   34.107230] [btmtk_info] btmtk_fops_open: end
+[   34.111598] [btmtk_info] btmtk_fops_fasync: fd = 0x6, flag = 0x1
+[   34.181189] [btmtk_info] btmtk_fops_write: got command: 0x03 0C 00 (HCI_RESET)
+[   34.193473] [btmtk_info] btmtk_sdio_card_to_host: get hci reset
+[   34.194106] [btmtk_info] btmtk_fops_read: get reset complete and set audio!
+[   34.201234] [btmtk_info] btmtk_sdio_set_audio_slave: 
+[   34.206348] [btmtk_info] btmtk_sdio_set_audio_slave: set mode = 0x8
+[   34.319240] [btmtk_info] btmtk_set_eeprom2ctrler: start, device: 0x7668
+[   34.427242] [btmtk_warn] btmtk_set_eeprom2ctrler: set BDAddress(72-76-68-48-3F-07) OK
+[   34.535255] [btmtk_warn] btmtk_set_eeprom2ctrler: set radio(BT/BLE default power: 0/0 MAX power: 0) OK
+[   34.647266] [btmtk_warn] btmtk_set_eeprom2ctrler: set power offset(00 00 00 00 00 00) OK
+[   34.755223] [btmtk_warn] btmtk_set_eeprom2ctrler: set XTAL(0xAE 00) OK
+[   34.756299] [btmtk_info] btmtk_set_eeprom2ctrler: end
+[   34.771653] [btmtk_info] btmtk_fops_write: got command: 0x01 10 00 (READ_LOCAL_VERSION)
+[   35.109340] [btmtk_info] btmtk_fops_fasync: fd = 0xFFFFFFFF, flag = 0x0
+[   35.110497] [btmtk_info] btmtk_fops_close: begin
+[   35.116390] [btmtk_info] btmtk_fops_close: Mediatek Bluetooth SDIO driver ver v0.0.1.13_2020092401
+[   35.125105] [btmtk_info] btmtk_fops_close: major 495 minor 0 (pid 3791), probe counter: 1
+[   35.133081] [btmtk_info] btmtk_fops_set_state: btmtk_fops_set_state: FOPS_OPENED(3) -> FOPS_CLOSING(4)
+[   35.143253] [btmtk_info] btmtk_sdio_send_hci_reset: begin\x0a
+[   35.159588] [btmtk_info] btmtk_sdio_card_to_host: get hci reset
+[   35.255287] [btmtk_info] btmtk_sdio_bt_set_power: onoff 0
+[   35.363242] [btmtk_info] btmtk_stereo_unreg_irq: enter
+[   35.363297] [btmtk_info] btmtk_stereo_unreg_irq: exit
+[   35.372395] [btmtk_info] btmtk_clean_queue: enter
+[   35.372945] [btmtk_info] btmtk_clean_queue: end
+[   35.382769] [btmtk_info] btmtk_fops_set_state: btmtk_fops_set_state: FOPS_CLOSING(4) -> FOPS_CLOSED(5)
+[   35.388714] [btmtk_info] btmtk_fops_close: end
+[   37.373158] [btmtk_info] btmtk_fops_open: begin
+[   37.373211] [btmtk_info] btmtk_fops_open: Mediatek Bluetooth SDIO driver ver v0.0.1.13_2020092401
+[   37.381376] [btmtk_info] btmtk_fops_open: major 495 minor 0 (pid 3791), probe counter: 1
+[   37.389533] [btmtk_info] btmtk_fops_set_state: btmtk_fops_set_state: FOPS_CLOSED(5) -> FOPS_OPENING(2)
+[   37.399001] [btmtk_info] btmtk_sdio_bt_set_power: onoff 1
+[   37.511229] [btmtk_info] btmtk_sdio_set_sleep: begin
+[   37.619251] [btmtk_info] btmtk_sdio_set_audio_slave: 
+[   37.619309] [btmtk_info] btmtk_sdio_set_audio_slave: set mode = 0x8
+[   37.731262] [btmtk_info] btmtk_sdio_read_pin_mux_setting: 
+[   37.947235] [btmtk_info] btmtk_sdio_write_pin_mux_setting: begin, value = 0x22220000
+[   38.055223] [btmtk_info] btmtk_sdio_read_pin_mux_setting: 
+[   38.163214] [btmtk_info] btmtk_sdio_set_audio_pin_mux: confirm pinmux 22220000
+[   38.164985] [btmtk_info] btmtk_sdio_send_vendor_cfg: begin
+[   38.275231] [btmtk_info] btmtk_sdio_send_apcf_reserved: ret 0
+[   38.275521] [btmtk_info] btmtk_clean_queue: enter
+[   38.280411] [btmtk_info] btmtk_clean_queue: end
+[   38.285076] [btmtk_info] btmtk_fops_set_state: btmtk_fops_set_state: FOPS_OPENING(2) -> FOPS_OPENED(3)
+[   38.294520] [btmtk_info] btmtk_fops_open: end
+[   38.299084] [btmtk_info] btmtk_fops_fasync: fd = 0x6, flag = 0x1
+[   38.321949] [btmtk_info] btmtk_fops_write: got command: 0x03 0C 00 (HCI_RESET)
+[   38.334443] [btmtk_info] btmtk_sdio_card_to_host: get hci reset
+[   38.335021] [btmtk_info] btmtk_fops_read: get reset complete and set audio!
+[   38.342068] [btmtk_info] btmtk_sdio_set_audio_slave: 
+[   38.347199] [btmtk_info] btmtk_sdio_set_audio_slave: set mode = 0x8
+[   38.459213] [btmtk_info] btmtk_set_eeprom2ctrler: start, device: 0x7668
+[   38.567208] [btmtk_warn] btmtk_set_eeprom2ctrler: set BDAddress(72-76-68-48-3F-07) OK
+[   38.675211] [btmtk_warn] btmtk_set_eeprom2ctrler: set radio(BT/BLE default power: 0/0 MAX power: 0) OK
+[   38.787262] [btmtk_warn] btmtk_set_eeprom2ctrler: set power offset(00 00 00 00 00 00) OK
+[   38.895232] [btmtk_warn] btmtk_set_eeprom2ctrler: set XTAL(0xAE 00) OK
+[   38.896306] [btmtk_info] btmtk_set_eeprom2ctrler: end
+[   38.913732] [btmtk_info] btmtk_fops_write: got command: 0x01 10 00 (READ_LOCAL_VERSION)
+[   40.444190] Now can use cma, free:3107, wm:3174
+[   45.043414] selinux: avc:  denied  { set } for property=persist.sys.appinstalled pid=4585 uid=0 gid=0 scontext=u:r:toolbox:s0 tcontext=u:object_r:vendor_platform_prop:s0 tclass=property_service permissive=1\x0a
+[   46.863326] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =99
+[   50.994680] [wlan][3298]mtk_cfg80211_scan:(REQ INFO) scan channel num = 39
+[   50.996214] [wlan][3298]mtk_cfg80211_scan:(REQ WARN) scan channel num (39) exceeds 32, do a full scan instead
+[   51.006243] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SCAN]
+[   51.013809] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =100
+[   51.020640] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [IDLE] -> [SCANNING]
+[   51.028604] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =101
+[   51.742044] selinux: avc:  denied  { set } for property=finsky.early_startup_opt pid=4700 uid=10025 gid=10025 scontext=u:r:priv_app:s0:c512,c768 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=1\x0a
+[   51.758029] [wlan][3443]scanP2pProcessBeaconAndProbeResp:(P2P STATE) indicate  [40]
+[   52.471436] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [SCANNING] -> [IDLE]
+[   52.474382] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SCAN] -> [IDLE]
+[   52.481645] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =102
+[   52.488369] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =103
+[   52.496712] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   52.503207] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =104
+[   52.510539] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   52.518414] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =105
+[   55.557594] unifykey:  key_unify_init() already inited!
+[   55.558128] unifykey: name_store() 1302, name usid, 4
+[   55.567628] unifykey: name_store() 1311
+[   55.568638] unifykey: name: usid, size 15
+[   62.479308] fb: mem_free_work, free memory: addr:800000
+[   80.911351] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =106
+[   94.356486] binder_alloc: 3821: binder_alloc_buf size 1056768 failed, no address space
+[   94.358943] binder_alloc: allocated: 3832 (num: 8 largest: 1884), free: 1036552 (num: 3 largest: 1034828)
+[   94.368752] binder: 4195:5262 transaction failed 29201/-28, size 1056768-0 line 3267
+[   94.959333] logd: logdr: UID=10013 GID=10013 PID=4195 n tail=0 logMask=4 pid=0 start=0ns timeout=0ns
+[   95.410532] [wlan][3298]mtk_cfg80211_scan:(REQ INFO) scan channel num = 39
+[   95.412066] [wlan][3298]mtk_cfg80211_scan:(REQ WARN) scan channel num (39) exceeds 32, do a full scan instead
+[   95.423350] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SCAN]
+[   95.429643] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =107
+[   95.436487] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [IDLE] -> [SCANNING]
+[   95.444480] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =108
+[   96.832635] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [SCANNING] -> [IDLE]
+[   96.835575] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SCAN] -> [IDLE]
+[   96.842764] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =109
+[   96.849573] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =110
+[   96.862732] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   96.865245] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =111
+[   96.874958] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   96.880493] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =112
+[   96.887824] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   96.895710] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =113
+[   96.903062] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[   96.911098] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =114
+[  113.158651] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =115
+[  161.204133] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =116
+[  175.400620] [wlan][3298]mtk_cfg80211_scan:(REQ INFO) scan channel num = 39
+[  175.402042] [wlan][3298]mtk_cfg80211_scan:(REQ WARN) scan channel num (39) exceeds 32, do a full scan instead
+[  175.412244] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SCAN]
+[  175.419750] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =117
+[  175.426610] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [IDLE] -> [SCANNING]
+[  175.434538] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =118
+[  176.836760] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [SCANNING] -> [IDLE]
+[  176.840619] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SCAN] -> [IDLE]
+[  176.847633] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =119
+[  176.853840] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =120
+[  176.861968] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[  176.869132] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =121
+[  176.875986] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[  176.883871] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =122
+[  176.891081] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [REQ_REMAIN_ON_CHANNEL]
+[  176.900144] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =123
+[  176.913543] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REQ_REMAIN_ON_CHANNEL] -> [REMAIN_ON_CHANNEL]
+[  176.918267] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =124
+[  176.930519] [wlan][3443]rlmProcessPublicAction:(P2P ERROR) prSwRfb->prStaRec is null.
+[  176.933132] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REMAIN_ON_CHANNEL] -> [IDLE]
+[  176.941771] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =125
+[  176.948669] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =126
+[  176.955366] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =127
+[  193.134567] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =128
+[  241.169296] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =129
+[  305.225574] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =130
+[  335.389735] [wlan][3298]mtk_cfg80211_scan:(REQ INFO) scan channel num = 39
+[  335.391252] [wlan][3298]mtk_cfg80211_scan:(REQ WARN) scan channel num (39) exceeds 32, do a full scan instead
+[  335.401246] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SCAN]
+[  335.408944] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =131
+[  335.415649] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [IDLE] -> [SCANNING]
+[  335.423842] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =132
+[  336.785121] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [SCANNING] -> [IDLE]
+[  336.788973] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SCAN] -> [IDLE]
+[  336.795505] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =133
+[  336.802238] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =134
+[  336.810344] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[  336.816883] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =135
+[  336.828183] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[  336.832143] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =136
+[  336.839504] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[  336.847598] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =137
+[  336.854747] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =138
+[  369.117159] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =139
+[  401.149613] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =140
+[  465.204411] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =141
+[  495.406882] [wlan][3298]mtk_cfg80211_scan:(REQ INFO) scan channel num = 39
+[  495.408375] [wlan][3298]mtk_cfg80211_scan:(REQ WARN) scan channel num (39) exceeds 32, do a full scan instead
+[  495.418402] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SCAN]
+[  495.426076] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =142
+[  495.432762] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [IDLE] -> [SCANNING]
+[  495.440805] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =143
+[  496.895263] [wlan][3443]scnFsmSteps:(SCN STATE) [SCAN]TRANSITION: [SCANNING] -> [IDLE]
+[  496.899287] [wlan][3443]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SCAN] -> [IDLE]
+[  496.905906] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =144
+[  496.912467] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =145
+[  496.921590] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[  496.927501] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =146
+[  496.934605] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) Command ID = 0x000000C1
+[  496.942373] [wlan][3443]wlanoidSendSetQueryP2PCmd:(REQ TRACE) ucCmdSeqNum =147
+[  496.949980] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =148
+[  529.203926] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =149
+[  561.237193] [wlan][3443]wlanSendSetQueryCmd:(REQ TRACE) ucCmdSeqNum =150

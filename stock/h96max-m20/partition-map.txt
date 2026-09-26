@@ -1,0 +1,46 @@
+[mmcblk0p01]           bootloader  offset 0x000000000000, size 0x000000400000 
+[mmcblk0p02]             reserved  offset 0x000002400000, size 0x000004000000 
+[mmcblk0p03]                cache  offset 0x000006c00000, size 0x000046000000 
+[mmcblk0p04]                  env  offset 0x00004d400000, size 0x000000800000 
+[mmcblk0p05]                 logo  offset 0x00004e400000, size 0x000000800000 
+[mmcblk0p06]             recovery  offset 0x00004f400000, size 0x000001800000 
+[mmcblk0p07]                 misc  offset 0x000051400000, size 0x000000800000 
+[mmcblk0p08]                 dtbo  offset 0x000052400000, size 0x000000800000 
+[mmcblk0p09]             cri_data  offset 0x000053400000, size 0x000000800000 
+[mmcblk0p10]                param  offset 0x000054400000, size 0x000001000000 
+[mmcblk0p11]                 boot  offset 0x000055c00000, size 0x000001000000 
+[mmcblk0p12]                  rsv  offset 0x000057400000, size 0x000001000000 
+[mmcblk0p13]             metadata  offset 0x000058c00000, size 0x000001000000 
+[mmcblk0p14]               vbmeta  offset 0x00005a400000, size 0x000000200000 
+[mmcblk0p15]                  tee  offset 0x00005ae00000, size 0x000002000000 
+[mmcblk0p16]               vendor  offset 0x00005d600000, size 0x000014000000 
+[mmcblk0p17]                  odm  offset 0x000071e00000, size 0x000008000000 
+[mmcblk0p18]               system  offset 0x00007a600000, size 0x000060000000 
+[mmcblk0p19]              product  offset 0x0000dae00000, size 0x000008000000 
+[mmcblk0p20]                 data  offset 0x0000e3600000, size 0x0002c7e00000 
+[    5.156412@3] EXT4-fs (mmcblk0p17): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    5.172645@2] EXT4-fs (mmcblk0p19): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    5.195516@2] EXT4-fs (mmcblk0p18): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    5.214465@2] EXT4-fs (mmcblk0p16): mounted filesystem without journal. Opts: barrier=1,inode_readahead_blks=8
+[    6.741532@0] EXT4-fs (mmcblk0p20): Ignoring removed nomblk_io_submit option
+[    6.862460@3] EXT4-fs (mmcblk0p20): 5 orphan inodes deleted
+[    6.862502@3] EXT4-fs (mmcblk0p20): recovery complete
+[    6.885689@3] EXT4-fs (mmcblk0p20): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[    7.754581@3] EXT4-fs (mmcblk0p20): Ignoring removed nomblk_io_submit option
+[    7.768081@3] EXT4-fs (mmcblk0p20): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    7.776643@3] EXT4-fs (mmcblk0p3): Ignoring removed nomblk_io_submit option
+[    7.788860@3] EXT4-fs (mmcblk0p3): recovery complete
+[    7.789518@3] EXT4-fs (mmcblk0p3): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[    7.935262@2] EXT4-fs (mmcblk0p3): Ignoring removed nomblk_io_submit option
+[    7.944858@2] EXT4-fs (mmcblk0p3): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    7.954614@2] EXT4-fs (mmcblk0p13): Ignoring removed nomblk_io_submit option
+[    7.967227@2] EXT4-fs (mmcblk0p13): recovery complete
+[    7.967918@2] EXT4-fs (mmcblk0p13): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[    8.058009@3] EXT4-fs (mmcblk0p13): Ignoring removed nomblk_io_submit option
+[    8.062515@3] EXT4-fs (mmcblk0p13): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    8.154404@3] EXT4-fs (mmcblk0p10): Ignoring removed nomblk_io_submit option
+[    8.159736@3] EXT4-fs (mmcblk0p10): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[    8.241279@3] EXT4-fs (mmcblk0p15): Ignoring removed nomblk_io_submit option
+[    8.246092@3] EXT4-fs (mmcblk0p15): mounted filesystem with ordered data mode. Opts: nodelalloc,nomblk_io_submit,errors=panic
+[   13.699404@2] EXT4-fs (mmcblk0p18): re-mounted. Opts: (null)
+[   14.132279@1] EXT4-fs (mmcblk0p18): re-mounted. Opts: (null)

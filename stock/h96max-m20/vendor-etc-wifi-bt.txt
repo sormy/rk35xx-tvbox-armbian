@@ -1,0 +1,239 @@
+/vendor/etc/bluetooth:
+total 852
+-rw-r--r-- 1 root root  38644 2008-12-31 16:00 4343.hcd
+-rw-r--r-- 1 root root  26621 2008-12-31 16:00 BCM20702.hcd
+-rw-r--r-- 1 root root  35466 2008-12-31 16:00 BCM20703A2.hcd
+-rw-r--r-- 1 root root  32790 2008-12-31 16:00 BCM2076.hcd
+-rw-r--r-- 1 root root  54593 2008-12-31 16:00 BCM4330.hcd
+-rw-r--r-- 1 root root  46941 2008-12-31 16:00 BCM43430B0.hcd
+-rw-r--r-- 1 root root  65570 2008-12-31 16:00 BCM4345C0.hcd
+-rw-r--r-- 1 root root  39411 2008-12-31 16:00 BCM4345C5.hcd
+-rw-r--r-- 1 root root  66879 2008-12-31 16:00 BCM4350.hcd
+-rw-r--r-- 1 root root  65058 2008-12-31 16:00 BCM4354.hcd
+-rw-r--r-- 1 root root  65507 2008-12-31 16:00 BCM4359C0.hcd
+-rw-r--r-- 1 root root  32529 2008-12-31 16:00 BCM43751.hcd
+-rw-r--r-- 1 root root   1536 2008-12-31 16:00 auto_pairing.conf
+-rw-r--r-- 1 root root  14344 2008-12-31 16:00 bcm43241b4.hcd
+-rw-r--r-- 1 root root  12801 2008-12-31 16:00 bcm43341b0.hcd
+-rw-r--r-- 1 root root  66306 2008-12-31 16:00 bcm4335c0.hcd
+-rw-r--r-- 1 root root  53007 2008-12-31 16:00 bcm43569a2.hcd
+-rw-r--r-- 1 root root    401 2008-12-31 16:00 blacklist.conf
+-rw-r--r-- 1 root root    146 2008-12-31 16:00 bt_vendor.conf
+drwxr-xr-x 3 root shell  4096 2008-12-31 16:00 qca6174
+drwxr-xr-x 3 root shell  4096 2008-12-31 16:00 qca9377
+-rw-r--r-- 1 root root    799 2008-12-31 16:00 rtkbt.conf
+drwxr-xr-x 2 root shell  4096 2008-12-31 16:00 uwe562x
+
+/vendor/etc/bluetooth/qca6174:
+total 8
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 ar3k
+
+/vendor/etc/bluetooth/qca6174/ar3k:
+total 76
+-rw-r--r-- 1 root root  2010 2008-12-31 16:00 nvm_tlv_3.2.bin
+-rw-r--r-- 1 root root 63680 2008-12-31 16:00 rampatch_tlv_3.2.tlv
+
+/vendor/etc/bluetooth/qca9377:
+total 8
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 ar3k
+
+/vendor/etc/bluetooth/qca9377/ar3k:
+total 76
+-rw-r--r-- 1 root root  2010 2008-12-31 16:00 nvm_tlv_tf_1.1.bin
+-rw-r--r-- 1 root root 64292 2008-12-31 16:00 rampatch_tlv_tf_1.1.tlv
+
+/vendor/etc/bluetooth/uwe562x:
+total 56
+-rw-r--r-- 1 root root 5439 2008-12-31 16:00 bt_configure_pskey.ini
+-rw-r--r-- 1 root root 7126 2008-12-31 16:00 bt_configure_rf_marlin.ini
+-rw-r--r-- 1 root root 3114 2008-12-31 16:00 bt_configure_rf_marlin3_2.ini
+-rw-r--r-- 1 root root 3114 2008-12-31 16:00 bt_configure_rf_marlin3_3.ini
+-rw-r--r-- 1 root root 3118 2008-12-31 16:00 bt_configure_rf_marlin3e_2.ini
+-rw-r--r-- 1 root root 3118 2008-12-31 16:00 bt_configure_rf_marlin3e_3.ini
+
+/vendor/etc/wifi:
+total 208
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 43458
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 4354
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 4356
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 43569
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 4358
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 4359
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 6212
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 6255
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 62x2
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 6335
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 AP6271
+-rw-r--r-- 1 root root  1541 2008-12-31 16:00 MT7601USTA.dat
+-rw-r--r-- 1 root root  1477 2008-12-31 16:00 RT2870STA_7603.dat
+-rw-r--r-- 1 root root    83 2008-12-31 16:00 bcm_supplicant.conf
+-rw-r--r-- 1 root root    83 2008-12-31 16:00 bcm_supplicant_overlay.conf
+-rw-r--r-- 1 root root   149 2008-12-31 16:00 icomm_supplicant_overlay.conf
+-rw-r--r-- 1 root root    82 2008-12-31 16:00 p2p_supplicant.conf
+-rw-r--r-- 1 root root    23 2008-12-31 16:00 p2p_supplicant_overlay.conf
+drwxr-xr-x 3 root shell 4096 2008-12-31 16:00 qca6174
+drwxr-xr-x 3 root shell 4096 2008-12-31 16:00 qca9377
+drwxr-xr-x 3 root shell 4096 2008-12-31 16:00 qca9379
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 ssv6051
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 ssv6x5x
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 uwe5621
+-rw-r--r-- 1 root root    82 2008-12-31 16:00 wpa_supplicant.conf
+-rw-r--r-- 1 root root    38 2008-12-31 16:00 wpa_supplicant_overlay.conf
+
+/vendor/etc/wifi/43458:
+total 1480
+-rw-r--r-- 1 root root    108 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 493449 2008-12-31 16:00 fw_bcm43455c0_ag.bin
+-rw-r--r-- 1 root root 493449 2008-12-31 16:00 fw_bcm43455c0_ag_apsta.bin
+-rw-r--r-- 1 root root 493449 2008-12-31 16:00 fw_bcm43455c0_ag_p2p.bin
+-rw-r--r-- 1 root root   1601 2008-12-31 16:00 nvram_43458.txt
+
+/vendor/etc/wifi/4354:
+total 1876
+-rw-r--r-- 1 root root    108 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 628932 2008-12-31 16:00 fw_bcm4354a1_ag.bin
+-rw-r--r-- 1 root root 628932 2008-12-31 16:00 fw_bcm4354a1_ag_apsta.bin
+-rw-r--r-- 1 root root 628932 2008-12-31 16:00 fw_bcm4354a1_ag_p2p.bin
+-rw-r--r-- 1 root root   3341 2008-12-31 16:00 nvram_ap6354.txt
+
+/vendor/etc/wifi/4356:
+total 1764
+-rw-r--r-- 1 root root      0 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 592051 2008-12-31 16:00 fw_bcm4356a2_ag.bin
+-rw-r--r-- 1 root root 592051 2008-12-31 16:00 fw_bcm4356a2_ag_apsta.bin
+-rw-r--r-- 1 root root 592051 2008-12-31 16:00 fw_bcm4356a2_ag_p2p.bin
+-rw-r--r-- 1 root root   2584 2008-12-31 16:00 nvram_ap6356.txt
+
+/vendor/etc/wifi/43569:
+total 2624
+-rw-r--r-- 1 root root 663552 2008-12-31 16:00 fw_bcm43569a2_ag.bin.trx
+-rw-r--r-- 1 root root 663552 2008-12-31 16:00 fw_bcm4358u_ag.bin
+-rw-r--r-- 1 root root 663552 2008-12-31 16:00 fw_bcm4358u_ag_apsta.bin
+-rw-r--r-- 1 root root 663552 2008-12-31 16:00 fw_bcm4358u_ag_p2p.bin
+-rw-r--r-- 1 root root   2764 2008-12-31 16:00 nvram_ap6269a2.nvm
+-rw-r--r-- 1 root root   2764 2008-12-31 16:00 nvram_ap62x8.txt
+
+/vendor/etc/wifi/4358:
+total 1664
+-rw-r--r-- 1 root root     94 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 556789 2008-12-31 16:00 fw_bcm4358_ag.bin
+-rw-r--r-- 1 root root 556789 2008-12-31 16:00 fw_bcm4358_ag_apsta.bin
+-rw-r--r-- 1 root root 556789 2008-12-31 16:00 fw_bcm4358_ag_p2p.bin
+-rw-r--r-- 1 root root   6336 2008-12-31 16:00 nvram_4358.txt
+
+/vendor/etc/wifi/4359:
+total 1860
+-rw-r--r-- 1 root root 637347 2008-12-31 16:00 fw_bcm4359c0_ag.bin
+-rw-r--r-- 1 root root 637347 2008-12-31 16:00 fw_bcm4359c0_ag_apsta.bin
+-rw-r--r-- 1 root root 637347 2008-12-31 16:00 fw_bcm4359c0_ag_p2p.bin
+-rw-r--r-- 1 root root   5861 2008-12-31 16:00 nvram_ap6398s.txt
+
+/vendor/etc/wifi/6212:
+total 1784
+-rw-r--r-- 1 root root      0 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 421861 2008-12-31 16:00 fw_bcm43436b0.bin
+-rw-r--r-- 1 root root 421861 2008-12-31 16:00 fw_bcm43436b0_apsta.bin
+-rw-r--r-- 1 root root 326074 2008-12-31 16:00 fw_bcm43438a0.bin
+-rw-r--r-- 1 root root 309352 2008-12-31 16:00 fw_bcm43438a0_apsta.bin
+-rw-r--r-- 1 root root 326074 2008-12-31 16:00 fw_bcm43438a0_p2p.bin
+-rw-r--r-- 1 root root    956 2008-12-31 16:00 nvram.txt
+-rw-r--r-- 1 root root   1212 2008-12-31 16:00 nvram_ap6236.txt
+
+/vendor/etc/wifi/6255:
+total 2980
+-rw-r--r-- 1 root root      0 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 617600 2008-12-31 16:00 fw_bcm43455c0_ag.bin
+-rw-r--r-- 1 root root 617600 2008-12-31 16:00 fw_bcm43455c0_ag_apsta.bin
+-rw-r--r-- 1 root root 617600 2008-12-31 16:00 fw_bcm43455c0_ag_p2p.bin
+-rw-r--r-- 1 root root 575445 2008-12-31 16:00 fw_bcm43456c5_ag.bin
+-rw-r--r-- 1 root root 575445 2008-12-31 16:00 fw_bcm43456c5_ag_apsta.bin
+-rw-r--r-- 1 root root   1644 2008-12-31 16:00 nvram_ap6255.txt
+-rw-r--r-- 1 root root   2099 2008-12-31 16:00 nvram_ap6256.txt
+
+/vendor/etc/wifi/62x2:
+total 1200
+-rw-r--r-- 1 root root      0 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 400662 2008-12-31 16:00 fw_bcm43241b4_ag.bin
+-rw-r--r-- 1 root root 400662 2008-12-31 16:00 fw_bcm43241b4_ag_apsta.bin
+-rw-r--r-- 1 root root 400662 2008-12-31 16:00 fw_bcm43241b4_ag_p2p.bin
+-rw-r--r-- 1 root root   2691 2008-12-31 16:00 nvram.txt
+
+/vendor/etc/wifi/6335:
+total 1552
+-rw-r--r-- 1 root root     47 2008-12-31 16:00 config.txt
+-rw-r--r-- 1 root root 567196 2008-12-31 16:00 fw_bcm4339a0_ag.bin
+-rw-r--r-- 1 root root 567196 2008-12-31 16:00 fw_bcm4339a0_ag_apsta.bin
+-rw-r--r-- 1 root root 567196 2008-12-31 16:00 fw_bcm4339a0_ag_p2p.bin
+-rw-r--r-- 1 root root   2373 2008-12-31 16:00 nvram_ap6335.txt
+
+/vendor/etc/wifi/AP6271:
+total 1524
+-rw-r--r-- 1 root root  19164 2008-12-31 16:00 clm_bcm43751a1_ag.blob
+-rw-r--r-- 1 root root 824590 2008-12-31 16:00 fw_bcm43751a1_ag.bin
+-rw-r--r-- 1 root root 824590 2008-12-31 16:00 fw_bcm43751a1_ag_apsta.bin
+-rw-r--r-- 1 root root   7399 2008-12-31 16:00 nvram_ap6271s.txt
+
+/vendor/etc/wifi/qca6174:
+total 1452
+-rw-r--r-- 1 root root  568824 2008-12-31 16:00 athwlan.bin
+-rw-r--r-- 1 root root    8124 2008-12-31 16:00 bdwlan30.bin
+-rw-r--r-- 1 root root   25057 2008-12-31 16:00 otp30.bin
+-rw-r--r-- 1 root root  519928 2008-12-31 16:00 qwlan30.bin
+-rw-r--r-- 1 root root  331220 2008-12-31 16:00 utf30.bin
+drwxr-xr-x 2 root shell   4096 2008-12-31 16:00 wlan
+
+/vendor/etc/wifi/qca6174/wlan:
+total 56
+-rw-r--r-- 1 root root 10234 2008-12-31 16:00 cfg.dat
+-rw-r--r-- 1 root root 16293 2008-12-31 16:00 qcom_cfg.ini
+-rw-r--r-- 1 root root 16293 2008-12-31 16:00 qcom_cfg.ini.ok
+
+/vendor/etc/wifi/qca9377:
+total 1024
+-rw-r--r-- 1 root root    8124 2008-12-31 16:00 bdwlan30.bin
+-rw-r--r-- 1 root root   25061 2008-12-31 16:00 otp30.bin
+-rw-r--r-- 1 root root  617152 2008-12-31 16:00 qwlan30.bin
+-rw-r--r-- 1 root root  367288 2008-12-31 16:00 utf30.bin
+drwxr-xr-x 2 root shell   4096 2008-12-31 16:00 wlan
+
+/vendor/etc/wifi/qca9377/wlan:
+total 60
+-rw-r--r-- 1 root root 10234 2008-12-31 16:00 cfg.dat
+-rw-r--r-- 1 root root 12057 2008-12-31 16:00 qcom_cfg.ini
+-rw-r--r-- 1 root root 29776 2008-12-31 16:00 qcom_wlan_nv.bin
+
+/vendor/etc/wifi/qca9379:
+total 996
+-rw-r--r-- 1 root root  599904 2008-12-31 16:00 athwlan.bin
+-rw-r--r-- 1 root root    8124 2008-12-31 16:00 fakeboar.bin
+-rw-r--r-- 1 root root   25057 2008-12-31 16:00 otp.bin
+-rw-r--r-- 1 root root  354284 2008-12-31 16:00 utf.bin
+drwxr-xr-x 2 root shell   4096 2008-12-31 16:00 wlan
+
+/vendor/etc/wifi/qca9379/wlan:
+total 32
+-rw-r--r-- 1 root root 10234 2008-12-31 16:00 cfg.dat
+-rw-r--r-- 1 root root 10119 2008-12-31 16:00 qcom_cfg.ini
+
+/vendor/etc/wifi/ssv6051:
+total 92
+-rw-r--r-- 1 root root 81200 2008-12-31 16:00 ssv6051-sw.bin
+-rw-r--r-- 1 root root  2707 2008-12-31 16:00 ssv6051-wifi.cfg
+
+/vendor/etc/wifi/ssv6x5x:
+total 52
+-rw-r--r-- 1 root root 39808 2008-12-31 16:00 ssv6x5x-sw.bin
+-rw-r--r-- 1 root root  2871 2008-12-31 16:00 ssv6x5x-wifi.cfg
+
+/vendor/etc/wifi/uwe5621:
+total 120
+-rw-r--r-- 1 root root 6717 2008-12-31 16:00 wifi_23550001_2ant.ini
+-rw-r--r-- 1 root root 6717 2008-12-31 16:00 wifi_23550001_3ant.ini
+-rw-r--r-- 1 root root 6750 2008-12-31 16:00 wifi_23550002_2ant.ini
+-rw-r--r-- 1 root root 6750 2008-12-31 16:00 wifi_23550002_3ant.ini
+-rw-r--r-- 1 root root 6743 2008-12-31 16:00 wifi_23550003_2ant.ini
+-rw-r--r-- 1 root root 6743 2008-12-31 16:00 wifi_23550003_3ant.ini
+-rw-r--r-- 1 root root 6848 2008-12-31 16:00 wifi_56630000_2ant.ini
+-rw-r--r-- 1 root root 6848 2008-12-31 16:00 wifi_56630000_3ant.ini
+-rw-r--r-- 1 root root 6848 2008-12-31 16:00 wifi_56630001_2ant.ini
+-rw-r--r-- 1 root root 6848 2008-12-31 16:00 wifi_56630001_3ant.ini

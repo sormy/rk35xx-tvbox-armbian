@@ -1,0 +1,29 @@
+Module                  Size  Used by
+wlan_mt76x8_sdio     1728512  0 
+btmtksdio             266240  1 
+aml_hardware_dmx      139264  0 
+hdr10_tmo_alg          24576  0 
+amvdec_mavs            40960  0 
+vpu                    45056  0 
+encoder                49152  0 
+amvdec_avs2           200704  0 
+amvdec_vp9            110592  0 
+amvdec_vc1             65536  0 
+amvdec_real            45056  0 
+amvdec_mmpeg4          40960  0 
+amvdec_mpeg4           65536  0 
+amvdec_mmpeg12         40960  0 
+amvdec_mpeg12         118784  0 
+amvdec_mmjpeg          28672  0 
+amvdec_mjpeg           40960  0 
+amvdec_h265           139264  0 
+amvdec_h264mvc         57344  0 
+amvdec_mh264          159744  0 
+amvdec_h264           151552  0 
+amvdec_avs             73728  0 
+stream_input          172032  12 aml_hardware_dmx,amvdec_mavs,amvdec_avs2,amvdec_vp9,amvdec_real,amvdec_mmpeg12,amvdec_mpeg12,amvdec_h265,amvdec_h264mvc,amvdec_mh264,amvdec_h264,amvdec_avs
+decoder_common        176128  18 amvdec_mavs,encoder,amvdec_avs2,amvdec_vp9,amvdec_vc1,amvdec_real,amvdec_mmpeg4,amvdec_mpeg4,amvdec_mmpeg12,amvdec_mpeg12,amvdec_mmjpeg,amvdec_mjpeg,amvdec_h265,amvdec_h264mvc,amvdec_mh264,amvdec_h264,amvdec_avs,stream_input
+firmware               24576  19 amvdec_mavs,encoder,amvdec_avs2,amvdec_vp9,amvdec_vc1,amvdec_real,amvdec_mmpeg4,amvdec_mpeg4,amvdec_mmpeg12,amvdec_mpeg12,amvdec_mmjpeg,amvdec_mjpeg,amvdec_h265,amvdec_h264mvc,amvdec_mh264,amvdec_h264,amvdec_avs,stream_input,decoder_common
+media_clock            36864  16 aml_hardware_dmx,amvdec_mavs,vpu,encoder,amvdec_avs2,amvdec_vp9,amvdec_vc1,amvdec_mpeg4,amvdec_mpeg12,amvdec_h265,amvdec_mh264,amvdec_h264,amvdec_avs,stream_input,decoder_common,firmware
+tb_detect              20480  0 
+mali                  294912  16 

@@ -1,0 +1,67 @@
+/vendor/firmware:
+total 3140
+-rw-r--r-- 1 root root    1536 2008-12-31 16:00 EEPROM_MT7663.bin
+-rw-r--r-- 1 root root    1024 2008-12-31 16:00 EEPROM_MT7668.bin
+-rw-r--r-- 1 root root   19064 2008-12-31 16:00 TxPwrLimit_MT76x8.dat
+-rw-r--r-- 1 root root   51816 2008-12-31 16:00 WIFI_RAM_CODE2_SDIO_MT7668.bin
+-rw-r--r-- 1 root root   55880 2008-12-31 16:00 WIFI_RAM_CODE2_USB_MT7668.bin
+-rw-r--r-- 1 root root  440460 2008-12-31 16:00 WIFI_RAM_CODE_MT7663.bin
+-rw-r--r-- 1 root root  463080 2008-12-31 16:00 WIFI_RAM_CODE_MT7668.bin
+-rw-r--r-- 1 root root    1019 2008-12-31 16:00 bt.cfg
+-rw-r--r-- 1 root root  163872 2008-12-31 16:00 fw_usb.bin
+-rw-r--r-- 1 root root  191630 2008-12-31 16:00 mt7663_patch_e2_hdr.bin
+-rw-r--r-- 1 root root  152302 2008-12-31 16:00 mt7668_patch_e1_hdr.bin
+-rw-r--r-- 1 root root  178782 2008-12-31 16:00 mt7668_patch_e2_hdr.bin
+drwxr-xr-x 3 root shell   4096 2008-12-31 16:00 qca9379
+-rw-r--r-- 1 root root      33 2008-12-31 16:00 rtl8723b_config
+-rw-r--r-- 1 root root   46740 2008-12-31 16:00 rtl8723b_fw
+-rw-r--r-- 1 root root     106 2008-12-31 16:00 rtl8723bs_VQ0_config
+-rw-r--r-- 1 root root   46236 2008-12-31 16:00 rtl8723bs_VQ0_fw
+-rw-r--r-- 1 root root      94 2008-12-31 16:00 rtl8723bs_config
+-rw-r--r-- 1 root root   46104 2008-12-31 16:00 rtl8723bs_fw
+-rw-r--r-- 1 root root      67 2008-12-31 16:00 rtl8723bu_config
+-rw-r--r-- 1 root root      56 2008-12-31 16:00 rtl8723d_config
+-rw-r--r-- 1 root root   52840 2008-12-31 16:00 rtl8723d_fw
+-rw-r--r-- 1 root root      75 2008-12-31 16:00 rtl8723ds_config
+-rw-r--r-- 1 root root   54548 2008-12-31 16:00 rtl8723ds_fw
+-rw-r--r-- 1 root root      94 2008-12-31 16:00 rtl8761a_config
+-rw-r--r-- 1 root root   66740 2008-12-31 16:00 rtl8761a_fw
+-rw-r--r-- 1 root root      98 2008-12-31 16:00 rtl8761at_config
+-rw-r--r-- 1 root root   67044 2008-12-31 16:00 rtl8761at_fw
+-rw-r--r-- 1 root root   68620 2008-12-31 16:00 rtl8761au8192ee_fw
+-rw-r--r-- 1 root root   70708 2008-12-31 16:00 rtl8761au8812ae_fw
+-rw-r--r-- 1 root root   69044 2008-12-31 16:00 rtl8761au_fw
+-rw-r--r-- 1 root root      81 2008-12-31 16:00 rtl8761aw8192eu_config
+-rw-r--r-- 1 root root   71964 2008-12-31 16:00 rtl8761aw8192eu_fw
+-rw-r--r-- 1 root root      62 2008-12-31 16:00 rtl8761b_config
+-rw-r--r-- 1 root root   32988 2008-12-31 16:00 rtl8761b_fw
+-rw-r--r-- 1 root root      81 2008-12-31 16:00 rtl8761bt_config
+-rw-r--r-- 1 root root   33424 2008-12-31 16:00 rtl8761bt_fw
+-rw-r--r-- 1 root root      67 2008-12-31 16:00 rtl8821a_config
+-rw-r--r-- 1 root root   41184 2008-12-31 16:00 rtl8821a_fw
+-rw-r--r-- 1 root root      90 2008-12-31 16:00 rtl8821as_config
+-rw-r--r-- 1 root root   40744 2008-12-31 16:00 rtl8821as_fw
+-rw-r--r-- 1 root root      56 2008-12-31 16:00 rtl8821c_config
+-rw-r--r-- 1 root root   43332 2008-12-31 16:00 rtl8821c_fw
+-rw-r--r-- 1 root root      75 2008-12-31 16:00 rtl8821cs_config
+-rw-r--r-- 1 root root   45344 2008-12-31 16:00 rtl8821cs_fw
+-rw-r--r-- 1 root root      56 2008-12-31 16:00 rtl8822b_config
+-rw-r--r-- 1 root root   54220 2008-12-31 16:00 rtl8822b_fw
+-rw-r--r-- 1 root root      75 2008-12-31 16:00 rtl8822bs_config
+-rw-r--r-- 1 root root   45280 2008-12-31 16:00 rtl8822bs_fw
+-rw-r--r-- 1 root root      54 2008-12-31 16:00 rtl8822c_config
+-rw-r--r-- 1 root root   59784 2008-12-31 16:00 rtl8822c_fw
+-rw-r--r-- 1 root root      73 2008-12-31 16:00 rtl8822cs_config
+-rw-r--r-- 1 root root   74664 2008-12-31 16:00 rtl8822cs_fw
+-rw-r--r-- 1 root root     889 2008-12-31 16:00 wifi.cfg
+-rw-r--r-- 1 root root    1264 2008-12-31 16:00 woble_setting.bin
+-rw-r--r-- 1 root root    1675 2008-12-31 16:00 woble_setting_7663.bin
+
+/vendor/firmware/qca9379:
+total 8
+drwxr-xr-x 2 root shell 4096 2008-12-31 16:00 ar3k
+
+/vendor/firmware/qca9379/ar3k:
+total 48
+-rw-r--r-- 1 root root  2247 2008-12-31 16:00 nvm_tlv_usb_npl_1.0.bin
+-rw-r--r-- 1 root root 35504 2008-12-31 16:00 rampatch_tlv_usb_npl_1.0.tlv
