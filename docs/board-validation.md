@@ -80,7 +80,8 @@ payload and an upstreamed board skips it.
 
 - [ ] Associates on 2.4 GHz **and** 5 GHz; band and PHY rate from `iw dev wlan0 link`, or
       `wpa_cli -i wlan0 status` (`freq=`) where `iw` is not installed
-- [ ] Throughput idle **and** under 4-core load, both bands
+- [ ] Throughput idle **and** under 4-core load, both bands, **with the regulatory domain named** —
+      it decides the no-IR channels and the power, so a figure without it is not comparable
 - [ ] No latch — after the load stops, baseline returns at once or within 60 s
 - [ ] MAC stable across three reboots, and again after eMMC migration
 - [ ] MAC is **this unit's own** — from the Wi-Fi part's own eFUSE, not the SoC's id and not a
@@ -90,6 +91,9 @@ payload and an upstreamed board skips it.
 - [ ] Shipped firmware is named for its scope: a generic image takes no board suffix, a per-board
       file — EEPROM, calibration, NVRAM — takes one. An unsuffixed per-board blob is how a shared
       MAC ships in the first place
+- [ ] With no region code set, `iw dev wlan0 scan` still finds networks — an empty channel list
+      looks healthy in `iw list`
+- [ ] `iw reg set <country>` returns, and the box still answers afterwards
 
 ## Bluetooth
 
@@ -212,6 +216,8 @@ never reads `firmware/` or `/usr/local/share/*/`.
       `/usr/local/share/*/`
 - [ ] Survives `apt full-upgrade`: `BOARD_NAME` intact, `linux-u-boot-*` held
 - [ ] Both update paths work — `rk35xx-deploy` from a host, `rk35xx-update --pull` on the box
+- [ ] Every DKMS module survives `rmmod` and `modprobe` back, and nothing sharing the chip goes down
+      with it
 - [ ] Payload udev rules fire: anything a recipe names as `event<N>` has its `SYMLINK+=`
 - [ ] The dtb-persist hook survives a kernel update — `/boot/dtb-*/rockchip/board.dtb` still matches
       `/usr/local/share/*/board.dtb`
@@ -271,6 +277,8 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
   missing, or the SDIO Wi-Fi comes up wedged — while a cold power cycle always clears it. It is
   intermittent and per-driver (the `sdhci` eMMC has never done it), so reboot ten times and watch
   the root mount and `wlan0` specifically.
+- **Reloading a module you are connected through:** unload, check and reload in one detached script
+  that restores whatever it found, so a dropped connection cannot strand the box.
 - A boot that has grown since the last measurement is the cheapest signal something is wrong. Usual
   causes: a unit waiting on absent hardware, a getty retrying a tty, a first-boot script that never
   marked itself done, DHCP on an unplugged interface, a DKMS rebuild meant to happen once.
