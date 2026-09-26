@@ -34,6 +34,15 @@ stale `..`, a parent link count one too high, a leaked block. The patch also giv
 link for the child's `..`, and frees the inode with `ext2fs_inode_alloc_stats2()` so the group
 descriptor's `used_dirs_count` follows.
 
+## An image from a box that did not shut down cleanly
+
+libext2fs does not replay the ext4 journal, so editing such an image writes over metadata still
+waiting in it. `e2fsck` it first, on the host:
+
+```sh
+e2fsck -fy <image-or-device>    # Homebrew keeps it in $(brew --prefix e2fsprogs)/sbin
+```
+
 ## Verifying
 
 `./build-e2tools.sh --test` re-runs the gate. Every case must leave the same block count as an
