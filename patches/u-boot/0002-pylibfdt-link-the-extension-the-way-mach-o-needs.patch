@@ -1,3 +1,8 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] pylibfdt: link the extension the way Mach-O needs
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
 diff --git a/scripts/dtc/pylibfdt/Makefile b/scripts/dtc/pylibfdt/Makefile
 index ce9c2d09..a6b69dc4 100644
 --- a/scripts/dtc/pylibfdt/Makefile

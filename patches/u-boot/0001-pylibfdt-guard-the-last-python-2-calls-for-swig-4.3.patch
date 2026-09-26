@@ -1,3 +1,8 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] pylibfdt: guard the last Python 2 calls for SWIG 4.3
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
 diff --git a/scripts/dtc/pylibfdt/libfdt.i_shipped b/scripts/dtc/pylibfdt/libfdt.i_shipped
 index e4659489..82707aee 100644
 --- a/scripts/dtc/pylibfdt/libfdt.i_shipped

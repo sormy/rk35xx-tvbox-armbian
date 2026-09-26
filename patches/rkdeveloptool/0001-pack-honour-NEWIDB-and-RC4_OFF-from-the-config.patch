@@ -1,3 +1,8 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] pack: honour NEWIDB and RC4_OFF from the config
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
 --- a/boot_merger.h
 +++ b/boot_merger.h
 @@ -47,6 +47,8 @@
