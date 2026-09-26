@@ -1,4 +1,4 @@
-# H96 firmware payload — files copied verbatim into the rootfs (mode src dest, src under firmware/).
+# H96 Max H313 firmware payload — files copied verbatim into the rootfs (mode src dest, src under firmware/).
 # Mechanism scripts are family-level (rk35xx-*, firmware/common/); this list is mostly board data.
 # DKMS *sources* are fetched by board.conf's board_stage_dkms, built by rk35xx-firstboot.
 

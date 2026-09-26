@@ -6,7 +6,7 @@
 	#size-cells = <0x02>;
 	/* the U-Boot banner's "Model:" line, so three near-identical boxes are
 	 * distinguishable on a serial console; nothing else reads it */
-	model = "H96 Max 3518_ZX_V01";
+	model = "H96 Max H313 3518_ZX_V01";
 
 	aliases {
 		gpio0 = "/pinctrl/gpio@ff610000";

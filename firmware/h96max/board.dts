@@ -7,7 +7,7 @@
 	interrupt-parent = <&gic>;
 	#address-cells = <0x02>;
 	#size-cells = <0x02>;
-	model = "H96 Max 3518_ZX_V01";
+	model = "H96 Max H313 3518_ZX_V01";
 
 	aliases {
 		ethernet0 = "/ethernet@ffbd0000";

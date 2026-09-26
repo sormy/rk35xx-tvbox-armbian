@@ -2,9 +2,9 @@
 /*
  * H96 Max 3518D TV box (PCB silkscreen 3518_DG_ZX_V01) — Rockchip RK3518, RK3528 family.
  *
- * A stick-form sibling of the H96 Max ZX, from the same vendor tree. Most of what
+ * A stick-form sibling of the 3518_ZX_V01 board, from the same vendor tree. Most of what
  * differs is hardware this PCB does not have, switched off rather than described.
- * The console also differs: the ZX frees ff9f0000 for ttyS0, while this box keeps the
+ * The console also differs: the 3518_ZX_V01 frees ff9f0000 for ttyS0, while this box keeps the
  * vendor's fiq-debugger on it and boots with console=ttyFIQ0, so uart0 stays disabled
  * and fiq-debugger stays enabled — neither is a departure here.
  *

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * H96 Max ZX TV box (PCB silkscreen 3518_ZX_V01) — Rockchip RK3518, RK3528 family.
+ * H96 Max H313 TV box (PCB silkscreen 3518_ZX_V01) — Rockchip RK3518, RK3528 family.
  *
  * The vendor derived this box from Rockchip's EVB1 DDR4 V10 reference design and its
  * compatible still says so, so this includes that board and overrides what differs.

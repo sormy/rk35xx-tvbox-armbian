@@ -12,7 +12,7 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 | ------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `/` (root)          | `compatible` prepends `"h96max-zx,rk3518-tvbox"`                     | the Seekwave driver keys board-specific firmware names off it             |
 | `/` (root)          | `compatible` appends `"rockchip,rk3528a"`                            | userspace can't identify this SoC otherwise — see below                   |
-| `/` (root)          | `model` → `H96 Max 3518_ZX_V01`                                      | the factory string names the reference EVB, not this box                  |
+| `/` (root)          | `model` → `H96 Max H313 3518_ZX_V01`                                 | the factory string names the reference EVB, not this box                  |
 | `serial@ff9f0000`   | `status` → `okay`, `pinctrl-0 = <&uart0m0_xfer>` added               | debug-header UART → `ttyS0` console @ 1500000                             |
 | `fiq-debugger`      | `status` → `disabled`                                                | frees `ff9f0000` for `ttyS0` — probably unnecessary, see below            |
 | `pwm@ffa90030` (IR) | `remote_support_psci` `0` → `1`                                      | IR as ATF wake source (remote wake)                                       |

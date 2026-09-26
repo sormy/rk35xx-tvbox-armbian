@@ -7,7 +7,7 @@
 -	model = "Rockchip RK3528 Evaluation Board";
 +	/* the U-Boot banner's "Model:" line, so three near-identical boxes are
 +	 * distinguishable on a serial console; nothing else reads it */
-+	model = "H96 Max 3518_DG_ZX_V01";
++	model = "H96 Max 3518D 3518_DG_ZX_V01";
  
  	aliases {
  		gpio0 = "/pinctrl/gpio@ff610000";

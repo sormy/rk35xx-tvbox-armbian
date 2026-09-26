@@ -1,4 +1,4 @@
-# H96 Max — board details
+# H96 Max H313 — board details
 
 Retail name "H96 Max H313" — the H313 is branding, the silicon is RK3518.
 
