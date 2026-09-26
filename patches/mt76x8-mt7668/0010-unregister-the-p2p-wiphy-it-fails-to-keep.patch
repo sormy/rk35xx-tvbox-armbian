@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Fri, 25 Sep 2026 20:00:00 -0400
+Subject: [PATCH] unregister the p2p wiphy it fails to keep
+
+Every probe registers a p2p role wiphy that remove never destroys, so the
+probe after a host reset finds both role slots taken and frees its new
+wiphy while still registered. The first regulatory change after the module
+is gone then crashes:
+
+  Unable to handle kernel paging request at virtual address ffff80007ab55fec
+  wiphy_update_regulatory+0xd0/0xa10 [cfg80211]
+
+Unregister it before freeing it.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/os/linux/gl_p2p.c
++++ b/wlan/os/linux/gl_p2p.c
+@@ -1202,11 +1202,13 @@ BOOLEAN glP2pCreateWirelessDevice(P_GLUE_INFO_T prGlueInfo)
+ 
+ 	if (i == KAL_P2P_NUM) {
+ 		DBGLOG(INIT, WARN, "fail to register wiphy to driver\n");
+-		goto free_wiphy;
++		goto unregister_wiphy;
+ 	}
+ 
+ 	return TRUE;
+ 
++unregister_wiphy:
++	wiphy_unregister(prWiphy);
+ free_wiphy:
+ 	wiphy_free(prWiphy);
+ free_wdev:

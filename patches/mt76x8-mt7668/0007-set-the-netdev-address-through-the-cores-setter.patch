@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 20 Sep 2026 15:00:00 -0400
+Subject: [PATCH] set the netdev address through the core's setter
+
+dev_addr is const to drivers, and the core checks it was not written
+behind its back, so every association and every unload with a p2p
+interface left a backtrace:
+
+  WARNING: CPU: 2 PID: 2265 at net/core/dev_addr_lists.c:520 dev_addr_check
+
+Use dev_addr_mod().
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/os/linux/gl_bow.c
++++ b/wlan/os/linux/gl_bow.c
+@@ -1088,7 +1088,7 @@ BOOLEAN kalInitBowDevice(IN P_GLUE_INFO_T prGlueInfo, IN const char *prDevName)
+ 		/* 1.2 fill hardware address */
+ 		COPY_MAC_ADDR(rMacAddr, prAdapter->rMyMacAddr);
+ 		rMacAddr[0] |= 0x2;	/* change to local administrated address */
+-		kalMemCopy(prGlueInfo->rBowInfo.prDevHandler->dev_addr, rMacAddr, ETH_ALEN);
++		dev_addr_mod(prGlueInfo->rBowInfo.prDevHandler, 0, rMacAddr, ETH_ALEN);
+ 		kalMemCopy(prGlueInfo->rBowInfo.prDevHandler->perm_addr,
+ 			   prGlueInfo->rBowInfo.prDevHandler->dev_addr, ETH_ALEN);
+ 
+--- a/wlan/os/linux/gl_init.c
++++ b/wlan/os/linux/gl_init.c
+@@ -2498,7 +2498,8 @@ static INT_32 wlanProbe(PVOID pvData, PVOID pvDriverData)
+ 				DBGLOG(INIT, WARN, "set MAC addr fail 0x%lx\n", rStatus);
+ 				prGlueInfo->u4ReadyFlag = 0;
+ 			} else {
+-				kalMemCopy(prGlueInfo->prDevHandler->dev_addr, &MacAddr.sa_data, ETH_ALEN);
++				dev_addr_mod(prGlueInfo->prDevHandler, 0,
++					     &MacAddr.sa_data, ETH_ALEN);
+ 				kalMemCopy(prGlueInfo->prDevHandler->perm_addr,
+ 					   prGlueInfo->prDevHandler->dev_addr, ETH_ALEN);
+ 
+--- a/wlan/os/linux/gl_kal.c
++++ b/wlan/os/linux/gl_kal.c
+@@ -603,8 +603,12 @@ VOID kalUpdateMACAddress(IN P_GLUE_INFO_T prGlueInfo, IN PUINT_8 pucMacAddr)
+ 	ASSERT(prGlueInfo);
+ 	ASSERT(pucMacAddr);
+ 
++	/* dev_addr is const to drivers and the core checks it has not been
++	 * written behind its back, so go through the setter.
++	 */
+ 	if (UNEQUAL_MAC_ADDR(prGlueInfo->prDevHandler->dev_addr, pucMacAddr))
+-		memcpy(prGlueInfo->prDevHandler->dev_addr, pucMacAddr, PARAM_MAC_ADDR_LEN);
++		dev_addr_mod(prGlueInfo->prDevHandler, 0, pucMacAddr,
++			     PARAM_MAC_ADDR_LEN);
+ 
+ }
+ 
+--- a/wlan/os/linux/gl_p2p.c
++++ b/wlan/os/linux/gl_p2p.c
+@@ -992,7 +992,7 @@ BOOLEAN glRegisterP2P(P_GLUE_INFO_T prGlueInfo, const char *prDevName, const cha
+ 		COPY_MAC_ADDR(rMacAddr, prAdapter->rMyMacAddr);
+ 		rMacAddr[0] |= 0x2;
+ 		rMacAddr[0] ^= i << 2;	/* change to local administrated address */
+-		kalMemCopy(prGlueInfo->prP2PInfo[i]->prDevHandler->dev_addr, rMacAddr, ETH_ALEN);
++		dev_addr_mod(prGlueInfo->prP2PInfo[i]->prDevHandler, 0, rMacAddr, ETH_ALEN);
+ 		kalMemCopy(prGlueInfo->prP2PInfo[i]->prDevHandler->perm_addr,
+ 			prGlueInfo->prP2PInfo[i]->prDevHandler->dev_addr,
+ 			   ETH_ALEN);
+--- a/wlan/os/linux/gl_p2p_cfg80211.c
++++ b/wlan/os/linux/gl_p2p_cfg80211.c
+@@ -440,7 +440,7 @@ struct wireless_dev *mtk_p2p_cfg80211_add_iface(struct wiphy *wiphy,
+ 			else
+ 				rMacAddr[0] ^= prGlueInfo->prAdapter->prP2pInfo->u4DeviceNum << 2;
+ 		}
+-		kalMemCopy(prNewNetDevice->dev_addr, rMacAddr, ETH_ALEN);
++		dev_addr_mod(prNewNetDevice, 0, rMacAddr, ETH_ALEN);
+ 		kalMemCopy(prNewNetDevice->perm_addr, rMacAddr, ETH_ALEN);
+ 
+ 		DBGLOG(P2P, TRACE, "mtk_p2p_cfg80211_add_iface ucBssIdx=%d\n", prNetDevPriv->ucBssIdx);

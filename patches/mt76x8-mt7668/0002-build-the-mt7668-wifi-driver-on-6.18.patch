@@ -1,0 +1,170 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 20 Sep 2026 15:00:00 -0400
+Subject: [PATCH] build the mt7668 wifi driver on 6.18
+
+The tree targets 5.15's cfg80211 and module APIs. Follow what changed:
+scan_width went in 6.9, tdls_mgmt gained a link_id in 6.2, change_beacon
+takes a cfg80211_ap_update from 6.12, the wiphy and tx power ops a
+radio_idx from 6.18, MODULE_IMPORT_NS a string from 6.13, and
+del_timer_sync became timer_delete_sync in 6.15.
+
+Build without DFS master: its CAC reporting no longer matches cfg80211,
+and a station never runs it.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/include/config.h
++++ b/wlan/include/config.h
+@@ -157,7 +157,7 @@
+ #define CFG_SUPPORT_DFS             1	/* DFS (802.11h) */
+ #endif
+ #ifndef CFG_SUPPORT_DFS_MASTER
+-#define CFG_SUPPORT_DFS_MASTER      1
++#define CFG_SUPPORT_DFS_MASTER      0
+ #endif
+ 
+ #if (CFG_SUPPORT_DFS == 1)	/* Add by Enlai */
+--- a/wlan/os/linux/gl_cfg80211.c
++++ b/wlan/os/linux/gl_cfg80211.c
+@@ -879,7 +879,7 @@ int mtk_cfg80211_scan(struct wiphy *wiphy, struct cfg80211_scan_request *request
+ 			rScanRequest.arChnlInfoList[i].u4CenterFreq1 = request->channels[i]->center_freq;
+ 			rScanRequest.arChnlInfoList[i].u4CenterFreq2 = 0;
+ 			rScanRequest.arChnlInfoList[i].u2PriChnlFreq = request->channels[i]->center_freq;
+-#if KERNEL_VERSION(3, 12, 0) <= CFG80211_VERSION_CODE
++#if KERNEL_VERSION(3, 12, 0) <= CFG80211_VERSION_CODE && CFG80211_VERSION_CODE < KERNEL_VERSION(6, 9, 0)
+ 			rScanRequest.arChnlInfoList[i].ucChnlBw = request->scan_width;
+ #else
+ 			rScanRequest.arChnlInfoList[i].ucChnlBw = 0;
+@@ -3114,7 +3114,7 @@ int mtk_cfg80211_del_station(struct wiphy *wiphy, struct net_device *ndev, u8 *m
+ #if KERNEL_VERSION(3, 18, 0) <= CFG80211_VERSION_CODE
+ int
+ mtk_cfg80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
+-		       const u8 *peer, u8 action_code, u8 dialog_token,
++		       const u8 *peer, MTK_TDLS_MGMT_LINK_ID u8 action_code, u8 dialog_token,
+ 		       u16 status_code, u32 peer_capability,
+ 		       bool initiator, const u8 *buf, size_t len)
+ {
+--- a/wlan/os/linux/gl_kal.c
++++ b/wlan/os/linux/gl_kal.c
+@@ -80,8 +80,12 @@
+ #include <linux/ctype.h>
+ 
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
++MODULE_IMPORT_NS("VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver");
++#else
+ MODULE_IMPORT_NS(VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver);
+ #endif
++#endif
+ 
+ /*******************************************************************************
+ *                              C O N S T A N T S
+--- a/wlan/os/linux/gl_p2p.c
++++ b/wlan/os/linux/gl_p2p.c
+@@ -125,6 +125,36 @@ struct wireless_dev *gprP2pRoleWdev[KAL_P2P_NUM];
+ struct net_device *gPrP2pDev[KAL_P2P_NUM];
+ 
+ #if CFG_ENABLE_WIFI_DIRECT_CFG_80211
++
++/* change_beacon takes a cfg80211_ap_update from 6.12, and the wiphy-wide and
++ * tx power ops a radio_idx from 6.18
++ */
++#if CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
++static int mtk_p2p_change_beacon_compat(struct wiphy *wiphy, struct net_device *dev,
++					struct cfg80211_ap_update *info)
++{
++	return mtk_p2p_cfg80211_change_beacon(wiphy, dev, &info->beacon);
++}
++#endif
++#if CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++static int mtk_p2p_set_wiphy_params_compat(struct wiphy *wiphy, int radio_idx, u32 changed)
++{
++	return mtk_p2p_cfg80211_set_wiphy_params(wiphy, changed);
++}
++
++static int mtk_p2p_set_txpower_compat(struct wiphy *wiphy, struct wireless_dev *wdev,
++				      int radio_idx, enum nl80211_tx_power_setting type, int mbm)
++{
++	return mtk_p2p_cfg80211_set_txpower(wiphy, wdev, type, mbm);
++}
++
++static int mtk_p2p_get_txpower_compat(struct wiphy *wiphy, struct wireless_dev *wdev,
++				      int radio_idx, unsigned int link_id, int *dbm)
++{
++	return mtk_p2p_cfg80211_get_txpower(wiphy, wdev, dbm);
++}
++#endif
++
+ static struct cfg80211_ops mtk_p2p_ops = {
+ #if (CFG_ENABLE_WIFI_DIRECT_CFG_80211 != 0)
+ 	/* Froyo */
+@@ -142,9 +172,17 @@ static struct cfg80211_ops mtk_p2p_ops = {
+ 	.deauth = mtk_p2p_cfg80211_deauth,
+ 	.disassoc = mtk_p2p_cfg80211_disassoc,
+ 	.start_ap = mtk_p2p_cfg80211_start_ap,
++#if CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
++	.change_beacon = mtk_p2p_change_beacon_compat,
++#else
+ 	.change_beacon = mtk_p2p_cfg80211_change_beacon,
++#endif
+ 	.stop_ap = mtk_p2p_cfg80211_stop_ap,
++#if CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	.set_wiphy_params = mtk_p2p_set_wiphy_params_compat,
++#else
+ 	.set_wiphy_params = mtk_p2p_cfg80211_set_wiphy_params,
++#endif
+ 	.del_station = mtk_p2p_cfg80211_del_station,
+ 	.set_bitrate_mask = mtk_p2p_cfg80211_set_bitrate_mask,
+ #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 8, 0))
+@@ -158,8 +196,16 @@ static struct cfg80211_ops mtk_p2p_ops = {
+ 	.set_default_mgmt_key = mtk_p2p_cfg80211_set_mgmt_key,
+ 	.join_ibss = mtk_p2p_cfg80211_join_ibss,
+ 	.leave_ibss = mtk_p2p_cfg80211_leave_ibss,
++#if CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	.set_tx_power = mtk_p2p_set_txpower_compat,
++#else
+ 	.set_tx_power = mtk_p2p_cfg80211_set_txpower,
++#endif
++#if CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	.get_tx_power = mtk_p2p_get_txpower_compat,
++#else
+ 	.get_tx_power = mtk_p2p_cfg80211_get_txpower,
++#endif
+ 	.set_power_mgmt = mtk_p2p_cfg80211_set_power_mgmt,
+ #if (CFG_SUPPORT_DFS_MASTER == 1)
+ 	.start_radar_detection = mtk_p2p_cfg80211_start_radar_detection,
+--- a/wlan/os/linux/include/gl_cfg80211.h
++++ b/wlan/os/linux/include/gl_cfg80211.h
+@@ -309,9 +309,16 @@ int mtk_cfg80211_del_station(struct wiphy *wiphy, struct net_device *ndev, struc
+ int mtk_cfg80211_del_station(struct wiphy *wiphy, struct net_device *ndev,
+ 		const u8 *mac);
+ #endif
++/* cfg80211's tdls_mgmt gained an int link_id after peer in 6.2 */
++#if KERNEL_VERSION(6, 2, 0) <= CFG80211_VERSION_CODE
++#define MTK_TDLS_MGMT_LINK_ID int link_id,
++#else
++#define MTK_TDLS_MGMT_LINK_ID
++#endif
++
+ #if KERNEL_VERSION(3, 18, 0) <= CFG80211_VERSION_CODE
+ int mtk_cfg80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
+-			   const u8 *peer, u8 action_code, u8 dialog_token,
++			   const u8 *peer, MTK_TDLS_MGMT_LINK_ID u8 action_code, u8 dialog_token,
+ 			   u16 status_code, u32 peer_capability,
+ 			   bool initiator, const u8 *buf, size_t len);
+ #else
+--- a/wlan/os/linux/include/gl_kal.h
++++ b/wlan/os/linux/include/gl_kal.h
+@@ -86,6 +86,11 @@
+ #endif
+ 
+ #include "linux/kallsyms.h"
++#include <linux/sched/clock.h>
++#include <linux/version.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++#define del_timer_sync(t) timer_delete_sync(t)
++#endif
+ /*#include <linux/ftrace_event.h>*/
+ 
+ #if DBG

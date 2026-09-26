@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 20 Sep 2026 15:00:00 -0400
+Subject: [PATCH] carry errors only in the driver's own log
+
+A healthy boot wrote 91 driver lines, halPollDbgCr alone fourteen
+identical ones. Default every module to the error class; the dbgLevel proc
+entry raises any of them at runtime. Two messages that are not errors stop
+claiming to be: the world-wide regulatory fallback, and a regulatory state
+transition the driver recovers from, which also loses its assert.
+
+Measured: 6 driver lines a boot, and no backtrace.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/mgmt/rlm_domain.c
++++ b/wlan/mgmt/rlm_domain.c
+@@ -3068,7 +3068,7 @@ const struct ieee80211_regdomain *rlmDomainSearchRegdomainFromLocalDataBase(char
+ 		idx++;
+ 	}
+ 
+-	DBGLOG(RLM, ERROR, "%s(): Error, Cannot find the correct RegDomain. country = %s.\n",
++	DBGLOG(RLM, WARN, "%s(): no local RegDomain for %s, using world-wide\n",
+ 			__func__, alpha2);
+ 	DBGLOG(RLM, INFO, "    Set as default WW.\n");
+ 
+--- a/wlan/os/linux/gl_cfg80211.c
++++ b/wlan/os/linux/gl_cfg80211.c
+@@ -3429,9 +3429,7 @@ mtk_reg_notify(IN struct wiphy *pWiphy,
+ 			/* Change to same state or same country, ignore */
+ 			return;
+ 	} else if (rlmDomainIsCtrlStateEqualTo(REGD_STATE_INVALID)) {
+-		DBGLOG(RLM, ERROR, "\n%s():\n---> WARNING. Transit to invalid state.\n", __func__);
+-		DBGLOG(RLM, ERROR, "---> WARNING.\n ");
+-		rlmDomainAssert(0);
++		DBGLOG(RLM, WARN, "%s(): transit to invalid state\n", __func__);
+ #if 0
+ 		return; /*error state*/
+ #endif
+--- a/wlan/os/linux/gl_init.c
++++ b/wlan/os/linux/gl_init.c
+@@ -1097,16 +1097,14 @@ VOID wlanDebugInit(VOID)
+ 		aucDebugModule[i] = CFG_DEFAULT_DBG_LEVEL;
+ #else
+ 
+-	for (i = 0; i < DBG_MODULE_NUM; i++) {
+-		aucDebugModule[i] = DBG_CLASS_ERROR |
+-			DBG_CLASS_WARN | DBG_CLASS_STATE | DBG_CLASS_EVENT;// | DBG_CLASS_INFO;
+-	}
+-	aucDebugModule[DBG_TX_IDX] &= ~(DBG_CLASS_EVENT | DBG_CLASS_INFO);
+-	aucDebugModule[DBG_RX_IDX] &= ~(DBG_CLASS_EVENT | DBG_CLASS_INFO);
+-	aucDebugModule[DBG_REQ_IDX] &= ~(DBG_CLASS_EVENT | DBG_CLASS_INFO);
++	/* The state and event classes narrate a working boot, and this driver's
++	 * warnings repeat once per poll, so a healthy card fills the log. Carry
++	 * errors only; the dbgLevel proc entry raises any module at runtime.
++	 */
++	for (i = 0; i < DBG_MODULE_NUM; i++)
++		aucDebugModule[i] = DBG_CLASS_ERROR;
++
+ 	aucDebugModule[DBG_INTR_IDX] = 0;
+-	aucDebugModule[DBG_MEM_IDX] = DBG_CLASS_ERROR | DBG_CLASS_WARN;
+-	aucDebugModule[DBG_REQ_IDX] = DBG_CLASS_MASK;
+ 
+ #endif
+ #endif /* DBG */

@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Fri, 18 Sep 2026 02:10:00 -0400
+Subject: [PATCH] give the fallback regdomain a transmit power
+
+REG_RULE_LIGHT() hardcodes a maximum EIRP of zero and default_regdom_ww
+is built from it, so a country missing from the local database clamps
+every channel to 0 dBm and the firmware grants none to join on.
+
+Measured: 0.0 dBm before, 20.0 dBm after, on every 2.4 GHz channel.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/mgmt/rlm_domain.c
++++ b/wlan/mgmt/rlm_domain.c
+@@ -218,14 +218,19 @@ const struct ieee80211_regdomain default_regdom_ww = {
+ 	.n_reg_rules = 4,
+ 	.alpha2 = "99",
+ 	.reg_rules = {
++	/* REG_RULE_LIGHT() hardcodes a maximum EIRP of zero, so a regdomain built
++	 * from it permits no transmit power at all - every channel reports 0 dBm
++	 * and the firmware never grants a channel to join on. This is the domain
++	 * every unmatched country falls back to, so spell the power out.
++	 */
+ 	/* channels 1..13 */
+-	REG_RULE_LIGHT(2412-10, 2472+10, 40, 0),
++	REG_RULE(2412-10, 2472+10, 40, 0, 20, 0),
+ 	/* channels 14 */
+-	REG_RULE_LIGHT(2484-10, 2484+10, 20, 0),
++	REG_RULE(2484-10, 2484+10, 20, 0, 20, 0),
+ 	/* channel 36..64 */
+-	REG_RULE_LIGHT(5150-10, 5350+10, 80, 0),
++	REG_RULE(5150-10, 5350+10, 80, 0, 20, 0),
+ 	/* channel 100..165 */
+-	REG_RULE_LIGHT(5470-10, 5850+10, 80, 0),
++	REG_RULE(5470-10, 5850+10, 80, 0, 20, 0),
+ 	}
+ };
+ #endif

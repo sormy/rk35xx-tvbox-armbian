@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Fri, 18 Sep 2026 01:30:00 -0400
+Subject: [PATCH] build the MT7668 Bluetooth driver on 6.18
+
+Four API changes since the 6.1 the tree was ported to: AMP controllers and
+hci_dev.dev_type went away, class_create() lost its module argument, and
+MODULE_IMPORT_NS() takes a string literal.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/btif_audio_ts.c
++++ b/btif_audio_ts.c
+@@ -195,7 +195,7 @@ int btif_ts_init(void)
+ 	}
+ 
+ 	/* Register the device class */
+-	g_dev_class = class_create(THIS_MODULE, CLASS_NAME);
++	g_dev_class = class_create(CLASS_NAME);
+ 	if (IS_ERR(g_dev_class)) {
+ 		unregister_chrdev(g_major_num, DEVICE_NAME);
+ 		pr_alert("BTTS: failed to register device class\n");
+--- a/btmtk_main.c
++++ b/btmtk_main.c
+@@ -366,4 +366,4 @@ MODULE_AUTHOR("Mediatek Ltd.");
+ MODULE_DESCRIPTION("Mediatek Bluetooth driver ver " VERSION);
+ MODULE_VERSION(VERSION);
+ MODULE_LICENSE("GPL v2");
+-MODULE_IMPORT_NS(VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver);
++MODULE_IMPORT_NS("VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver");
+--- a/btmtk_sdio.c
++++ b/btmtk_sdio.c
+@@ -4423,10 +4423,7 @@ static int btmtk_sdio_probe(struct sdio_func *func,
+ 
+ 	hdev->bus = HCI_SDIO;
+ 
+-	if (id->class == SDIO_CLASS_BT_AMP)
+-		hdev->dev_type = HCI_AMP;
+-	else
+-		hdev->dev_type = HCI_PRIMARY;
++	/* AMP controllers, and with them hci_dev.dev_type, went away in 6.x */
+ 		
+ 	SET_HCIDEV_DEV(hdev, &func->dev);
+ 
+@@ -5943,7 +5940,7 @@ static int BTMTK_init(void)
+ 	pr_info("%s driver(major %d) installed.\n",
+ 			"BT_chrdevfwlog", BT_majorfwlog);
+ 
+-	pBTClass = class_create(THIS_MODULE, "BT_chrdev");
++	pBTClass = class_create("BT_chrdev");
+ 	if (IS_ERR(pBTClass)) {
+ 		pr_err("class create fail, error code(%ld)\n",
+ 			PTR_ERR(pBTClass));

@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Fri, 18 Sep 2026 18:30:00 -0400
+Subject: [PATCH] build the channel list before sending it to the firmware
+
+rlmDomainParsingChannel() builds the channel list CMD_ID_SET_DOMAIN_INFO
+carries, but runs only from the regulatory notifier, which returns early on
+the world-wide hint - the only one this image produces. The firmware got an
+empty list on every boot.
+
+Build the list where it is used. Measured: 0 channels before; 14 on 2.4 GHz
+and 25 on 5 GHz after, and a join gets its channel grant.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/mgmt/rlm_domain.c
++++ b/wlan/mgmt/rlm_domain.c
+@@ -965,6 +965,16 @@ VOID rlmDomainSendDomainInfoCmd_V2(P_ADAPTER_T prAdapter, BOOLEAN fgIsOid)
+ 
+ 
+ 
++	/*
++	 * The active channel list is built by rlmDomainParsingChannel(), which only
++	 * runs from the regulatory notifier - and the notifier returns early on the
++	 * core's world-wide hint, which is the only one this image ever gets. Left
++	 * alone the counters stay zero and the firmware is handed an empty channel
++	 * list, so it has nothing to grant a channel privilege from. Build it here,
++	 * where it is about to be used.
++	 */
++	rlmDomainParsingChannel(pWiphy);
++
+ 	/*
+ 	 * Fill in the active channels
+ 	 */

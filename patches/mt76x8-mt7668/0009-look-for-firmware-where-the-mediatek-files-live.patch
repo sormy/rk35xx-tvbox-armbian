@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 21 Sep 2026 22:40:00 -0400
+Subject: [PATCH] look for firmware where the mediatek files live
+
+The driver asks for bare firmware names, so request_firmware() looks only
+in /lib/firmware, while linux-firmware and mt76 keep MediaTek images under
+mediatek/. Name them there, so one copy serves both drivers. The longest,
+mediatek/WIFI_RAM_CODE2_SDIO_MT7668_E2.bin, fits the 64-byte buffer.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/include/config.h
++++ b/wlan/include/config.h
+@@ -126,8 +126,8 @@
+ #define CFG_FW_FILENAME                 L"WIFI_RAM_CODE"
+ #define CFG_CR4_FW_FILENAME             L"WIFI_RAM_CODE2"
+ #else
+-#define CFG_FW_FILENAME                 "WIFI_RAM_CODE"
+-#define CFG_CR4_FW_FILENAME             "WIFI_RAM_CODE2"
++#define CFG_FW_FILENAME                 "mediatek/WIFI_RAM_CODE"
++#define CFG_CR4_FW_FILENAME             "mediatek/WIFI_RAM_CODE2"
+ #endif
+ 
+ #ifndef CFG_MET_PACKET_TRACE_SUPPORT
+--- a/wlan/os/linux/gl_init.c
++++ b/wlan/os/linux/gl_init.c
+@@ -154,7 +154,7 @@ BOOLEAN	g_fgIsCalDataBackuped = FALSE;
+ /**20150205 added work queue for sched_scan to avoid cfg80211 stop schedule scan dead loack**/
+ struct delayed_work sched_workq;
+ 
+-#define CFG_EEPRM_FILENAME    "EEPROM"
++#define CFG_EEPRM_FILENAME    "mediatek/EEPROM"
+ #define FILE_NAME_MAX     64
+ 
+ #if (CFG_EFUSE_BUFFER_MODE_DELAY_CAL == 1)
+--- a/wlan/os/linux/gl_kal.c
++++ b/wlan/os/linux/gl_kal.c
+@@ -155,8 +155,8 @@ static PUINT_8 apucCr4FwName[] = {
+ };
+ 
+ static PUINT_8 apucPatchName[] = {
+-	(PUINT_8) "mt6632_patch_e1_hdr.bin",
+-	(PUINT_8) "mt7666_patch_e1_hdr.bin",
++	(PUINT_8) "mediatek/mt6632_patch_e1_hdr.bin",
++	(PUINT_8) "mediatek/mt7666_patch_e1_hdr.bin",
+ 	NULL
+ };
+ 
+@@ -407,7 +407,7 @@ kalFirmwareImageMapping(IN P_GLUE_INFO_T prGlueInfo,
+ 			/* construct the file name for patch */
+ 
+ 			/* mtxxxx_patch_ex_hdr.bin*/
+-			snprintf(apucName[idx], FILE_NAME_MAX, "mt%x_patch_e%x_hdr.bin",
++			snprintf(apucName[idx], FILE_NAME_MAX, "mediatek/mt%x_patch_e%x_hdr.bin",
+ 					chip_id, wlanGetEcoVersion(prGlueInfo->prAdapter));
+ 			idx += 1;
+ 		} else {

@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 20 Sep 2026 15:00:00 -0400
+Subject: [PATCH] stop the fortify warnings on the command buffers
+
+A zero-length aucBuffer reads as a 0-byte field to
+__builtin_object_size(), so every command copied into it trips
+CONFIG_FORTIFY_SOURCE - five backtraces a boot from the firmware download
+alone:
+
+  memcpy: detected field-spanning write (size 2048) of single field
+    "prInitHifTxHeader->rInitWifiCmd.aucBuffer" (size 0)
+
+Make the buffers reached through a pointer flexible array members, and
+address the one embedded in INIT_HIF_TX_HEADER_T by offset.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/common/wlan_lib.c
++++ b/wlan/common/wlan_lib.c
+@@ -3087,7 +3087,14 @@ WLAN_STATUS wlanImageSectionDownload(IN P_ADAPTER_T prAdapter, IN UINT_32 u4ImgS
+ 	prInitHifTxHeader->rInitWifiCmd.ucSeqNum = 0;
+ 
+ 	/* 3. Setup DOWNLOAD_BUF */
+-	kalMemCopy(prInitHifTxHeader->rInitWifiCmd.aucBuffer, pucImgSecBuf, u4ImgSecSize);
++	/* aucBuffer is a zero-length array inside an enclosing struct, so it
++	 * cannot become a flexible array member; addressing it by offset keeps
++	 * __builtin_object_size() from reporting the field as 0 bytes and
++	 * warning on every section of the image.
++	 */
++	kalMemCopy((PUINT_8)prInitHifTxHeader +
++		   OFFSET_OF(INIT_HIF_TX_HEADER_T, rInitWifiCmd.aucBuffer),
++		   pucImgSecBuf, u4ImgSecSize);
+ 
+ 	/* 4. Send FW_Download command */
+ 	if (nicTxInitCmd(prAdapter, prCmdInfo) != WLAN_STATUS_SUCCESS) {
+--- a/wlan/include/nic_cmd_event.h
++++ b/wlan/include/nic_cmd_event.h
+@@ -943,7 +943,11 @@ typedef struct _WIFI_CMD_T {
+ 	UINT_8 ucReserved2[3];
+ 	UINT_32 au4Reserved3[4];	/* padding fields */
+ #endif
+-	UINT_8 aucBuffer[0];
++	/* a zero-length array reads as a 0-byte field to
++ * __builtin_object_size(), so every command body copied into it
++ * trips the fortify check; a flexible array member is unbounded
++ */
++	UINT_8 aucBuffer[];
+ } WIFI_CMD_T, *P_WIFI_CMD_T;
+ 
+ /* for Command Packet (via HIF-TX) */
+@@ -1804,7 +1808,10 @@ typedef struct _CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_V2_T {
+ 	UINT_8 eband; /*ENUM_BAND_T*/
+ 	UINT_8 usReserved[2];
+ 	UINT_32 countryCode;
+-	CMD_CHANNEL_POWER_LIMIT_V2 rChannelPowerLimit[0];
++	/* a zero-length array reads as a 0-byte field to
++ * __builtin_object_size(); a flexible array member is unbounded
++ */
++	CMD_CHANNEL_POWER_LIMIT_V2 rChannelPowerLimit[];
+ } CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_V2_T, *P_CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_V2_T;
+ 
+ #define TX_PWR_LIMIT_SECTION_NUM 5

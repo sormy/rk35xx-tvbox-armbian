@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 20 Sep 2026 13:50:00 -0400
+Subject: [PATCH] do not apply a regulatory domain from the notifier
+
+wiphy_apply_custom_regulatory() takes rtnl_lock(), and cfg80211 calls
+reg_notifier with it held: `iw reg set US` deadlocks rtnl, and every
+netlink user with it, sshd included.
+
+The call belongs before wiphy registration, where cfg80211_regd_set_wiphy()
+already makes it. Drop it from the notifier and keep the channel parsing
+the firmware needs. Measured: `iw reg set US` returns 0, the domain becomes
+DFS-FCC, and 2.4 GHz still associates in 2 s.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/wlan/os/linux/gl_cfg80211.c
++++ b/wlan/os/linux/gl_cfg80211.c
+@@ -3493,7 +3493,13 @@ DOMAIN_SEND_CMD:
+ 		}
+ 
+ 
+-		mtk_apply_custom_regulatory(pWiphy, pRegdom);
++		/* wiphy_apply_custom_regulatory() takes rtnl_lock(), and
++		 * cfg80211 calls this notifier holding it. Applying the domain
++		 * here deadlocks the thread against a lock it already owns and
++		 * strands the machine. The documented place is before
++		 * wiphy_register(), which cfg80211_regd_set_wiphy() already
++		 * does; only the channel parsing below belongs here.
++		 */
+ 	}
+ 
+ 
