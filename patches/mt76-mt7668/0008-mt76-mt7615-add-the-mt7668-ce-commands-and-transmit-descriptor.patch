@@ -1,0 +1,1296 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 8/12] wifi: mt76: mt7615: add the MT7668's CE commands and transmit descriptor
+
+A firmware that owns the MAC takes connections through the flat CE
+commands and needs its own transmit descriptor: data goes to the lmac
+port with a 44-byte append carrying the bss index, management is a
+command on the mcu port, the descriptor sets the retry count and
+lifetime, and a management frame without a rate from mac80211 uses the
+band's lowest basic rate.
+
+Add both in new files, the commands as an mt7615_mcu_ops table: the
+firmware handles block ack, the station table and power state, so the
+host only raises and drops the BSS. Nothing uses them yet.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt76_connac_mcu.h	2026-08-09 14:25:30
++++ b/mt76_connac_mcu.h	2026-09-21 12:00:00
+@@ -1331,8 +1331,13 @@
+ 	MCU_CE_CMD_TEST_CTRL = 0x01,
+ 	MCU_CE_CMD_START_HW_SCAN = 0x03,
+ 	MCU_CE_CMD_SET_PS_PROFILE = 0x05,
++	MCU_CE_CMD_ADD_REMOVE_KEY = 0x07,
+ 	MCU_CE_CMD_SET_RX_FILTER = 0x0a,
+ 	MCU_CE_CMD_SET_CHAN_DOMAIN = 0x0f,
++	MCU_CE_CMD_BSS_ACTIVATE_CTRL = 0x11,
++	MCU_CE_CMD_SET_BSS_INFO = 0x12,
++	MCU_CE_CMD_UPDATE_STA_RECORD = 0x13,
++	MCU_CE_CMD_REMOVE_STA_RECORD = 0x14,
+ 	MCU_CE_CMD_SET_BSS_CONNECTED = 0x16,
+ 	MCU_CE_CMD_SET_BSS_ABORT = 0x17,
+ 	MCU_CE_CMD_CANCEL_HW_SCAN = 0x1b,
+--- a/mt7615/mac_ce.c	2026-08-09 14:25:30
++++ b/mt7615/mac_ce.c	2026-09-21 12:00:00
+@@ -0,0 +1,210 @@
++// SPDX-License-Identifier: ISC
++/* Copyright (C) 2026 Artem Butusov <art.sormy@gmail.com> */
++
++/* The transmit descriptor of a part whose firmware owns the MAC: data goes to
++ * the lmac port with an append, the firmware building the 802.11 header of an
++ * ethernet frame; management is a command on the mcu port; rate, aggregation
++ * and status are the firmware's.
++ */
++
++#include <linux/etherdevice.h>
++#include "mt7615.h"
++#include "mac.h"
++
++/* the header the mcu port puts ahead of a frame */
++#define MT7668_PSE_HDR_LEN	4
++/* transmit attempts, the same for every queue */
++#define MT7668_TX_COUNT	30
++/* the lifetime of a frame with an 802.11 header, 2000 ms in units of 32 tu */
++#define MT7668_TX_TIME	61
++/* the spatial extension index the firmware transmits with */
++#define MT7668_SPE_IDX	0x18
++
++int mt7668_mac_txd_append_len(struct mt7615_dev *dev, struct sk_buff *skb)
++{
++	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
++
++	/* every data frame goes to the lmac port, which wants the append */
++	if (!dev->fw->owns_mac ||
++	    (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) &&
++	     !ieee80211_is_data(hdr->frame_control)))
++		return 0;
++
++	return sizeof(struct mt7668_txd_append);
++}
++EXPORT_SYMBOL_GPL(mt7668_mac_txd_append_len);
++
++/* the lowest basic rate of the band as a tx rate code, where mt76's hw_value
++ * keeps the phy type a byte up
++ */
++u16 mt7668_mac_basic_rate(struct mt76_phy *mphy)
++{
++	struct ieee80211_supported_band *sband;
++	u16 rate;
++
++	sband = mphy->hw->wiphy->bands[mphy->chandef.chan->band];
++	rate = sband->bitrates[0].hw_value;
++
++	return FIELD_PREP(MT_TX_RATE_MODE, rate >> 8) |
++	       FIELD_PREP(MT_TX_RATE_IDX, rate & 0xff);
++}
++
++/* the rate of a frame with an 802.11 header: mac80211's if it gave one, else
++ * the band's lowest basic rate, fixed
++ */
++static int mt7668_mac_80211_rate(struct mt7615_dev *dev,
++				 struct mt76_phy *mphy, __le32 *txwi,
++				 struct sk_buff *skb, bool mmpdu)
++{
++	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++	struct ieee80211_tx_rate *rate = &info->control.rates[0];
++	u16 rateval;
++	u8 bw;
++
++	txwi[2] |= cpu_to_le32(MT_TXD2_FIX_RATE);
++
++	if (rate->idx < 0 || !rate->count ||
++	    (info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE)) {
++		if (mmpdu)
++			txwi[6] = cpu_to_le32(FIELD_PREP(MT_TXD6_TX_RATE,
++							 mt7668_mac_basic_rate(mphy)));
++		else
++			txwi[2] &= ~cpu_to_le32(MT_TXD2_FIX_RATE);
++		return MT7668_TX_COUNT;
++	}
++
++	rateval = mt7615_mac_tx_rate_val(dev, mphy, rate,
++					 info->flags & IEEE80211_TX_CTL_STBC,
++					 &bw);
++	/* the firmware picks the bandwidth itself */
++	txwi[6] = cpu_to_le32(FIELD_PREP(MT_TXD6_BW, bw) |
++			      FIELD_PREP(MT_TXD6_TX_RATE, rateval));
++	if (rate->flags & IEEE80211_TX_RC_SHORT_GI)
++		txwi[6] |= cpu_to_le32(MT_TXD6_SGI);
++	if (info->flags & IEEE80211_TX_CTL_LDPC)
++		txwi[6] |= cpu_to_le32(MT_TXD6_LDPC);
++	if (!mmpdu &&
++	    !(rate->flags & (IEEE80211_TX_RC_MCS | IEEE80211_TX_RC_VHT_MCS)))
++		txwi[2] |= cpu_to_le32(MT_TXD2_BA_DISABLE);
++
++	return rate->count;
++}
++
++int mt7668_mac_write_txwi(struct mt7615_dev *dev, __le32 *txwi,
++			  struct sk_buff *skb, struct mt76_wcid *wcid,
++			  int pid, struct ieee80211_key_conf *key,
++			  enum mt76_txq_id qid)
++{
++	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
++	bool is_8023 = info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP;
++	/* an 802.3 frame starts with its destination */
++	bool multicast = is_multicast_ether_addr(is_8023 ? skb->data :
++						 hdr->addr1);
++	int sz_append = mt7668_mac_txd_append_len(dev, skb);
++	struct ieee80211_vif *vif = info->control.vif;
++	struct mt76_phy *mphy = &dev->mphy;
++	u8 fc_type = 0, fc_stype = 0, omac_idx = 0, wmm_idx = 0, q_idx;
++	u8 port = MT_TX_PORT_IDX_LMAC;
++	int eth_type_ofs = MT7668_PSE_HDR_LEN;
++	int tx_count = MT7668_TX_COUNT;
++	u32 val;
++
++	if (vif) {
++		struct mt76_vif_link *mvif = (struct mt76_vif_link *)vif->drv_priv;
++
++		omac_idx = mvif->omac_idx;
++		wmm_idx = mvif->wmm_idx;
++	}
++
++	if (qid >= MT_TXQ_PSD)
++		q_idx = MT_LMAC_ALTX0;
++	else
++		q_idx = wmm_idx * MT7615_MAX_WMM_SETS +
++			mt7615_lmac_mapping(dev, skb_get_queue_mapping(skb));
++
++	memset(txwi, 0, MT_TXD_SIZE);
++
++	if (is_8023) {
++		eth_type_ofs += ETH_HLEN - ETH_TLEN;
++		val = FIELD_PREP(MT_TXD1_HDR_FORMAT, MT_HDR_FORMAT_802_3) |
++		      FIELD_PREP(MT_TXD1_TID, skb->priority &
++					      IEEE80211_QOS_CTL_TID_MASK) |
++		      FIELD_PREP(MT_TXD1_PKT_FMT, MT_TX_TYPE_CT);
++		if (get_unaligned_be16(skb->data + 2 * ETH_ALEN) >=
++		    ETH_P_802_3_MIN)
++			val |= MT_TXD1_ETH_802_3;
++	} else {
++		__le16 fc = hdr->frame_control;
++		bool mmpdu = !ieee80211_is_data(fc);
++
++		eth_type_ofs += ieee80211_get_hdrlen_from_skb(skb);
++		if (!mmpdu)
++			eth_type_ofs += sizeof(rfc1042_header);
++		fc_type = (le16_to_cpu(fc) & IEEE80211_FCTL_FTYPE) >> 2;
++		fc_stype = (le16_to_cpu(fc) & IEEE80211_FCTL_STYPE) >> 4;
++		val = FIELD_PREP(MT_TXD1_HDR_FORMAT, MT_HDR_FORMAT_802_11) |
++		      FIELD_PREP(MT_TXD1_HDR_INFO,
++				 ieee80211_get_hdrlen_from_skb(skb) / 2) |
++		      FIELD_PREP(MT_TXD1_PKT_FMT,
++				 mmpdu ? MT_TX_TYPE_CMD : MT_TX_TYPE_CT);
++		/* management is a command on the mcu port */
++		if (mmpdu) {
++			port = MT_TX_PORT_IDX_MCU;
++			q_idx = MT_TX_MCU_PORT_RX_Q1;
++		}
++		txwi[2] = cpu_to_le32(FIELD_PREP(MT_TXD2_MAX_TX_TIME,
++						 MT7668_TX_TIME));
++		txwi[3] = cpu_to_le32(MT_TXD3_DURATION_CTRL);
++		tx_count = mt7668_mac_80211_rate(dev, mphy, txwi, skb, mmpdu);
++	}
++
++	/* the ethertype's offset is in words, from the mcu port's header */
++	txwi[0] = cpu_to_le32(FIELD_PREP(MT_TXD0_P_IDX, port) |
++			      FIELD_PREP(MT_TXD0_Q_IDX, q_idx) |
++			      FIELD_PREP(MT_TXD0_TX_BYTES, skb->len +
++					 MT_TXD_SIZE + sz_append) |
++			      FIELD_PREP(MT_TXD0_ETH_TYPE_OFFSET,
++					 eth_type_ofs / 2));
++	txwi[1] = cpu_to_le32(val | MT_TXD1_LONG_FORMAT |
++			      FIELD_PREP(MT_TXD1_WLAN_IDX, wcid->idx) |
++			      FIELD_PREP(MT_TXD1_OWN_MAC, omac_idx));
++	txwi[2] |= cpu_to_le32(FIELD_PREP(MT_TXD2_FRAME_TYPE, fc_type) |
++			       FIELD_PREP(MT_TXD2_SUB_TYPE, fc_stype) |
++			       FIELD_PREP(MT_TXD2_MULTICAST, multicast));
++	if (key)
++		txwi[3] |= cpu_to_le32(MT_TXD3_PROTECT_FRAME);
++	txwi[3] |= cpu_to_le32(FIELD_PREP(MT_TXD3_REM_TX_COUNT, tx_count));
++	if (info->flags & IEEE80211_TX_CTL_NO_ACK)
++		txwi[3] |= cpu_to_le32(MT_TXD3_NO_ACK);
++	if (!is_8023 && (info->flags & IEEE80211_TX_CTL_INJECTED)) {
++		u16 seqno = le16_to_cpu(hdr->seq_ctrl);
++
++		if (ieee80211_is_back_req(hdr->frame_control))
++			seqno = le16_to_cpu(((struct ieee80211_bar *)hdr)->start_seq_num);
++		txwi[3] |= cpu_to_le32(MT_TXD3_SN_VALID |
++				       FIELD_PREP(MT_TXD3_SEQ,
++						  IEEE80211_SEQ_TO_SN(seqno)));
++	}
++
++	val = FIELD_PREP(MT_TXD5_PID, pid);
++	/* a status only for a frame something waits on; one per data frame
++	 * floods the receive path
++	 */
++	if (!is_8023 || pid >= MT_PACKET_ID_FIRST)
++		val |= MT_TXD5_TX_STATUS_HOST;
++	txwi[5] = cpu_to_le32(val);
++
++	txwi[7] = cpu_to_le32(FIELD_PREP(MT_TXD7_SPE_IDX, MT7668_SPE_IDX));
++
++	if (sz_append) {
++		struct mt7668_txd_append *append = (void *)(txwi + MT_TXD_SIZE / 4);
++
++		memset(append, 0, sz_append);
++		append->pkt_flags = cpu_to_le16(MT7668_TXD_APPEND_CT_WITH_TXD);
++		append->bss_idx = omac_idx;
++	}
++
++	return 0;
++}
+--- a/mt7615/mac.c	2026-08-09 14:25:30
++++ b/mt7615/mac.c	2026-09-21 12:00:00
+@@ -649,7 +649,7 @@
+ 	return 0;
+ }
+ 
+-static u16
++u16
+ mt7615_mac_tx_rate_val(struct mt7615_dev *dev,
+ 		       struct mt76_phy *mphy,
+ 		       const struct ieee80211_tx_rate *rate,
+--- a/mt7615/mac.h	2026-08-09 14:25:30
++++ b/mt7615/mac.h	2026-09-21 12:00:00
+@@ -169,6 +169,11 @@
+ #define MT_TXD1_TXD_LEN			BIT(16)
+ #define MT_TXD1_LONG_FORMAT		BIT(15)
+ #define MT_TXD1_HDR_FORMAT		GENMASK(14, 13)
++/* an ethernet II frame; the top bit of MT_TXD1_HDR_INFO, which a frame that is
++ * not 802.11 does not use for a header length
++ */
++#define MT_TXD1_ETH_802_3		BIT(12)
++
+ #define MT_TXD1_HDR_INFO		GENMASK(12, 8)
+ #define MT_TXD1_WLAN_IDX		GENMASK(7, 0)
+ 
+@@ -194,6 +199,7 @@
+ #define MT_TXD3_SEQ			GENMASK(27, 16)
+ #define MT_TXD3_REM_TX_COUNT		GENMASK(15, 11)
+ #define MT_TXD3_TX_COUNT		GENMASK(10, 6)
++#define MT_TXD3_DURATION_CTRL		BIT(4)
+ #define MT_TXD3_PROTECT_FRAME		BIT(1)
+ #define MT_TXD3_NO_ACK			BIT(0)
+ 
+@@ -322,4 +328,19 @@
+ 	return MT_WTBL_BASE(dev) + wcid * MT_WTBL_ENTRY_SIZE;
+ }
+ 
++/* what an MT7668 data frame carries between its descriptor and the frame; the
++ * firmware reads the bss index from here
++ */
++struct mt7668_txd_append {
++	__le16 pkt_flags;
++	__le16 msdu_token;
++	u8 bss_idx;
++	u8 reserved[2];
++	u8 buf_num;
++	__le32 buf_ptr[6];
++	__le16 buf_len[6];
++} __packed;
++
++#define MT7668_TXD_APPEND_CT_WITH_TXD	BIT(0)
++
+ #endif
+--- a/mt7615/Makefile	2026-08-09 14:25:30
++++ b/mt7615/Makefile	2026-09-21 12:00:00
+@@ -8,7 +8,7 @@
+ 
+ CFLAGS_trace.o := -I$(src)
+ 
+-mt7615-common-y := main.o init.o mcu.o eeprom.o mac.o \
++mt7615-common-y := main.o init.o mcu.o mcu_ce.o eeprom.o mac.o mac_ce.o \
+ 		   debugfs.o trace.o
+ mt7615-common-$(CONFIG_NL80211_TESTMODE) += testmode.o
+ 
+--- a/mt7615/mcu_ce.c	2026-08-09 14:25:30
++++ b/mt7615/mcu_ce.c	2026-09-21 12:00:00
+@@ -0,0 +1,910 @@
++// SPDX-License-Identifier: ISC
++/* Copyright (C) 2026 Artem Butusov <art.sormy@gmail.com> */
++
++/* The CE command set of a firmware that owns the MAC: flat structures. */
++
++#include <linux/etherdevice.h>
++#include "mt7615.h"
++#include "mcu.h"
++
++#define MT7668_PHY_HR_DSSS	BIT(0)
++#define MT7668_PHY_ERP	BIT(1)
++#define MT7668_PHY_OFDM	BIT(3)
++#define MT7668_PHY_HT	BIT(4)
++#define MT7668_PHY_VHT	BIT(5)
++#define MT7668_RATES_2G	0x3fcf
++#define MT7668_RATES_5G	0x3fc0
++#define MT7668_BASIC_2G	0x000f
++#define MT7668_BASIC_5G	0x0540
++#define MT7668_STA_LEGACY_AP	(BIT(0) | BIT(6))
++#define MT7668_JOIN_INTERVAL	4000	/* ms */
++#define MT7668_JOIN_GRANT_TIMEOUT	(5 * HZ)
++#define MT7668_ROC_TOKEN	1
++#define MT7668_ROC_JOIN		0	/* request type */
++#define MT7668_WTBL_RESERVED	0xff
++#define MT7668_STA_IDX	0
++
++#define MT7668_MCS_ALL	0xff
++#define MT7668_NSS		2
++#define MT7668_STA_NONE	0xfe
++#define MT7668_RTS_LEGACY	3
++/* the capability reply's transmit resource element */
++#define MT7668_CAP_TX_RESOURCE	0
++/* TxBaSize and RxHtBaSize, and TxMaxAmsduInAmpduLen */
++#define MT7668_BA_SIZE	64
++#define MT7668_MAX_AMSDU_LEN	0x0fff
++
++enum {
++	MT7668_BSS_CONNECTED,
++	MT7668_BSS_DISCONNECTED,
++};
++
++/* station states, by the frame classes the part will accept */
++enum {
++	MT7668_STA_STATE_1,		/* class 1 */
++	MT7668_STA_STATE_2,		/* class 1 and 2 */
++	MT7668_STA_STATE_3,		/* class 1, 2 and 3 */
++};
++
++struct mt7668_bss_rlm {
++	u8 bss_idx;
++	u8 band;
++	u8 pri_ch;
++	u8 sco;
++	u8 erp_prot_mode;
++	u8 ht_prot_mode;
++	u8 gf_mode;
++	u8 rifs_mode;
++	__le16 ht_op_info3;
++	__le16 ht_op_info2;
++	u8 ht_op_info1;
++	u8 short_preamble;
++	u8 short_slot;
++	u8 vht_bw;
++	u8 vht_ch_s1;
++	u8 vht_ch_s2;
++	__le16 vht_basic_mcs;
++	u8 nss;
++	u8 __rsv;
++} __packed;
++
++struct mt7668_bss_info {
++	u8 bss_idx;
++	u8 conn_state;
++	u8 op_mode;
++	u8 ssid_len;
++	u8 ssid[IEEE80211_MAX_SSID_LEN];
++	u8 bssid[ETH_ALEN];
++	u8 qbss;
++	u8 __rsv0;
++	__le16 op_rates;
++	__le16 basic_rates;
++	u8 ap_sta_idx;
++	u8 __rsv1;
++	__le16 fixed_rate;
++	u8 non_ht_phy_type;
++	u8 auth_mode;
++	u8 enc_status;
++	u8 phy_type_set;
++	u8 wapi_mode;
++	u8 ap_mode;
++	u8 bmc_wlan_idx;
++	u8 hidden_ssid_mode;
++	u8 disconnect_detect_th;
++	u8 __rsv2[3];
++	__le32 private_data;
++	struct mt7668_bss_rlm rlm;
++	u8 dbdc_band;
++	u8 wmm_set;
++	u8 dbdc_action;
++	u8 nss;
++	u8 __rsv3[22];
++} __packed;
++
++struct mt7668_sta_rec {
++	u8 sta_idx;
++	u8 sta_type;
++	u8 addr[ETH_ALEN];
++	__le16 aid;
++	__le16 listen_interval;
++	u8 bss_idx;
++	u8 phy_type_set;
++	__le16 non_ht_rates;
++	__le16 basic_rates;
++	u8 qos;
++	u8 uapsd;
++	u8 state;
++	u8 mcs_set;
++	u8 sup_mcs32;
++	u8 __rsv0;
++	u8 rx_mcs_bitmask[10];
++	__le16 rx_highest_rate;
++	__le32 tx_rate_info;
++	__le16 ht_cap_info;
++	__le16 ht_ext_cap;
++	__le32 tx_bf_cap;
++	u8 ampdu_param;
++	u8 asel_cap;
++	u8 rcpi;
++	u8 need_resp;
++	u8 uapsd_ac;
++	u8 uapsd_sp;
++	u8 wlan_idx;
++	u8 bmc_wlan_idx;
++	__le32 vht_cap_info;
++	__le16 vht_rx_mcs_map;
++	__le16 vht_rx_highest_rate;
++	__le16 vht_tx_mcs_map;
++	__le16 vht_tx_highest_rate;
++	u8 rts_policy;
++	u8 vht_op_mode;
++	u8 traffic_type;
++	u8 tx_gf_mode;
++	u8 tx_sgi_mode;
++	u8 tx_stbc_mode;
++	__le16 fixed_rate;
++	u8 tx_ampdu;
++	u8 rx_ampdu;
++	u8 __rsv1[2];
++	__le32 fixed_phy_rate;
++	__le16 max_link_speed;
++	__le16 min_link_speed;
++	__le32 flags;
++	u8 tx_ba_size;
++	u8 rx_ba_size;
++	u8 __rsv2[2];
++	u8 tx_bf_pfmu[32];
++	u8 tx_amsdu_in_ampdu;
++	u8 rx_amsdu_in_ampdu;
++	u8 __rsv3[2];
++	__le32 tx_max_amsdu_len;
++} __packed;
++
++/* the part numbers its bands from one, zero meaning none */
++static u8 mt7668_band(struct cfg80211_chan_def *chandef)
++{
++	return chandef->chan->band == NL80211_BAND_2GHZ ? 1 : 2;
++}
++
++static u8 mt7668_phy_types(struct cfg80211_chan_def *chandef,
++			   struct ieee80211_sta *sta)
++{
++	if (chandef->chan->band == NL80211_BAND_2GHZ)
++		return MT7668_PHY_HR_DSSS | MT7668_PHY_ERP |
++		       MT7668_PHY_HT;
++
++	if (sta && sta->deflink.vht_cap.vht_supported)
++		return MT7668_PHY_OFDM | MT7668_PHY_HT |
++		       MT7668_PHY_VHT;
++
++	return MT7668_PHY_OFDM | MT7668_PHY_HT;
++}
++
++/* where the secondary channel sits */
++enum {
++	MT7668_SCN,
++	MT7668_SCA,
++	MT7668_SCB = 3,
++};
++
++static u8 mt7668_sco(struct cfg80211_chan_def *chandef)
++{
++	int pri40;
++
++	switch (chandef->width) {
++	case NL80211_CHAN_WIDTH_40:
++	case NL80211_CHAN_WIDTH_80:
++	case NL80211_CHAN_WIDTH_80P80:
++	case NL80211_CHAN_WIDTH_160:
++		pri40 = cfg80211_chandef_primary(chandef, NL80211_CHAN_WIDTH_40,
++						 NULL);
++		return pri40 > chandef->chan->center_freq ? MT7668_SCA
++							   : MT7668_SCB;
++	default:
++		return MT7668_SCN;
++	}
++}
++
++static u8 mt7668_vht_bw(struct cfg80211_chan_def *chandef)
++{
++	switch (chandef->width) {
++	case NL80211_CHAN_WIDTH_80:
++		return IEEE80211_VHT_CHANWIDTH_80MHZ;
++	case NL80211_CHAN_WIDTH_80P80:
++		return IEEE80211_VHT_CHANWIDTH_80P80MHZ;
++	case NL80211_CHAN_WIDTH_160:
++		return IEEE80211_VHT_CHANWIDTH_160MHZ;
++	default:
++		return IEEE80211_VHT_CHANWIDTH_USE_HT;
++	}
++}
++
++/* the firmware transmits no wider than the bss it is given */
++static void mt7668_fill_rlm(struct mt7668_bss_rlm *rlm,
++			    struct cfg80211_chan_def *chandef, u8 bss_idx)
++{
++	rlm->bss_idx = bss_idx;
++	rlm->band = mt7668_band(chandef);
++	rlm->pri_ch = chandef->chan->hw_value;
++	rlm->nss = MT7668_NSS;
++	rlm->sco = mt7668_sco(chandef);
++	if (rlm->sco != MT7668_SCN)
++		rlm->ht_op_info1 = rlm->sco | IEEE80211_HT_PARAM_CHAN_WIDTH_ANY;
++
++	rlm->vht_bw = mt7668_vht_bw(chandef);
++	if (rlm->vht_bw != IEEE80211_VHT_CHANWIDTH_USE_HT)
++		rlm->vht_ch_s1 =
++			ieee80211_frequency_to_channel(chandef->center_freq1);
++	if (chandef->center_freq2)
++		rlm->vht_ch_s2 =
++			ieee80211_frequency_to_channel(chandef->center_freq2);
++}
++
++static int mt7668_mcu_send(struct mt7615_dev *dev, int cmd, const void *req,
++			   int len)
++{
++	int ret;
++
++	ret = mt76_mcu_send_msg(&dev->mt76, cmd, req, len, false);
++	if (ret)
++		dev_err(dev->mt76.dev, "ce command %#04x failed: %d\n",
++			cmd & 0xff, ret);
++
++	return ret;
++}
++
++/* the station record removal that takes every station of the bss */
++#define MT7668_DROP_BSS	1
++
++static int mt7668_mcu_drop_bss(struct mt7615_dev *dev, u8 bss_idx)
++{
++	struct {
++		u8 action;
++		u8 sta_idx;
++		u8 bss_idx;
++		u8 __rsv;
++	} __packed req = {
++		.action = MT7668_DROP_BSS,
++		.bss_idx = bss_idx,
++	};
++
++	return mt7668_mcu_send(dev, MCU_CE_CMD(REMOVE_STA_RECORD), &req,
++			       sizeof(req));
++}
++
++struct mt7668_cap_hdr {
++	__le16 n_element;
++	u8 __rsv[2];
++} __packed;
++
++struct mt7668_cap_tlv {
++	__le32 type;
++	__le32 len;
++} __packed;
++
++struct mt7668_tx_resource {
++	__le32 mcu_total;
++	__le32 mcu_unit;
++	__le32 lmac_total;
++	__le32 lmac_unit;
++} __packed;
++
++/* how many frames each port holds; one frame more than the lmac port holds
++ * stalls the sdio write behind it
++ */
++int mt7668_mcu_tx_resource(struct mt7615_dev *dev)
++{
++	struct mt76_sdio *sdio = &dev->mt76.sdio;
++	struct mt7668_tx_resource *res;
++	struct mt7668_cap_hdr *hdr;
++	struct mt7668_cap_tlv *tlv;
++	struct sk_buff *skb;
++	int i, n, ret;
++
++	ret = mt76_mcu_send_and_get_msg(&dev->mt76, MCU_CE_CMD(GET_NIC_CAPAB),
++					NULL, 0, true, &skb);
++	if (ret)
++		return ret;
++
++	if (skb->len < sizeof(struct mt7615_mcu_rxd) + sizeof(*hdr)) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	skb_pull(skb, sizeof(struct mt7615_mcu_rxd));
++	hdr = (void *)skb->data;
++	n = le16_to_cpu(hdr->n_element);
++	skb_pull(skb, sizeof(*hdr));
++
++	for (i = 0; i < n && skb->len >= sizeof(*tlv); i++) {
++		int len;
++
++		tlv = (void *)skb->data;
++		skb_pull(skb, sizeof(*tlv));
++		len = le32_to_cpu(tlv->len);
++		if (skb->len < len)
++			break;
++
++		if (le32_to_cpu(tlv->type) == MT7668_CAP_TX_RESOURCE &&
++		    len >= sizeof(*res)) {
++			res = (void *)skb->data;
++			sdio->pse_mcu_quota_max = le32_to_cpu(res->mcu_total);
++			sdio->sched.pse_data_quota = le32_to_cpu(res->lmac_total);
++		}
++		skb_pull(skb, len);
++	}
++
++out:
++	dev_kfree_skb(skb);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(mt7668_mcu_tx_resource);
++
++static int mt7668_mcu_abort_pm(struct mt7615_dev *dev, u8 bss_idx)
++{
++	struct {
++		u8 bss_idx;
++		u8 __rsv[3];
++	} __packed req = {
++		.bss_idx = bss_idx,
++	};
++
++	return mt7668_mcu_send(dev, MCU_CE_CMD(SET_BSS_ABORT), &req,
++			       sizeof(req));
++}
++
++int mt7668_mcu_activate(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++			bool enable)
++{
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	struct {
++		u8 bss_idx;
++		u8 active;
++		u8 network_type;	/* 0: the infrastructure network */
++		u8 omac_idx;
++		u8 omac_addr[ETH_ALEN];
++		u8 bmc_wcid;
++		u8 __rsv;
++	} __packed req = {
++		.bss_idx = mvif->mt76.idx,
++		.active = enable,
++		.omac_idx = mvif->mt76.omac_idx,
++	};
++
++	memcpy(req.omac_addr, vif->addr, ETH_ALEN);
++
++	return mt7668_mcu_send(phy->dev, MCU_CE_CMD(BSS_ACTIVATE_CTRL),
++			       &req, sizeof(req));
++}
++
++static int mt7668_mcu_bss(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++			  struct ieee80211_sta *sta, u8 conn_state)
++{
++	struct cfg80211_chan_def *chandef = &phy->mt76->chandef;
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	bool band_2g = chandef->chan->band == NL80211_BAND_2GHZ;
++	struct mt7668_bss_info req = {
++		.bss_idx = mvif->mt76.idx,
++		.conn_state = conn_state,
++		.ssid_len = vif->cfg.ssid_len,
++		.nss = MT7668_NSS,
++		.fixed_rate = cpu_to_le16(mt7668_mac_basic_rate(phy->mt76)),
++	};
++
++	BUILD_BUG_ON(sizeof(req) != 116);
++
++	mt7668_fill_rlm(&req.rlm, chandef, mvif->mt76.idx);
++
++	/* before the join the bss carries neither ssid nor bssid */
++	if (conn_state == MT7668_BSS_DISCONNECTED) {
++		req.ap_sta_idx = MT7668_STA_NONE;
++		req.bmc_wlan_idx = MT7668_WTBL_RESERVED;
++	} else {
++		req.op_rates = cpu_to_le16(band_2g ? MT7668_RATES_2G
++						   : MT7668_RATES_5G);
++		req.basic_rates = cpu_to_le16(band_2g ? MT7668_BASIC_2G
++						      : MT7668_BASIC_5G);
++		req.non_ht_phy_type = band_2g ? ffs(MT7668_PHY_ERP) - 1
++					      : ffs(MT7668_PHY_OFDM) - 1;
++		req.phy_type_set = mt7668_phy_types(chandef, sta);
++		req.qbss = 1;
++		req.rlm.short_slot = 1;
++		memcpy(req.ssid, vif->cfg.ssid, vif->cfg.ssid_len);
++		if (vif->bss_conf.bssid)
++			memcpy(req.bssid, vif->bss_conf.bssid, ETH_ALEN);
++	}
++
++	return mt7668_mcu_send(phy->dev, MCU_CE_CMD(SET_BSS_INFO), &req,
++			       sizeof(req));
++}
++
++static int mt7668_mcu_sta(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++			  struct ieee80211_sta *sta, u8 state)
++{
++	struct cfg80211_chan_def *chandef = &phy->mt76->chandef;
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	bool band_2g = chandef->chan->band == NL80211_BAND_2GHZ;
++	struct mt7615_sta *msta = (struct mt7615_sta *)sta->drv_priv;
++	struct mt7615_dev *dev = phy->dev;
++	struct mt7668_sta_rec req = {
++		.sta_idx = MT7668_STA_IDX,
++		.sta_type = MT7668_STA_LEGACY_AP,
++		.bss_idx = mvif->mt76.idx,
++		.phy_type_set = mt7668_phy_types(chandef, sta),
++		.non_ht_rates = cpu_to_le16(band_2g ? MT7668_RATES_2G
++						    : MT7668_RATES_5G),
++		.basic_rates = cpu_to_le16(band_2g ? MT7668_BASIC_2G
++						   : MT7668_BASIC_5G),
++		.qos = 1,
++		.uapsd = 1,
++		.state = state,
++		.wlan_idx = msta->wcid.idx,
++		/* the part's own reserved entry, which is not the last of the
++		 * table the way mt76 counts it
++		 */
++		.bmc_wlan_idx = MT7668_WTBL_RESERVED,
++		.rts_policy = MT7668_RTS_LEGACY,
++		.fixed_rate = cpu_to_le16(mt7668_mac_basic_rate(phy->mt76)),
++		.tx_ampdu = 1,
++		/* the firmware agrees a receive session itself and reports it,
++		 * and the host reorders
++		 */
++		.rx_ampdu = 1,
++		.tx_ba_size = MT7668_BA_SIZE,
++		.rx_ba_size = MT7668_BA_SIZE,
++		.tx_max_amsdu_len = cpu_to_le32(MT7668_MAX_AMSDU_LEN),
++	};
++
++	BUILD_BUG_ON(sizeof(req) != 136);
++
++	memcpy(req.addr, sta->addr, ETH_ALEN);
++
++	if (state == MT7668_STA_STATE_3) {
++		struct ieee80211_sta_ht_cap *ht = &sta->deflink.ht_cap;
++		struct ieee80211_sta_vht_cap *vht = &sta->deflink.vht_cap;
++		int signal = -ewma_signal_read(&msta->wcid.rssi);
++
++		/* the association id is this station's, not the peer's */
++		req.aid = cpu_to_le16(vif->cfg.aid);
++		req.listen_interval =
++			cpu_to_le16(phy->mt76->hw->conf.listen_interval);
++		/* the firmware starts its rate selection from the peer's
++		 * signal, in 802.11k rcpi
++		 */
++		req.rcpi = clamp((signal + 110) * 2, 0, 220);
++		req.need_resp = 1;
++
++		/* the firmware picks the rates itself, from this record: left
++		 * without the peer's ht capabilities it stays on the floor
++		 */
++		if (ht->ht_supported) {
++			req.ht_cap_info = cpu_to_le16(ht->cap);
++			req.ampdu_param = ht->ampdu_factor |
++					  (ht->ampdu_density <<
++					   IEEE80211_HT_AMPDU_PARM_DENSITY_SHIFT);
++			req.mcs_set = MT7668_MCS_ALL;
++			memcpy(req.rx_mcs_bitmask, ht->mcs.rx_mask,
++			       sizeof(req.rx_mcs_bitmask));
++			req.tx_rate_info = cpu_to_le32(ht->mcs.tx_params);
++		}
++		if (vht->vht_supported) {
++			req.vht_cap_info = cpu_to_le32(vht->cap);
++			req.vht_rx_mcs_map = vht->vht_mcs.rx_mcs_map;
++			req.vht_rx_highest_rate = vht->vht_mcs.rx_highest;
++			req.vht_tx_mcs_map = vht->vht_mcs.tx_mcs_map;
++			req.vht_tx_highest_rate = vht->vht_mcs.tx_highest;
++			req.rx_amsdu_in_ampdu = 1;
++			/* without it the firmware transmits at 20 MHz on one
++			 * stream, whatever the bss says
++			 */
++			req.vht_op_mode = min_t(u8, sta->deflink.bandwidth,
++						IEEE80211_STA_RX_BW_160) |
++					  (sta->deflink.rx_nss - 1) <<
++					  IEEE80211_OPMODE_NOTIF_RX_NSS_SHIFT;
++		}
++	}
++
++	return mt7668_mcu_send(dev, MCU_CE_CMD(UPDATE_STA_RECORD),
++			       &req, sizeof(req));
++}
++
++/* the part's own cipher numbering */
++enum {
++	MT7668_CIPHER_NONE,
++	MT7668_CIPHER_WEP40,
++	MT7668_CIPHER_TKIP,
++	MT7668_CIPHER_TKIP_NO_MIC,
++	MT7668_CIPHER_CCMP,
++	MT7668_CIPHER_WEP104,
++	MT7668_CIPHER_BIP,
++	MT7668_CIPHER_WEP128,
++	MT7668_CIPHER_WPI,
++	MT7668_CIPHER_CCMP_CCX,
++	MT7668_CIPHER_GCMP,
++};
++
++u8 mt7668_mcu_cipher(u32 cipher)
++{
++	switch (cipher) {
++	case WLAN_CIPHER_SUITE_TKIP:
++		return MT7668_CIPHER_TKIP;
++	case WLAN_CIPHER_SUITE_CCMP:
++		return MT7668_CIPHER_CCMP;
++	case WLAN_CIPHER_SUITE_GCMP:
++		return MT7668_CIPHER_GCMP;
++	case WLAN_CIPHER_SUITE_AES_CMAC:
++		return MT7668_CIPHER_BIP;
++	default:
++		return MT7668_CIPHER_NONE;
++	}
++}
++
++int mt7668_mcu_key(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++		   struct ieee80211_sta *sta,
++		   struct ieee80211_key_conf *key)
++{
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	bool pairwise = !!(key->flags & IEEE80211_KEY_FLAG_PAIRWISE);
++	struct {
++		u8 add;
++		u8 tx_key;
++		u8 pairwise;
++		u8 authenticator;
++		u8 peer[ETH_ALEN];
++		u8 bss_idx;
++		u8 cipher;
++		u8 key_id;
++		u8 key_len;
++		u8 wlan_idx;
++		u8 mgmt_protection;
++		u8 material[32];
++		u8 rsc[16];
++	} __packed req = {
++		.add = 1,
++		/* a station transmits with its pairwise key, never the group one */
++		.tx_key = pairwise,
++		.pairwise = pairwise,
++		.bss_idx = mvif->mt76.idx,
++		.cipher = mt7668_mcu_cipher(key->cipher),
++		.key_id = key->keyidx,
++		.key_len = key->keylen,
++		/* the broadcast key lives in the entry the part named as the
++		 * bss's own when it was activated, not in the peer's
++		 */
++		.wlan_idx = MT7668_WTBL_BMC,
++	};
++
++	BUILD_BUG_ON(sizeof(req) != 64);
++
++	memcpy(req.material, key->key, key->keylen);
++	if (sta) {
++		struct mt7615_sta *msta = (struct mt7615_sta *)sta->drv_priv;
++
++		memcpy(req.peer, sta->addr, ETH_ALEN);
++		if (pairwise)
++			req.wlan_idx = msta->wcid.idx;
++	} else {
++		memcpy(req.peer, vif->bss_conf.bssid, ETH_ALEN);
++	}
++
++	return mt7668_mcu_send(phy->dev, MCU_CE_CMD(ADD_REMOVE_KEY), &req,
++			       sizeof(req));
++}
++
++/* what the firmware hands up: its receive filter is a firmware setting, not the
++ * MT_WF_RFCR register
++ */
++enum {
++	MT7668_RX_DIRECTED	= BIT(0),
++	MT7668_RX_MULTICAST	= BIT(1),
++	MT7668_RX_ALL_MCAST	= BIT(2),
++	MT7668_RX_BROADCAST	= BIT(3),
++};
++
++static int mt7668_mcu_rx_filter(struct mt7615_dev *dev)
++{
++	struct {
++		__le32 filter;
++		u8 __rsv[64];
++	} __packed req = {
++		.filter = cpu_to_le32(MT7668_RX_DIRECTED |
++				      MT7668_RX_MULTICAST |
++				      MT7668_RX_ALL_MCAST |
++				      MT7668_RX_BROADCAST),
++	};
++
++	BUILD_BUG_ON(sizeof(req) != 68);
++
++	return mt7668_mcu_send(dev, MCU_CE_CMD(SET_RX_FILTER), &req,
++			       sizeof(req));
++}
++
++/* the firmware takes the whole edca table, in its own access class order, and
++ * does not answer the ext command that sets one class at a time
++ */
++int mt7668_mcu_wmm(struct mt7615_phy *phy, struct ieee80211_vif *vif)
++{
++	static const u8 ac_to_mac80211[] = {
++		IEEE80211_AC_BE, IEEE80211_AC_BK,
++		IEEE80211_AC_VI, IEEE80211_AC_VO,
++	};
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	struct {
++		struct {
++			__le16 cw_min;
++			__le16 cw_max;
++			__le16 txop;
++			__le16 aifsn;
++			u8 guard_time;
++			u8 acm;
++		} __packed ac[IEEE80211_NUM_ACS];
++		u8 bss_idx;
++		u8 qbss;
++		u8 wmm_set;
++		u8 __rsv;
++	} __packed req = {
++		.bss_idx = mvif->mt76.idx,
++		.qbss = 1,
++	};
++	int i;
++
++	BUILD_BUG_ON(sizeof(req) != 44);
++
++	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
++		const struct ieee80211_tx_queue_params *p;
++
++		p = &mvif->tx_q[ac_to_mac80211[i]];
++		req.ac[i].cw_min = cpu_to_le16(p->cw_min);
++		req.ac[i].cw_max = cpu_to_le16(p->cw_max);
++		req.ac[i].txop = cpu_to_le16(p->txop);
++		req.ac[i].aifsn = cpu_to_le16(p->aifs);
++		req.ac[i].acm = p->acm;
++	}
++
++	return mt7668_mcu_send(phy->dev, MCU_CE_CMD(SET_EDCA_PARMS), &req,
++			       sizeof(req));
++}
++
++/* this firmware lacks the ext commands that take an interface down, so the bss
++ * goes down through the ce ones - a firmware still holding it will not power
++ * down when the driver unloads
++ */
++static void mt7668_mcu_leave(struct mt7615_phy *phy,
++			     struct ieee80211_vif *vif)
++{
++	mt7668_mcu_bss(phy, vif, NULL, MT7668_BSS_DISCONNECTED);
++	mt7668_mcu_activate(phy, vif, false);
++}
++
++static int mt7668_mcu_privilege(struct mt7615_phy *phy,
++				struct ieee80211_vif *vif, bool enable)
++{
++	struct cfg80211_chan_def *chandef = &phy->mt76->chandef;
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	struct mt7615_dev *dev = phy->dev;
++	struct mt7615_roc_tlv req = {
++		.bss_idx = mvif->mt76.idx,
++		.token = MT7668_ROC_TOKEN,
++		.active = !enable,
++		.primary_chan = chandef->chan->hw_value,
++		.sco = mt7668_sco(chandef),
++		.band = mt7668_band(chandef),
++		.width = mt7668_vht_bw(chandef),
++		.freq_seg1 = ieee80211_frequency_to_channel(chandef->center_freq1),
++		.req_type = MT7668_ROC_JOIN,
++		.max_interval = cpu_to_le32(MT7668_JOIN_INTERVAL),
++	};
++	int ret;
++
++	BUILD_BUG_ON(sizeof(req) != 24);
++
++	phy->roc_grant = false;
++
++	ret = mt7668_mcu_send(dev, MCU_CE_CMD(SET_ROC), &req, sizeof(req));
++	if (ret || !enable)
++		return ret;
++
++	/* the part can take seconds to answer */
++	if (!wait_event_timeout(phy->roc_wait, phy->roc_grant,
++				MT7668_JOIN_GRANT_TIMEOUT)) {
++		dev_err(dev->mt76.dev, "no channel granted to join on\n");
++		/* it holds the channel reserved until it is handed back, and
++		 * nothing else - a scan included - can be given one meanwhile
++		 */
++		mt7668_mcu_privilege(phy, vif, false);
++		return -ETIMEDOUT;
++	}
++
++	return 0;
++}
++
++int mt7668_mcu_assoc(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++		     struct ieee80211_sta *sta)
++{
++	int ret;
++
++	ret = mt7668_mcu_bss(phy, vif, sta, MT7668_BSS_CONNECTED);
++	if (ret)
++		return ret;
++
++	ret = mt7668_mcu_sta(phy, vif, sta, MT7668_STA_STATE_3);
++	if (ret)
++		return ret;
++
++	return mt7668_mcu_rx_filter(phy->dev);
++}
++
++static int mt7668_mcu_join(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++			   struct ieee80211_sta *sta, bool enable)
++{
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	struct mt7615_dev *dev = phy->dev;
++	int ret;
++
++	if (!enable) {
++		/* with the station still recorded, or the bss still counted
++		 * connected, no later scan reports done
++		 */
++		mt7668_mcu_abort_pm(dev, mvif->mt76.idx);
++		mt7668_mcu_bss(phy, vif, NULL, MT7668_BSS_DISCONNECTED);
++		mt7668_mcu_drop_bss(dev, mvif->mt76.idx);
++		mt7668_mcu_activate(phy, vif, false);
++		return mt7668_mcu_privilege(phy, vif, false);
++	}
++
++	ret = mt7668_mcu_bss(phy, vif, sta, MT7668_BSS_DISCONNECTED);
++	if (ret)
++		return ret;
++
++	ret = mt7668_mcu_drop_bss(dev, mvif->mt76.idx);
++	if (ret)
++		return ret;
++
++	ret = mt7668_mcu_activate(phy, vif, true);
++	if (ret)
++		return ret;
++
++	ret = mt7668_mcu_privilege(phy, vif, true);
++	if (ret)
++		return ret;
++
++	ret = mt7668_mcu_sta(phy, vif, sta, MT7668_STA_STATE_1);
++	if (ret) {
++		dev_err(dev->mt76.dev, "join failed: %d\n", ret);
++		mt7668_mcu_privilege(phy, vif, false);
++	}
++
++	return ret;
++}
++
++/* the firmware answers the peer's ADDBA itself and reports the session, which
++ * the host still has to reorder
++ */
++struct mt7668_rx_addba {
++	u8 sta_idx;
++	u8 token;
++	__le16 param;
++	__le16 timeout;
++	__le16 ssc;
++} __packed;
++
++struct mt7668_rx_delba {
++	u8 sta_idx;
++	u8 tid;
++	u8 __rsv[2];
++} __packed;
++
++struct mt7668_ba_session {
++	u16 tid;
++	bool start;
++};
++
++static void mt7668_mcu_ba_iter(void *priv, u8 *mac, struct ieee80211_vif *vif)
++{
++	struct mt7668_ba_session *ba = priv;
++
++	if (vif->type != NL80211_IFTYPE_STATION || !vif->cfg.assoc)
++		return;
++
++	if (ba->start)
++		ieee80211_start_rx_ba_session_offl(vif, vif->bss_conf.bssid,
++						   ba->tid);
++	else
++		ieee80211_stop_rx_ba_session_offl(vif, vif->bss_conf.bssid,
++						  ba->tid);
++}
++
++void mt7668_mcu_ba_event(struct mt7615_dev *dev, struct sk_buff *skb)
++{
++	struct mt7615_mcu_rxd *rxd = (struct mt7615_mcu_rxd *)skb->data;
++	struct mt7668_ba_session ba = {
++		.start = rxd->eid == MT7668_EVENT_RX_ADDBA,
++	};
++
++	skb_pull(skb, sizeof(*rxd));
++	if (ba.start) {
++		struct mt7668_rx_addba *ev = (struct mt7668_rx_addba *)skb->data;
++
++		if (skb->len < sizeof(*ev))
++			return;
++		ba.tid = u16_get_bits(le16_to_cpu(ev->param),
++				      IEEE80211_ADDBA_PARAM_TID_MASK);
++	} else {
++		struct mt7668_rx_delba *ev = (struct mt7668_rx_delba *)skb->data;
++
++		if (skb->len < sizeof(*ev))
++			return;
++		ba.tid = ev->tid & IEEE80211_QOS_CTL_TID_MASK;
++	}
++
++	ieee80211_iterate_active_interfaces_atomic(mt76_hw(dev),
++						   IEEE80211_IFACE_ITER_NORMAL,
++						   mt7668_mcu_ba_iter, &ba);
++}
++
++/* the firmware keeps block ack, the station table and its power state to
++ * itself; the host only raises and drops the bss
++ */
++static int mt7668_mcu_add_ba(struct mt7615_dev *dev,
++			     struct ieee80211_ampdu_params *params,
++			     bool enable)
++{
++	return 0;
++}
++
++static int mt7668_mcu_sta_add(struct mt7615_phy *phy,
++			      struct ieee80211_vif *vif,
++			      struct ieee80211_sta *sta, bool enable)
++{
++	return 0;
++}
++
++static int mt7668_mcu_add_dev_info(struct mt7615_phy *phy,
++				   struct ieee80211_vif *vif, bool enable)
++{
++	return 0;
++}
++
++static int mt7668_mcu_add_bss_info(struct mt7615_phy *phy,
++				   struct ieee80211_vif *vif,
++				   struct ieee80211_sta *sta, bool enable)
++{
++	if (sta)
++		return mt7668_mcu_join(phy, vif, sta, enable);
++
++	if (!enable)
++		mt7668_mcu_leave(phy, vif);
++
++	return 0;
++}
++
++static int mt7668_mcu_add_beacon(struct mt7615_dev *dev,
++				 struct ieee80211_hw *hw,
++				 struct ieee80211_vif *vif, bool enable)
++{
++	return 0;
++}
++
++static int mt7668_mcu_set_pm_state(struct mt7615_dev *dev, int band,
++				   int state)
++{
++	return 0;
++}
++
++static int mt7668_mcu_set_sta_decap(struct mt7615_dev *dev,
++				    struct ieee80211_vif *vif,
++				    struct ieee80211_sta *sta)
++{
++	return 0;
++}
++
++const struct mt7615_mcu_ops mt7668_mcu_ops = {
++	.add_tx_ba = mt7668_mcu_add_ba,
++	.add_rx_ba = mt7668_mcu_add_ba,
++	.sta_add = mt7668_mcu_sta_add,
++	.add_dev_info = mt7668_mcu_add_dev_info,
++	.add_bss_info = mt7668_mcu_add_bss_info,
++	.add_beacon_offload = mt7668_mcu_add_beacon,
++	.set_pm_state = mt7668_mcu_set_pm_state,
++	.set_sta_decap_offload = mt7668_mcu_set_sta_decap,
++};
+--- a/mt7615/mcu.h	2026-08-09 14:25:30
++++ b/mt7615/mcu.h	2026-09-21 12:00:00
+@@ -132,6 +132,10 @@
+     MT_SKU_4SS_DELTA,
+ };
+ 
++/* unsolicited: the firmware agreed or tore down a receive block ack session */
++#define MT7668_EVENT_RX_ADDBA	0x0a
++#define MT7668_EVENT_RX_DELBA	0x0b
++
+ struct mt7615_mcu_rxd {
+ 	__le32 rxd[4];
+ 
+--- a/mt7615/mt7615.h	2026-08-09 14:25:30
++++ b/mt7615/mt7615.h	2026-09-21 12:00:00
+@@ -146,6 +146,8 @@
+ 	struct mt76_vif_link mt76; /* must be first */
+ 	struct mt7615_sta sta;
+ 	bool sta_added;
++	/* the part takes all four at once, where mac80211 gives one at a time */
++	struct ieee80211_tx_queue_params tx_q[IEEE80211_NUM_ACS];
+ };
+ 
+ struct mib_stats {
+@@ -444,6 +446,12 @@
+ 	return dev->fw_ver > MT7615_FIRMWARE_V2;
+ }
+ 
++/* the first table entry the part leaves to a peer, and the one it keeps for
++ * the bss's own broadcast traffic
++ */
++#define MT7668_WTBL_FIRST	3
++#define MT7668_WTBL_BMC	0
++
+ static inline u16 mt7615_wtbl_size(struct mt7615_dev *dev)
+ {
+ 	if (is_mt7663(&dev->mt76) && mt7615_firmware_offload(dev))
+@@ -500,6 +508,7 @@
+ void mt7615_mac_set_scs(struct mt7615_phy *phy, bool enable);
+ void mt7615_mac_enable_nf(struct mt7615_dev *dev, bool ext_phy);
+ void mt7615_mac_sta_poll(struct mt7615_dev *dev);
++int mt7668_mac_txd_append_len(struct mt7615_dev *dev, struct sk_buff *skb);
+ int mt7615_mac_write_txwi(struct mt7615_dev *dev, __le32 *txwi,
+ 			  struct sk_buff *skb, struct mt76_wcid *wcid,
+ 			  struct ieee80211_sta *sta, int pid,
+@@ -558,6 +567,26 @@
+ int mt7615_dfs_init_radar_detector(struct mt7615_phy *phy);
+ int mt7615_mcu_set_protection(struct mt7615_phy *phy, struct ieee80211_vif *vif,
+ 			      u8 ht_mode, bool use_cts_prot);
++int mt7668_mcu_tx_resource(struct mt7615_dev *dev);
++void mt7668_mcu_ba_event(struct mt7615_dev *dev, struct sk_buff *skb);
++u16 mt7668_mac_basic_rate(struct mt76_phy *mphy);
++u16 mt7615_mac_tx_rate_val(struct mt7615_dev *dev, struct mt76_phy *mphy,
++			   const struct ieee80211_tx_rate *rate, bool stbc,
++			   u8 *bw);
++int mt7668_mac_write_txwi(struct mt7615_dev *dev, __le32 *txwi,
++			  struct sk_buff *skb, struct mt76_wcid *wcid,
++			  int pid, struct ieee80211_key_conf *key,
++			  enum mt76_txq_id qid);
++int mt7668_mcu_activate(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++			bool enable);
++int mt7668_mcu_wmm(struct mt7615_phy *phy, struct ieee80211_vif *vif);
++extern const struct mt7615_mcu_ops mt7668_mcu_ops;
++u8 mt7668_mcu_cipher(u32 cipher);
++int mt7668_mcu_key(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++		   struct ieee80211_sta *sta,
++		   struct ieee80211_key_conf *key);
++int mt7668_mcu_assoc(struct mt7615_phy *phy, struct ieee80211_vif *vif,
++		     struct ieee80211_sta *sta);
+ int mt7615_mcu_set_roc(struct mt7615_phy *phy, struct ieee80211_vif *vif,
+ 		       struct ieee80211_channel *chan, int duration);
+ 

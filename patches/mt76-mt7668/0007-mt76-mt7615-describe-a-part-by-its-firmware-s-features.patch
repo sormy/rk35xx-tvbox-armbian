@@ -1,0 +1,152 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 7/12] wifi: mt76: mt7615: describe a part by its firmware's features
+
+mt7615 tells parts apart by chip id, which cannot describe a firmware
+with a different command set. Add a profile of the firmware - its images
+and patch address, its calibration window, and whether it owns the MAC,
+reports readiness in the host interface, takes the version 0 scan request
+and must run before registration - selected at probe.
+
+Existing parts get the default profile, which changes nothing.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt7615/mcu.c	2026-08-09 14:25:30
++++ b/mt7615/mcu.c	2026-09-21 12:00:00
+@@ -132,6 +132,21 @@
+ }
+ EXPORT_SYMBOL_GPL(mt7615_mcu_fill_msg);
+ 
++/* the stock command set, with the host driving the mac and the phy */
++const struct mt7615_fw_features mt7615_fw_features_default = {};
++EXPORT_SYMBOL_GPL(mt7615_fw_features_default);
++
++void mt7615_apply_fw_features(struct mt7615_dev *dev,
++			      const struct mt7615_fw_features *features)
++{
++	dev->fw = features;
++	dev->mt76.mcu.hw_scan_v0 = features->hw_scan_v0;
++	dev->mt76.sdio.mcu_txq = features->mcu_txq;
++	dev->mt76.sdio.quota_pkts = features->quota_pkts;
++	dev->mt76.sdio.data_txq_len = features->data_txq_len;
++}
++EXPORT_SYMBOL_GPL(mt7615_apply_fw_features);
++
+ int mt7615_mcu_parse_response(struct mt76_dev *mdev, int cmd,
+ 			      struct sk_buff *skb, int seq)
+ {
+--- a/mt7615/mmio.c	2026-08-09 14:25:30
++++ b/mt7615/mmio.c	2026-09-21 12:00:00
+@@ -204,6 +204,7 @@
+ 
+ 	dev->reg_map = map;
+ 	dev->ops = ops;
++	dev->fw = &mt7615_fw_features_default;
+ 	mdev->rev = (mt76_rr(dev, MT_HW_CHIPID) << 16) |
+ 		    (mt76_rr(dev, MT_HW_REV) & 0xff);
+ 	dev_dbg(mdev->dev, "ASIC revision: %04x\n", mdev->rev);
+--- a/mt7615/mt7615.h	2026-08-09 14:25:30
++++ b/mt7615/mt7615.h	2026-09-21 12:00:00
+@@ -242,6 +242,33 @@
+ 				     struct ieee80211_sta *sta);
+ };
+ 
++/* what a part's firmware does differently from the MT7615's, chosen once at
++ * probe so nothing else asks which part it is
++ */
++struct mt7615_fw_features {
++	/* images; a null cr4 means the part runs one processor */
++	const char *rom_patch;
++	const char *n9;
++	const char *cr4;
++	u32 patch_addr;
++
++	/* a null eeprom name means the efuse is readable */
++	const char *eeprom;
++	u16 ee_cal_start;
++	u16 ee_cal_len;
++	u8 ee_cmd_type;
++
++	u8 mcu_txq;		/* counter its command credits come back on */
++	bool quota_pkts;	/* one credit per frame, not per page */
++	u16 data_txq_len;	/* host data ring, ahead of its own deep one */
++	bool owns_mac;		/* it programs the MAC and PHY, joins by CE */
++	bool hif_ready;		/* readiness, events and power-down go through the
++				 * host interface, not MISC2
++				 */
++	bool hw_scan_v0;	/* its scan request stops after the ies */
++	bool mcu_first;		/* its firmware must run before the interface exists */
++};
++
+ struct mt7615_dev {
+ 	union { /* must be first */
+ 		struct mt76_dev mt76;
+@@ -277,6 +304,8 @@
+ 	bool flash_eeprom;
+ 	bool dbdc_support;
+ 
++	const struct mt7615_fw_features *fw;
++
+ 	u8 fw_ver;
+ 
+ 	struct work_struct rate_work;
+@@ -485,6 +514,9 @@
+ void mt7615_mac_reset_work(struct work_struct *work);
+ u32 mt7615_mac_get_sta_tid_sn(struct mt7615_dev *dev, int wcid, u8 tid);
+ 
++extern const struct mt7615_fw_features mt7615_fw_features_default;
++void mt7615_apply_fw_features(struct mt7615_dev *dev,
++			      const struct mt7615_fw_features *features);
+ int mt7615_mcu_parse_response(struct mt76_dev *mdev, int cmd,
+ 			      struct sk_buff *skb, int seq);
+ u32 mt7615_rf_rr(struct mt7615_dev *dev, u32 wf, u32 reg);
+--- a/mt7615/sdio.c	2026-08-09 14:25:30
++++ b/mt7615/sdio.c	2026-09-21 12:00:00
+@@ -99,6 +99,7 @@
+ 		.rd_rp = mt76s_rd_rp,
+ 		.type = MT76_BUS_SDIO,
+ 	};
++	const struct mt7615_fw_features *fw = (const void *)id->driver_data;
+ 	struct ieee80211_ops *ops;
+ 	struct mt7615_dev *dev;
+ 	struct mt76_dev *mdev;
+@@ -109,6 +110,19 @@
+ 	if (!ops)
+ 		return -ENOMEM;
+ 
++	/* sta_add arrives only once the station is authenticated, which is
++	 * after a firmware that owns the mac needs it; sta_state arrives as
++	 * soon as the station exists
++	 */
++	if (fw && fw->owns_mac) {
++		ops->sta_add = NULL;
++		ops->sta_remove = NULL;
++		ops->sta_state = mt76_sta_state;
++		ops->remain_on_channel = NULL;
++		ops->cancel_remain_on_channel = NULL;
++		ops->set_rekey_data = NULL;
++	}
++
+ 	mdev = mt76_alloc_device(&func->dev, sizeof(*dev), ops, &drv_ops);
+ 	if (!mdev)
+ 		return -ENOMEM;
+@@ -118,6 +132,7 @@
+ 	INIT_WORK(&dev->mcu_work, mt7663s_init_work);
+ 	dev->reg_map = mt7663_usb_sdio_reg_map;
+ 	dev->ops = ops;
++	dev->fw = &mt7615_fw_features_default;
+ 	sdio_set_drvdata(func, dev);
+ 
+ 	ret = mt76s_init(mdev, func, &mt7663s_ops);
+--- a/mt7615/usb.c	2026-08-09 14:25:30
++++ b/mt7615/usb.c	2026-09-21 12:00:00
+@@ -159,6 +159,7 @@
+ 	INIT_WORK(&dev->mcu_work, mt7663u_init_work);
+ 	dev->reg_map = mt7663_usb_sdio_reg_map;
+ 	dev->ops = ops;
++	dev->fw = &mt7615_fw_features_default;
+ 	ret = __mt76u_init(mdev, usb_intf, &bus_ops);
+ 	if (ret < 0)
+ 		goto error;

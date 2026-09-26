@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sat, 20 Sep 2026 12:00:00 -0400
+Subject: [PATCH 12/12] build the SDIO stack for DKMS
+
+Not for upstream: builds only the SDIO leaf out of tree, under its own
+name, so it loads beside the in-tree mt76 stack.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/dkms.conf	1969-12-31 19:00:00
++++ b/dkms.conf	2026-09-19 14:11:36
+@@ -0,0 +1,20 @@
++PACKAGE_NAME="mt76-mt7668"
++PACKAGE_VERSION="1.0.0"
++MAKE[0]="make -C ${kernel_source_dir} M=${dkms_tree}/${PACKAGE_NAME}/${PACKAGE_VERSION}/build modules CONFIG_MT76_CORE=m CONFIG_MT76_SDIO=m CONFIG_MT76_CONNAC_LIB=m CONFIG_MT7615_COMMON=m CONFIG_MT7663S=m CONFIG_MT7663_USB_SDIO_COMMON=m"
++CLEAN="make -C ${kernel_source_dir} M=${dkms_tree}/${PACKAGE_NAME}/${PACKAGE_VERSION}/build clean"
++BUILT_MODULE_NAME[0]="mt76"
++BUILT_MODULE_NAME[1]="mt76-sdio"
++BUILT_MODULE_NAME[2]="mt76-connac-lib"
++BUILT_MODULE_NAME[3]="mt7615-common"
++BUILT_MODULE_NAME[4]="mt7663-usb-sdio-common"
++BUILT_MODULE_NAME[5]="mt7663s"
++BUILT_MODULE_LOCATION[3]="mt7615"
++BUILT_MODULE_LOCATION[4]="mt7615"
++BUILT_MODULE_LOCATION[5]="mt7615"
++DEST_MODULE_LOCATION[0]="/kernel/drivers/net/wireless/mediatek/mt76"
++DEST_MODULE_LOCATION[1]="/kernel/drivers/net/wireless/mediatek/mt76"
++DEST_MODULE_LOCATION[2]="/kernel/drivers/net/wireless/mediatek/mt76"
++DEST_MODULE_LOCATION[3]="/kernel/drivers/net/wireless/mediatek/mt76/mt7615"
++DEST_MODULE_LOCATION[4]="/kernel/drivers/net/wireless/mediatek/mt76/mt7615"
++DEST_MODULE_LOCATION[5]="/kernel/drivers/net/wireless/mediatek/mt76/mt7615"
++AUTOINSTALL="yes"

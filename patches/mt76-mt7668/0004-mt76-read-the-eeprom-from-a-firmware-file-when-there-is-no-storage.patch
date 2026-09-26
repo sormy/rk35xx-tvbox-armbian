@@ -1,0 +1,97 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 4/12] wifi: mt76: read the EEPROM from a firmware file when there is no storage
+
+A part with no readable flash or OTP still needs calibration data. Take
+it from a firmware file the driver names, and accept a file shorter than
+the EEPROM: the MT7668S's holds only the calibration block.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/eeprom.c	2026-08-09 14:25:30
++++ b/eeprom.c	2026-09-21 12:00:00
+@@ -8,6 +8,7 @@
+ #include <linux/mtd/partitions.h>
+ #include <linux/nvmem-consumer.h>
+ #include <linux/etherdevice.h>
++#include <linux/firmware.h>
+ #include "mt76.h"
+ 
+ static int mt76_get_of_eeprom_data(struct mt76_dev *dev, void *eep, int len)
+@@ -144,23 +145,52 @@
+ }
+ EXPORT_SYMBOL_GPL(mt76_get_of_data_from_nvmem);
+ 
+-static int mt76_get_of_eeprom(struct mt76_dev *dev, void *eep, int len)
++static int mt76_get_eeprom_from_firmware(struct mt76_dev *dev, void *eep, int len)
+ {
+-	struct device_node *np = dev->dev->of_node;
++	const struct firmware *fw;
+ 	int ret;
+ 
+-	if (!np)
++	if (!dev->eeprom_name)
+ 		return -ENOENT;
+ 
+-	ret = mt76_get_of_eeprom_data(dev, eep, len);
+-	if (!ret)
+-		return 0;
+-
+-	ret = mt76_get_of_data_from_mtd(dev, eep, 0, len);
+-	if (!ret)
+-		return 0;
++	ret = firmware_request_nowarn(&fw, dev->eeprom_name, dev->dev);
++	if (ret)
++		return ret;
++
++	if (!fw->size)
++		ret = -EINVAL;
++	else
++		memcpy(eep, fw->data, min_t(size_t, fw->size, len));
++
++	release_firmware(fw);
++
++	return ret;
++}
++
++static int mt76_get_of_eeprom(struct mt76_dev *dev, void *eep, int len)
++{
++	struct device_node *np = dev->dev->of_node;
++	int ret;
+ 
+-	return mt76_get_of_data_from_nvmem(dev, eep, "eeprom", len);
++	if (np) {
++		ret = mt76_get_of_eeprom_data(dev, eep, len);
++		if (!ret)
++			return 0;
++
++		ret = mt76_get_of_data_from_mtd(dev, eep, 0, len);
++		if (!ret)
++			return 0;
++
++		ret = mt76_get_of_data_from_nvmem(dev, eep, "eeprom", len);
++		if (!ret)
++			return 0;
++	}
++
++	/* Parts whose calibration is the same for every unit ship it as a file
++	 * instead of storing it, so there is nothing for the sources above to
++	 * read. A driver names one by setting eeprom_name.
++	 */
++	return mt76_get_eeprom_from_firmware(dev, eep, len);
+ }
+ 
+ int
+--- a/mt76.h	2026-08-09 14:25:30
++++ b/mt76.h	2026-09-21 12:00:00
+@@ -991,6 +991,9 @@
+ 	struct debugfs_blob_wrapper eeprom;
+ 	struct debugfs_blob_wrapper otp;
+ 
++	/* calibration that ships as a file rather than in storage */
++	const char *eeprom_name;
++
+ 	char alpha2[3];
+ 	enum nl80211_dfs_regions region;
+ 

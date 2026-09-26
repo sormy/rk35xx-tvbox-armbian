@@ -1,0 +1,592 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 9/12] wifi: mt76: mt7615: load and unload a part whose firmware owns the MAC
+
+On a part whose firmware owns the MAC:
+
+  - load the ROM patch at its own address and both RAM images through
+    the shared code, the CR4 image split into regions like the N9 one
+  - take readiness from the host interface: MT_TOP_MISC2_FW_N9_RDY stays
+    clear
+  - send only the calibration window of the EEPROM file, and read the
+    MAC address from the efuse through the firmware, falling back to a
+    random one, since the file's is the same on every unit
+  - run the firmware before registration, which the address needs, and
+    set the offload capabilities before registering
+  - refuse a firmware left running at probe, and on unload power it
+    down and hand ownership back, so a reload needs no power cycle
+  - receive its events on the second receive queue
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt7615/eeprom.c	2026-08-09 14:25:30
++++ b/mt7615/eeprom.c	2026-09-21 12:00:00
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include <linux/of.h>
++#include <linux/etherdevice.h>
+ #include "mt7615.h"
+ #include "eeprom.h"
+ 
+@@ -77,10 +78,26 @@
+ 
+ 	BUILD_BUG_ON(MT7615_EEPROM_FULL_SIZE < MT7663_EEPROM_SIZE);
+ 
++	/* a part whose efuse mt76 cannot read - MT_EFUSE_CTRL never reports
++	 * valid - names a file to load instead
++	 */
++	if (dev->fw->eeprom)
++		dev->mt76.eeprom_name = dev->fw->eeprom;
++
+ 	ret = mt76_eeprom_init(&dev->mt76, MT7615_EEPROM_FULL_SIZE);
+ 	if (ret < 0)
+ 		return ret;
+ 
++	/* the part's efuse calibration is poorer than the file's */
++	if (dev->fw->eeprom) {
++		if (!ret) {
++			dev_err(dev->mt76.dev, "calibration %s missing\n",
++				dev->fw->eeprom);
++			return -ENOENT;
++		}
++		return 0;
++	}
++
+ 	return mt7615_efuse_init(dev, addr);
+ }
+ 
+@@ -330,6 +347,24 @@
+ 	}
+ }
+ 
++/* The calibration file ships identically to every board, so the address in it
++ * belongs to none of them. The chip's own is in the efuse.
++ */
++static void mt7615_eeprom_mac_from_efuse(struct mt7615_dev *dev)
++{
++	u32 base = round_down(MT_EE_MAC_ADDR, MT7615_EFUSE_BLOCK_SIZE);
++	u8 block[MT7615_EFUSE_BLOCK_SIZE];
++	u8 *addr = block + MT_EE_MAC_ADDR - base;
++
++	if (mt7615_mcu_get_efuse(dev, MT_EE_MAC_ADDR, block) ||
++	    !is_valid_ether_addr(addr)) {
++		dev_warn(dev->mt76.dev, "no address in the efuse, using a random one\n");
++		eth_random_addr(addr);
++	}
++
++	memcpy(dev->mt76.eeprom.data + MT_EE_MAC_ADDR, addr, ETH_ALEN);
++}
++
+ int mt7615_eeprom_init(struct mt7615_dev *dev, u32 addr)
+ {
+ 	int ret;
+@@ -348,6 +383,11 @@
+ 	}
+ 
+ 	mt7615_eeprom_parse_hw_cap(dev);
++
++	/* only a firmware that runs first can answer for the efuse by now */
++	if (dev->fw->eeprom && dev->fw->mcu_first)
++		mt7615_eeprom_mac_from_efuse(dev);
++
+ 	memcpy(dev->mphy.macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR,
+ 	       ETH_ALEN);
+ 
+--- a/mt7615/init.c	2026-08-09 14:25:30
++++ b/mt7615/init.c	2026-09-21 12:00:00
+@@ -184,8 +184,7 @@
+ 	mt7615_mcu_set_rx_hdr_trans_blacklist(dev);
+ }
+ 
+-static void
+-mt7615_check_offload_capability(struct mt7615_dev *dev)
++void mt7615_check_offload_capability(struct mt7615_dev *dev)
+ {
+ 	struct ieee80211_hw *hw = mt76_hw(dev);
+ 	struct wiphy *wiphy = hw->wiphy;
+@@ -217,6 +216,7 @@
+ 		wiphy->max_sched_scan_reqs = 0;
+ 	}
+ }
++EXPORT_SYMBOL_GPL(mt7615_check_offload_capability);
+ 
+ bool mt7615_wait_for_mcu_init(struct mt7615_dev *dev)
+ {
+@@ -319,10 +319,18 @@
+ void mt7615_init_work(struct mt7615_dev *dev)
+ {
+ 	mt7615_mcu_set_eeprom(dev);
+-	mt7615_mac_init(dev);
+-	mt7615_phy_init(dev);
+-	mt76_connac_mcu_del_wtbl_all(&dev->mt76);
+-	mt7615_check_offload_capability(dev);
++	if (!dev->fw->owns_mac) {
++		mt7615_mac_init(dev);
++		mt7615_phy_init(dev);
++		mt76_connac_mcu_del_wtbl_all(&dev->mt76);
++	} else {
++		/* mac80211 takes an 802.3 frame only after the handshake, whose
++		 * frames the firmware would translate too
++		 */
++		mt76_clear(dev, MT_DMA_DCR0, MT_DMA_DCR0_RX_HDR_TRANS_EN);
++	}
++	if (!dev->fw->mcu_first)
++		mt7615_check_offload_capability(dev);
+ }
+ EXPORT_SYMBOL_GPL(mt7615_init_work);
+ 
+--- a/mt7615/mcu.c	2026-08-09 14:25:30
++++ b/mt7615/mcu.c	2026-09-21 12:00:00
+@@ -183,6 +183,8 @@
+ 		skb_pull(skb, sizeof(*rxd));
+ 		event = (struct mt76_connac_mcu_uni_event *)skb->data;
+ 		ret = le32_to_cpu(event->status);
++	} else if (cmd == MCU_EXT_QUERY(EFUSE_ACCESS)) {
++		skb_pull(skb, sizeof(*rxd));
+ 	} else if (cmd == MCU_CE_QUERY(REG_READ)) {
+ 		struct mt76_connac_mcu_reg_event *event;
+ 
+@@ -1321,9 +1323,8 @@
+ static int
+ mt7615_mcu_send_ram_firmware(struct mt7615_dev *dev,
+ 			     const struct mt7615_fw_trailer *hdr,
+-			     const u8 *data, bool is_cr4)
++			     const u8 *data, int n_region, bool is_cr4)
+ {
+-	int n_region = is_cr4 ? CR4_REGION_NUM : N9_REGION_NUM;
+ 	int err, i, offset = 0;
+ 	u32 len, addr, mode;
+ 
+@@ -1375,7 +1376,8 @@
+ 	dev_info(dev->mt76.dev, "N9 Firmware Version: %.10s, Build Time: %.15s\n",
+ 		 hdr->fw_ver, hdr->build_date);
+ 
+-	ret = mt7615_mcu_send_ram_firmware(dev, hdr, fw->data, false);
++	ret = mt7615_mcu_send_ram_firmware(dev, hdr, fw->data, N9_REGION_NUM,
++					   false);
+ 	if (ret)
+ 		goto out;
+ 
+@@ -1426,7 +1428,8 @@
+ 	dev_info(dev->mt76.dev, "CR4 Firmware Version: %.10s, Build Time: %.15s\n",
+ 		 hdr->fw_ver, hdr->build_date);
+ 
+-	ret = mt7615_mcu_send_ram_firmware(dev, hdr, fw->data, true);
++	ret = mt7615_mcu_send_ram_firmware(dev, hdr, fw->data, CR4_REGION_NUM,
++					   true);
+ 	if (ret)
+ 		goto out;
+ 
+@@ -1624,6 +1627,39 @@
+ 	return ret;
+ }
+ 
++/* the MT7668 splits its cr4 image in two as well, and starts each without an
++ * override address
++ */
++static int mt7668_load_ram(struct mt7615_dev *dev, const char *name, u32 flag)
++{
++	const struct mt7615_fw_trailer *hdr;
++	const struct firmware *fw;
++	int ret;
++
++	ret = request_firmware(&fw, name, dev->mt76.dev);
++	if (ret)
++		return ret;
++
++	if (fw->size < N9_REGION_NUM * sizeof(*hdr)) {
++		dev_err(dev->mt76.dev, "Invalid firmware %s\n", name);
++		ret = -EINVAL;
++		goto out;
++	}
++
++	hdr = (const void *)(fw->data + fw->size - N9_REGION_NUM * sizeof(*hdr));
++	dev_info(dev->mt76.dev, "%s Version: %.10s, Build Time: %.15s\n",
++		 name, hdr->fw_ver, hdr->build_date);
++
++	ret = mt7615_mcu_send_ram_firmware(dev, hdr, fw->data, N9_REGION_NUM,
++					   flag & FW_START_WORKING_PDA_CR4);
++	if (!ret)
++		ret = mt76_connac_mcu_start_firmware(&dev->mt76, 0, flag);
++
++out:
++	release_firmware(fw);
++	return ret;
++}
++
+ static int
+ mt7663_load_rom_patch(struct mt7615_dev *dev, const char **n9_firmware)
+ {
+@@ -1631,6 +1667,24 @@
+ 	const char *primary_rom = MT7663_OFFLOAD_ROM_PATCH;
+ 	int ret;
+ 
++	if (dev->fw->rom_patch) {
++		ret = mt7615_load_patch(dev, dev->fw->patch_addr,
++					dev->fw->rom_patch);
++		if (ret) {
++			dev_err(dev->mt76.dev, "failed to load %s\n",
++				dev->fw->rom_patch);
++			return ret;
++		}
++
++		/* it scans for itself, so the offload paths apply; its stations
++		 * go through the ce commands
++		 */
++		dev->fw_ver = MT7615_FIRMWARE_V3;
++		dev->mcu_ops = &mt7668_mcu_ops;
++
++		return 0;
++	}
++
+ 	if (!prefer_offload_fw) {
+ 		secondary_rom = MT7663_OFFLOAD_ROM_PATCH;
+ 		primary_rom = MT7663_ROM_PATCH;
+@@ -1679,9 +1733,24 @@
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = mt7663_load_n9(dev, n9_firmware);
+-	if (ret)
+-		return ret;
++	if (dev->fw->cr4) {
++		ret = mt7668_load_ram(dev, dev->fw->n9, FW_START_DLYCAL);
++		if (!ret)
++			ret = mt7668_load_ram(dev, dev->fw->cr4,
++					      FW_START_WORKING_PDA_CR4);
++		if (ret)
++			return ret;
++	} else {
++		ret = mt7663_load_n9(dev, n9_firmware);
++		if (ret)
++			return ret;
++	}
++
++	/* MT_TOP_MISC2_FW_N9_RDY stays zero on a part that reports readiness in
++	 * the host interface; its first command waits on the answer instead
++	 */
++	if (dev->fw->hif_ready)
++		return 0;
+ 
+ 	if (!mt76_poll_msec(dev, MT_CONN_ON_MISC, MT_TOP_MISC2_FW_N9_RDY,
+ 			    MT_TOP_MISC2_FW_N9_RDY, 1500)) {
+@@ -1768,6 +1837,73 @@
+ }
+ EXPORT_SYMBOL_GPL(mt7615_mcu_exit);
+ 
++/* Where the efuse register window is unreachable, the firmware still answers
++ * for it: one block, from a block-aligned address.
++ */
++int mt7615_mcu_get_efuse(struct mt7615_dev *dev, u32 offset, u8 *buf)
++{
++	struct mt7615_efuse_block {
++		__le32 addr;
++		__le32 valid;
++		u8 data[MT7615_EFUSE_BLOCK_SIZE];
++	} __packed req = {
++		.addr = cpu_to_le32(round_down(offset,
++					       MT7615_EFUSE_BLOCK_SIZE)),
++	};
++	struct mt7615_efuse_block *res;
++	struct sk_buff *skb;
++	int ret;
++
++	ret = mt76_mcu_send_and_get_msg(&dev->mt76, MCU_EXT_QUERY(EFUSE_ACCESS),
++					&req, sizeof(req), true, &skb);
++	if (ret)
++		return ret;
++
++	res = (struct mt7615_efuse_block *)skb->data;
++	if (skb->len < sizeof(*res))
++		ret = -EINVAL;
++	else
++		memcpy(buf, res->data, MT7615_EFUSE_BLOCK_SIZE);
++
++	dev_kfree_skb(skb);
++
++	return ret;
++}
++
++#define MT7615_EE_SOURCE_BUFFER		1
++#define MT7615_EE_COUNT_UNUSED		0xff
++
++/* A four-byte header - the source, an unused block count and the format -
++ * then the calibration window alone, not the whole EEPROM.
++ */
++
++static int mt7615_mcu_set_eeprom_window(struct mt7615_dev *dev)
++{
++	struct {
++		u8 source_mode;
++		u8 count;
++		u8 cmd_type;
++		u8 __rsv;
++	} __packed req_hdr = {
++		.source_mode = MT7615_EE_SOURCE_BUFFER,
++		.count = MT7615_EE_COUNT_UNUSED,
++		.cmd_type = dev->fw->ee_cmd_type,
++	};
++	u8 *eep = (u8 *)dev->mt76.eeprom.data;
++	struct sk_buff *skb;
++
++	skb = mt76_mcu_msg_alloc(&dev->mt76, NULL,
++				 sizeof(req_hdr) + dev->fw->ee_cal_len);
++	if (!skb)
++		return -ENOMEM;
++
++	skb_put_data(skb, &req_hdr, sizeof(req_hdr));
++	skb_put_data(skb, eep + dev->fw->ee_cal_start, dev->fw->ee_cal_len);
++
++	return mt76_mcu_skb_send_msg(&dev->mt76, skb,
++				     MCU_EXT_CMD(EFUSE_BUFFER_MODE), true);
++}
++
+ int mt7615_mcu_set_eeprom(struct mt7615_dev *dev)
+ {
+ 	struct {
+@@ -1781,6 +1917,9 @@
+ 	struct sk_buff *skb;
+ 	int eep_len, offset;
+ 
++	if (dev->fw->ee_cal_len)
++		return mt7615_mcu_set_eeprom_window(dev);
++
+ 	switch (mt76_chip(&dev->mt76)) {
+ 	case 0x7622:
+ 		eep_len = MT7622_EE_MAX - MT_EE_NIC_CONF_0;
+--- a/mt7615/mt7615.h	2026-08-09 14:25:30
++++ b/mt7615/mt7615.h	2026-09-21 12:00:00
+@@ -417,6 +417,9 @@
+ void mt7615_unregister_device(struct mt7615_dev *dev);
+ int mt7615_register_ext_phy(struct mt7615_dev *dev);
+ void mt7615_unregister_ext_phy(struct mt7615_dev *dev);
++#define MT7615_EFUSE_BLOCK_SIZE	16
++
++int mt7615_mcu_get_efuse(struct mt7615_dev *dev, u32 offset, u8 *buf);
+ int mt7615_eeprom_init(struct mt7615_dev *dev, u32 addr);
+ int mt7615_eeprom_get_target_power_index(struct mt7615_dev *dev,
+ 					 struct ieee80211_channel *chan,
+@@ -499,6 +502,7 @@
+ 			 struct ieee80211_supported_band *sband);
+ int mt7615_set_channel(struct mt76_phy *mphy);
+ void mt7615_init_work(struct mt7615_dev *dev);
++void mt7615_check_offload_capability(struct mt7615_dev *dev);
+ 
+ int mt7615_mcu_restart(struct mt76_dev *dev);
+ void mt7615_update_channel(struct mt76_phy *mphy);
+@@ -617,5 +621,6 @@
+ 
+ /* sdio */
+ int mt7663s_mcu_init(struct mt7615_dev *dev);
++void mt7663s_mcu_exit(struct mt7615_dev *dev);
+ 
+ #endif
+--- a/mt7615/sdio_mcu.c	2026-08-09 14:25:30
++++ b/mt7615/sdio_mcu.c	2026-09-21 12:00:00
+@@ -16,6 +16,9 @@
+ #include "mcu.h"
+ #include "regs.h"
+ 
++#define MT7663S_FW_GONE_POLL_US		(10 * USEC_PER_MSEC)
++#define MT7663S_FW_GONE_TIMEOUT_US	USEC_PER_SEC
++
+ static int mt7663s_mcu_init_sched(struct mt7615_dev *dev)
+ {
+ 	struct mt76_sdio *sdio = &dev->mt76.sdio;
+@@ -130,6 +133,49 @@
+ 	return ret;
+ }
+ 
++/* Where MT_TOP_MISC2_FW_N9_RDY stays zero, the host interface's ready bit is
++ * what says a firmware is already running. One that is will not give up the
++ * patch semaphore and the download times out.
++ */
++static bool mt7663s_fw_resident(struct mt7615_dev *dev)
++{
++	struct sdio_func *func = dev->mt76.sdio.func;
++	int err = 0;
++	u32 val;
++
++	sdio_claim_host(func);
++	val = sdio_readl(func, MCR_WCIR, &err);
++	sdio_release_host(func);
++
++	if (err)
++		return false;
++
++	return val & WCIR_WLAN_READY;
++}
++
++/* Power the firmware down and wait for the host interface to say it has gone,
++ * or the next download cannot take the patch semaphore.
++ */
++void mt7663s_mcu_exit(struct mt7615_dev *dev)
++{
++	bool resident;
++
++	if (!test_and_clear_bit(MT76_STATE_MCU_RUNNING, &dev->mphy.state))
++		return;
++
++	mt76_connac_mcu_restart(&dev->mt76);
++
++	if (read_poll_timeout(mt7663s_fw_resident, resident, !resident,
++			      MT7663S_FW_GONE_POLL_US,
++			      MT7663S_FW_GONE_TIMEOUT_US, false, dev))
++		dev_warn(dev->mt76.dev, "firmware did not power down\n");
++
++	/* keeping driver ownership across an unload leaves the next download
++	 * unanswered
++	 */
++	mt7615_mcu_set_fw_ctrl(dev);
++}
++
+ int mt7663s_mcu_init(struct mt7615_dev *dev)
+ {
+ 	static const struct mt76_mcu_ops mt7663s_mcu_ops = {
+@@ -149,6 +195,14 @@
+ 
+ 	dev->mt76.mcu_ops = &mt7663s_mcu_ops;
+ 
++	/* such a part keeps MT_TOP_MISC2_FW_N9_RDY clear and says it is running
++	 * in the host interface instead
++	 */
++	if (dev->fw->hif_ready && mt7663s_fw_resident(dev)) {
++		dev_err(dev->mt76.dev, "firmware is still resident\n");
++		return -EIO;
++	}
++
+ 	ret = mt76_get_field(dev, MT_CONN_ON_MISC, MT_TOP_MISC2_FW_N9_RDY);
+ 	if (ret) {
+ 		mt7615_mcu_restart(&dev->mt76);
+@@ -176,5 +230,9 @@
+ 
+ 	set_bit(MT76_STATE_MCU_RUNNING, &dev->mphy.state);
+ 
++	/* the firmware sizes the host's transmit budgets, before any traffic */
++	if (dev->fw->owns_mac)
++		return mt7668_mcu_tx_resource(dev);
++
+ 	return 0;
+ }
+--- a/mt7615/sdio.c	2026-08-09 14:25:30
++++ b/mt7615/sdio.c	2026-09-21 12:00:00
+@@ -42,10 +42,22 @@
+ static void mt7663s_init_work(struct work_struct *work)
+ {
+ 	struct mt7615_dev *dev;
++	int ret;
+ 
+ 	dev = container_of(work, struct mt7615_dev, mcu_work);
+-	if (mt7663s_mcu_init(dev))
++	ret = mt7663s_mcu_init(dev);
++	if (ret) {
++		dev_err(dev->mt76.dev, "MCU init failed: %d\n", ret);
+ 		return;
++	}
++
++	if (dev->fw->mcu_first) {
++		ret = mt7663_usb_sdio_register_device(dev);
++		if (ret) {
++			dev_err(dev->mt76.dev, "register failed: %d\n", ret);
++			return;
++		}
++	}
+ 
+ 	mt7615_init_work(dev);
+ }
+@@ -160,6 +172,13 @@
+ 	if (ret)
+ 		goto error;
+ 
++	/* such a part answers on RX1 as well, which the MT7663 never uses */
++	if (dev->fw->hif_ready) {
++		ret = mt76s_alloc_rx_queue(mdev, MT_RXQ_MCU);
++		if (ret)
++			goto error;
++	}
++
+ 	ret = mt76s_alloc_tx(mdev);
+ 	if (ret)
+ 		goto error;
+@@ -171,6 +190,20 @@
+ 
+ 	sched_set_fifo_low(mdev->sdio.txrx_worker.task);
+ 
++	/* a firmware that answers for the eeprom has to be running before the
++	 * interface takes its address from it
++	 */
++	if (dev->fw->mcu_first) {
++		/* the mcu sends through the tx worker this installs, and
++		 * mt76s_sdio_irq() drops the answer until the interface is
++		 * declared up - both have to precede the firmware download
++		 */
++		mt7615_init_device(dev);
++		set_bit(MT76_STATE_INITIALIZED, &dev->mphy.state);
++		queue_work(system_wq, &dev->mcu_work);
++		return 0;
++	}
++
+ 	ret = mt7663_usb_sdio_register_device(dev);
+ 	if (ret)
+ 		goto error;
+@@ -191,7 +224,14 @@
+ 	if (!test_and_clear_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
+ 		return;
+ 
+-	ieee80211_unregister_hw(dev->mt76.hw);
++	/* a part whose firmware is started from mcu_work was never registered
++	 * if that start failed
++	 */
++	cancel_work_sync(&dev->mcu_work);
++	if (test_bit(MT76_STATE_REGISTERED, &dev->mphy.state))
++		ieee80211_unregister_hw(dev->mt76.hw);
++	if (dev->fw->hif_ready)
++		mt7663s_mcu_exit(dev);
+ 	mt76s_deinit(&dev->mt76);
+ 	mt76_free_device(&dev->mt76);
+ }
+--- a/mt7615/usb_sdio.c	2026-08-09 14:25:30
++++ b/mt7615/usb_sdio.c	2026-09-21 12:00:00
+@@ -310,7 +310,8 @@
+ 
+ 	INIT_WORK(&dev->rate_work, mt7663_usb_sdio_rate_work);
+ 	INIT_LIST_HEAD(&dev->wrd_head);
+-	mt7615_init_device(dev);
++	if (!dev->fw->mcu_first)
++		mt7615_init_device(dev);
+ 
+ 	err = mt7663_usb_sdio_init_hardware(dev);
+ 	if (err)
+@@ -326,6 +327,10 @@
+ 			hw->max_tx_fragments = 1;
+ 	}
+ 
++	/* its firmware is already running, so its offloads are known */
++	if (dev->fw->mcu_first)
++		mt7615_check_offload_capability(dev);
++
+ 	err = mt76_register_device(&dev->mt76, true, mt76_rates,
+ 				   ARRAY_SIZE(mt76_rates));
+ 	if (err < 0)
+@@ -339,7 +344,8 @@
+ 		vht_cap->cap &= ~IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_11454;
+ 	}
+ 
+-	ieee80211_queue_work(hw, &dev->mcu_work);
++	if (!dev->fw->mcu_first)
++		ieee80211_queue_work(hw, &dev->mcu_work);
+ 	mt7615_init_txpower(dev, &dev->mphy.sband_2g.sband);
+ 	mt7615_init_txpower(dev, &dev->mphy.sband_5g.sband);
+ 
+--- a/sdio.h	2026-08-09 14:25:30
++++ b/sdio.h	2026-09-21 12:00:00
+@@ -10,6 +10,7 @@
+ #define MT_PSE_PAGE_SZ			128
+ 
+ #define MCR_WCIR			0x0000
++#define WCIR_WLAN_READY			BIT(21)
+ #define MCR_WHLPCR			0x0004
+ #define WHLPCR_FW_OWN_REQ_CLR		BIT(9)
+ #define WHLPCR_FW_OWN_REQ_SET		BIT(8)

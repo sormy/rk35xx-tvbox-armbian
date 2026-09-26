@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Fri, 25 Sep 2026 12:00:00 -0400
+Subject: [PATCH 0/11] wifi: mt76: mt7615: add MT7668S support
+
+The MT7668S is an SDIO Wi-Fi and Bluetooth combo found in Amlogic TV
+boxes. Its Wi-Fi half is an MT7663 sibling whose firmware owns the MAC:
+it builds connections through the flat CE commands, answers a smaller
+command set, and counts transmit credit in frames.
+
+1-6 are small core changes the part needs, each a no-op for the parts
+already supported. 7 adds a per-firmware profile to mt7615, 8 the CE
+commands and transmit descriptor in new files, 9 and 10 wire them in, and
+11 adds the sdio id.
+
+Tested on an H96 Max M20 (Amlogic S905LTS, meson-gx-mmc, no SDIO
+interrupt) against MediaTek's driver on the same access point: joins on
+both bands, reconnects in 105-352 ms, and carries about 150 Mbit/s each
+way on 5 GHz at 80 MHz and 90 on 2.4 GHz at 20 MHz.
+
+Known limits:
+  - the firmware images are not in linux-firmware yet:
+    mt7668_patch_e2_hdr.bin, WIFI_RAM_CODE_MT7668.bin,
+    WIFI_RAM_CODE2_SDIO_MT7668.bin and EEPROM_MT7668.bin
+  - station mode only
+  - system suspend is untested
+  - remain-on-channel falls back to mac80211's software implementation,
+    which cannot leave the operating channel on this firmware
+  - DISABLE_KEY is not sent to the firmware, as elsewhere in mt7615
+
+Artem Butusov (11):
+  wifi: mt76: sdio: support a part that counts transmit credit in frames
+  wifi: mt76: sdio: let a driver shorten the data rings
+  wifi: mt76: sdio: poll for transmit credit where the host has no card interrupt
+  wifi: mt76: read the EEPROM from a firmware file when there is no storage
+  wifi: mt76: connac: support the version 0 hw scan request
+  wifi: mt76: mt7615: wait out a held patch semaphore
+  wifi: mt76: mt7615: describe a part by its firmware's features
+  wifi: mt76: mt7615: add the MT7668's CE commands and transmit descriptor
+  wifi: mt76: mt7615: load and unload a part whose firmware owns the MAC
+  wifi: mt76: mt7615: drive a part whose firmware owns the MAC
+  wifi: mt76: mt7615: support the MT7668S
+
+ drivers/net/wireless/mediatek/mt76/eeprom.c   |  48 +-
+ drivers/net/wireless/mediatek/mt76/mt76.h     |  28 +
+ .../wireless/mediatek/mt76/mt7615/Makefile    |   2 +-
+ .../wireless/mediatek/mt76/mt7615/eeprom.c    |  40 +
+ .../net/wireless/mediatek/mt76/mt7615/init.c  |  55 +-
+ .../net/wireless/mediatek/mt76/mt7615/mac.c   |  45 +-
+ .../net/wireless/mediatek/mt76/mt7615/mac.h   |  21 +
+ .../wireless/mediatek/mt76/mt7615/mac_ce.c    | 210 ++++
+ .../net/wireless/mediatek/mt76/mt7615/main.c  | 110 ++-
+ .../net/wireless/mediatek/mt76/mt7615/mcu.c   | 193 +++-
+ .../net/wireless/mediatek/mt76/mt7615/mcu.h   |   4 +
+ .../wireless/mediatek/mt76/mt7615/mcu_ce.c    | 910 ++++++++++++++++++
+ .../net/wireless/mediatek/mt76/mt7615/mmio.c  |   1 +
+ .../wireless/mediatek/mt76/mt7615/mt7615.h    |  85 ++
+ .../net/wireless/mediatek/mt76/mt7615/sdio.c  | 101 +-
+ .../wireless/mediatek/mt76/mt7615/sdio_mcu.c  |  58 ++
+ .../net/wireless/mediatek/mt76/mt7615/usb.c   |   1 +
+ .../wireless/mediatek/mt76/mt7615/usb_sdio.c  |  43 +-
+ .../net/wireless/mediatek/mt76/mt76_connac.h  |   3 +-
+ .../wireless/mediatek/mt76/mt76_connac_mcu.c  |  34 +-
+ .../wireless/mediatek/mt76/mt76_connac_mcu.h  |   5 +
+ drivers/net/wireless/mediatek/mt76/sdio.c     |  12 +-
+ drivers/net/wireless/mediatek/mt76/sdio.h     |   1 +
+ .../net/wireless/mediatek/mt76/sdio_txrx.c    |  79 +-
+ 24 files changed, 1991 insertions(+), 98 deletions(-)
+
+--
+2.47.0

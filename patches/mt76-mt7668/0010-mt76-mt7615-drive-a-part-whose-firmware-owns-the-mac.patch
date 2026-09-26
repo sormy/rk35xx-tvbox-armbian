@@ -1,0 +1,610 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 10/12] wifi: mt76: mt7615: drive a part whose firmware owns the MAC
+
+On a part whose firmware owns the MAC:
+
+  - skip MAC and PHY register access, each an unanswered mailbox round
+    trip
+  - skip the commands it lacks: DBDC, MAC enable, channel switch, rx
+    path, SKU, protection, RTS, ARP and GTK rekey offload, and the rate
+    power table. Each costs a full MCU timeout; GTK rekey offload alone
+    held every reconnect for 20 s
+  - join with CH_PRIVILEGE, BSS activation and a station record, and on
+    leave drop every station of the BSS, or later scans never complete
+  - raise the BSS before a scan, since the firmware probes from it, and
+    scan one band per request, the most a version 0 request lists
+  - send keys by command, rejecting unsupported ciphers before any state
+    changes
+  - leave transmit block ack to the firmware, and follow its receive
+    session events with mac80211's offloaded sessions
+  - transmit data as 802.3 with the firmware building the header, strip
+    the header each frame actually carries on completion, and leave
+    receive header translation off, which mac80211 takes only after the
+    handshake
+  - use the BSS as the own-MAC index, the first WMM set, and table
+    entries above the ones the firmware keeps
+  - advertise station mode only, without 160 MHz
+
+System suspend is untested and still sends the MT7663's HIF suspend
+commands.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt7615/init.c	2026-08-09 14:25:30
++++ b/mt7615/init.c	2026-09-21 12:00:00
+@@ -199,6 +199,17 @@
+ 				   WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL |
+ 				   NL80211_FEATURE_P2P_GO_CTWIN |
+ 				   NL80211_FEATURE_P2P_GO_OPPPS;
++		/* the version 0 scan request carries no address of its own,
++		 * and such a firmware has no scheduled scan
++		 */
++		if (dev->mt76.mcu.hw_scan_v0) {
++			wiphy->features &=
++				~(NL80211_FEATURE_SCHED_SCAN_RANDOM_MAC_ADDR |
++				  NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR);
++			dev->ops->sched_scan_start = NULL;
++			dev->ops->sched_scan_stop = NULL;
++			wiphy->max_sched_scan_reqs = 0;
++		}
+ 	} else {
+ 		dev->ops->hw_scan = NULL;
+ 		dev->ops->cancel_hw_scan = NULL;
+@@ -357,7 +368,8 @@
+ 
+ 	if (mt7615_firmware_offload(phy->dev)) {
+ 		mt76_connac_mcu_set_channel_domain(mphy);
+-		mt76_connac_mcu_set_rate_txpower(mphy);
++		if (!dev->fw->owns_mac)
++			mt76_connac_mcu_set_rate_txpower(mphy);
+ 	}
+ 
+ 	mt7615_mutex_release(dev);
+@@ -407,11 +419,23 @@
+ 	if (!is_mt7622(&phy->dev->mt76))
+ 		wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_MU_MIMO_AIR_SNIFFER);
+ 
+-	ieee80211_hw_set(hw, SINGLE_SCAN_ON_ALL_BANDS);
++	/* a version 0 scan request lists one band's channels at most */
++	if (!phy->dev->mt76.mcu.hw_scan_v0)
++		ieee80211_hw_set(hw, SINGLE_SCAN_ON_ALL_BANDS);
+ 	ieee80211_hw_set(hw, TX_STATUS_NO_AMPDU_LEN);
+ 	ieee80211_hw_set(hw, WANT_MONITOR_VIF);
+-	ieee80211_hw_set(hw, SUPPORTS_RX_DECAP_OFFLOAD);
+ 	ieee80211_hw_set(hw, SUPPORTS_VHT_EXT_NSS_BW);
++	/* a firmware that owns the mac joins as a station and nothing else,
++	 * agrees its transmit sessions itself and hands up 802.11 frames
++	 */
++	if (phy->dev->fw->owns_mac) {
++		wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION);
++		wiphy->iface_combinations = NULL;
++		wiphy->n_iface_combinations = 0;
++		ieee80211_hw_set(hw, TX_AMPDU_SETUP_IN_HW);
++	} else {
++		ieee80211_hw_set(hw, SUPPORTS_RX_DECAP_OFFLOAD);
++	}
+ 
+ 	if (is_mt7615(&phy->dev->mt76))
+ 		hw->max_tx_fragments = MT_TXP_MAX_BUF_NUM;
+@@ -649,6 +673,11 @@
+ 	dev->pm.stats.last_wake_event = jiffies;
+ 	dev->pm.stats.last_doze_event = jiffies;
+ 	mt7615_cap_dbdc_disable(dev);
++	/* its widest channel is 80 MHz */
++	if (dev->fw->owns_mac)
++		dev->mphy.sband_5g.sband.vht_cap.cap &=
++			~(IEEE80211_VHT_CAP_SHORT_GI_160 |
++			  IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ);
+ 
+ #ifdef CONFIG_NL80211_TESTMODE
+ 	dev->mt76.test_ops = &mt7615_testmode_ops;
+--- a/mt7615/mac.c	2026-08-09 14:25:30
++++ b/mt7615/mac.c	2026-09-21 12:00:00
+@@ -109,6 +109,9 @@
+ 	struct mt7615_dev *dev = phy->dev;
+ 	int i;
+ 
++	if (dev->fw->owns_mac)
++		return;
++
+ 	for (i = 0; i < 4; i++) {
+ 		mt76_rr(dev, MT_TX_AGG_CNT(0, i));
+ 		mt76_rr(dev, MT_TX_AGG_CNT(1, i));
+@@ -144,6 +147,9 @@
+ 	int sifs, offset;
+ 	bool is_5ghz = phy->mt76->chandef.chan->band == NL80211_BAND_5GHZ;
+ 
++	if (dev->fw->owns_mac)
++		return;
++
+ 	if (!test_bit(MT76_STATE_RUNNING, &phy->mt76->state))
+ 		return;
+ 
+@@ -726,6 +732,10 @@
+ 	int tx_count = 8;
+ 	u16 seqno = 0;
+ 
++	if (dev->fw->owns_mac && !beacon)
++		return mt7668_mac_write_txwi(dev, txwi, skb, wcid, pid, key,
++					     qid);
++
+ 	if (vif) {
+ 		struct mt76_vif_link *mvif = (struct mt76_vif_link *)vif->drv_priv;
+ 
+@@ -871,6 +881,9 @@
+ 
+ bool mt7615_mac_wtbl_update(struct mt7615_dev *dev, int idx, u32 mask)
+ {
++	if (dev->fw->owns_mac)
++		return true;
++
+ 	mt76_rmw(dev, MT_WTBL_UPDATE, MT_WTBL_UPDATE_WLAN_IDX,
+ 		 FIELD_PREP(MT_WTBL_UPDATE_WLAN_IDX, idx) | mask);
+ 
+@@ -1101,6 +1114,13 @@
+ 	u32 w5, w27, addr;
+ 	u16 idx = sta->vif->mt76.omac_idx;
+ 
++	/* a firmware that owns the table picks the rates from the station
++	 * record itself, and every word of the table it would take here costs
++	 * an mcu round trip that races the commands
++	 */
++	if (dev->fw->owns_mac)
++		return;
++
+ 	if (!mt76_is_mmio(&dev->mt76)) {
+ 		mt7615_mac_queue_rate_update(phy, sta, probe_rate, rates);
+ 		return;
+@@ -1930,6 +1950,9 @@
+ 	struct mt76_phy *mphy_ext = mdev->phys[MT_BAND1];
+ 	ktime_t cur_time;
+ 
++	if (dev->fw->owns_mac)
++		return;
++
+ 	/* MT7615 can only update both phys simultaneously
+ 	 * since some reisters are shared across bands.
+ 	 */
+@@ -1969,6 +1992,9 @@
+ 	int i, aggr = 0;
+ 	u32 val, val2;
+ 
++	if (dev->fw->owns_mac)
++		return;
++
+ 	mib->fcs_err_cnt += mt76_get_field(dev, MT_MIB_SDR3(ext_phy),
+ 					   MT_MIB_SDR3_FCS_ERR_MASK);
+ 
+@@ -2292,15 +2318,20 @@
+ 	if (err)
+ 		return err;
+ 
+-	if (phy->n_beacon_vif) {
++	if (phy->n_beacon_vif)
+ 		vif->driver_flags &= ~IEEE80211_VIF_BEACON_FILTER;
+-		mt76_clear(dev, MT_WF_RFCR(ext_phy),
+-			   MT_WF_RFCR_DROP_OTHER_BEACON);
+-	} else {
++	else
+ 		vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER;
+-		mt76_set(dev, MT_WF_RFCR(ext_phy),
++
++	/* the receive filter belongs to a firmware that owns the mac, and a
++	 * read-modify-write of it here is an mcu round trip that races the
++	 * commands
++	 */
++	if (!dev->fw->owns_mac)
++		mt76_rmw(dev, MT_WF_RFCR(ext_phy),
++			 MT_WF_RFCR_DROP_OTHER_BEACON,
++			 phy->n_beacon_vif ? 0 :
+ 			 MT_WF_RFCR_DROP_OTHER_BEACON);
+-	}
+ 
+ 	return 0;
+ }
+--- a/mt7615/main.c	2026-08-09 14:25:30
++++ b/mt7615/main.c	2026-09-21 12:00:00
+@@ -30,7 +30,7 @@
+ 	struct mt7615_phy *phy = mt7615_hw_phy(hw);
+ 	unsigned long timeout;
+ 	bool running;
+-	int ret;
++	int ret = 0;
+ 
+ 	if (!mt7615_wait_for_mcu_init(dev))
+ 		return -EIO;
+@@ -39,7 +39,8 @@
+ 
+ 	running = mt7615_dev_running(dev);
+ 
+-	if (!running) {
++	/* a firmware that owns the mac brings it up itself */
++	if (!running && !dev->fw->owns_mac) {
+ 		ret = mt7615_mcu_set_pm(dev, 0, 0);
+ 		if (ret)
+ 			goto out;
+@@ -68,12 +69,14 @@
+ 		if (ret)
+ 			goto out;
+ 
+-		ret = mt76_connac_mcu_set_rate_txpower(phy->mt76);
++		if (!dev->fw->owns_mac)
++			ret = mt76_connac_mcu_set_rate_txpower(phy->mt76);
+ 		if (ret)
+ 			goto out;
+ 	}
+ 
+-	ret = mt7615_mcu_set_chan_info(phy, MCU_EXT_CMD(SET_RX_PATH));
++	if (!dev->fw->owns_mac)
++		ret = mt7615_mcu_set_chan_info(phy, MCU_EXT_CMD(SET_RX_PATH));
+ 	if (ret)
+ 		goto out;
+ 
+@@ -117,7 +120,7 @@
+ 		mt76_connac_mcu_set_mac_enable(&dev->mt76, 1, false, false);
+ 	}
+ 
+-	if (!mt7615_dev_running(dev)) {
++	if (!mt7615_dev_running(dev) && !dev->fw->owns_mac) {
+ 		mt7615_mcu_set_pm(dev, 0, 1);
+ 		mt76_connac_mcu_set_mac_enable(&dev->mt76, 0, false, false);
+ 	}
+@@ -205,11 +208,15 @@
+ 		ret = -ENOSPC;
+ 		goto out;
+ 	}
+-	mvif->mt76.omac_idx = idx;
++	/* the ce commands name only the bss */
++	mvif->mt76.omac_idx = dev->fw->owns_mac ? mvif->mt76.idx : idx;
+ 
+ 	mvif->mt76.band_idx = ext_phy;
+-	mvif->mt76.wmm_idx = vif->type != NL80211_IFTYPE_AP;
++	/* a firmware that owns the mac services the first parameter set only */
++	mvif->mt76.wmm_idx = !dev->fw->owns_mac &&
++			     vif->type != NL80211_IFTYPE_AP;
+ 	mvif->mt76.wcid = &mvif->sta.wcid;
++
+ 	if (ext_phy)
+ 		mvif->mt76.wmm_idx += 2;
+ 
+@@ -217,7 +224,8 @@
+ 	dev->omac_mask |= BIT_ULL(mvif->mt76.omac_idx);
+ 	phy->omac_mask |= BIT_ULL(mvif->mt76.omac_idx);
+ 
+-	ret = mt7615_mcu_set_dbdc(dev);
++	if (!dev->fw->owns_mac)
++		ret = mt7615_mcu_set_dbdc(dev);
+ 	if (ret)
+ 		goto out;
+ 
+@@ -286,7 +294,7 @@
+ 	struct mt7615_phy *phy = mphy->priv;
+ 	struct mt7615_dev *dev = phy->dev;
+ 	bool ext_phy = phy != &dev->phy;
+-	int ret;
++	int ret = 0;
+ 
+ 	mt76_connac_pm_wake(mphy, &dev->pm);
+ 
+@@ -300,6 +308,10 @@
+ 			goto out;
+ 	}
+ 
++	/* a firmware that owns the mac tunes for its own scans and joins */
++	if (dev->fw->owns_mac)
++		goto out;
++
+ 	ret = mt7615_mcu_set_chan_info(phy, MCU_EXT_CMD(CHANNEL_SWITCH));
+ 	if (ret)
+ 		goto out;
+@@ -374,6 +386,9 @@
+ 		return -EOPNOTSUPP;
+ 	}
+ 
++	if (dev->fw->owns_mac && !mt7668_mcu_cipher(key->cipher))
++		return -EOPNOTSUPP;
++
+ 	mt7615_mutex_acquire(dev);
+ 
+ 	if (cmd == SET_KEY && !sta && !mvif->mt76.cipher) {
+@@ -390,7 +405,12 @@
+ 	}
+ 
+ 	mt76_wcid_key_setup(&dev->mt76, wcid, key);
+-	if (mt76_is_mmio(&dev->mt76))
++	if (dev->fw->owns_mac)
++		/* the firmware owns the table, so the key goes to it by
++		 * command rather than by writing the entry
++		 */
++		err = mt7668_mcu_key(phy, vif, sta, key);
++	else if (mt76_is_mmio(&dev->mt76))
+ 		err = mt7615_mac_wtbl_set_key(dev, wcid, key);
+ 	else
+ 		err = __mt7615_mac_wtbl_set_key(dev, wcid, key);
+@@ -414,6 +434,9 @@
+ 	if (err)
+ 		return err;
+ 
++	if (phy->dev->fw->owns_mac)
++		return 0;
++
+ 	if (mt7615_firmware_offload(phy->dev))
+ 		return mt76_connac_mcu_set_rate_txpower(phy->mt76);
+ 
+@@ -468,9 +491,14 @@
+ 
+ 	mt7615_mutex_acquire(dev);
+ 
+-	queue = mt7615_lmac_mapping(dev, queue);
+-	queue += mvif->wmm_idx * MT7615_MAX_WMM_SETS;
+-	err = mt7615_mcu_set_wmm(dev, queue, params);
++	if (dev->fw->owns_mac) {
++		container_of(mvif, struct mt7615_vif, mt76)->tx_q[queue] = *params;
++		err = mt7668_mcu_wmm(mt7615_hw_phy(hw), vif);
++	} else {
++		queue = mt7615_lmac_mapping(dev, queue);
++		queue += mvif->wmm_idx * MT7615_MAX_WMM_SETS;
++		err = mt7615_mcu_set_wmm(dev, queue, params);
++	}
+ 
+ 	mt7615_mutex_release(dev);
+ 
+@@ -528,12 +556,18 @@
+ 			     MT_WF_RFCR_DROP_NDPA);
+ 
+ 	*total_flags = flags;
+-	mt76_wr(dev, MT_WF_RFCR(band), phy->rxfilter);
+ 
+-	if (*total_flags & FIF_CONTROL)
+-		mt76_clear(dev, MT_WF_RFCR1(band), ctl_flags);
+-	else
+-		mt76_set(dev, MT_WF_RFCR1(band), ctl_flags);
++	/* the receive filter belongs to a firmware that owns the mac, and
++	 * reaching it here costs an mcu round trip per register
++	 */
++	if (!dev->fw->owns_mac) {
++		mt76_wr(dev, MT_WF_RFCR(band), phy->rxfilter);
++
++		if (*total_flags & FIF_CONTROL)
++			mt76_clear(dev, MT_WF_RFCR1(band), ctl_flags);
++		else
++			mt76_set(dev, MT_WF_RFCR1(band), ctl_flags);
++	}
+ 
+ 	mt7615_mutex_release(dev);
+ }
+@@ -595,7 +629,8 @@
+ 		       BSS_CHANGED_BEACON_ENABLED))
+ 		mt7615_mcu_add_beacon(dev, hw, vif, info->enable_beacon);
+ 
+-	if (changed & BSS_CHANGED_HT || changed & BSS_CHANGED_ERP_CTS_PROT)
++	if ((changed & BSS_CHANGED_HT || changed & BSS_CHANGED_ERP_CTS_PROT) &&
++	    !dev->fw->owns_mac)
+ 		mt7615_mcu_set_protection(phy, vif, info->ht_operation_mode,
+ 					  info->use_cts_prot);
+ 
+@@ -603,7 +638,7 @@
+ 		mt76_connac_mcu_set_vif_ps(&dev->mt76, vif);
+ 
+ 	if ((changed & BSS_CHANGED_ARP_FILTER) &&
+-	    mt7615_firmware_offload(dev)) {
++	    mt7615_firmware_offload(dev) && !dev->fw->owns_mac) {
+ 		struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
+ 
+ 		mt76_connac_mcu_update_arp_filter(&dev->mt76, &mvif->mt76,
+@@ -673,6 +708,28 @@
+ }
+ EXPORT_SYMBOL_GPL(mt7615_mac_sta_add);
+ 
++int mt7615_mac_sta_event(struct mt76_dev *mdev, struct ieee80211_vif *vif,
++			 struct ieee80211_sta *sta, enum mt76_sta_event ev)
++{
++	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	struct mt7615_phy *phy;
++	int ret;
++
++	if (!dev->fw->owns_mac || ev != MT76_STA_EVENT_ASSOC ||
++	    vif->type != NL80211_IFTYPE_STATION || sta->tdls)
++		return 0;
++
++	phy = mvif->mt76.band_idx ? mt7615_ext_phy(dev) : &dev->phy;
++
++	mt7615_mutex_acquire(dev);
++	ret = mt7668_mcu_assoc(phy, vif, sta);
++	mt7615_mutex_release(dev);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(mt7615_mac_sta_event);
++
+ void mt7615_mac_sta_remove(struct mt76_dev *mdev, struct ieee80211_vif *vif,
+ 			   struct ieee80211_sta *sta)
+ {
+@@ -792,6 +849,9 @@
+ 	struct mt7615_phy *phy = mt7615_hw_phy(hw);
+ 	int err, band = phy != &dev->phy;
+ 
++	if (dev->fw->owns_mac)
++		return 0;
++
+ 	mt7615_mutex_acquire(dev);
+ 	err = mt76_connac_mcu_set_rts_thresh(&dev->mt76, val, band);
+ 	mt7615_mutex_release(dev);
+@@ -1091,14 +1151,20 @@
+ {
+ 	struct mt7615_dev *dev = mt7615_hw_dev(hw);
+ 	struct mt76_phy *mphy = hw->priv;
+-	int err;
++	int err = 0;
+ 
+ 	/* fall-back to sw-scan */
+ 	if (!mt7615_firmware_offload(dev))
+ 		return 1;
+ 
+ 	mt7615_mutex_acquire(dev);
+-	err = mt76_connac_mcu_hw_scan(mphy, vif, req);
++	/* the firmware probes from the bss it is scanning for, and hears no
++	 * answer while that bss is down
++	 */
++	if (dev->fw->owns_mac && !vif->cfg.assoc)
++		err = mt7668_mcu_activate(mt7615_hw_phy(hw), vif, true);
++	if (!err)
++		err = mt76_connac_mcu_hw_scan(mphy, vif, req);
+ 	mt7615_mutex_release(dev);
+ 
+ 	return err;
+--- a/mt7615/mcu.c	2026-08-09 14:25:30
++++ b/mt7615/mcu.c	2026-09-21 12:00:00
+@@ -496,12 +496,17 @@
+ 	else
+ 		mphy = &dev->mt76.phy;
+ 
+-	ieee80211_ready_on_channel(mphy->hw);
++	/* this firmware grants the channel only to its own joins */
++	if (!dev->fw->owns_mac)
++		ieee80211_ready_on_channel(mphy->hw);
+ 
+ 	phy = mphy->priv;
+ 	phy->roc_grant = true;
+ 	wake_up(&phy->roc_wait);
+ 
++	if (dev->fw->owns_mac)
++		return;
++
+ 	duration = le32_to_cpu(event->max_interval);
+ 	mod_timer(&phy->roc_timer,
+ 		  round_jiffies_up(jiffies + msecs_to_jiffies(duration)));
+@@ -570,6 +575,11 @@
+ 	case MCU_EVENT_BSS_ABSENCE:
+ 		mt7615_mcu_bss_event(dev, skb);
+ 		break;
++	case MT7668_EVENT_RX_ADDBA:
++	case MT7668_EVENT_RX_DELBA:
++		if (dev->fw->owns_mac)
++			mt7668_mcu_ba_event(dev, skb);
++		break;
+ 	case MCU_EVENT_COREDUMP:
+ 		mt76_connac_mcu_coredump_event(&dev->mt76, skb,
+ 					       &dev->coredump);
+--- a/mt7615/mt7615.h	2026-08-09 14:25:30
++++ b/mt7615/mt7615.h	2026-09-21 12:00:00
+@@ -356,6 +356,14 @@
+ 	RDD_RESUME_BF,
+ };
+ 
++/* the plain long descriptor, where an mt7663 on usb or sdio takes one with
++ * the transmit payload words appended
++ */
++static inline u32 mt7615_txd_size(struct mt7615_dev *dev)
++{
++	return dev->fw->owns_mac ? MT_TXD_SIZE : MT_USB_TXD_SIZE;
++}
++
+ static inline struct mt7615_phy *
+ mt7615_hw_phy(struct ieee80211_hw *hw)
+ {
+@@ -554,6 +562,8 @@
+ 			 struct sk_buff *skb, u32 *info);
+ int mt7615_mac_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
+ 		       struct ieee80211_sta *sta);
++int mt7615_mac_sta_event(struct mt76_dev *mdev, struct ieee80211_vif *vif,
++			 struct ieee80211_sta *sta, enum mt76_sta_event ev);
+ void mt7615_mac_sta_remove(struct mt76_dev *mdev, struct ieee80211_vif *vif,
+ 			   struct ieee80211_sta *sta);
+ void mt7615_mac_work(struct work_struct *work);
+--- a/mt7615/sdio.c	2026-08-09 14:25:30
++++ b/mt7615/sdio.c	2026-09-21 12:00:00
+@@ -97,6 +97,7 @@
+ 		.rx_skb = mt7615_queue_rx_skb,
+ 		.rx_check = mt7615_rx_check,
+ 		.sta_add = mt7615_mac_sta_add,
++		.sta_event = mt7615_mac_sta_event,
+ 		.sta_remove = mt7615_mac_sta_remove,
+ 		.update_survey = mt7615_update_channel,
+ 		.set_channel = mt7615_set_channel,
+@@ -151,6 +152,9 @@
+ 	if (ret < 0)
+ 		goto error;
+ 
++	if (fw)
++		mt7615_apply_fw_features(dev, fw);
++
+ 	ret = mt76s_hw_init(mdev, func, MT76_CONNAC_SDIO);
+ 	if (ret)
+ 		goto error;
+--- a/mt7615/usb_sdio.c	2026-08-09 14:25:30
++++ b/mt7615/usb_sdio.c	2026-09-21 12:00:00
+@@ -46,11 +46,13 @@
+ 			   struct ieee80211_key_conf *key, int pid,
+ 			   struct sk_buff *skb)
+ {
+-	__le32 *txwi = (__le32 *)(skb->data - MT_USB_TXD_SIZE);
++	int len = mt7615_txd_size(dev);
++	int append = mt7668_mac_txd_append_len(dev, skb);
++	__le32 *txwi = (__le32 *)(skb->data - len - append);
+ 
+-	memset(txwi, 0, MT_USB_TXD_SIZE);
++	memset(txwi, 0, len);
+ 	mt7615_mac_write_txwi(dev, txwi, skb, wcid, sta, pid, key, qid, false);
+-	skb_push(skb, MT_USB_TXD_SIZE);
++	skb_push(skb, len + append);
+ }
+ 
+ static int mt7663_usb_sdio_set_rates(struct mt7615_dev *dev,
+@@ -157,6 +159,12 @@
+ {
+ 	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
+ 
++	/* the table's airtime is read a register at a time through the
++	 * firmware's mailbox, and a firmware that owns the table keeps it
++	 */
++	if (dev->fw->owns_mac)
++		return false;
++
+ 	mt7615_mutex_acquire(dev);
+ 	mt7615_mac_sta_poll(dev);
+ 	mt7615_mutex_release(dev);
+@@ -168,10 +176,14 @@
+ void mt7663_usb_sdio_tx_complete_skb(struct mt76_dev *mdev,
+ 				     struct mt76_queue_entry *e)
+ {
+-	unsigned int headroom = MT_USB_TXD_SIZE;
++	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
++	unsigned int headroom = mt76_is_usb(mdev) ? MT_USB_HDR_SIZE : 0;
++	__le32 *txwi = (__le32 *)(e->skb->data + headroom);
+ 
+-	if (mt76_is_usb(mdev))
+-		headroom += MT_USB_HDR_SIZE;
++	headroom += mt7615_txd_size(dev);
++	/* a frame for the lmac port carries the append after its descriptor */
++	if (dev->fw->owns_mac && !(le32_to_cpu(txwi[0]) & MT_TXD0_P_IDX))
++		headroom += sizeof(struct mt7668_txd_append);
+ 	skb_pull(e->skb, headroom);
+ 
+ 	mt76_tx_complete_skb(mdev, e->wcid, e->skb);
+@@ -300,6 +312,10 @@
+ 	dev->mt76.global_wcid.hw_key_idx = -1;
+ 	rcu_assign_pointer(dev->mt76.wcid[idx], &dev->mt76.global_wcid);
+ 
++	/* the firmware keeps the entries below MT7668_WTBL_FIRST */
++	if (dev->fw->owns_mac)
++		dev->mt76.wcid_mask[0] |= GENMASK(MT7668_WTBL_FIRST - 1, 1);
++
+ 	return 0;
+ }
+ 
+@@ -318,6 +334,11 @@
+ 		return err;
+ 
+ 	hw->extra_tx_headroom += MT_USB_TXD_SIZE;
++	/* a firmware that owns the mac builds the 802.11 header itself */
++	if (dev->fw->owns_mac) {
++		hw->extra_tx_headroom += sizeof(struct mt7668_txd_append);
++		ieee80211_hw_set(hw, SUPPORTS_TX_ENCAP_OFFLOAD);
++	}
+ 	if (mt76_is_usb(&dev->mt76)) {
+ 		hw->extra_tx_headroom += MT_USB_HDR_SIZE;
+ 		/* check hw sg support in order to enable AMSDU */

@@ -1,0 +1,99 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 5/12] wifi: mt76: connac: support the version 0 hw scan request
+
+The MT7668S's firmware takes the version 0 hw scan request, which ends
+at the ies; sent the longer form, it stops answering entirely.
+
+Let a driver ask for version 0: trim the request at the ies, list the
+channels only when they fit and scan everything otherwise, and leave the
+probe count, dwell and timeout to the firmware. With mt76's dwell and a
+timeout of one dwell per channel, a one-channel scan finds nothing.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt76_connac_mcu.c	2026-08-09 14:25:30
++++ b/mt76_connac_mcu.c	2026-09-21 12:00:00
+@@ -1744,6 +1744,7 @@
+ 	struct mt76_connac_mcu_scan_channel *chan;
+ 	struct mt76_connac_hw_scan_req *req;
+ 	struct sk_buff *skb;
++	bool full;
+ 
+ 	if (test_bit(MT76_HW_SCANNING, &phy->state))
+ 		return -EBUSY;
+@@ -1760,8 +1761,12 @@
+ 	req->seq_num = mvif->scan_seq_num | mvif->band_idx << 7;
+ 	req->bss_idx = mvif->idx;
+ 	req->scan_type = sreq->n_ssids ? 1 : 0;
+-	req->probe_req_num = sreq->n_ssids ? 2 : 0;
+-	req->version = 1;
++	/* an active scan that sends no probes finds nothing; version 0 leaves
++	 * the count, the dwell and the timeout to the firmware
++	 */
++	if (!mdev->mcu.hw_scan_v0)
++		req->probe_req_num = sreq->n_ssids ? 2 : 0;
++	req->version = mdev->mcu.hw_scan_v0 ? 0 : 1;
+ 
+ 	for (i = 0; i < sreq->n_ssids; i++) {
+ 		if (!sreq->ssids[i].ssid_len)
+@@ -1780,11 +1785,18 @@
+ 	/* increase channel time for passive scan */
+ 	if (!sreq->n_ssids)
+ 		duration *= 2;
+-	req->timeout_value = cpu_to_le16(sreq->n_channels * duration);
+-	req->channel_min_dwell_time = cpu_to_le16(duration);
+-	req->channel_dwell_time = cpu_to_le16(duration);
++	/* version 0 takes a list only for as many channels as fit in it, and
++	 * scans anything larger as a full scan on the firmware's own dwell
++	 */
++	full = !sreq->n_channels || sreq->n_channels > 64 ||
++	       (mdev->mcu.hw_scan_v0 && sreq->n_channels > 32);
++	if (!mdev->mcu.hw_scan_v0) {
++		req->timeout_value = cpu_to_le16(sreq->n_channels * duration);
++		req->channel_min_dwell_time = cpu_to_le16(duration);
++		req->channel_dwell_time = cpu_to_le16(duration);
++	}
+ 
+-	if (sreq->n_channels == 0 || sreq->n_channels > 64) {
++	if (full) {
+ 		req->channel_type = 0;
+ 		req->channels_num = 0;
+ 		req->ext_channels_num = 0;
+@@ -1823,12 +1835,18 @@
+ 		req->scan_func |= SCAN_FUNC_SPLIT_SCAN;
+ 
+ 	memcpy(req->bssid, sreq->bssid, ETH_ALEN);
+-	if (sreq->flags & NL80211_SCAN_FLAG_RANDOM_ADDR) {
++	if (!mdev->mcu.hw_scan_v0 &&
++	    sreq->flags & NL80211_SCAN_FLAG_RANDOM_ADDR) {
+ 		get_random_mask_addr(req->random_mac, sreq->mac_addr,
+ 				     sreq->mac_addr_mask);
+ 		req->scan_func |= SCAN_FUNC_RANDOM_MAC;
+ 	}
+ 
++	if (mdev->mcu.hw_scan_v0)
++		/* version 0 says it does not read the fields after the ies */
++		skb_trim(skb, offsetof(struct mt76_connac_hw_scan_req, ies) +
++			 le16_to_cpu(req->ies_len));
++
+ 	err = mt76_mcu_skb_send_msg(mdev, skb, MCU_CE_CMD(START_HW_SCAN),
+ 				    false);
+ 	if (err < 0)
+--- a/mt76.h	2026-08-09 14:25:30
++++ b/mt76.h	2026-09-21 12:00:00
+@@ -637,6 +637,13 @@
+ 	int timeout;
+ 
+ 	struct sk_buff_head res_q;
++
++	/* Firmware that does not take the hw scan request's fields after ies.
++	 * The request says which version it is, and this one is version 0: sent
++	 * the longer form, the part stops answering anything at all.
++	 */
++	bool hw_scan_v0;
++
+ 	wait_queue_head_t wait;
+ };
+ 

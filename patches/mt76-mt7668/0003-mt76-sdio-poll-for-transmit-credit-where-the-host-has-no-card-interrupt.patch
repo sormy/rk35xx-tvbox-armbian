@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 3/12] wifi: mt76: sdio: poll for transmit credit where the host has no card interrupt
+
+A host without an SDIO interrupt learns of returned credit only at the
+MMC core's next poll, and every credit stall waits for it: on an Amlogic
+GX host with an MT7668S, 41 of the first 50 pings after association were
+lost.
+
+While frames wait for credit on such a host, read the status block from
+the worker, a bounded number of times, 20-40 us apart. It is limited to
+a part counting credit in frames, where it was measured; other parts
+keep their behaviour.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/sdio_txrx.c	2026-08-09 14:25:30
++++ b/sdio_txrx.c	2026-09-21 12:00:00
+@@ -10,6 +10,7 @@
+ #include <linux/iopoll.h>
+ #include <linux/module.h>
+ 
++#include <linux/mmc/card.h>
+ #include <linux/mmc/host.h>
+ #include <linux/mmc/sdio_ids.h>
+ #include <linux/mmc/sdio_func.h>
+@@ -352,10 +353,17 @@
+ 	return nframes;
+ }
+ 
++/* how many times a host polled for the card's interrupt reads the status block
++ * itself while frames wait for credit
++ */
++#define MT76S_TX_CREDIT_POLLS	512
++
+ void mt76s_txrx_worker(struct mt76_sdio *sdio)
+ {
+ 	struct mt76_dev *dev = container_of(sdio, struct mt76_dev, sdio);
+-	int i, nframes, ret;
++	bool polled = sdio->quota_pkts &&
++		      !(sdio->func->card->host->caps & MMC_CAP_SDIO_IRQ);
++	int i, nframes, ret, polls = 0;
+ 
+ 	/* disable interrupt */
+ 	sdio_claim_host(sdio->func);
+@@ -387,6 +395,17 @@
+ 			else
+ 				wake_up(&sdio->wait);
+ 		}
++
++		/* a host without the card's interrupt line learns of returned
++		 * credit only when it next polls for it, milliseconds away
++		 */
++		if (!nframes && polled && !mt76s_txqs_empty(dev) &&
++		    polls++ < MT76S_TX_CREDIT_POLLS) {
++			usleep_range(20, 40);
++			nframes = 1;
++		} else if (nframes) {
++			polls = 0;
++		}
+ 	} while (nframes > 0);
+ 
+ 	/* enable interrupt */

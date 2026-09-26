@@ -1,0 +1,160 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 1/12] wifi: mt76: sdio: support a part that counts transmit credit in frames
+
+An MT7668S counts transmit credit in frames, not pages. It returns
+command credit on TQ15 and data credit on TQ0-TQ11, and has no PLE pool.
+mt76 read command credit from TQ4 and charged pages against TQ0-TQ3, so
+both pools drained and the next frame was queued and never sent.
+
+Let a driver name its command credit counter, and charge one credit per
+frame with no PLE gate. Charge a frame by the port bit in its descriptor:
+a management frame sent through a data queue lands in the seven-deep
+command queue, and charged to the data pool it overran that queue until
+the firmware asserted.
+
+Zero and false keep existing parts unchanged.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt76.h	2026-08-09 14:25:30
++++ b/mt76.h	2026-09-21 12:00:00
+@@ -672,6 +672,17 @@
+ #define MT76S_NUM_TX_ENTRIES	256
+ #define MT76S_NUM_RX_ENTRIES	512
+ struct mt76_sdio {
++	/* The status block counts sixteen transmit queues and a part says on
++	 * which of them it returns the command queue's credits. Zero selects
++	 * the one the MT7615 family uses.
++	 */
++	u8 mcu_txq;
++
++	/* A part that returns one credit per frame rather than per page is
++	 * charged the same way, or its queues drain and never refill.
++	 */
++	bool quota_pkts;
++
+ 	struct mt76_worker txrx_worker;
+ 	struct mt76_worker status_worker;
+ 	struct mt76_worker net_worker;
+--- a/sdio_txrx.c	2026-08-09 14:25:30
++++ b/sdio_txrx.c	2026-09-21 12:00:00
+@@ -18,6 +18,19 @@
+ #include "sdio.h"
+ #include "mt76.h"
+ 
++/* the counter the MT7615 family returns command credits on */
++#define MT76S_DEFAULT_MCU_TXQ	4
++
++/* four access classes in each of three queue sets */
++#define MT76S_DATA_TXQ_CNT	12
++
++/* the status block counts sixteen transmit queues, two to a word */
++static u32 mt76s_txq_cnt(u32 *data, int q)
++{
++	return q & 1 ? FIELD_GET(TXQ_CNT_H, data[q / 2])
++		     : FIELD_GET(TXQ_CNT_L, data[q / 2]);
++}
++
+ static int mt76s_refill_sched_quota(struct mt76_dev *dev, u32 *data)
+ {
+ 	u32 ple_ac_data_quota[] = {
+@@ -32,14 +45,23 @@
+ 		FIELD_GET(TXQ_CNT_H, data[0]), /* BE */
+ 		FIELD_GET(TXQ_CNT_L, data[0]), /* BK */
+ 	};
+-	u32 pse_mcu_quota = FIELD_GET(TXQ_CNT_L, data[2]);
++	u32 pse_mcu_quota = mt76s_txq_cnt(data, dev->sdio.mcu_txq ?:
++					  MT76S_DEFAULT_MCU_TXQ);
+ 	u32 pse_data_quota = 0, ple_data_quota = 0;
+ 	struct mt76_sdio *sdio = &dev->sdio;
+ 	int i;
+ 
+-	for (i = 0; i < ARRAY_SIZE(pse_ac_data_quota); i++) {
+-		pse_data_quota += pse_ac_data_quota[i];
+-		ple_data_quota += ple_ac_data_quota[i];
++	/* a part counting in frames returns a data frame's credit on the
++	 * counter of whichever of its three queue sets served it
++	 */
++	if (sdio->quota_pkts) {
++		for (i = 0; i < MT76S_DATA_TXQ_CNT; i++)
++			pse_data_quota += mt76s_txq_cnt(data, i);
++	} else {
++		for (i = 0; i < ARRAY_SIZE(pse_ac_data_quota); i++) {
++			pse_data_quota += pse_ac_data_quota[i];
++			ple_data_quota += ple_ac_data_quota[i];
++		}
+ 	}
+ 
+ 	if (!pse_data_quota && !ple_data_quota && !pse_mcu_quota)
+@@ -193,12 +215,16 @@
+ 	pse_sz = DIV_ROUND_UP(buf_sz + sdio->sched.deficit,
+ 			      sdio->sched.pse_page_size);
+ 
+-	if (mcu && sdio->hw_ver == MT76_CONNAC2_SDIO)
++	if (sdio->quota_pkts || (mcu && sdio->hw_ver == MT76_CONNAC2_SDIO))
+ 		pse_sz = 1;
+ 
+ 	if (mcu) {
+ 		if (sdio->sched.pse_mcu_quota < *pse_size + pse_sz)
+ 			return -EBUSY;
++	} else if (sdio->quota_pkts) {
++		/* such a part reports no ple pool at all */
++		if (sdio->sched.pse_data_quota < *pse_size + pse_sz)
++			return -EBUSY;
+ 	} else {
+ 		if (sdio->sched.pse_data_quota < *pse_size + pse_sz ||
+ 		    sdio->sched.ple_data_quota < *ple_size + 1)
+@@ -242,9 +268,20 @@
+ 	return err;
+ }
+ 
++/* the port bit of a connac descriptor: a frame routed to the mcu port lands in
++ * the command queue whichever mt76 queue carried it
++ */
++#define MT76S_TXD0_P_IDX_MCU	BIT(31)
++
++static bool mt76s_tx_to_mcu(struct mt76_sdio *sdio, struct sk_buff *skb)
++{
++	return sdio->quota_pkts &&
++	       le32_to_cpu(*(__le32 *)skb->data) & MT76S_TXD0_P_IDX_MCU;
++}
++
+ static int mt76s_tx_run_queue(struct mt76_dev *dev, struct mt76_queue *q)
+ {
+-	int err, nframes = 0, len = 0, pse_sz = 0, ple_sz = 0;
++	int err, nframes = 0, len = 0, pse_sz = 0, ple_sz = 0, mcu_pse_sz = 0;
+ 	bool mcu = q == dev->q_mcu[MT_MCUQ_WM];
+ 	struct mt76_sdio *sdio = &dev->sdio;
+ 	u8 pad;
+@@ -252,6 +289,7 @@
+ 	while (q->first != q->head) {
+ 		struct mt76_queue_entry *e = &q->entry[q->first];
+ 		struct sk_buff *iter;
++		bool to_mcu;
+ 
+ 		smp_rmb();
+ 
+@@ -276,8 +314,9 @@
+ 		if (len + e->skb->len + pad + 4 > dev->sdio.xmit_buf_sz)
+ 			break;
+ 
+-		if (mt76s_tx_pick_quota(sdio, mcu, e->buf_sz, &pse_sz,
+-					&ple_sz))
++		to_mcu = mcu || mt76s_tx_to_mcu(sdio, e->skb);
++		if (mt76s_tx_pick_quota(sdio, to_mcu, e->buf_sz,
++					to_mcu ? &mcu_pse_sz : &pse_sz, &ple_sz))
+ 			break;
+ 
+ 		memcpy(sdio->xmit_buf + len, e->skb->data, skb_headlen(e->skb));
+@@ -305,7 +344,8 @@
+ 		if (err)
+ 			return err;
+ 	}
+-	mt76s_tx_update_quota(sdio, mcu, pse_sz, ple_sz);
++	mt76s_tx_update_quota(sdio, false, pse_sz, ple_sz);
++	mt76s_tx_update_quota(sdio, true, mcu_pse_sz, 0);
+ 
+ 	mt76_worker_schedule(&sdio->status_worker);
+ 

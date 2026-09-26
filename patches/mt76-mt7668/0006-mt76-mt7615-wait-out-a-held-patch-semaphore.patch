@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 6/12] wifi: mt76: mt7615: wait out a held patch semaphore
+
+A part may hold the patch semaphore briefly after power-up and answer
+PATCH_NOT_DL_SEM_FAIL, meaning the patch is still wanted. Retry every
+100 ms for up to five seconds instead of failing the probe.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt7615/mcu.c	2026-08-09 14:25:30
++++ b/mt7615/mcu.c	2026-09-21 12:00:00
+@@ -1228,7 +1228,7 @@
+ {
+ 	const struct mt7615_patch_hdr *hdr;
+ 	const struct firmware *fw = NULL;
+-	int len, ret, sem;
++	int len, ret, sem, i;
+ 
+ 	ret = firmware_request_nowarn(&fw, name, dev->mt76.dev);
+ 	if (ret)
+@@ -1240,7 +1240,16 @@
+ 		goto release_fw;
+ 	}
+ 
+-	sem = mt76_connac_mcu_patch_sem_ctrl(&dev->mt76, true);
++	/* PATCH_NOT_DL_SEM_FAIL says the patch is still wanted but the semaphore is
++	 * not ours yet. Some parts hold it for a moment after power-up, so ask
++	 * again rather than give up.
++	 */
++	for (i = 0; i < MT7615_PATCH_SEM_RETRIES; i++) {
++		sem = mt76_connac_mcu_patch_sem_ctrl(&dev->mt76, true);
++		if (sem != PATCH_NOT_DL_SEM_FAIL)
++			break;
++		msleep(MT7615_PATCH_SEM_DELAY_MS);
++	}
+ 	switch (sem) {
+ 	case PATCH_IS_DL:
+ 		goto release_fw;
+--- a/mt7615/mt7615.h	2026-08-09 14:25:30
++++ b/mt7615/mt7615.h	2026-09-21 12:00:00
+@@ -34,6 +34,10 @@
+ 
+ #define MT7615_DRV_OWN_RETRY_COUNT	10
+ 
++/* how long a part may hold the patch semaphore after power-up */
++#define MT7615_PATCH_SEM_RETRIES	50
++#define MT7615_PATCH_SEM_DELAY_MS	100
++
+ #define MT7615_FIRMWARE_CR4		"mediatek/mt7615_cr4.bin"
+ #define MT7615_FIRMWARE_N9		"mediatek/mt7615_n9.bin"
+ #define MT7615_ROM_PATCH		"mediatek/mt7615_rom_patch.bin"

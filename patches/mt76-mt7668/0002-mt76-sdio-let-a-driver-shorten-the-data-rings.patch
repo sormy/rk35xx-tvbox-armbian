@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 2/12] wifi: mt76: sdio: let a driver shorten the data rings
+
+The data rings are a FIFO ahead of mac80211's fair queueing. On a part
+that queues deeply in firmware, a 256-entry ring holds one flow's acks
+behind another's data: with an upload running, an MT7668S download fell
+to 5-9 Mbit/s. With 64 entries it holds 28-58 Mbit/s.
+
+Let a driver set the length; zero keeps MT76S_NUM_TX_ENTRIES.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt76.h	2026-08-09 14:25:30
++++ b/mt76.h	2026-09-21 12:00:00
+@@ -691,6 +691,13 @@
+ 	u8 *xmit_buf;
+ 	u32 xmit_buf_sz;
+ 
++	/* A part that queues deeply in firmware takes a short data ring: the
++	 * ring is a fifo ahead of mac80211's fair queueing, drained at the bus
++	 * rate, and a deep one holds one flow's acks behind another flow's
++	 * data. Zero keeps MT76S_NUM_TX_ENTRIES.
++	 */
++	u16 data_txq_len;
++
+ 	struct sdio_func *func;
+ 	void *intr_data;
+ 	u8 hw_ver;
+--- a/sdio.c	2026-08-09 14:25:30
++++ b/sdio.c	2026-09-21 12:00:00
+@@ -320,7 +320,7 @@
+ }
+ EXPORT_SYMBOL_GPL(mt76s_alloc_rx_queue);
+ 
+-static struct mt76_queue *mt76s_alloc_tx_queue(struct mt76_dev *dev)
++static struct mt76_queue *mt76s_alloc_tx_queue(struct mt76_dev *dev, int n)
+ {
+ 	struct mt76_queue *q;
+ 
+@@ -330,12 +330,11 @@
+ 
+ 	spin_lock_init(&q->lock);
+ 	q->entry = devm_kcalloc(dev->dev,
+-				MT76S_NUM_TX_ENTRIES, sizeof(*q->entry),
+-				GFP_KERNEL);
++				n, sizeof(*q->entry), GFP_KERNEL);
+ 	if (!q->entry)
+ 		return ERR_PTR(-ENOMEM);
+ 
+-	q->ndesc = MT76S_NUM_TX_ENTRIES;
++	q->ndesc = n;
+ 
+ 	return q;
+ }
+@@ -346,14 +345,15 @@
+ 	int i;
+ 
+ 	for (i = 0; i <= MT_TXQ_PSD; i++) {
+-		q = mt76s_alloc_tx_queue(dev);
++		q = mt76s_alloc_tx_queue(dev, dev->sdio.data_txq_len ?:
++					 MT76S_NUM_TX_ENTRIES);
+ 		if (IS_ERR(q))
+ 			return PTR_ERR(q);
+ 
+ 		dev->phy.q_tx[i] = q;
+ 	}
+ 
+-	q = mt76s_alloc_tx_queue(dev);
++	q = mt76s_alloc_tx_queue(dev, MT76S_NUM_TX_ENTRIES);
+ 	if (IS_ERR(q))
+ 		return PTR_ERR(q);
+ 

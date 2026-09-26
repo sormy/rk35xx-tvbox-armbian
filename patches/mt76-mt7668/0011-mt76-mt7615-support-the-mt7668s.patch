@@ -1,0 +1,104 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 -0400
+Subject: [PATCH 11/12] wifi: mt76: mt7615: support the MT7668S
+
+The MT7668S is an MT7663 sibling on SDIO - the same registers,
+descriptors and firmware download - whose firmware owns the MAC. Add its
+profile and its sdio id, 0x7608.
+
+It joins on both bands, reconnects in 105-352 ms, and matches MediaTek's
+driver on the same access point: about 150 Mbit/s each way on 5 GHz at
+80 MHz, and 90 on 2.4 GHz at 20 MHz.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt76_connac.h	2026-08-09 14:25:30
++++ b/mt76_connac.h	2026-09-21 12:00:00
+@@ -192,9 +192,10 @@
+ 	return mt76_chip(dev) == 0x7961 || is_mt7922(dev) || is_mt7920(dev);
+ }
+ 
++/* the MT7668 takes the MT7663's paths: same bus, registers and descriptors */
+ static inline bool is_mt7663(struct mt76_dev *dev)
+ {
+-	return mt76_chip(dev) == 0x7663;
++	return mt76_chip(dev) == 0x7663 || mt76_chip(dev) == 0x7668;
+ }
+ 
+ static inline bool is_mt7915(struct mt76_dev *dev)
+--- a/mt7615/mt7615.h	2026-08-09 14:25:30
++++ b/mt7615/mt7615.h	2026-09-21 12:00:00
+@@ -54,6 +54,11 @@
+ #define MT7663_ROM_PATCH		"mediatek/mt7663pr2h_rebb.bin"
+ #define MT7663_FIRMWARE_N9		"mediatek/mt7663_n9_rebb.bin"
+ 
++#define MT7668_ROM_PATCH		"mediatek/mt7668_patch_e2_hdr.bin"
++#define MT7668_FIRMWARE_N9		"mediatek/WIFI_RAM_CODE_MT7668.bin"
++#define MT7668_FIRMWARE_CR4		"mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin"
++#define MT7668_EEPROM			"mediatek/EEPROM_MT7668.bin"
++
+ #define MT7615_EEPROM_SIZE		1024
+ #define MT7663_EEPROM_SIZE		1536
+ #define MT7615_TOKEN_SIZE		4096
+--- a/mt7615/sdio.c	2026-08-09 14:25:30
++++ b/mt7615/sdio.c	2026-09-21 12:00:00
+@@ -19,11 +19,6 @@
+ #include "mac.h"
+ #include "mcu.h"
+ 
+-static const struct sdio_device_id mt7663s_table[] = {
+-	{ SDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, 0x7603) },
+-	{ }	/* Terminating entry */
+-};
+-
+ static void mt7663s_txrx_worker(struct mt76_worker *w)
+ {
+ 	struct mt76_sdio *sdio = container_of(w, struct mt76_sdio,
+@@ -85,6 +80,35 @@
+ 	return 0;
+ }
+ 
++static const struct mt7615_fw_features mt7668_fw_features = {
++	.rom_patch = MT7668_ROM_PATCH,
++	.patch_addr = 0x000c8000,
++	.n9 = MT7668_FIRMWARE_N9,
++	.cr4 = MT7668_FIRMWARE_CR4,
++
++	.eeprom = MT7668_EEPROM,
++	/* where the calibration starts, as the firmware reports it */
++	.ee_cal_start = 0x03a,
++	.ee_cal_len = 790,
++	.ee_cmd_type = 0x11,	/* buffer format, calibration deferred */
++
++	.mcu_txq = 15,
++	.quota_pkts = true,
++	/* 32 frames ahead of its own 127, past the core's MT_TXQ_FREE_THR */
++	.data_txq_len = 64,
++	.owns_mac = true,
++	.hif_ready = true,
++	.hw_scan_v0 = true,
++	.mcu_first = true,
++};
++
++static const struct sdio_device_id mt7663s_table[] = {
++	{ SDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, 0x7603) },
++	{ SDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, 0x7608),
++	  .driver_data = (kernel_ulong_t)&mt7668_fw_features },
++	{ }	/* Terminating entry */
++};
++
+ static int mt7663s_probe(struct sdio_func *func,
+ 			 const struct sdio_device_id *id)
+ {
+@@ -299,6 +323,10 @@
+ MODULE_FIRMWARE(MT7663_OFFLOAD_ROM_PATCH);
+ MODULE_FIRMWARE(MT7663_FIRMWARE_N9);
+ MODULE_FIRMWARE(MT7663_ROM_PATCH);
++MODULE_FIRMWARE(MT7668_ROM_PATCH);
++MODULE_FIRMWARE(MT7668_FIRMWARE_N9);
++MODULE_FIRMWARE(MT7668_FIRMWARE_CR4);
++MODULE_FIRMWARE(MT7668_EEPROM);
+ 
+ static DEFINE_SIMPLE_DEV_PM_OPS(mt7663s_pm_ops, mt7663s_suspend, mt7663s_resume);
+ 
