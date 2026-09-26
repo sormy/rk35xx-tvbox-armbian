@@ -18,6 +18,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                                   |
 | `backup/<board>/`   | eMMC images (gitignored)                                                                           |
 | `patches/<tool>/`   | fixes to host tools we build ourselves, formatted to send upstream                                 |
+| `src/<tool>/`       | host tools we write ourselves                                                                      |
 
 **Repo filenames mirror the names installed on disk**, and every board installs under the `rk35xx-`
 prefix — `BOARD_PREFIX` in `board.conf` drives every installed path. A board directory holds
@@ -28,7 +29,8 @@ hook, or a unit for hardware only it has (the R69's `rk35xx-bt`).
 
 **Tools we build, and must:** `dtc` (`./build-dtc.sh` — vanilla cannot round-trip a vendor blob with
 `&label`s) · `e2tools` (`./build-e2tools.sh` — the stock one corrupts an image on delete) ·
-`rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · a per-board `uboot.dts`
+`rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd`
+(`./build-amltools.sh` — Amlogic's own is closed and x86-64 Linux only) · a per-board `uboot.dts`
 (`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all three at
 once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only on
 Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier`. **On the box:** `evtest`,
@@ -60,6 +62,7 @@ another, so nothing rots when one is rewritten.
 | `docs/h96max/wifi-tx-latch.md`        | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest          |
 | `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why         |
 | `upstream/README.md`                  | turning the grafts into something upstreamable                        |
+| `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there      |
 | `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s       |
 | `patches/u-boot/README.md`            | the two fixes U-Boot's pylibfdt build needs off Linux                 |
 | `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader    |
