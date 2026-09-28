@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Sat, 20 Sep 2026 12:00:00 -0400
-Subject: [PATCH 12/12] build the SDIO stack for DKMS
+Subject: [PATCH 13/13] build the SDIO stack for DKMS
 
 Not for upstream: builds the SDIO stack out of tree, since the series
 changes the core, to install over the in-tree modules.

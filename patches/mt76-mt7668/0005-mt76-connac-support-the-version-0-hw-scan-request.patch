@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Mon, 21 Sep 2026 12:00:00 -0400
-Subject: [PATCH 5/12] wifi: mt76: connac: support the version 0 hw scan request
+Subject: [PATCH 5/13] wifi: mt76: connac: support the version 0 hw scan request
 
 The MT7668S's firmware takes the version 0 hw scan request, which ends
 at the ies; sent the longer form, it stops answering entirely.

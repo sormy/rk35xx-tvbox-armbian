@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Fri, 25 Sep 2026 12:00:00 -0400
-Subject: [PATCH 0/11] wifi: mt76: mt7615: add MT7668S support
+Subject: [PATCH 0/12] wifi: mt76: mt7615: add MT7668S support
 
 The MT7668S is an SDIO Wi-Fi and Bluetooth combo found in Amlogic TV
 boxes. Its Wi-Fi half is an MT7663 sibling whose firmware owns the MAC:
@@ -10,8 +10,10 @@ command set, and counts transmit credit in frames.
 
 1-6 are small core changes the part needs, each a no-op for the parts
 already supported. 7 adds a per-firmware profile to mt7615, 8 the CE
-commands and transmit descriptor in new files, 9 and 10 wire them in, and
-11 adds the sdio id.
+commands and transmit descriptor in new files, 9 and 10 wire them in,
+11 adds the sdio id, and 12 sizes the part by its firmware's own report,
+which tells it from single-stream siblings such as the MT7658 that share
+the id.
 
 Tested on an H96 Max M20 (Amlogic S905LTS, meson-gx-mmc, no SDIO
 interrupt) against MediaTek's driver on the same access point: joins on
@@ -28,7 +30,7 @@ Known limits:
     which cannot leave the operating channel on this firmware
   - DISABLE_KEY is not sent to the firmware, as elsewhere in mt7615
 
-Artem Butusov (11):
+Artem Butusov (12):
   wifi: mt76: sdio: support a part that counts transmit credit in frames
   wifi: mt76: sdio: let a driver shorten the data rings
   wifi: mt76: sdio: poll for transmit credit where the host has no card interrupt
@@ -40,32 +42,33 @@ Artem Butusov (11):
   wifi: mt76: mt7615: load and unload a part whose firmware owns the MAC
   wifi: mt76: mt7615: drive a part whose firmware owns the MAC
   wifi: mt76: mt7615: support the MT7668S
+  wifi: mt76: mt7615: size an MT7668 by what its firmware reports
 
- drivers/net/wireless/mediatek/mt76/eeprom.c   |  48 +-
- drivers/net/wireless/mediatek/mt76/mt76.h     |  28 +
- .../wireless/mediatek/mt76/mt7615/Makefile    |   2 +-
- .../wireless/mediatek/mt76/mt7615/eeprom.c    |  40 +
- .../net/wireless/mediatek/mt76/mt7615/init.c  |  55 +-
- .../net/wireless/mediatek/mt76/mt7615/mac.c   |  45 +-
- .../net/wireless/mediatek/mt76/mt7615/mac.h   |  21 +
- .../wireless/mediatek/mt76/mt7615/mac_ce.c    | 210 ++++
- .../net/wireless/mediatek/mt76/mt7615/main.c  | 110 ++-
- .../net/wireless/mediatek/mt76/mt7615/mcu.c   | 193 +++-
- .../net/wireless/mediatek/mt76/mt7615/mcu.h   |   4 +
- .../wireless/mediatek/mt76/mt7615/mcu_ce.c    | 910 ++++++++++++++++++
- .../net/wireless/mediatek/mt76/mt7615/mmio.c  |   1 +
- .../wireless/mediatek/mt76/mt7615/mt7615.h    |  85 ++
- .../net/wireless/mediatek/mt76/mt7615/sdio.c  | 101 +-
- .../wireless/mediatek/mt76/mt7615/sdio_mcu.c  |  58 ++
- .../net/wireless/mediatek/mt76/mt7615/usb.c   |   1 +
- .../wireless/mediatek/mt76/mt7615/usb_sdio.c  |  43 +-
- .../net/wireless/mediatek/mt76/mt76_connac.h  |   3 +-
- .../wireless/mediatek/mt76/mt76_connac_mcu.c  |  34 +-
- .../wireless/mediatek/mt76/mt76_connac_mcu.h  |   5 +
- drivers/net/wireless/mediatek/mt76/sdio.c     |  12 +-
- drivers/net/wireless/mediatek/mt76/sdio.h     |   1 +
- .../net/wireless/mediatek/mt76/sdio_txrx.c    |  79 +-
- 24 files changed, 1991 insertions(+), 98 deletions(-)
+ drivers/net/wireless/mediatek/mt76/eeprom.c  |   48 +-
+ drivers/net/wireless/mediatek/mt76/mt76.h    |   28 +
+ .../wireless/mediatek/mt76/mt7615/Makefile   |    2 +-
+ .../wireless/mediatek/mt76/mt7615/eeprom.c   |   40 +
+ .../net/wireless/mediatek/mt76/mt7615/init.c |   55 +-
+ .../net/wireless/mediatek/mt76/mt7615/mac.c  |   45 +-
+ .../net/wireless/mediatek/mt76/mt7615/mac.h  |   21 +
+ .../wireless/mediatek/mt76/mt7615/mac_ce.c   |  210 ++++
+ .../net/wireless/mediatek/mt76/mt7615/main.c |  110 +-
+ .../net/wireless/mediatek/mt76/mt7615/mcu.c  |  193 ++-
+ .../net/wireless/mediatek/mt76/mt7615/mcu.h  |    4 +
+ .../wireless/mediatek/mt76/mt7615/mcu_ce.c   | 1000 ++++++++++++++++
+ .../net/wireless/mediatek/mt76/mt7615/mmio.c |    1 +
+ .../wireless/mediatek/mt76/mt7615/mt7615.h   |   95 ++
+ .../net/wireless/mediatek/mt76/mt7615/sdio.c |  101 +-
+ .../wireless/mediatek/mt76/mt7615/sdio_mcu.c |   63 +
+ .../net/wireless/mediatek/mt76/mt7615/usb.c  |    1 +
+ .../wireless/mediatek/mt76/mt7615/usb_sdio.c |   48 +-
+ .../net/wireless/mediatek/mt76/mt76_connac.h |    3 +-
+ .../wireless/mediatek/mt76/mt76_connac_mcu.c |   34 +-
+ .../wireless/mediatek/mt76/mt76_connac_mcu.h |    6 +
+ drivers/net/wireless/mediatek/mt76/sdio.c    |   12 +-
+ drivers/net/wireless/mediatek/mt76/sdio.h    |    1 +
+ .../net/wireless/mediatek/mt76/sdio_txrx.c   |   79 +-
+ 24 files changed, 2101 insertions(+), 99 deletions(-)
 
 --
 2.47.0

@@ -3036,3 +3036,27 @@ Backup replaced first: `.bak/2026-09-25-swept/`.
   Dropped.
 - `mt7668_patch_e1_hdr.bin` and `TxPwrLimit_MT76x8.dat` are the vendor driver's alone, which is not
   shipped. Dropped; `stock/h96max-m20/firmware/` keeps them.
+
+## 2026-09-28 — streams and bands from the firmware
+
+- An outside tester ran the series on an MT7668 and an MT7658 (Echo Show 8 and 5). The MT7658,
+  single-stream, aborted its firmware on the series' fixed two streams and rejected the descriptor's
+  spatial extension index `0x18`.
+- MediaTek's driver matches both parts by sdio id `0x7608`; it tells them apart only by CE query
+  `0x80`, the v1 NIC capability event: `ucHwSetNss1x1`, `ucHwWiFiZeroOnly`, `ucHw5GBandDisabled`,
+  `ucHwNotSupportAC`. From them it picks one stream and, per band, the transmit path: 5 GHz on path
+  0 and 2.4 GHz on path 1, or path 0 on both when only path 0 is fitted. Two streams keep `0x18`.
+- `0012` asks for that event after the transmit budget and applies it after the eeprom. This unit
+  answers at probe with no timeout: product `7668`, 5 GHz on, VHT on, two streams.
+- Gated against the series without it, same session, same access point:
+
+| Build        | 5 GHz up / down   | 5 GHz both ways | 2.4 GHz up / down | 2.4 GHz both ways |
+| ------------ | ----------------- | --------------- | ----------------- | ----------------- |
+| without 0012 | 148-152 / 140-145 | 122 / 28.6      | 91-93 / 89-90     | 48.2 / 40.5       |
+| with 0012    | 147-149 / 142     | 116 / 33.6      | 90-91 / 85-92     | 57.9 / 29.9       |
+| one forced   | 139-152 / 142-143 | 115 / 37.0      | 47 / 49           | 25.3 / 22.7       |
+
+- Reconnects 10 of 10 in 109-385 ms on all three; no handshake or MCU timeouts, no warnings.
+- Forced to one stream, the phy advertises antennas `0x1` and HT MCS 0-7, and the firmware takes one
+  stream with path 1 on 2.4 GHz and path 0 on 5 GHz. 2.4 GHz halves, as one stream at 20 MHz should;
+  5 GHz does not, one stream at 80 MHz still outrunning the sdio bus.

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Mon, 21 Sep 2026 12:00:00 -0400
-Subject: [PATCH 2/12] wifi: mt76: sdio: let a driver shorten the data rings
+Subject: [PATCH 2/13] wifi: mt76: sdio: let a driver shorten the data rings
 
 The data rings are a FIFO ahead of mac80211's fair queueing. On a part
 that queues deeply in firmware, a 256-entry ring holds one flow's acks

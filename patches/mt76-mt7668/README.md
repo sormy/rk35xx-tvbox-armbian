@@ -20,7 +20,8 @@ register map, connac descriptors and firmware download - whose firmware owns the
 | 0009 | mt7615: loading and resetting a firmware that owns the MAC | yes      |
 | 0010 | mt7615: running a part whose firmware owns the MAC         | yes      |
 | 0011 | mt7615: the MT7668S's sdio id and profile                  | yes      |
-| 0012 | build the SDIO stack out of tree, over the in-tree modules | no       |
+| 0012 | mt7615: streams and bands from the firmware's report       | yes      |
+| 0013 | build the SDIO stack out of tree, over the in-tree modules | no       |
 
 Each patch builds on its own at `W=1`. `cover-letter.txt` introduces the set for submission.
 
@@ -58,6 +59,7 @@ back by cycling the sdio host:
 | Both ways at once          | 🟡 13-19 down on some runs, ~30 on others; unexplained |
 | Reconnect and roam time    | 🟡 two groups, ~110 and ~340 ms; unexplained           |
 | Firmware in linux-firmware | not there: none of the four images                     |
+| Single-stream siblings     | 🟡 one stream forced on an MT7668; no MT7658 run here  |
 
 AP is proven only as far as `hostapd` reaching `AP-ENABLED` on the vendor driver. Porting it needs
 the beacon template, the BSS in AP role and client station records; remain-on-channel needs

@@ -1,0 +1,256 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 28 Sep 2026 12:00:00 -0400
+Subject: [PATCH 12/13] wifi: mt76: mt7615: size an MT7668 by what its firmware reports
+
+The MT7668 shares its sdio id, 0x7608, with single-stream siblings such
+as the MT7658; MediaTek's driver tells them apart only by the firmware's
+NIC capability event, CE query 0x80. The series assumed two streams:
+told to use two, a single-stream part's firmware aborts, and it rejects
+the transmit descriptor's spatial extension index 0x18, which duplicates
+a frame over both paths.
+
+Ask for the event once the firmware runs, and after the eeprom apply
+what it reports: one stream, no 5 GHz band, no VHT. A single-stream part
+transmits 5 GHz on path 0 and 2.4 GHz on path 1, or path 0 on both when
+only path 0 is fitted, as MediaTek's driver selects them. A two-stream
+part keeps 0x18.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt76_connac_mcu.h
++++ b/mt76_connac_mcu.h
+@@ -1348,6 +1348,7 @@
+ 	MCU_CE_CMD_SET_RATE_TX_POWER = 0x5d,
+ 	MCU_CE_CMD_SCHED_SCAN_ENABLE = 0x61,
+ 	MCU_CE_CMD_SCHED_SCAN_REQ = 0x62,
++	MCU_CE_CMD_GET_NIC_CAPAB_V1 = 0x80,
+ 	MCU_CE_CMD_GET_NIC_CAPAB = 0x8a,
+ 	MCU_CE_CMD_RSSI_MONITOR = 0xa1,
+ 	MCU_CE_CMD_SET_MU_EDCA_PARMS = 0xb0,
+--- a/mt7615/mt7615.h
++++ b/mt7615/mt7615.h
+@@ -312,6 +312,14 @@
+ 	bool dbdc_support;
+ 
+ 	const struct mt7615_fw_features *fw;
++	/* what a firmware that owns the mac reports its unit lacks */
++	struct {
++		bool no_5ghz;
++		bool no_vht;
++		bool one_stream;
++		bool wf0_only;
++	} hw_cap;
++	u8 spe_idx[NUM_NL80211_BANDS];
+ 
+ 	u8 fw_ver;
+ 
+@@ -587,6 +595,8 @@
+ int mt7615_mcu_set_protection(struct mt7615_phy *phy, struct ieee80211_vif *vif,
+ 			      u8 ht_mode, bool use_cts_prot);
+ int mt7668_mcu_tx_resource(struct mt7615_dev *dev);
++int mt7668_mcu_hw_cap(struct mt7615_dev *dev);
++void mt7668_apply_hw_cap(struct mt7615_dev *dev);
+ void mt7668_mcu_ba_event(struct mt7615_dev *dev, struct sk_buff *skb);
+ u16 mt7668_mac_basic_rate(struct mt76_phy *mphy);
+ u16 mt7615_mac_tx_rate_val(struct mt7615_dev *dev, struct mt76_phy *mphy,
+--- a/mt7615/mcu_ce.c
++++ b/mt7615/mcu_ce.c
+@@ -25,9 +25,12 @@
+ #define MT7668_STA_IDX	0
+ 
+ #define MT7668_MCS_ALL	0xff
+-#define MT7668_NSS		2
+ #define MT7668_STA_NONE	0xfe
+ #define MT7668_RTS_LEGACY	3
++/* a frame's transmit path: one of them, or the same frame on both */
++#define MT7668_SPE_WF0	0
++#define MT7668_SPE_WF1	1
++#define MT7668_SPE_BOTH	0x18
+ /* the capability reply's transmit resource element */
+ #define MT7668_CAP_TX_RESOURCE	0
+ /* TxBaSize and RxHtBaSize, and TxMaxAmsduInAmpduLen */
+@@ -221,12 +224,13 @@
+ 
+ /* the firmware transmits no wider than the bss it is given */
+ static void mt7668_fill_rlm(struct mt7668_bss_rlm *rlm,
+-			    struct cfg80211_chan_def *chandef, u8 bss_idx)
++			    struct cfg80211_chan_def *chandef, u8 bss_idx,
++			    u8 nss)
+ {
+ 	rlm->bss_idx = bss_idx;
+ 	rlm->band = mt7668_band(chandef);
+ 	rlm->pri_ch = chandef->chan->hw_value;
+-	rlm->nss = MT7668_NSS;
++	rlm->nss = nss;
+ 	rlm->sco = mt7668_sco(chandef);
+ 	if (rlm->sco != MT7668_SCN)
+ 		rlm->ht_op_info1 = rlm->sco | IEEE80211_HT_PARAM_CHAN_WIDTH_ANY;
+@@ -340,6 +344,92 @@
+ }
+ EXPORT_SYMBOL_GPL(mt7668_mcu_tx_resource);
+ 
++struct mt7668_nic_cap {
++	__le16 product_id;
++	__le16 fw_ver;
++	__le16 drv_ver;
++	u8 hw_5ghz_disabled;
++	u8 eeprom_used;
++	u8 mac_addr[ETH_ALEN];
++	u8 mac_addr_endian;
++	u8 hw_no_vht;
++	u8 rf_ver;
++	u8 phy_ver;
++	u8 rf_cal_fail;
++	u8 bb_cal_fail;
++	u8 date[16];
++	__le32 feature[2];
++	__le32 compile[2];
++	u8 branch[4];
++	u8 build;
++	u8 hw_one_stream;
++	u8 hw_no_dbdc;
++	u8 hw_wf0_only;
++} __packed;
++
++/* the parts sharing this sdio id differ in streams and bands, which only
++ * their firmware reports
++ */
++int mt7668_mcu_hw_cap(struct mt7615_dev *dev)
++{
++	struct mt7668_nic_cap *cap;
++	struct sk_buff *skb;
++	int ret;
++
++	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
++					MCU_CE_CMD(GET_NIC_CAPAB_V1),
++					NULL, 0, true, &skb);
++	if (ret)
++		return ret;
++
++	if (skb->len < sizeof(struct mt7615_mcu_rxd) + sizeof(*cap)) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	cap = (void *)(skb->data + sizeof(struct mt7615_mcu_rxd));
++	dev->hw_cap.no_5ghz = cap->hw_5ghz_disabled;
++	dev->hw_cap.no_vht = cap->hw_no_vht;
++	dev->hw_cap.one_stream = cap->hw_one_stream;
++	dev->hw_cap.wf0_only = cap->hw_wf0_only;
++	dev_dbg(dev->mt76.dev,
++		"product %04x: 5 GHz %s, vht %s, %s stream%s\n",
++		le16_to_cpu(cap->product_id),
++		cap->hw_5ghz_disabled ? "off" : "on",
++		cap->hw_no_vht ? "off" : "on",
++		cap->hw_one_stream ? "one" : "two",
++		cap->hw_wf0_only ? ", path 0 only" : "");
++
++out:
++	dev_kfree_skb(skb);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(mt7668_mcu_hw_cap);
++
++/* after the eeprom, which describes the two-stream part */
++void mt7668_apply_hw_cap(struct mt7615_dev *dev)
++{
++	u8 spe_2g = MT7668_SPE_BOTH, spe_5g = MT7668_SPE_BOTH;
++
++	if (dev->hw_cap.no_5ghz)
++		dev->mphy.cap.has_5ghz = false;
++
++	/* a single-stream part sends 5 GHz on path 0 and 2.4 GHz on path 1,
++	 * unless only path 0 is fitted
++	 */
++	if (dev->hw_cap.one_stream) {
++		dev->chainmask = BIT(0);
++		dev->mphy.chainmask = BIT(0);
++		dev->mphy.antenna_mask = BIT(0);
++		spe_5g = MT7668_SPE_WF0;
++		spe_2g = dev->hw_cap.wf0_only ? MT7668_SPE_WF0 : MT7668_SPE_WF1;
++	}
++
++	dev->spe_idx[NL80211_BAND_2GHZ] = spe_2g;
++	dev->spe_idx[NL80211_BAND_5GHZ] = spe_5g;
++}
++EXPORT_SYMBOL_GPL(mt7668_apply_hw_cap);
++
+ static int mt7668_mcu_abort_pm(struct mt7615_dev *dev, u8 bss_idx)
+ {
+ 	struct {
+@@ -387,13 +477,13 @@
+ 		.bss_idx = mvif->mt76.idx,
+ 		.conn_state = conn_state,
+ 		.ssid_len = vif->cfg.ssid_len,
+-		.nss = MT7668_NSS,
++		.nss = hweight8(phy->mt76->antenna_mask),
+ 		.fixed_rate = cpu_to_le16(mt7668_mac_basic_rate(phy->mt76)),
+ 	};
+ 
+ 	BUILD_BUG_ON(sizeof(req) != 116);
+ 
+-	mt7668_fill_rlm(&req.rlm, chandef, mvif->mt76.idx);
++	mt7668_fill_rlm(&req.rlm, chandef, mvif->mt76.idx, req.nss);
+ 
+ 	/* before the join the bss carries neither ssid nor bssid */
+ 	if (conn_state == MT7668_BSS_DISCONNECTED) {
+--- a/mt7615/mac_ce.c
++++ b/mt7615/mac_ce.c
+@@ -18,7 +18,6 @@
+ /* the lifetime of a frame with an 802.11 header, 2000 ms in units of 32 tu */
+ #define MT7668_TX_TIME	61
+ /* the spatial extension index the firmware transmits with */
+-#define MT7668_SPE_IDX	0x18
+ 
+ int mt7668_mac_txd_append_len(struct mt7615_dev *dev, struct sk_buff *skb)
+ {
+@@ -196,7 +195,8 @@
+ 		val |= MT_TXD5_TX_STATUS_HOST;
+ 	txwi[5] = cpu_to_le32(val);
+ 
+-	txwi[7] = cpu_to_le32(FIELD_PREP(MT_TXD7_SPE_IDX, MT7668_SPE_IDX));
++	txwi[7] = cpu_to_le32(FIELD_PREP(MT_TXD7_SPE_IDX,
++					 dev->spe_idx[mphy->chandef.chan->band]));
+ 
+ 	if (sz_append) {
+ 		struct mt7668_txd_append *append = (void *)(txwi + MT_TXD_SIZE / 4);
+--- a/mt7615/sdio_mcu.c
++++ b/mt7615/sdio_mcu.c
+@@ -231,8 +231,13 @@
+ 	set_bit(MT76_STATE_MCU_RUNNING, &dev->mphy.state);
+ 
+ 	/* the firmware sizes the host's transmit budgets, before any traffic */
+-	if (dev->fw->owns_mac)
+-		return mt7668_mcu_tx_resource(dev);
++	if (dev->fw->owns_mac) {
++		ret = mt7668_mcu_tx_resource(dev);
++		if (ret)
++			return ret;
++
++		return mt7668_mcu_hw_cap(dev);
++	}
+ 
+ 	return 0;
+ }
+--- a/mt7615/usb_sdio.c
++++ b/mt7615/usb_sdio.c
+@@ -295,6 +295,9 @@
+ 	if (ret < 0)
+ 		return ret;
+ 
++	if (dev->fw->owns_mac)
++		mt7668_apply_hw_cap(dev);
++
+ 	if (mt76_is_usb(&dev->mt76)) {
+ 		ret = mt7663u_dma_sched_init(dev);
+ 		if (ret)
+@@ -352,7 +355,7 @@
+ 	if (dev->fw->mcu_first)
+ 		mt7615_check_offload_capability(dev);
+ 
+-	err = mt76_register_device(&dev->mt76, true, mt76_rates,
++	err = mt76_register_device(&dev->mt76, !dev->hw_cap.no_vht, mt76_rates,
+ 				   ARRAY_SIZE(mt76_rates));
+ 	if (err < 0)
+ 		return err;

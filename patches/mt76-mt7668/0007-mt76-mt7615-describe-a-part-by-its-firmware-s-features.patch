@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Mon, 21 Sep 2026 12:00:00 -0400
-Subject: [PATCH 7/12] wifi: mt76: mt7615: describe a part by its firmware's features
+Subject: [PATCH 7/13] wifi: mt76: mt7615: describe a part by its firmware's features
 
 mt7615 tells parts apart by chip id, which cannot describe a firmware
 with a different command set. Add a profile of the firmware - its images

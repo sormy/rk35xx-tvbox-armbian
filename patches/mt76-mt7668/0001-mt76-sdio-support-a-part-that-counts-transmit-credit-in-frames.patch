@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Mon, 21 Sep 2026 12:00:00 -0400
-Subject: [PATCH 1/12] wifi: mt76: sdio: support a part that counts transmit credit in frames
+Subject: [PATCH 1/13] wifi: mt76: sdio: support a part that counts transmit credit in frames
 
 An MT7668S counts transmit credit in frames, not pages. It returns
 command credit on TQ15 and data credit on TQ0-TQ11, and has no PLE pool.

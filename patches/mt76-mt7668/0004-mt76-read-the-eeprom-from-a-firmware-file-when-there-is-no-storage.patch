@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Mon, 21 Sep 2026 12:00:00 -0400
-Subject: [PATCH 4/12] wifi: mt76: read the EEPROM from a firmware file when there is no storage
+Subject: [PATCH 4/13] wifi: mt76: read the EEPROM from a firmware file when there is no storage
 
 A part with no readable flash or OTP still needs calibration data. Take
 it from a firmware file the driver names, and accept a file shorter than

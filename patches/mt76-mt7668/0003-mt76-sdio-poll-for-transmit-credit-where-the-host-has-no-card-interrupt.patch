@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Mon, 21 Sep 2026 12:00:00 -0400
-Subject: [PATCH 3/12] wifi: mt76: sdio: poll for transmit credit where the host has no card interrupt
+Subject: [PATCH 3/13] wifi: mt76: sdio: poll for transmit credit where the host has no card interrupt
 
 A host without an SDIO interrupt learns of returned credit only at the
 MMC core's next poll, and every credit stall waits for it: on an Amlogic
