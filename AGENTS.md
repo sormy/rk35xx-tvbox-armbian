@@ -19,6 +19,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `backup/<board>/`   | eMMC images (gitignored)                                                                           |
 | `patches/<tool>/`   | fixes to host tools we build ourselves, formatted to send upstream                                 |
 | `src/<tool>/`       | host tools we write ourselves                                                                      |
+| `scripts/`          | host-side helpers, never installed on a box                                                        |
 
 **Repo filenames mirror the names installed on disk**, and every board installs under the `rk35xx-`
 prefix — `BOARD_PREFIX` in `board.conf` drives every installed path. A board directory holds
@@ -33,8 +34,9 @@ hook, or a unit for hardware only it has (the R69's `rk35xx-bt`).
 (`./build-amltools.sh` — Amlogic's own are closed and x86-64 Linux only) · a per-board `uboot.dts`
 (`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all three at
 once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only on
-Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier`. **On the box:** `evtest`,
-`fio`, `stress-ng`, `iw`, `bluez`.
+Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier` · `python3` · `mtools` and
+`mkimage`, for a board whose image carries a FAT boot partition. **On the box:** `evtest`, `fio`,
+`stress-ng`, `iw`, `bluez`.
 
 ## Where things are written down
 
@@ -60,7 +62,7 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                   |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too         |
 | `docs/<board>/worklog.md`             | dated history, wrong turns included                                   |
-| `docs/h96max-h313/wifi-tx-latch.md`        | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest          |
+| `docs/h96max-h313/wifi-tx-latch.md`   | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest          |
 | `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why         |
 | `upstream/README.md`                  | turning the grafts into something upstreamable                        |
 | `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there      |

@@ -8,21 +8,21 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 
 ## Boxes
 
-|            | **R69**                                     | **H96 Max H313**                               | **H96 Max 3518D**                                    |
-| ---------- | ------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
+|            | **R69**                                     | **H96 Max H313**                                    | **H96 Max 3518D**                                    |
+| ---------- | ------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
 | Box        | <img src="docs/r69/image1.jpg" width="300"> | <img src="docs/h96max-h313/image1.jpg" width="300"> | <img src="docs/h96max-3518d/image1.png" width="300"> |
 | Board      | <img src="docs/r69/board.jpg" width="300">  | <img src="docs/h96max-h313/board.jpg" width="300">  | <img src="docs/h96max-3518d/board.jpg" width="300">  |
-| Board key  | `r69`                                       | `h96max-h313`                                  | `h96max-3518d`                                       |
-| Silkscreen | `XR821_V1.1`                                | `3518_ZX_V01 20250818`                         | `3518_DG_ZX_V01 20250401`                            |
-| SoC        | RK3518                                      | RK3518                                         | RK3518                                               |
-| RAM        | 2 GB (1.5 GB usable)                        | 2 GB                                           | 2 GB                                                 |
-| eMMC       | 16 GB Samsung                               | 16 GB Micron                                   | 16 GB Micron, **no SD slot**                         |
-| USB        | USB-A 3.0 (OTG) + USB-A 2.0                 | USB-A 3.0 (OTG) + USB-A 2.0                    | USB-C 2.0 (OTG) + USB-A 2.0                          |
-| Ethernet   | 10/100                                      | 10/100                                         | **none**                                             |
-| Wi-Fi / BT | AIC8800D80                                  | Seekwave SWT6621S                              | Seekwave SWT6621S                                    |
-| Base image | [Armbian ROCK 2F][rock2f]                   | [Armbian ROCK 2F][rock2f]                      | [Armbian ROCK 2F][rock2f]                            |
-| Install    | SD + Maskrom                                | SD + Maskrom                                   | Maskrom only                                         |
-| Details    | [board doc][r69]                            | [board doc][h96]                               | [board doc][h96d]                                    |
+| Board key  | `r69`                                       | `h96max-h313`                                       | `h96max-3518d`                                       |
+| Silkscreen | `XR821_V1.1`                                | `3518_ZX_V01 20250818`                              | `3518_DG_ZX_V01 20250401`                            |
+| SoC        | RK3518                                      | RK3518                                              | RK3518                                               |
+| RAM        | 2 GB (1.5 GB usable)                        | 2 GB                                                | 2 GB                                                 |
+| eMMC       | 16 GB Samsung                               | 16 GB Micron                                        | 16 GB Micron, **no SD slot**                         |
+| USB        | USB-A 3.0 (OTG) + USB-A 2.0                 | USB-A 3.0 (OTG) + USB-A 2.0                         | USB-C 2.0 (OTG) + USB-A 2.0                          |
+| Ethernet   | 10/100                                      | 10/100                                              | **none**                                             |
+| Wi-Fi / BT | AIC8800D80                                  | Seekwave SWT6621S                                   | Seekwave SWT6621S                                    |
+| Base image | [Armbian ROCK 2F][rock2f]                   | [Armbian ROCK 2F][rock2f]                           | [Armbian ROCK 2F][rock2f]                            |
+| Install    | SD + Maskrom                                | SD + Maskrom                                        | Maskrom only                                         |
+| Details    | [board doc][r69]                            | [board doc][h96]                                    | [board doc][h96d]                                    |
 
 [r69]: docs/r69/board.md
 [h96]: docs/h96max-h313/board.md
@@ -81,13 +81,16 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 
 ## Build
 
-Needs a stock ROCK 2F `.img.xz` (tested: `minimal` vendor 6.1), and a **microSD** (8 GB+) on the
+Needs a stock Armbian `.img.xz` (tested: `minimal` vendor 6.1), and a **microSD** (8 GB+) on the
 boxes that have a slot — the rest take the same image over USB, below.
+
+Which Armbian image is the board's own, and the build refuses any other. Run `./build-image.sh` with
+no arguments to list every board and its base.
 
 ```bash
 brew install xz coreutils                    # macOS  ·  apt install xz-utils on Debian
 ./build-e2tools.sh                           # once — stock e2tools corrupts an image on delete
-./build-image.sh Armbian_..._Rock-2f_..._minimal.img.xz h96max-h313   # r69 | h96max-h313 | h96max-3518d
+./build-image.sh Armbian_..._Rock-2f_..._minimal.img.xz h96max-h313
 ```
 
 ~1 minute, no Docker, no kernel build. Output: `Armbian_..._-<board>.img`.
@@ -141,11 +144,9 @@ Restore only if you want the factory MAC back. `docs/armbian-install.md` has the
 Nothing to boot from, so backup and install both go over USB in Maskrom. Hold the recovery button,
 then plug the OTG cable in — the cable powers the box, so the PSU stays out.
 
-**One cable, ordered before you need it:** a [USB-A male-to-male][amm]
-(~$4), with a
-[USB-C→USB-A female adapter][ca] (~$8 for 4) on whichever end is USB-C. Charge-only
-cables enumerate nothing, and a plain USB-C→USB-A cable with the C end in the host does not do OTG
-at all.
+**One cable, ordered before you need it:** a [USB-A male-to-male][amm] (~$4), with a [USB-C→USB-A
+female adapter][ca] (~$8 for 4) on whichever end is USB-C. Charge-only cables enumerate nothing, and
+a plain USB-C→USB-A cable with the C end in the host does not do OTG at all.
 
 [amm]: https://www.amazon.com/dp/B0CLB4Y5XD
 [ca]: https://www.amazon.com/dp/B0DSK82JK8

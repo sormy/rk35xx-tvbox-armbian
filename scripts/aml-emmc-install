@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Install an Amlogic board's image to its eMMC over the OTG cable, single boot: Android goes. Writes
+# only the image's own regions, the env last; never the bootloader or reserved's key window, where
+# this unit's serial and MAC live.
+#
+#   scripts/aml-emmc-install <image> <backup>
+#
+# <backup>, this box's full eMMC backup, is the only way back to Android: it is checked against the
+# box, never written. Run `amlcmd connect` first.
+set -euo pipefail
+
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+AMLCMD="${AMLCMD:-$REPO/tools/aml/amlcmd}"
+IMG="${1:?usage: aml-emmc-install <image> <backup>}"
+BACKUP="${2:?usage: aml-emmc-install <image> <backup>}"
+UEXT_SEEK=8192
+RESERVED_SEEK=73728          # 36 MiB: fixed by the vendor U-Boot
+MPT_SECTORS=8
+KEYS_OFFSET=32               # reserved +16 KiB: 256 KiB of unifykeys
+KEYS_SECTORS=512
+DTB_OFFSET=8192              # reserved +4 MiB: the two 256 KiB device-tree copies
+DTB_SECTORS=1024
+
+T="$(mktemp -d)"
+trap 'rm -rf "$T"' EXIT
+cut() { dd if="$IMG" of="$T/$1" bs=512 skip="$2" count="$3" 2>/dev/null; }
+put() { echo "writing $1 @$2"; "$AMLCMD" restore "$T/$1" "$2"; }
+
+cut mpt "$RESERVED_SEEK" "$MPT_SECTORS"
+read -r ENV_SEEK _ <<< "$(python3 "$REPO/scripts/aml-mpt.py" "$T/mpt" env)"
+read -r ROOT_SEEK ROOT_SECTORS <<< "$(python3 - "$IMG" <<'PY'
+import struct, sys
+m = open(sys.argv[1], "rb").read(512)
+assert m[510:] == b"\x55\xaa", "no MBR"
+print(*struct.unpack("<II", m[446 + 16 + 8:446 + 16 + 16]))
+PY
+)"
+
+echo "checking the backup is this box's"
+KEYS=$((RESERVED_SEEK + KEYS_OFFSET))
+"$AMLCMD" backup "$T/keys-box" "$KEYS" "$KEYS_SECTORS" >/dev/null
+dd if="$BACKUP" of="$T/keys-backup" bs=512 skip="$KEYS" count="$KEYS_SECTORS" 2>/dev/null
+cmp -s "$T/keys-box" "$T/keys-backup" ||
+  { echo "the backup's key window is not this box's - refusing without a backup of this box"; exit 1; }
+
+cut rootfs "$ROOT_SEEK" "$ROOT_SECTORS"
+put rootfs "$ROOT_SEEK"
+cut gap "$UEXT_SEEK" $((RESERVED_SEEK - UEXT_SEEK))
+put gap "$UEXT_SEEK"
+cut mbr 0 1
+put mbr 0
+cut dtb $((RESERVED_SEEK + DTB_OFFSET)) "$DTB_SECTORS"
+put dtb $((RESERVED_SEEK + DTB_OFFSET))
+put mpt "$RESERVED_SEEK"
+cut env "$ENV_SEEK" 128
+put env "$ENV_SEEK"
+
+echo "installed; \`$AMLCMD reset\` boots it"

@@ -9,6 +9,16 @@ if [ -x /usr/local/sbin/rk35xx-firstboot-board ]; then
   /usr/local/sbin/rk35xx-firstboot-board
 fi
 
+# packages the base image lacks, staged into the apt cache at image build. dpkg, not apt: there is
+# no network on first boot, and apt treats even a local .deb path as something to acquire - with
+# --no-download it refuses, and without it it retries the network until it gives up.
+set -- /var/cache/apt/archives/*.deb
+if [ -e "$1" ]; then
+  log=/var/log/rk35xx-staged-packages.log
+  dpkg -i "$@" >"$log" 2>&1 || dpkg --configure -a >>"$log" 2>&1 ||
+    echo "staged packages: see $log" >&2
+fi
+
 ub=$(dpkg-query -W -f='${Package}\n' 'linux-u-boot-*' 2>/dev/null | head -1)
 [ -n "$ub" ] && apt-mark hold "$ub" >/dev/null 2>&1 || true
 
