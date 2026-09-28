@@ -222,7 +222,7 @@ How far a stalling board gets depends on how recently it was worked — 12.58 GB
 GB minutes after that stall.
 
 ❓ **Cause unknown** — not the loader and not the media; every sector a read died on re-read cleanly
-later. `docs/todo/rk35xx-maskrom-loader.md` carries the analysis and what would settle it.
+later.
 
 **A falling rate warns, a steady one does not.** A stalling board usually slides first — 18 MB/s to
 16 KB/s — but one held 25-27 MB/s flat for 500 s and then stopped dead.

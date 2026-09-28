@@ -58,6 +58,7 @@ another, so nothing rots when one is rewritten.
 | `docs/remote-keymap.md`               | validating IR and BLE keymaps separately; the `hwdb` override         |
 | `docs/mt7668-sdio-protocol.md`        | the MT7668's SDIO host protocol, as its vendor driver speaks it       |
 | `research/<experiment>/`              | dead ends and partial results, kept so nobody re-walks them           |
+| `TODO.md`                             | small open items, and where the bigger ones live                      |
 | `docs/todo/`                          | open questions — `rk35xx-` is family-wide, `<board>-` is one box      |
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                   |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too         |

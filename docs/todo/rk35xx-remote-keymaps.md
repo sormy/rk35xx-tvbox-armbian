@@ -6,7 +6,8 @@ happened to emit. Two of them contradict each other on the same physical key.
 
 ## Established
 
-Read off `docs/r69/board.md`, `docs/h96max-h313/board.md` and the 2026-09-07 BLE capture on the 3518D.
+Read off `docs/r69/board.md`, `docs/h96max-h313/board.md` and the 2026-09-07 BLE capture on the
+3518D.
 
 | Button      | R69, IR      | H96 Max, IR     | 3518D, BLE (after the `hwdb` override) |
 | ----------- | ------------ | --------------- | -------------------------------------- |

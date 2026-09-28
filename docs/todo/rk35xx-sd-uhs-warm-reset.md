@@ -11,8 +11,8 @@ upstream driver unmodified: `skw_sdio_scan_card()` in
 `wait_for_completion_timeout(&skw_sdio->scan_done, msecs_to_jiffies(1000))` at commit `b1b15016`, so
 a warm reboot can still come up without `wlan0`.
 
-Symptom and the five disproven device-tree candidates are in `h96max-h313/board.md` and `h96max-h313/dtb.md`.
-This file is the open question only.
+Symptom and the five disproven device-tree candidates are in `h96max-h313/board.md` and
+`h96max-h313/dtb.md`. This file is the open question only.
 
 ## What is actually established
 
@@ -81,5 +81,5 @@ non-v2 path whatever the SD does. The two subjects are unrelated.
 ## Done means
 
 Either the `-110` is root-caused and `sd-uhs-sdr12/25/50/104` goes back into
-`firmware/h96max-h313/board.dts` with warm reboots still clean over 10 iterations — or the cause is found
-to be unfixable in the tree, and this file says so with the evidence.
+`firmware/h96max-h313/board.dts` with warm reboots still clean over 10 iterations — or the cause is
+found to be unfixable in the tree, and this file says so with the evidence.

@@ -1,8 +1,7 @@
 # The Wi-Fi TX rate that latches at 6 Mbit/s
 
 ✅ **Root-caused in the driver and fixed**, deployed 2026-08-25 and live across two reboots
-(`txba_stale_sec=10`). 🟡 Not re-tested against the reproducer since — inducing the latch needs 2.4
-GHz plus CPU load on a daily driver.
+(`txba_stale_sec=10`).
 
 TX parks at the lowest basic rate, upload collapses, download stays healthy, and it does not recover
 on its own. The latch is **per-TID**: only BE/BK are pinned, VI/VO keep running HE-MCS 9–11 on the

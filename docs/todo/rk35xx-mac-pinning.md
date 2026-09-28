@@ -36,7 +36,7 @@ own `CONFIG_PLATFORM_*` path, which is invasive, has to be rebased on every kern
 go through Armbian to reach users. `patches/linux-rockchip/README.md` covers why an overlay box
 cannot carry kernel patches of its own.
 
-## The two candidates worth trying
+## The candidates worth trying
 
 **A systemd `.link` file, generated once.** `net_setup_link` applies it as the device appears, which
 is earlier than any unit can run and has no wait at all. The catch, already recorded in `AGENTS.md`:
@@ -50,7 +50,23 @@ would read vendor storage, then set `local-mac-address` on the relevant node —
 up with the right address from the very first probe, no window and no wait. This is the standard
 mechanism, not a trick.
 
-Open questions before committing to it:
+**The kernel reads it, from the tree alone.** A `mac-address` nvmem cell on the gmac node is read by
+`of_get_mac_address()` at probe, no userspace at all. Two sources:
+
+- the OTP: ❓ if the RK3528's holds a MAC rather than only the `cpuid` U-Boot derives one from;
+- vendor storage: not in mainline 6.18, where only MTD registers an nvmem provider — none on a block
+  device — and no layout parses `DVKR`'s tag table; both would be new kernel code. The vendor 6.1
+  kernel these boards run may read `LAN_MAC` in its own `dwmac-rk` instead. Boot once without
+  `rk35xx-mac-pin` and compare `end0` against vendor storage id 3 to settle it.
+
+**Upstream, later: a vendor-storage nvmem layout.** "Support for block device NVMEM providers" (v10,
+2026-08) lets an eMMC partition node carry an nvmem layout; its bindings are in v7.3-rc1, the block
+provider itself is reviewed but not yet applied. On top of it, a small layout driver in the shape of
+`onie-tlv` would parse `DVKR` — newest valid copy, tag table — into `mac-address`, Wi-Fi and
+`local-bd-address` cells for each board's tree to point at. It reaches these boards only once
+Armbian ships a kernel carrying it.
+
+Open questions before committing to the U-Boot route:
 
 - Does our mainline U-Boot have a vendor-storage driver? The R69 notes say it does **not**, which is
   exactly why `rockchip_setup_macaddr()` derives from the OTP `cpuid` today. Writing one is the bulk

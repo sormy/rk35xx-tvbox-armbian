@@ -21,11 +21,13 @@ Everything before the first GPT partition, plus the two partitions the bootloade
 | 20480–23448 | U-Boot FIT, slot B                  | 4096 sectors after slot A           | `uboot`                 |
 | 24576–32767 | `trust`                             | **all zero on all three boards**    | `trust`                 |
 
-Two things that surprise people:
+Three things that surprise people:
 
 - **The idbloader and the vendor storage sit outside every partition.** The factory GPT's first
   partition starts at 8192, so sectors 0–8191 are unpartitioned reserved space. A tool that only
   respects the partition table will happily destroy both.
+- **Slot B is not a fallback.** SPL never tries it when slot A fails its hash, and our writes put
+  the same FIT in both; the eMMC backup is the fallback.
 - **`trust` is empty.** OP-TEE is not in its own partition — it rides inside the U-Boot FIT, which
   is why the boot log checks `optee` right after `uboot`.
 
