@@ -1,0 +1,29 @@
+# H96 Max M20 firmware payload — files copied verbatim into the rootfs (mode src dest, src under firmware/).
+# No onboard Ethernet: first boot must not depend on a network.
+# DKMS *sources* are fetched by board.conf's board_stage_dkms, built by rk35xx-firstboot.
+
+# family first boot (enabled via a multi-user.target drop-in at image build)
+0755 common/rk35xx-firstboot         /usr/local/sbin/rk35xx-firstboot
+0644 common/rk35xx-firstboot.service /etc/systemd/system/rk35xx-firstboot.service
+
+# mt76's firmware for the MT7668, the factory image's own files. Bluetooth's mt7668pr2h.bin comes
+# from firmware-mediatek.
+0644 h96max-m20/mt7668/mt7668_patch_e2_hdr.bin        /lib/firmware/mediatek/mt7668_patch_e2_hdr.bin
+0644 h96max-m20/mt7668/WIFI_RAM_CODE_MT7668.bin       /lib/firmware/mediatek/WIFI_RAM_CODE_MT7668.bin
+0644 h96max-m20/mt7668/WIFI_RAM_CODE2_SDIO_MT7668.bin /lib/firmware/mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin
+0644 h96max-m20/mt7668/EEPROM_MT7668.bin              /lib/firmware/mediatek/EEPROM_MT7668.bin
+
+# login-banner board name (reads /usr/local/share/rk35xx/board-name)
+0755 common/rk35xx-boardname         /usr/local/sbin/rk35xx-boardname
+0644 common/rk35xx-boardname.apt     /etc/apt/apt.conf.d/99-rk35xx-boardname
+0644 h96max-m20/board-name           /usr/local/share/rk35xx/board-name
+# board key (= firmware/<board>/), so rk35xx-update knows which payload to install
+0644 h96max-m20/board-id             /usr/local/share/rk35xx/board-id
+
+# DTB master copy + kernel postinst.d hooks
+0644 h96max-m20/board.dtb            /usr/local/share/rk35xx/board.dtb
+0755 common/rk35xx-dtb-persist       /etc/kernel/postinst.d/rk35xx-dtb-persist
+0755 common/rk35xx-kernel-prepare    /etc/kernel/postinst.d/00-rk35xx-kernel-prepare
+
+# in-place updater, so `rk35xx-update --pull` and rk35xx-deploy work on the box
+0755 ../rk35xx-update                /usr/local/sbin/rk35xx-update

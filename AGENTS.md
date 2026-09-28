@@ -62,7 +62,7 @@ another, so nothing rots when one is rewritten.
 | `docs/todo/`                          | open questions — `rk35xx-` is family-wide, `<board>-` is one box      |
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                   |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too         |
-| `docs/<board>/worklog.md`             | dated history, wrong turns included                                   |
+| `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows     |
 | `docs/h96max-h313/wifi-tx-latch.md`   | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest          |
 | `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why         |
 | `upstream/README.md`                  | turning the grafts into something upstreamable                        |
@@ -184,6 +184,10 @@ higher one and record why.
 
 ## Hardware
 
+- **First boot lands in Armbian's setup wizard, not a shell.** Ctrl-C at each prompt aborts it and
+  leaves root at the image's default password, `1234`. With a network, copy an SSH key into
+  `/root/.ssh/authorized_keys` over serial once, and the rest of bring-up runs as
+  `ssh root@<BOARD_HOSTNAME>`.
 - `mmcblk` numbering is **not stable** across images or boots. Identify the eMMC by its
   `boot0`/`boot1` companions, never by a remembered number.
 - **After any refactor, rebuild the image and diff every payload file against a pre-change build.**

@@ -1,0 +1,637 @@
+--- board.dts
++++ armbian.dts
+@@ -1,13 +1,23 @@
+ /dts-v1/;
+ 
+ / {
+-	model = "Amlogic";
++	/* Board name first, as on the other boards here: userspace and the DKMS
++	   packages identify the box by it. The factory model string is only
++	   "Amlogic"; amlogic-dt-id below carries the real identity. */
++	model = "H96 Max M20 905_DG_ZX01_V01";
+ 	amlogic-dt-id = "gxlx2_p291_2g";
+-	compatible = "amlogic, Gxl";
++	/* meson-gxlx last, so mainline still matches the SoC. */
++	compatible = "h96max-m20,gxlx2-tvbox", "amlogic,p291", "amlogic,s905l", "amlogic,meson-gxlx";
+ 	interrupt-parent = <&gic>;
+ 	#address-cells = <0x01>;
+ 	#size-cells = <0x01>;
+ 
++	/* mainline wants the console in the tree; the vendor tree has no chosen
++	   node and relied on bootargs the vendor U-Boot built. */
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++
+ 	gpu: mali@d00c0000 {
+ 		#cooling-cells = <0x02>;
+ 		compatible = "arm,mali-450";
+@@ -137,7 +147,8 @@
+ 
+ 		CPU0: cpu@0 {
+ 			device_type = "cpu";
+-			compatible = "arm,cortex-a53", "arm,armv8";
++			/* arm,armv8 is deprecated and matches nothing */
++			compatible = "arm,cortex-a53";
+ 			reg = <0x00>;
+ 			enable-method = "psci";
+ 			clocks = <&scpi_dvfs 0x00>;
+@@ -147,7 +158,7 @@
+ 
+ 		CPU1: cpu@1 {
+ 			device_type = "cpu";
+-			compatible = "arm,cortex-a53", "arm,armv8";
++			compatible = "arm,cortex-a53";
+ 			reg = <0x01>;
+ 			enable-method = "psci";
+ 			clocks = <&scpi_dvfs 0x00>;
+@@ -157,7 +168,7 @@
+ 
+ 		CPU2: cpu@2 {
+ 			device_type = "cpu";
+-			compatible = "arm,cortex-a53", "arm,armv8";
++			compatible = "arm,cortex-a53";
+ 			reg = <0x02>;
+ 			enable-method = "psci";
+ 			clocks = <&scpi_dvfs 0x00>;
+@@ -167,7 +178,7 @@
+ 
+ 		CPU3: cpu@3 {
+ 			device_type = "cpu";
+-			compatible = "arm,cortex-a53", "arm,armv8";
++			compatible = "arm,cortex-a53";
+ 			reg = <0x03>;
+ 			enable-method = "psci";
+ 			clocks = <&scpi_dvfs 0x00>;
+@@ -177,7 +188,8 @@
+ 	};
+ 
+ 	timer {
+-		compatible = "arm,armv7-timer";
++		/* same driver entry as armv7-timer, but this core is ARMv8 */
++		compatible = "arm,armv8-timer";
+ 		interrupts = <0x01 0x0d 0xff01 0x01 0x0e 0xff01 0x01 0x0b 0xff01 0x01 0x0a 0xff01>;
+ 	};
+ 
+@@ -203,7 +215,8 @@
+ 	};
+ 
+ 	arm_pmu {
+-		compatible = "arm,cortex-a15-pmu";
++		/* these are A53s: the a15 PMU model maps the wrong performance events */
++		compatible = "arm,cortex-a53-pmu";
+ 		interrupts = <0x00 0x89 0x04 0x00 0x8a 0x04 0x00 0x99 0x04 0x00 0x9a 0x04>;
+ 	};
+ 
+@@ -308,7 +321,10 @@
+ 	};
+ 
+ 	wdt: watchdog@0xffd0f0d0 {
+-		compatible = "amlogic, meson-wdt";
++		/* mainline meson-gxbb-wdt, so /dev/watchdog exists for systemd's
++		   RuntimeWatchdogSec - and so a silent hang leaves a record. The vendor
++		   node sits at an address the SoC does not use; the block is at c11098d0. */
++		compatible = "amlogic,meson-gxbb-wdt";
+ 		status = "okay";
+ 		default_timeout = <0x0a>;
+ 		reset_watchdog_method = <0x01>;
+@@ -397,7 +413,9 @@
+ 	};
+ 
+ 	pinctrl_aobus: pinctrl@14 {
+-		compatible = "amlogic,meson-gxlx-aobus-pinctrl";
++		/* mainline's pinctrl driver has no gxlx entry; the GXL pin data names every
++		   group and function this tree already asks for. */
++		compatible = "amlogic,meson-gxl-aobus-pinctrl";
+ 		#address-cells = <0x01>;
+ 		#size-cells = <0x01>;
+ 		ranges;
+@@ -505,7 +523,9 @@
+ 	};
+ 
+ 	pinctrl_periphs: pinctrl@4b0 {
+-		compatible = "amlogic,meson-gxlx-periphs-pinctrl";
++		/* as above. Unbound, this supplies no pin groups, and sd/sdio/emmc each sit
++		   in deferred probe waiting for one - which is what keeps Wi-Fi off. */
++		compatible = "amlogic,meson-gxl-periphs-pinctrl";
+ 		#address-cells = <0x01>;
+ 		#size-cells = <0x01>;
+ 		ranges;
+@@ -1049,18 +1069,29 @@
+ 			ranges = <0x00 0xc1100000 0x100000>;
+ 			phandle = <0xb0>;
+ 
++			/* The vendor MMC driver reset the controller itself; mainline's
++			   meson-gx-mmc takes a resets phandle instead, and the vendor tree
++			   describes no reset controller at all. */
++			reset: reset-controller@4404 {
++				compatible = "amlogic,meson-gxbb-reset";
++				reg = <0x4404 0x9c>;
++				#reset-cells = <0x01>;
++			};
++
+ 			meson_clk_msr {
+ 				compatible = "amlogic,gxlx-measure";
+ 				reg = <0x875c 0x04 0x8764 0x04>;
+ 			};
+ 
+ 			uart_A: serial@84c0 {
+-				compatible = "amlogic, meson-uart";
++				compatible = "amlogic,meson-gx-uart";
+ 				reg = <0x84c0 0x18>;
+ 				interrupts = <0x00 0x1a 0x01>;
+ 				status = "okay";
+-				clocks = <&clkc 0x23>;
+-				clock-names = "clk_uart";
++				/* meson-gx-uart looks up three clocks by name; the vendor's single clk_uart is
++				   none of them, so this node probed with -ENOENT every boot. */
++				clocks = <&xtal &clkc 0x1a &xtal>;
++				clock-names = "xtal", "pclk", "baud";
+ 				fifosize = <0x80>;
+ 				pinctrl-names = "default";
+ 				pinctrl-0 = <&a_uart_pins>;
+@@ -1068,7 +1099,7 @@
+ 			};
+ 
+ 			uart_B: serial@84dc {
+-				compatible = "amlogic, meson-uart";
++				compatible = "amlogic,meson-gx-uart";
+ 				reg = <0x84dc 0x18>;
+ 				interrupts = <0x00 0x4b 0x01>;
+ 				status = "disabled";
+@@ -1081,7 +1112,7 @@
+ 			};
+ 
+ 			uart_C: serial@8700 {
+-				compatible = "amlogic, meson-uart";
++				compatible = "amlogic,meson-gx-uart";
+ 				reg = <0x8700 0x18>;
+ 				interrupts = <0x00 0x5d 0x01>;
+ 				status = "disabled";
+@@ -1094,7 +1125,7 @@
+ 			};
+ 
+ 			pwm_ab: pwm@8550 {
+-				compatible = "amlogic,gx-ee-pwm";
++				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
+ 				reg = <0x8550 0x1c>;
+ 				#pwm-cells = <0x03>;
+ 				clocks = <&xtal &xtal &xtal &xtal>;
+@@ -1106,7 +1137,7 @@
+ 			};
+ 
+ 			pwm_cd: pwm@8640 {
+-				compatible = "amlogic,gx-ee-pwm";
++				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
+ 				reg = <0x8640 0x1c>;
+ 				#pwm-cells = <0x03>;
+ 				clocks = <&xtal &xtal &xtal &xtal>;
+@@ -1116,17 +1147,24 @@
+ 			};
+ 
+ 			pwm_ef: pwm@86c0 {
+-				compatible = "amlogic,gx-ee-pwm";
++				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
+ 				reg = <0x86c0 0x1c>;
+ 				#pwm-cells = <0x03>;
+-				clocks = <&xtal &xtal &xtal &xtal>;
++				/* clk81 as a parent: the 24 MHz crystal cannot divide to 32768 Hz any
++				   closer than 577 ppm, which is outside what the Wi-Fi and
++				   Bluetooth halves of the combo chip expect of their shared sleep
++				   clock. clk81 reaches 52 ppm. */
++				clocks = <&clkc 0x0c &xtal &xtal &xtal>;
+ 				clock-names = "clkin0", "clkin1", "clkin2", "clkin3";
+ 				status = "okay";
++				pinctrl-names = "default";
++				pinctrl-0 = <&wifi_32k_pins>;
+ 				phandle = <0x45>;
+ 			};
+ 
+ 			i2c0: i2c@8500 {
+-				compatible = "amlogic,meson-gx-i2c";
++				/* i2c-meson matches meson-gxbb-i2c; amlogic,meson-gx-i2c is not in its table */
++				compatible = "amlogic,meson-gxbb-i2c";
+ 				status = "disabled";
+ 				reg = <0x8500 0x20>;
+ 				interrupts = <0x00 0x15 0x01 0x00 0x2f 0x01>;
+@@ -1138,7 +1176,7 @@
+ 			};
+ 
+ 			i2c1: i2c@87c0 {
+-				compatible = "amlogic,meson-gx-i2c";
++				compatible = "amlogic,meson-gxbb-i2c";
+ 				status = "disabled";
+ 				reg = <0x87c0 0x20>;
+ 				interrupts = <0x00 0xd6 0x01 0x00 0x30 0x01>;
+@@ -1150,7 +1188,7 @@
+ 			};
+ 
+ 			i2c2: i2c@87e0 {
+-				compatible = "amlogic,meson-gx-i2c";
++				compatible = "amlogic,meson-gxbb-i2c";
+ 				status = "disabled";
+ 				reg = <0x87e0 0x20>;
+ 				interrupts = <0x00 0xd7 0x01 0x00 0x31 0x01>;
+@@ -1162,7 +1200,7 @@
+ 			};
+ 
+ 			i2c3: i2c@8d20 {
+-				compatible = "amlogic,meson-gx-i2c";
++				compatible = "amlogic,meson-gxbb-i2c";
+ 				status = "disabled";
+ 				reg = <0x8d20 0x20>;
+ 				interrupts = <0x00 0x27 0x01 0x00 0x32 0x01>;
+@@ -1182,17 +1220,36 @@
+ 			ranges = <0x00 0xc8100000 0x100000>;
+ 			phandle = <0xba>;
+ 
++			/* mainline's meson-gx-uart wants xtal, pclk and baud, and the pclk comes from
++			   the AO clock controller. That driver is a syscon child - it takes its regmap
++			   from the parent - so the sysctrl node has to exist too. The vendor tree models
++			   neither. */
++			sysctrl_AO: sys-ctrl@0 {
++				compatible = "amlogic,meson-gx-ao-sysctrl", "simple-mfd", "syscon";
++				reg = <0x00 0x100>;
++			
++				clkc_AO: clock-controller {
++					compatible = "amlogic,meson-gxl-aoclkc", "amlogic,meson-gx-aoclkc";
++					#clock-cells = <0x01>;
++					#reset-cells = <0x01>;
++					clocks = <&xtal &clkc 0x0c>;
++					clock-names = "xtal", "mpeg-clk";
++				};
++			};
++
+ 			cpu_version {
+ 				reg = <0x220 0x04>;
+ 			};
+ 
+ 			uart_AO: serial@4c0 {
+-				compatible = "amlogic, meson-uart";
++				/* mainline binding; the vendor's single "clk_uart" is not one of
++				   the three clocks meson-gx-uart looks up by name. */
++				compatible = "amlogic,meson-gx-uart", "amlogic,meson-ao-uart";
+ 				reg = <0x4c0 0x18>;
+ 				interrupts = <0x00 0xc1 0x01>;
+ 				status = "okay";
+-				clocks = <&xtal>;
+-				clock-names = "clk_uart";
++				clocks = <&xtal &clkc_AO 0x03 &xtal>;
++				clock-names = "xtal", "pclk", "baud";
+ 				xtal_tick_en = <0x01>;
+ 				fifosize = <0x40>;
+ 				pinctrl-names = "default";
+@@ -1201,7 +1258,9 @@
+ 			};
+ 
+ 			uart_AO_B: serial@4e0 {
+-				compatible = "amlogic, meson-uart";
++				/* the vendor spelling binds no mainline driver. uart_AO at 4c0, the console,
++				   already carries the mainline pair; these are its idle siblings. */
++				compatible = "amlogic,meson-gx-uart", "amlogic,meson-ao-uart";
+ 				reg = <0x4e0 0x18>;
+ 				interrupts = <0x00 0xc5 0x01>;
+ 				status = "disable";
+@@ -1214,7 +1273,8 @@
+ 			};
+ 
+ 			pwm_aoab: pwm@550 {
+-				compatible = "amlogic,gx-ao-pwm";
++				/* same: the gx-ao/gx-ee spellings are the vendor driver's, not mainline's */
++				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
+ 				reg = <0x550 0x1c>;
+ 				#pwm-cells = <0x03>;
+ 				clocks = <&xtal &xtal &xtal &xtal>;
+@@ -1247,13 +1307,34 @@
+ 			ranges = <0x00 0xc883c000 0x2000>;
+ 			phandle = <0xbf>;
+ 
+-			clkc: clock-controller@0 {
+-				compatible = "amlogic,gxl-clkc";
+-				#clock-cells = <0x01>;
+-				#reset-cells = <0x01>;
+-				reg = <0x00 0x3db>;
+-				phandle = <0x08>;
++			/* amlogic,gxl-clkc is a syscon child in mainline: the driver takes its
++			   regmap from the parent, so without this wrapper it never probes - and
++			   every clock consumer on the SoC defers behind it. The vendor driver
++			   mapped the registers itself and needed no syscon. */
++			sysctrl: system-controller@0 {
++				compatible = "amlogic,meson-gx-hhi-sysctrl", "simple-mfd", "syscon";
++				reg = <0x00 0x400>;
++
++				clkc: clock-controller@0 {
++					compatible = "amlogic,gxl-clkc";
++					#clock-cells = <0x01>;
++					#reset-cells = <0x01>;
++					/* Without its crystal input every PLL parent resolves to nothing and the
++					   whole tree reads 0 Hz - the eMMC then crawls at 200 kB/s and there is
++					   no cpufreq or thermal. The regmap comes from the parent syscon, so the
++					   vendor's reg is not used either. */
++					clocks = <&xtal>;
++					clock-names = "xtal";
++					phandle = <0x08>;
++				};
++				/* power domains mainline expects for USB and the VPU */
++				pwrc: power-controller {
++					compatible = "amlogic,meson-gxbb-pwrc";
++					#power-domain-cells = <0x01>;
++					amlogic,ao-sysctrl = <&sysctrl_AO>;
++				};
+ 			};
++
+ 		};
+ 	};
+ 
+@@ -1281,10 +1362,13 @@
+ 		compatible = "amlogic,meson-gxl-saradc";
+ 		status = "okay";
+ 		#io-channel-cells = <0x01>;
+-		clocks = <&xtal &clkc 0x58 &clkc 0xe4>;
+-		clock-names = "xtal", "clk81_gate", "saradc_clk";
++		/* meson-saradc looks these four up by name; the vendor's three are none of them. */
++		clocks = <&xtal &clkc 0x17 &clkc 0x61 &clkc 0x62>;
++		clock-names = "clkin", "core", "adc_clk", "adc_sel";
+ 		interrupts = <0x00 0x49 0x01>;
+-		reg = <0x00 0xc1108680 0x00 0x38>;
++		/* root is #address-cells = 1, so the vendor's two-cell reg reads as two resources -
++		   the first being address 0 sized 0xc1108680, which the ADC then fails to claim. */
++		reg = <0xc1108680 0x38>;
+ 		phandle = <0xc2>;
+ 	};
+ 
+@@ -1816,14 +1900,20 @@
+ 		compatible = "gpio-leds";
+ 		status = "okay";
+ 
+-		sys_red {
+-			label = "sys_red";
+-			gpios = <&gpio 0x4c 0x00>;
++		/* power/standby are the names the shared LED hooks drive. The factory called this
++		   one sys_red and left it off at boot, so it is the standby half; the lens is red. */
++		standby {
++			label = "standby";
++			/* The factory's own disabled `sysled` node names this same pin with
++			   led_active_low, so gpio-leds' active-high here is wrong. */
++			gpios = <&gpio 73 0x01>;
+ 			default-state = "off";
+ 		};
+ 
+-		sys_green {
+-			label = "sys_green";
++		/* the factory called this one sys_green and left it on at boot, so it is the power
++		   half. The lens is blue, whatever the vendor name says. */
++		power {
++			label = "power";
+ 			gpios = <&gpio 0x0e 0x00>;
+ 			default-state = "on";
+ 		};
+@@ -2109,6 +2199,38 @@
+ 		gpio_reset = <0x14 0x63 0x00>;
+ 	};
+ 
++
++	/* The mmc core needs a supply to know what it may drive the bus at. The vendor tree
++	   states it as ocr_avail in a sub-node only its own driver reads, so without this
++	   mainline reports "no support for card's volts" and no card initialises. */
++	vcc_3v3: regulator-vcc-3v3 {
++		compatible = "regulator-fixed";
++		regulator-name = "VCC_3V3";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-always-on;
++	};
++
++
++	wifi32k: wifi32k {
++		compatible = "pwm-clock";
++		#clock-cells = <0x00>;
++		clock-frequency = <32768>;
++		pwms = <&pwm_ef 0 30518 0>;
++	};
++
++	sdio_pwrseq: sdio-pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		/* GPIOX_6 is the combo chip's power-on and GPIOX_17 its Bluetooth enable - the
++		   vendor wifi and bt-dev nodes' power_on_pin and gpio_en. Read as resets: active
++		   low, so the sequencer drives both high to bring the chip up, and drops them on
++		   power-off, which is the only way to get the part out of a wedged state. */
++		reset-gpios = <&gpio 85 1>, <&gpio 96 1>;
++		clocks = <&wifi32k>;
++		clock-names = "ext_clock";
++		post-power-on-delay-ms = <100>;
++	};
++
+ 	wifi {
+ 		compatible = "amlogic, aml_wifi";
+ 		dev_name = "aml_wifi";
+@@ -2140,18 +2262,27 @@
+ 
+ 	sd_emmc_c: emmc@d0074000 {
+ 		status = "okay";
+-		compatible = "amlogic, meson-mmc-gxlx";
++		/* mainline meson-gx-mmc for eMMC: its own clkc gate numbers,
++		   and a reset line the vendor driver did not use. */
++		compatible = "amlogic,meson-gx-mmc", "amlogic,meson-gxbb-mmc";
++		resets = <&reset 0x2e>;
+ 		reg = <0xd0074000 0x2000>;
+ 		interrupts = <0x00 0xda 0x01>;
+-		pinctrl-names = "emmc_clk_cmd_pins", "emmc_all_pins";
+-		pinctrl-0 = <&emmc_clk_cmd_pins>;
+-		pinctrl-1 = <&emmc_conf_pull_up &emmc_conf_pull_done>;
+-		clocks = <&clkc 0x2e &clkc 0x82 &clkc 0x04>;
++		/* Linux applies only the state named "default". The vendor's first state muxes clk
++		   and cmd alone - the eight data lines are in emmc_conf_pull_up - so naming that one
++		   default left the data pins unconfigured and reads returned I/O errors. */
++		pinctrl-names = "default";
++		pinctrl-0 = <&emmc_conf_pull_up &emmc_conf_pull_done>;
++		clocks = <&clkc 0x60 &clkc 0x7d &clkc 0x04>;
+ 		clock-names = "core", "clkin0", "clkin1";
++		vmmc-supply = <&vcc_3v3>;
++		vqmmc-supply = <&vcc_3v3>;
+ 		bus-width = <0x08>;
+ 		cap-sd-highspeed;
+ 		cap-mmc-highspeed;
+-		max-frequency = <0xbebc200>;
++		/* 200 MHz is HS200/HS400, which needs the 1.8 V signalling this board never switches
++		   to; 50 MHz is the fastest mode a fixed 3.3 V rail supports. */
++		max-frequency = <50000000>;
+ 		non-removable;
+ 		disable-wp;
+ 		phandle = <0xc8>;
+@@ -2171,20 +2302,19 @@
+ 
+ 	sd_emmc_b: sd@d0072000 {
+ 		status = "okay";
+-		compatible = "amlogic, meson-mmc-gxlx";
++		/* mainline meson-gx-mmc for the SD slot: its own clkc gate numbers,
++		   and a reset line the vendor driver did not use. */
++		compatible = "amlogic,meson-gx-mmc", "amlogic,meson-gxbb-mmc";
++		resets = <&reset 0x2d>;
+ 		reg = <0xd0072000 0x2000>;
+ 		interrupts = <0x00 0xd9 0x01>;
+-		pinctrl-names = "sd_all_pins", "sd_clk_cmd_pins", "sd_1bit_pins", "sd_clk_cmd_uart_pins", "sd_1bit_uart_pins", "sd_to_ao_uart_pins", "ao_to_sd_uart_pins", "ao_to_sd_jtag_pins", "sd_to_ao_jtag_pins";
++		/* Linux registers the pin map for every state at probe, and the vendor's spare
++		   states mux these pins to uart_ao_a_card, a function mainline's gxl pinctrl does
++		   not have - two dozen "invalid function" errors per boot. Only "default" is ever
++		   applied, so the rest are dropped rather than translated. */
++		pinctrl-names = "default";
+ 		pinctrl-0 = <&sd_all_pins>;
+-		pinctrl-1 = <&sd_clk_cmd_pins>;
+-		pinctrl-2 = <&sd_1bit_pins>;
+-		pinctrl-3 = <&sd_to_ao_uart_clr_pins &sd_clk_cmd_pins &ao_to_sd_uart_pins>;
+-		pinctrl-4 = <&sd_to_ao_uart_clr_pins &sd_1bit_pins &ao_to_sd_uart_pins>;
+-		pinctrl-5 = <&sd_all_pins &sd_to_ao_uart_pins>;
+-		pinctrl-6 = <&sd_to_ao_uart_clr_pins &ao_to_sd_uart_pins>;
+-		pinctrl-7 = <&sd_to_ao_uart_clr_pins &ao_to_sd_uart_pins>;
+-		pinctrl-8 = <&sd_all_pins &sd_to_ao_uart_pins>;
+-		clocks = <&clkc 0x2d &clkc 0x7e &clkc 0x04>;
++		clocks = <&clkc 0x5f &clkc 0x7a &clkc 0x04>;
+ 		clock-names = "core", "clkin0", "clkin1";
+ 		bus-width = <0x04>;
+ 		cap-sd-highspeed;
+@@ -2208,22 +2338,34 @@
+ 
+ 	sd_emmc_a: sdio@d0070000 {
+ 		status = "okay";
+-		compatible = "amlogic, meson-mmc-gxlx";
++		/* mainline meson-gx-mmc for the SDIO Wi-Fi: its own clkc gate numbers,
++		   and a reset line the vendor driver did not use. */
++		compatible = "amlogic,meson-gx-mmc", "amlogic,meson-gxbb-mmc";
++		resets = <&reset 0x2c>;
+ 		reg = <0xd0070000 0x2000>;
+ 		interrupts = <0x00 0xd8 0x04>;
+-		pinctrl-names = "sdio_clk_cmd_pins", "sdio_all_pins";
+-		pinctrl-0 = <&sdio_clk_cmd_pins>;
+-		pinctrl-1 = <&sdio_all_pins>;
+-		clocks = <&clkc 0x2c &clkc 0x7a &clkc 0x04>;
++		/* Linux applies the state called "default" and nothing else; the vendor names its
++		   states for its own driver's lookup, so without this the SDIO pins are never muxed
++		   and the bus is dead. The eMMC only escapes that because the bootloader muxed it. */
++		pinctrl-names = "default";
++		pinctrl-0 = <&sdio_all_pins>;
++		clocks = <&clkc 0x5e &clkc 0x77 &clkc 0x04>;
+ 		clock-names = "core", "clkin0", "clkin1";
++		mmc-pwrseq = <&sdio_pwrseq>;
++		vmmc-supply = <&vcc_3v3>;
++		vqmmc-supply = <&vcc_3v3>;
+ 		bus-width = <0x04>;
+ 		cap-sd-highspeed;
+ 		cap-mmc-highspeed;
+-		max-frequency = <0x5f5e100>;
++		/* 100 MHz is SDR104, which needs 1.8 V signalling this board does not switch to.
++		   Enumeration survives it because that runs at 400 kHz in 1-bit mode. */
++		max-frequency = <50000000>;
+ 		non-removable;
+ 		disable-wp;
++		#address-cells = <1>;
++		#size-cells = <0>;
+ 		phandle = <0xca>;
+ 
+ 		sdio {
+ 			pinname = "sdio";
+ 			ocr_avail = <0x200080>;
+@@ -2311,7 +2461,12 @@
+ 	};
+ 
+ 	ethmac: ethernet@0xc9410000 {
+-		compatible = "amlogic, gxbb-eth-dwmac";
++		/* NOT FITTED - no Ethernet socket on this board. The SoC MAC block is
++		   real and the driver binds to it, which is where eth0 and its stored
++		   mac unifykey come from, but nothing is routed out, so it never gets
++		   carrier. Left disabled rather than waiting on a PHY that cannot answer. */
++		compatible = "amlogic,meson-gxbb-dwmac", "snps,dwmac";
++		status = "disabled";
+ 		reg = <0xc9410000 0x10000 0xc8834540 0x08 0xc8834558 0x0c 0xc1104408 0x04>;
+ 		interrupts = <0x00 0x08 0x01>;
+ 		pinctrl-names = "external_eth_pins";
+@@ -2329,30 +2484,72 @@
+ 		phandle = <0xcb>;
+ 	};
+ 
+-	dwc3: dwc3@c9000000 {
+-		compatible = "synopsys, dwc3";
+-		reg = <0xc9000000 0x100000>;
+-		interrupts = <0x00 0x1e 0x04>;
+-		usb-phy = <0x57 0x58>;
+-		cpu-type = "gxl";
+-		clock-src = "usb3.0";
+-		phandle = <0xcc>;
++	/* mainline's gxl USB is a controller wrapper holding dwc2 and dwc3, fed by
++	   two usb2 phys. The vendor tree has a flat dwc3 with a vendor "usb-phy"
++	   property and its own phy bindings, which no mainline driver claims - so the
++	   host controller never probes, /sys/bus/usb/devices stays empty, and there is
++	   no /dev/sda to mount a rootfs from. */
++	usb2_phy0: phy@d0078000 {
++		compatible = "amlogic,meson-gxl-usb2-phy";
++		#phy-cells = <0x00>;
++		reg = <0xd0078000 0x20>;
++		clocks = <&clkc 0x37>;
++		clock-names = "phy";
++		resets = <&reset 0x22>;
++		reset-names = "phy";
++		status = "okay";
+ 	};
+ 
+-	usb2_phy: usb2phy@d0078000 {
+-		compatible = "amlogic, amlogic-new-usb2";
+-		portnum = <0x03>;
+-		reg = <0xd0078000 0x80 0xc1104408 0x04>;
+-		phandle = <0x57>;
++	usb2_phy1: phy@d0078020 {
++		compatible = "amlogic,meson-gxl-usb2-phy";
++		#phy-cells = <0x00>;
++		reg = <0xd0078020 0x20>;
++		clocks = <&clkc 0x37>;
++		clock-names = "phy";
++		resets = <&reset 0x22>;
++		reset-names = "phy";
++		status = "okay";
+ 	};
+ 
+-	usb3_phy: usb3phy@d0078080 {
+-		compatible = "amlogic, amlogic-new-usb3";
+-		portnum = <0x00>;
++	usb: usb@d0078080 {
++		compatible = "amlogic,meson-gxl-usb-ctrl";
+ 		reg = <0xd0078080 0x20>;
+-		phandle = <0x58>;
++		interrupts = <0x00 0x10 0x04>;
++		#address-cells = <0x01>;
++		#size-cells = <0x01>;
++		ranges;
++		clocks = <&clkc 0x37 &clkc 0x40>;
++		clock-names = "usb_ctrl", "ddr";
++		resets = <&reset 0x22>;
++		dr_mode = "host";
++		phys = <&usb2_phy0 &usb2_phy1>;
++		phy-names = "usb2-phy0", "usb2-phy1";
++		status = "okay";
++
++		dwc2: usb@c9100000 {
++			compatible = "amlogic,meson-g12a-usb", "snps,dwc2";
++			reg = <0xc9100000 0x40000>;
++			interrupts = <0x00 0x1f 0x04>;
++			clocks = <&clkc 0x33>;
++			clock-names = "otg";
++			phys = <&usb2_phy1>;
++			dr_mode = "peripheral";
++			g-rx-fifo-size = <0xc0>;
++			g-np-tx-fifo-size = <0x80>;
++			g-tx-fifo-size = <0x80 0x80 0x10 0x10 0x10>;
++		};
++
++		dwc3: usb@c9000000 {
++			compatible = "snps,dwc3";
++			reg = <0xc9000000 0x100000>;
++			interrupts = <0x00 0x1e 0x04>;
++			dr_mode = "host";
++			maximum-speed = "high-speed";
++			snps,dis_u2_susphy_quirk;
++		};
+ 	};
+ 
++
+ 	dwc2_a {
+ 		compatible = "amlogic, dwc2";
+ 		device_name = "dwc2_a";
