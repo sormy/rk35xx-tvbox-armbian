@@ -21,6 +21,9 @@ grep -c DVKR /usr/lib/armbian-config/config.functions.sh   # 0 = it will zero th
 | 20480–24575 | `uboot` B    | the factory U-Boot's second copy                         | ❌ rewritten by our override |
 | 24576–32767 | `trust`      | empty on every board here                                | ✅ **untouched**             |
 
+The ✅ rows are the narrowing build. This box has `grep -c DVKR` = 0, so the wipe covered **all of
+0–20479** — window included — and the window came back only by splice (2026-09-30).
+
 Sectors 7168–16383 are factory-provisioned and never recreated. `N` is the device with
 `boot0`/`boot1` companions:
 
@@ -42,8 +45,15 @@ so keeping it is one `dd` and dropping it would be two.
 
 | Path                                              | `DVKR` / `SSKR`                                |
 | ------------------------------------------------- | ---------------------------------------------- |
-| **`armbian-install`** (SD → eMMC migration)       | kept by `armbian-config`                       |
+| **`armbian-install`** (SD → eMMC migration)       | kept only with the `DVKR` probe — zeroed here  |
 | **full-image write** (`wl 0` in maskrom, or `dd`) | overwritten — splice them back from the backup |
+
+Host and box, after whichever path zeroed them:
+
+```sh
+dd if=mortal-t1-eMMC-stock.img bs=512 skip=7168 count=9216 of=window.bin   # host
+dd if=window.bin of=/dev/mmcblkN bs=512 seek=7168 conv=notrunc,fsync        # box
+```
 
 A box with no card slot can only take the second. Afterwards `sudo rk35xx-vendor-storage lan` must
 match the box label. Everything else in the window comes from the repo either way: the idbloader to

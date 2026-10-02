@@ -607,3 +607,37 @@ button beside HDMI is inert, §11). Rows in `board.md`, node in `dtb.md`.
 - Recovery as designed: cable out, PSU in, power cycle → new `boot_id`, root back on `mmcblk0` (SD),
   `mmcblk2` (eMMC) untouched. Stranding is real but costs one power cycle.
 - Not attempted: `db` / `wl` pattern write — separate rows, G's restore covers the write path.
+
+## 23. G — maskrom write/restore, SD → eMMC migration, eMMC boot (2026-09-30)
+
+The storage criteria of done, one day: the maskrom `wl` path proven non-destructively and then for
+real, the migration spliced byte-exact, the box booted from eMMC with the SD out. Rows in
+`board.md`.
+
+- Cable session (PSU out, VBUS in — the box boots the full OS off host VBUS): `reboot maskrom` →
+  `ld` = `Maskrom` on the 2nd poll; `db` of `rk3528_spl_loader-mortal-t1.bin`; `rfi` = 15269888
+  sectors = `blockdev --getsz` (Samsung, 7456 MB).
+- Full-disk `wl 0` of `mortal-t1-eMMC-stock.img`: 7.8 GB in **6 m 48 s (19.2 MB/s)**, rc=0; full
+  `rl` readback **3 m 48 s (34.3 MB/s)**, md5 `6537dc0b…` = the image. `rl` sector 64 (2 MB) md5
+  `6a2f0b52…` = `factory_idbloader.bin`.
+- Non-destructive `wl`: the only outside-partition gap is **LBA 34–63** (GPT entries → idbloader —
+  present in the stock and the migrated layout alike). Original `c911a195…` → pattern written and
+  read back `c78a33ab…` → original restored and read back `c911a195…`.
+- Power cycle between phases failed dark (LED off, no boot) — the PSU was loose; reseated, fine.
+- Migration: `armbian-install --target /dev/mmcblk2 --boot emmc --fs ext4 --yes`. That box's
+  armbian-config 26.8.0-trunk.426 has 0 `DVKR` hits → `dd bs=1M count=10` zeroed sectors 0–20479,
+  window included. GPT inherited (not msdos — the bare `plan` probe defaults to msdos, `install`
+  inherits the source table), root from 16 MiB, rsync ~6 min, done 10:46:52. Target fstab +
+  `armbianEnv.txt` point at the eMMC's own UUID `6c18175f…` (SD = `2f63de46…`). Bootloader is our
+  `platform_install.sh`: factory idbloader into all 5 BootROM slots — the file is four identical 512
+  K quarters, so 64–4159 came back byte-identical to stock — `uboot.itb` zeroed then written into
+  both slots.
+- Splice `dd if=window.bin of=/dev/mmcblk2 bs=512 seek=7168 conv=notrunc,fsync`: readback md5
+  `a11247c7…` byte-identical; `DVKR`@7168 / `SSKR`@8192 tagged; `rk35xx-vendor-storage lan` =
+  `00:1c:79:a1:71:92`.
+- Boot-area diff vs the image (sector by sector, first 16 MiB + last 64): only sectors 0–5 (GPT),
+  16384–24575 (`uboot.itb` A+B) and the backup GPT (`15269855–58`, `15269887`) differ. idbloader
+  64–7167 and window 7168–16383 are identical to the backup.
+- eMMC boot: SD out → new `boot_id 24f892fd…`, root `/dev/mmcblk2p1`, no `mmcblk0` in lsblk at all.
+  Hotplug cycle in dmesg: insert 206 s, remove 575 s, reinsert 695 s — the card returns as `mmcblk1`
+  while the SD is absent (numbering shifts, as `AGENTS.md` warns), root stayed on eMMC throughout.

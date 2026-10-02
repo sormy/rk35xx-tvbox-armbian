@@ -44,7 +44,8 @@ reports everything honestly — `dmesg` states `Memory: 1570816K` (1.5 GB), meas
 | `partitions.txt` | partition map with measured sizes (disk = 7455 MiB)                                                      |
 
 Full stock image (7.8 GB, verified) in `backup/mortal-t1/mortal-t1-eMMC-stock.img` (gitignored) —
-restore with `rkdeveloptool wl 0 <sectors> <img>` after a `db` of `rk3528_spl_loader-mortal-t1.bin`.
+restore with `rkdeveloptool wl 0 <img>` after a `db` of `rk3528_spl_loader-mortal-t1.bin`. Exercised
+2026-09-30: `wl 0` in 6 m 48 s, full `rl` readback md5 = the image.
 
 ## Relation to the R69
 
@@ -84,12 +85,15 @@ therefore reuses the R69's grafts verbatim (only `model`/`compatible` adapted) �
 | eMMC (from 16 M)     | 87.8 / 37.7 MB/s | 23.4 / 16.9 MB/s |
 
 - eMMC full-disk read: 7.8 GB in one pass, 94.7 s, 82.5 MB/s, no stall.
+- Maskrom over USB 2: full write 6 m 48 s (19.2 MB/s), full read 3 m 48 s (34.3 MB/s), no stall,
+  readback md5 = the image.
 - SD ceiling is High Speed: raw `dd iflag=direct` 23.7 MB/s — the DT (stock-identical) has no
   `vqmmc-supply`, so no 1.8 V and no UHS/SDR104 (same as h313).
 - eMMC fio from offset 16 M overwrote stock `misc` and `super`; `boot` lost `ANDROID!`.
   `uboot`@16384 `d00dfeed`, GPT, boot0/1 intact; `DVKR`@7168 / `SSKR`@8192 still tagged; vendor
-  storage `lan` = `00:1c:79:a1:71:92` = the sticker. Restore = `dd` of `mortal-t1-eMMC-stock.img`,
-  no maskrom needed.
+  storage `lan` = `00:1c:79:a1:71:92` = the sticker. Restore = maskrom `wl 0` of
+  `mortal-t1-eMMC-stock.img` after `db`, md5-verified 2026-09-30; a `dd` restore was stated here
+  earlier and never exercised.
 - The first SD read run was an artifact (time_based reads of a partly-unwritten file zero-fill
   unwritten extents: 143 MB/s). The row is the redo on a fully-written file, caches dropped, 512 M
   working set (the fixed 1 G file would take 190 s to write at 5.4 MB/s).
@@ -304,20 +308,20 @@ reaches logind as instant → short → suspend.
 
 ### Storage
 
-| Check                                             | Mark | Note                                        |
-| ------------------------------------------------- | :--: | ------------------------------------------- |
-| eMMC fio, fixed parameters                        |  ✅  | table above                                 |
-| SD enumerates + fio                               |  ✅  | hotplug insert/remove = physical            |
-| Boots eMMC on its own loaders                     |  ❓  | migration = physical                        |
-| Migration keeps 7168–16383 identical              |  ❓  | physical                                    |
-| `DVKR`/`SSKR` tagged + vendor `LAN_MAC` = sticker |  ✅  | both read back; `00:1c:79:a1:71:92`         |
-| Maskrom full-disk read (backup)                   |  ✅  | stock image exists (read path proven)       |
-| Maskrom entry at power-on                         |  ❓  | physical — the backup may predate this repo |
-| Maskrom entry from the OS (`reboot maskrom`)      |  ✅  | `ld` → `Maskrom` (`2207:350c`), 2026-09-30  |
-| Maskrom `wl` write path                           |  ❓  | physical (pattern write + restore)          |
-| `rl` = `factory_idbloader`                        |  ✅  | sector 64 md5 `6a2f0b52…` = identity        |
-| Full-disk write (the restore claim)               |  ❓  | physical, destructive — then restore        |
-| Throughput recorded                               |  ✅  | table above                                 |
+| Check                                             | Mark | Note                                         |
+| ------------------------------------------------- | :--: | -------------------------------------------- |
+| eMMC fio, fixed parameters                        |  ✅  | table above                                  |
+| SD enumerates + fio                               |  ✅  | insert/remove/insert in dmesg, 2026-09-30    |
+| Boots eMMC on its own loaders                     |  ✅  | SD out, root = `mmcblk2p1`, 2026-09-30       |
+| Migration keeps 7168–16383 identical              |  ✅  | `a11247c7…`; only GPT + `uboot.itb` differ   |
+| `DVKR`/`SSKR` tagged + vendor `LAN_MAC` = sticker |  ✅  | both read back; `00:1c:79:a1:71:92`          |
+| Maskrom full-disk read (backup)                   |  ✅  | stock image exists (read path proven)        |
+| Maskrom entry at power-on                         |  ❌  | button inert (Ports); OS entry only          |
+| Maskrom entry from the OS (`reboot maskrom`)      |  ✅  | `ld` → `Maskrom` (`2207:350c`), 2026-09-30   |
+| Maskrom `wl` write path                           |  ✅  | pattern @34–63: write, match, restore, match |
+| `rl` = `factory_idbloader`                        |  ✅  | sector 64 md5 `6a2f0b52…` = identity         |
+| Full-disk write (the restore claim)               |  ✅  | `wl 0` 6 m 48 s, 19.2 MB/s, no stall         |
+| Throughput recorded                               |  ✅  | table above                                  |
 
 ### Ethernet — not on this box
 
@@ -456,8 +460,3 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 - Console garble: dirty SD card, caused by a faulty card reader (user-confirmed, worklog §7).
 - `h96max-3518d/board.md` "AVS2 357 fps" has no worklog provenance — flagged, not inherited here.
-
-### Needs the human — one trip
-
-- eMMC migration + full-disk write + restore (`dd` of the stock image); the device name it confirms.
-- SD insert/remove deferred: the only slot holds the boot card.
