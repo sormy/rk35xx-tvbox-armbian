@@ -496,3 +496,14 @@ live, typing confirmed by eye.
   nodes drop during sleep — BLE wake row stays ❓.
 - Node numbers shift on every reconnect (uhid 10–13 → 4/5/10/11; dongle 4–7 → 6/7/12/13) — names
   carry identity, not event numbers.
+- Long press per mode (A4): over BLE a hold is one down/up pair, no repeats, same scancode (vol+
+  held 1.3/1.6 s, OK held 1.6 s — `stock/mortal-t1/bt-longpress-consumer.log`). Over IR a hold is
+  one instantaneous frame (vol+ 0.16 s, OK 0.18 s — `ir-longpress*.log`). Power is the one gesture
+  that splits: BLE hold ~3 s → logind `Power key pressed long` → **reboot** (boot ended 14:49:40,
+  `986f4ae9` → `849d593d`); IR hold → press and release arrive together → `pressed short` → suspend
+  (14:55:28). Tap = suspend on both transports.
+- Capture hazards, learned the hard way: the remote auto-sleeps after ~14 min idle (its wake press
+  is swallowed by the reconnect), and a host `bluetoothctl disconnect` loses the race —
+  auto-reconnect came in 60 s cold, 4 s warm. The only stable IR window is `bluetoothctl power off`.
+  The first long-press round went to `/tmp` and died with the reboot; later captures went to `/root`
+  and survived.

@@ -243,6 +243,11 @@ nine were re-read off the handset. Mouse button emits no event over BLE — poin
 regardless; `hwdb` cannot fix silence. Voice sends one usage per press; `arecord -l` is empty —
 audio rides the `0xfeb3` vendor GATT service and needs a userspace client (out of scope).
 
+Long press per transport: a hold is one down/up pair over BLE (no repeats, same scancode) and one
+instantaneous frame over IR (hold duration invisible). Power is the only gesture that diverges — tap
+= suspend both ways; ~3 s hold = `Power key pressed long` → reboot over BLE, but over IR the press
+reaches logind as instant → short → suspend.
+
 ## Validation — `docs/board-validation.md`, run 2
 
 ### System
@@ -370,7 +375,7 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 | IR IRQ counts on press    |  ✅  | IRQ 27, pass 1: 63368 → 76561                                           |
 | Button beside HDMI        |  ❌  | inert: 1×, 2× @1–2 s, 3rd held 10 s — never maskrom, never powers off   |
 | Power-on remote cold-boot |  ➖  | self-boots on wall power; IR dead unplugged, no button (user-confirmed) |
-| Long press in each mode   |  ❓  | physical                                                                |
+| Long press in each mode   |  ✅  | gesture differs per transport (worklog §17)                             |
 | LED polarity by eye       |  ✅  | suspend: red, running: blue; off state = power-off pending              |
 | IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                         |
 | BLE keymap, per transport |  ✅  | BLE: table above, hwdb-verified (worklog §17)                           |
@@ -424,8 +429,8 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 ### Needs the human — one trip
 
 - TV input leftovers: a 1440p/2K panel, a PC monitor, a CEC menu check on a set that exposes one.
-- Remote: long press per mode; digital-X dongle keys (today: event6/7/12/13). Both transports
-  decoded and deployed (IR confirmed in Kodi).
+- Remote: digital-X dongle keys (today: event6/7/12/13). Both transports decoded and deployed (IR
+  confirmed in Kodi).
 - LED off state; suspend longer than the watchdog window (`boot_id` check); wake via BLE (after the
   remote pairs).
 - Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only
