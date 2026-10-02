@@ -313,3 +313,46 @@ after `drop_caches`). Root password chosen per boot (kept out of these docs). Nu
   keymaps, LEDs, suspend/wake, USB sticks, power meter, eMMC migration + restore, RJ45 look) —
   handed over as one list in `board.md`.
 - Console garble root cause (❓): tty1 substitutes CP437-ish glyphs, tty2 clean; probe recipe in §7.
+
+## 10. Display across three TVs, Kodi 21.2, one locked box (2026-09-28 – 29)
+
+Run-2 follow-up on the display criterion, plus Kodi the next day; `--no-upgrade` throughout. Numbers
+in `board.md`; this is how they got here.
+
+### Sharp → Prism+ 65″ direct (2026-09-28, 17:38 – 18:58)
+
+- Off the 2-port switch onto a direct HDMI run; `hpd-watch.sh` (600×1 s) caught the real cycle: 357
+  samples `st=disconnected hp=lo irq=94` → 243 `st=connected hp=hi irq=95+` (`/root/hpd-watch.log`)
+  — replug re-detect measured, not assumed.
+- EDID: the first read garbled (the tolerated `ddc read failed` ×4–5), a re-read settled it — Prism+
+  `3840x2160` ×5 + `4096x2160` ×2, later reads `3840x2160@60` preferred. Sharp: EDID byte-identical
+  over two reads, 1080p driven, bare `kmscube` as `twilight` 50.002 fps.
+- 4K60 on screen: `/root/mpv4k-test.sh` walks `--drm-mode` — the flag takes `WxH[@R]`, so
+  `3840x2160-25` dies at parse and plain `3840x2160` wins; dmesg
+  `Update mode to 3840x2160p60 … dclk 594000000`, 90 s of `/home/twilight/clips/hevc.4k.hevc` (25
+  fps, no PTS — lavf warns, mpv invents timing, harmless for a loop), 1 dropped frame
+  (`/root/mpv4k.log`).
+- CEC: the adapter configures (LA4, TV OSD `T1`) and then talks to nobody —
+  `/root/cec-audio-test.log` ends `Tx, Not Acknowledged (4), Max Retries`; `/root/cec-raw.log`: PA
+  `3.0.0.0`, empty topology, polls LA0/LA2 unanswered. No responder on Sharp or Prism+; no TV's CEC
+  menu was ever opened (physical leftover).
+
+### Kodi 21.2 (2026-09-29)
+
+- The earlier blocker: kodi needs `libpython3.13` (absent), its candidate `…deb13u5` exact-depends
+  the whole python set → 4 upgrades. Pinning all five packages to `3.13.5-2+deb13u4` (trixie-updates
+  still carries it) lands `0 upgraded, 69 newly installed`; u-boot hold untouched. First attempt
+  aborted at the `[Y/n]` (no TTY) — `-y` fixed it.
+- First run: `CDRMUtils::FindConnector HDMI-A-1`, `GL_RENDERER = Mali450`, `kodi.bin` holds DRM
+  master (direct-to-plane), ALSA `sysdefault` → card 0 `rockchiphdmi`. Debian 21.2 builds
+  GBM+Wayland+X11 windowings but hwdec `vaapi`/`mediacodec` only — libva probes
+  `rockchip_drv_video.so` and gets `-1` (`/root/kodi-run.log`) → no hwdec exists here, every player
+  decodes in software.
+- **Wrong turn:** with kodi holding DRM master I wrote `off`→`on` to the connector's `status` sysfs
+  to force an EDID re-read — modeset deadlock, network gone, the 89.5 s watchdog did not recover it,
+  the box needed a power cycle. HPD is a hardware input: there is no software EDID re-read — replug
+  the cable, and never touch `status` while anything holds DRM master.
+- The power cycle landed on a **third** set — a Toshiba, generic EDID (`mfr XRR`, top mode
+  `1920x1080`, no 4K), which is what made both boots look like the Prism+ losing its 4K. Kodi
+  restarted there fine, and the sink set in Kodi's audio settings was heard through the TV. No
+  pipewire/pulse exists (`pactl` absent, 0 processes) — ALSA card 0 is the entire audio story.

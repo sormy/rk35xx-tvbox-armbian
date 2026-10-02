@@ -242,26 +242,34 @@ Encode fps — all decode back rc=0:
 
 ### Display
 
-| Check                                      | Mark | Note               |
-| ------------------------------------------ | :--: | ------------------ |
-| GPU renders, fps recorded                  |  ✅  | 157/163/168 Mpix/s |
-| `cec-ctl` finds the adapter                |  ✅  | `/dev/cec0`        |
-| TV modes, EDID, 1080p/1440p/4K, PC monitor |  ❓  | physical           |
-| HDMI audio default sink                    |  ❓  | physical           |
-| Hotplug re-detect                          |  ❓  | physical           |
-| CEC traffic                                |  ❓  | physical           |
-| kmscube on screen                          |  ❓  | physical           |
-| AV jack                                    |  ➖  | not fitted         |
+| Check                        | Mark | Note                                                     |
+| ---------------------------- | :--: | -------------------------------------------------------- |
+| GPU renders, fps recorded    |  ✅  | 157/163/168 Mpix/s                                       |
+| `cec-ctl` finds the adapter  |  ✅  | `/dev/cec0`                                              |
+| EDID parses, hotplug re-read |  ✅  | Sharp, Prism+, Toshiba; replug re-reads                  |
+| 1080p drives the panel       |  ✅  | Sharp, Toshiba                                           |
+| 4K60 drives the panel        |  ✅  | Prism+: `Update mode to 3840x2160p60`                    |
+| 1440p/2K class               |  ❓  | no panel advertising it here yet                         |
+| PC monitor                   |  ❓  | physical                                                 |
+| HDMI audio + default sink    |  ✅  | card 0 `rockchiphdmi` only; heard in Kodi on the Toshiba |
+| CEC traffic                  |  ❌  | no ACK (Sharp, Prism+); `Tx, Not Acknowledged (4)`       |
+| kmscube on screen            |  ✅  | 50.002 fps                                               |
+| Kodi 21.2 GBM on screen      |  ✅  | DRM master, `GL_RENDERER = Mali450`                      |
+| Kodi hwdec                   |  ❌  | vaapi/mediacodec only; libva `-1`                        |
+| AV jack                      |  ➖  | not fitted                                               |
+
+Kodi: `kodi --standalone` as root; no autostart, no unit. No hwdec exists on this box — Debian's
+build carries no rkmpp/v4l2 backend, so every player decodes in software.
 
 ### Video codec
 
-| Check               | Mark | Note                     |
-| ------------------- | :--: | ------------------------ |
-| MPP names the SoC   |  ✅  | `rk3528a`                |
-| Matrix filled, fps  |  ✅  | tables above             |
-| AV1 absent          |  ✅  | refusal recorded         |
-| AVS · AVS+          |  🟡  | create accepted, no clip |
-| Real 4K HEVC smooth |  ❓  | physical                 |
+| Check               | Mark | Note                              |
+| ------------------- | :--: | --------------------------------- |
+| MPP names the SoC   |  ✅  | `rk3528a`                         |
+| Matrix filled, fps  |  ✅  | tables above                      |
+| AV1 absent          |  ✅  | refusal recorded                  |
+| AVS · AVS+          |  🟡  | create accepted, no clip          |
+| Real 4K HEVC smooth |  ✅  | mpv 90 s @4K60, 1 drop; SW decode |
 
 ### USB
 
@@ -337,8 +345,7 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 ### Needs the human — one trip
 
 - Cold power cycle: BT at boot, `.49`, console, `date`; timed cold-boot.
-- TV input: EDID modes, 1080p/1440p/4K classes, hotplug, HDMI audio, CEC traffic, kmscube on screen,
-  real 4K HEVC playing.
+- TV input leftovers: a 1440p/2K panel, a PC monitor, a CEC menu check on a set that exposes one.
 - Remote: every button under `evtest` **per transport** (IR IRQ 27 + BLE), mic, power-on from off,
   long press per mode, BT pairing; digital-X dongle keys (event4–7).
 - LEDs by eye (running/suspended/off); suspend/resume + wake in IR **and** BLE; suspend longer than
