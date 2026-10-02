@@ -436,7 +436,6 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 ### Needs the human — one trip
 
-- TV input leftovers: a 1440p/2K panel, a PC monitor, a CEC menu check on a set that exposes one.
 - Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only
   entry left is `reboot maskrom` (DT hunk, untested): flash USB on a host first, power cycle to
   recover; optional `wl` pattern test.
