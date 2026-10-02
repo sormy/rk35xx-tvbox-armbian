@@ -527,3 +527,28 @@ live, typing confirmed by eye.
 - **Poweroff LED**: `systemctl poweroff` → LED red, then dark; soft-off stays off (no self-boot);
   unplug/replug cold-boots (new `bcd60fd6`). Dongle keys (A5) dropped by user decision — not a core
   accessory for the box.
+
+## 19. USB bring-up — hub ceiling, 5 Gbps fault, BOS, uas (2026-09-29)
+
+- The all-in-one dongle was caught by `lsusb -t` before any benchmark: two nested `214b:7260` hubs,
+  `Product: USB2.0 HUB`, everything behind them at 480M with bus 2 empty — the dongle's own hub chip
+  is the ceiling, not the port. The 2 TB "USB 3.0" SSD (`048d:1234`, SDK PSSD) produced no
+  SuperSpeed event in three plugs (one watched live in `dmesg -w`) — USB2 path only, sticker or not.
+- SanDisk 3.2 Gen1 125 GB (`0781:55b1`) is a real USB3 device. Plug 1: `usb 2-1: new SuperSpeed`,
+  then setup-address timeouts, `error -71`, USB2 fallback, then `-110` descriptor timeouts on both
+  speeds → `unable to enumerate`. Reseat: **SS enumerated three times (devices 5, 6, 9 —
+  `usb-storage` bound, `sda` attached) and dropped 0.3–1.7 s later each time, always right after the
+  first SCSI traffic**; after the fourth drop the device fell back to 480M and has been stable
+  there. Traffic-correlated SS dropout = the 5 Gbps path fails under load. One device tested — a
+  second would split drive-vs-port.
+- BOS over the fallback (`lsusb -v`): `bcdUSB 2.10`, `SuperSpeed USB Device Capability`,
+  `wSpeedsSupported 0x000e` = FS + HS + SS 5 Gbps — judged by BOS, straight in the socket, per
+  `docs/board-validation.md`.
+- `uas`: the SanDisk exposes one interface at `bInterfaceProtocol 0x50` (BOT); `usb-storage` binding
+  is correct and `uas` (registered at boot) has nothing to bind. Row stays ❓.
+- USB2 throughput, fixed fio params, read-only on the raw disk: seq 1M QD8 **16.0 MB/s**, rand 4K
+  QD32 **2.2 MB/s**. The GEMBIRD reader path (all-in-one dongle) measured 5.4 / 5.5–5.6 MB/s
+  write/read — card-limited — and passed the 512 M direct-I/O integrity round-trip after
+  `drop_caches`: the card is clean, so run-1's corruption points at the slot/host path.
+- Debugging lore: xhci debugfs `portsc` read `Connected Link:U0 PortSpeed:3` while dmesg had no
+  SuperSpeed line at all — on this BSP kernel dmesg is the witness, not `portsc`.
