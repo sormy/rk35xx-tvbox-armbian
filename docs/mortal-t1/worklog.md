@@ -459,3 +459,11 @@ live, typing confirmed by eye.
 - `date` sane after total power loss (fake-hwclock), `wlan0` `.49`, console at getty.
 - Bond survived full power loss: keyboard typed at the login screen, `Connected: yes` on first SSH
   after.
+
+## 16. Power-on rows reclassified — structural, not pending (2026-09-29)
+
+- No power button on the PCB; the box self-boots the moment wall power returns, and with the plug
+  out the IR receiver has no rail. Cold IR power-on and power-button cold boot cannot occur — row
+  moved to ➖, batch bullets dropped (user-confirmed).
+- Soft `poweroff` with the wall on stays ❓: the pending LED-off observation answers whether it
+  latches; recovery is a wall cycle either way.

@@ -325,17 +325,17 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 
 ### IR, buttons, LEDs, keymap
 
-| Check                     | Mark | Note                                                                  |
-| ------------------------- | :--: | --------------------------------------------------------------------- |
-| Input nodes exist         |  ✅  | Input table                                                           |
-| IR IRQ counts on press    |  ✅  | IRQ 27, pass 1: 63368 → 76561                                         |
-| Button beside HDMI        |  ❌  | inert: 1×, 2× @1–2 s, 3rd held 10 s — never maskrom, never powers off |
-| Power-on remote cold-boot |  ❓  | physical                                                              |
-| Long press in each mode   |  ❓  | physical                                                              |
-| LED polarity by eye       |  ✅  | suspend: red, running: blue; off state = power-off pending            |
-| IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                       |
-| BLE keymap, per transport |  ❓  | physical (pairing first)                                              |
-| IR-extender jack          |  ➖  | none on the port list                                                 |
+| Check                     | Mark | Note                                                                    |
+| ------------------------- | :--: | ----------------------------------------------------------------------- |
+| Input nodes exist         |  ✅  | Input table                                                             |
+| IR IRQ counts on press    |  ✅  | IRQ 27, pass 1: 63368 → 76561                                           |
+| Button beside HDMI        |  ❌  | inert: 1×, 2× @1–2 s, 3rd held 10 s — never maskrom, never powers off   |
+| Power-on remote cold-boot |  ➖  | self-boots on wall power; IR dead unplugged, no button (user-confirmed) |
+| Long press in each mode   |  ❓  | physical                                                                |
+| LED polarity by eye       |  ✅  | suspend: red, running: blue; off state = power-off pending              |
+| IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                         |
+| BLE keymap, per transport |  ❓  | physical (pairing first)                                                |
+| IR-extender jack          |  ➖  | none on the port list                                                   |
 
 ### Device tree
 
@@ -384,16 +384,14 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 ### Needs the human — one trip
 
-- Cold power cycle: BT at boot, `.49`, console, `date`; timed cold-boot.
 - TV input leftovers: a 1440p/2K panel, a PC monitor, a CEC menu check on a set that exposes one.
-- Remote (BLE side): pairing, BLE keymap, mic, power-on from off, long press per mode; digital-X
-  dongle keys (event4–7). The IR side is decoded, deployed, and confirmed working in Kodi; only IR
-  cold-boot power-on is left.
-- LEDs by eye (running/suspended/off); suspend/resume + wake in IR **and** BLE; suspend longer than
-  the watchdog window (`boot_id` check).
+- Remote (BLE side): pairing, BLE keymap, mic, long press per mode; digital-X dongle keys
+  (event4–7). The IR side is decoded, deployed, and confirmed working in Kodi.
+- LED off state; suspend longer than the watchdog window (`boot_id` check); wake via BLE (after the
+  remote pairs).
 - Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only
   entry left is `reboot maskrom` (DT hunk, untested): flash USB on a host first, power cycle to
-  recover; optional `wl` pattern test; power-button cold boot.
+  recover; optional `wl` pattern test.
 - USB stick each port (USB 2 throughput, USB 3 `uas`/BOS; a USB-write integrity test doubles as the
   card-vs-slot discriminator for run-1's corruption); power meter, bare board.
 - eMMC migration + full-disk write + restore (`dd` of the stock image); the device name it confirms.
