@@ -392,6 +392,15 @@ this PCB" — untouched. The user later confirmed the design intent: wireless-fi
 no magnetics), and the online specs that list a LAN port are copied from other boards — the same
 kind of copy that gives this box its false 16 GB / 256 GB label.
 
+### The button beside HDMI
+
+Earlier reports called it the maskrom trigger (no toothpick hole exists — first useful fact). The
+user then tested every pattern: single press, two presses 1-2 s apart, third press held 10 s — **it
+never reaches maskrom and never powers off**; by all appearances inert. Maskrom entry on this unit
+is therefore the software path only: `reboot maskrom` via the `mode-maskrom` hunk (still untested),
+with the flash USB on a host beforehand, and a power cycle to get out again. An RK box that shows no
+force-off either suggests nothing is wired to it — worth one look inside during the eMMC trip.
+
 ### Build, deploy, verify
 
 - Patch regenerated from the stock decompile (12 hunks); `build-board-dts.sh` round-trip `cmp`

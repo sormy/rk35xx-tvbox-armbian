@@ -14,7 +14,7 @@ makes a stock ROCK 2F image the right base.
 | Storage       | **8 GB Samsung eMMC** ✅ measured — sysfs `name=H8G4u manfid=0x000090`, `rfi` 7456 MB / 15269888 sectors, GPT disk = 7455 MiB. **Label claims 256 GB — false.**                                                                                  |
 | Label MAC     | **`00:1C:79:A1:71:92`** (Rockchip OUI)                                                                                                                                                                                                           |
 | Wi-Fi / BT    | **AIC8800D80 SDIO + UART BT** ✅ confirmed — `aicwf_sdio_chipmatch USE AIC8800D80` in dmesg; `wlan0` associates (5 GHz ch36), `hci0` UP RUNNING                                                                                                  |
-| Ports         | HDMI · USB-A 3.0 (OTG, flash port) · microSD (TF) · USB-C power · reset button · **no ethernet**                                                                                                                                                 |
+| Ports         | HDMI · USB-A 3.0 (OTG, flash port) · microSD (TF) · USB-C power · button beside HDMI (inert — no maskrom, no power-off) · **no ethernet**                                                                                                        |
 | PCB marking   | `XR8223518K-V1.0`                                                                                                                                                                                                                                |
 | Serial header | not yet located — HDMI output works, so serial is a fallback, not a gate                                                                                                                                                                         |
 
@@ -153,15 +153,15 @@ Encode fps — all decode back rc=0:
 
 ### Input
 
-| Node                    | Device         | Note                               |
-| ----------------------- | -------------- | ---------------------------------- |
-| `ir-remote`             | event9         | pwm remotectl, IRQ 27 `rk_pwm_irq` |
-| `adc-keys`              | event8         | reset/toothpick candidate          |
-| `cec-remote`            | event1         |                                    |
-| `bt-powerkey`           | event3         |                                    |
-| `hdmi`, `hdmi-sound`    | event0, event2 |                                    |
-| USB digital-X 0513:0318 | event4–7       | keyboard/mouse/consumer/system     |
-| CEC adapter             | `/dev/cec0`    | `dwhdmi-rockchip` / `dw_hdmi`      |
+| Node                    | Device         | Note                                                    |
+| ----------------------- | -------------- | ------------------------------------------------------- |
+| `ir-remote`             | event9         | pwm remotectl, IRQ 27 `rk_pwm_irq`                      |
+| `adc-keys`              | event8         | reset candidate; the button beside HDMI is inert (user) |
+| `cec-remote`            | event1         |                                                         |
+| `bt-powerkey`           | event3         |                                                         |
+| `hdmi`, `hdmi-sound`    | event0, event2 |                                                         |
+| USB digital-X 0513:0318 | event4–7       | keyboard/mouse/consumer/system                          |
+| CEC adapter             | `/dev/cec0`    | `dwhdmi-rockchip` / `dw_hdmi`                           |
 
 ### IR keymap — decoded, in the device tree, evdev-verified
 
@@ -323,17 +323,17 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 
 ### IR, buttons, LEDs, keymap
 
-| Check                     | Mark | Note                            |
-| ------------------------- | :--: | ------------------------------- |
-| Input nodes exist         |  ✅  | Input table                     |
-| IR IRQ counts on press    |  ✅  | IRQ 27, pass 1: 63368 → 76561   |
-| Toothpick on `adc-keys`   |  ❓  | physical                        |
-| Power-on remote cold-boot |  ❓  | physical                        |
-| Long press in each mode   |  ❓  | physical                        |
-| LED polarity by eye       |  ❓  | physical                        |
-| IR keymap, per transport  |  ✅  | IR: table above, evdev-verified |
-| BLE keymap, per transport |  ❓  | physical (pairing first)        |
-| IR-extender jack          |  ➖  | none on the port list           |
+| Check                     | Mark | Note                                                                  |
+| ------------------------- | :--: | --------------------------------------------------------------------- |
+| Input nodes exist         |  ✅  | Input table                                                           |
+| IR IRQ counts on press    |  ✅  | IRQ 27, pass 1: 63368 → 76561                                         |
+| Button beside HDMI        |  ❌  | inert: 1×, 2× @1–2 s, 3rd held 10 s — never maskrom, never powers off |
+| Power-on remote cold-boot |  ❓  | physical                                                              |
+| Long press in each mode   |  ❓  | physical                                                              |
+| LED polarity by eye       |  ❓  | physical                                                              |
+| IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                       |
+| BLE keymap, per transport |  ❓  | physical (pairing first)                                              |
+| IR-extender jack          |  ➖  | none on the port list                                                 |
 
 ### Device tree
 
@@ -389,8 +389,9 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
   cold-boot power-on is left.
 - LEDs by eye (running/suspended/off); suspend/resume + wake in IR **and** BLE; suspend longer than
   the watchdog window (`boot_id` check).
-- Toothpick → maskrom (optional `wl` pattern test; `reboot maskrom` with USB attached); power button
-  cold boot.
+- Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only
+  entry left is `reboot maskrom` (DT hunk, untested): flash USB on a host first, power cycle to
+  recover; optional `wl` pattern test; power-button cold boot.
 - USB stick each port (USB 2 throughput, USB 3 `uas`/BOS; a USB-write integrity test doubles as the
   card-vs-slot discriminator for run-1's corruption); power meter, bare board.
 - eMMC migration + full-disk write + restore (`dd` of the stock image); the device name it confirms.
