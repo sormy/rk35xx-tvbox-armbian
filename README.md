@@ -241,8 +241,8 @@ image over USB**.
 
 ## Credits
 
-- [sormy/rk35xx-tvbox-armbian](https://github.com/sormy/rk35xx-tvbox-armbian) — the base
-  tree this fork is built on: board layout, build tooling, and the r69 / H96 Max prior work.
+- [sormy/rk35xx-tvbox-armbian](https://github.com/sormy/rk35xx-tvbox-armbian) — the base tree this
+  fork is built on: board layout, build tooling, and the r69 / H96 Max prior work.
 - Bring-up method from
   [juliovendramini/rk3518_armbian](https://github.com/juliovendramini/rk3518_armbian).
 - [Armbian](https://github.com/armbian) — the stock image and the kernel this layer sits on.
