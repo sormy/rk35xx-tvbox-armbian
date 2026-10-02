@@ -44,18 +44,24 @@ REPO_URL=https://github.com/sormy/rk35xx-tvbox-armbian
 SELF="$(cd "$(dirname "$0")" && pwd)"
 if [ "$PULL" = 1 ]; then
   # pull in place when we're already in a checkout; otherwise clone beside the board's identity dir
-  if [ -d "$SELF/.git" ]; then REPO="$SELF"
+  if [ -d "$SELF/.git" ]; then
+    REPO="$SELF"
+    git -C "$REPO" remote set-url origin "$REPO_URL"   # heals clones after a repo rename
+    git -C "$REPO" pull --ff-only
   else
     case "$BOARD" in
       r69) REPO=/usr/local/share/r69/repo ;;      # the historical path deployed boxes already use
       *)   REPO=/usr/local/share/rk35xx/repo ;;
     esac
-  fi
-  if [ -d "$REPO/.git" ]; then
-    git -C "$REPO" remote set-url origin "$REPO_URL"   # heals clones after a repo rename
-    git -C "$REPO" pull --ff-only
-  else
-    git clone --depth 1 "$REPO_URL" "$REPO"
+    # rk35xx-deploy leaves a non-git tree — host-owned files, a stale .git git refuses to open —
+    # so probe the repo instead of the directory, and let origin win when it is not one.
+    if git -C "$REPO" rev-parse --git-dir >/dev/null 2>&1; then
+      git -C "$REPO" remote set-url origin "$REPO_URL" # heals clones after a repo rename
+      git -C "$REPO" pull --ff-only
+    else
+      rm -rf "$REPO"
+      git clone --depth 1 "$REPO_URL" "$REPO"
+    fi
   fi
 elif [ -f "$SELF/firmware/$BOARD/payload.list" ]; then
   REPO="$SELF"
