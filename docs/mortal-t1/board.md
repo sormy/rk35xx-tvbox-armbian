@@ -74,7 +74,7 @@ therefore reuses the R69's grafts verbatim (only `model`/`compatible` adapted) �
 | ------------------- | ---------------------------------------------------------------------- |
 | Frequencies         | `1200000 1416000`; stock-vs-ours `operating-points-v2` diff empty      |
 | 300 s 4-core stress | 48.3 → 58.3 °C, no throttle (trips 95/110/120 °C, freq pinned 1416000) |
-| Draw                | ❓ physical batch — bare board, idle / suspended / off                 |
+| Draw                | ❓ no meter at hand — bare board, idle / suspended / off               |
 
 ### Storage — fio, fixed parameters (`--direct=1`)
 
@@ -271,7 +271,7 @@ reaches logind as instant → short → suspend.
 | --------------------------------------------- | :--: | -------------------------------------------------------------------- |
 | `scaling_available_frequencies` = factory OPP |  ✅  | dtc diff empty                                                       |
 | 5 min 4-core stress, no throttling            |  ✅  | 48.3 → 58.3 °C                                                       |
-| Draw metered                                  |  ❓  | physical                                                             |
+| Draw metered                                  |  ❓  | no meter available                                                   |
 | Suspend `deep` + `mem_sleep` bracket          |  ✅  | `s2idle [deep]`                                                      |
 | Suspend/resume, stays up                      |  ✅  | IR power both ways, `boot_id` unchanged                              |
 | Suspend > watchdog window, same `boot_id`     |  ✅  | 159 s vs 89.5 s window, `boot_id` unchanged (worklog §18)            |
@@ -440,6 +440,5 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 - Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only
   entry left is `reboot maskrom` (DT hunk, untested): flash USB on a host first, power cycle to
   recover; optional `wl` pattern test.
-- Power meter, bare board — idle / suspended / off (the last unmeasured row).
 - eMMC migration + full-disk write + restore (`dd` of the stock image); the device name it confirms.
 - SD insert/remove deferred: the only slot holds the boot card.

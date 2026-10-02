@@ -560,3 +560,8 @@ live, typing confirmed by eye.
 - **The blue port is true USB 3.0**: 5000M on the `1d6b:0003` root hub, `uas` bound, BOS SuperSpeed
   capability, `fio` recorded. The SanDisk stick fell back to 480M in every session — device and port
   recorded as seen, no attribution.
+
+## 20. D closed — power meter dropped, no equipment (2026-09-29)
+
+- User has no watt meter; `Draw metered` stays ❓ with the reason recorded. D's USB legs —
+  throughput, integrity, card-vs-slot discriminator, USB 3 characterization — are all in §19.
