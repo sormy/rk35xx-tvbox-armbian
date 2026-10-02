@@ -1,0 +1,315 @@
+# The Mortal T1 got Armbian — bring-up worklog
+
+Mortal T1 (label: "MORTAL Model T1, RAM 16GB / ROM 256GB"), PCB silkscreen **XR82235518K-V1.0**
+(actual: `XR8223518K-V1.0`), RK3518, no ethernet, TF slot, USB-A 3.0 OTG flash port. No public
+firmware exists for this box (XDA threads asking for it; the "Mortal T1" firmware that circulates is
+the **Allwinner H313** variant — wrong SoC entirely).
+
+Told in the order it happened.
+
+## 1. Maskrom recovery (before this repo was involved)
+
+The box was wedged (reboot-looping through vendor Loader on a flaky internal-hub port — moving it to
+a rear root port with the reset button held got a stable BootROM Maskrom). Tools: `rkdeveloptool`
+v1.32 + RKDevelopTool-GUI, udev rule `99-rk-rockusb.rules` covering `2207:350c`.
+
+Loaders built from this repo's `build-rktools.sh` with the **box's own factory DDR** (carved from
+the stock idbloader) worked where rkbin generic DDR variants hung:
+
+```
+db rk3528_spl_loader-mortal-t1.bin   → rfi: SAMSUNG, 7456 MB, 15269888 sectors
+```
+
+## 2. Full eMMC backup — the evidence base
+
+`rl` in 1 GiB chunks → `mortal-t1-eMMC-stock.img`, 7,818,182,656 B (15,269,888 sectors), md5
+`6537dc0b8a25c421ec108ae03594acbb`. First 16 MB byte-identical to an independent earlier read. Reads
+past the vendor loader's silent 32 MB cap verified (double-read identical).
+
+Everything below was carved from that image — the box was never asked to boot anything.
+
+## 3. What the dump revealed (the "masked specs" question)
+
+|          | Truth (measured)                                                                                                  | Label / stock Android claims                                                |
+| -------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| SoC      | RK3518 (RK3528-family), 4× Cortex-A53 @ 1.42 GHz, `rk3528` platform                                               | OK                                                                          |
+| RAM      | **2 GB** — SPL symbol `rk3518a1_max_2gbyte_limit`; Android runs `ro.config.low_ram=true`; all sibling boards 2 GB | 16 GB                                                                       |
+| eMMC     | **7455 MiB Samsung** (8 GB class) — GPT ends at LBA 15269854, `rfi` agrees                                        | 256 GB                                                                      |
+| Identity | `rk3518_box_32`, `ro.fota.device=XR822_A52_T1_14`                                                                 | spoofed `brand=google`, `model=Google_TV`, **Pixel 5 (redfin) fingerprint** |
+| OS       | Android 14 API 34, **32-bit only** (`abilist64=` empty), built 2026-05-26                                         | —                                                                           |
+
+No `16GB`/`256GB` spec claim exists anywhere in the firmware (grep of the full image: every hit is a
+glibc constant or Chromium histogram bucket) — the fake numbers live on the sticker and in the
+seller's launcher, not in Android. The fingerprint spoof is certification fraud (Play/Widevine), a
+different lie from the sticker.
+
+## 4. Board bring-up (this repo's pipeline)
+
+Per `docs/board-bringup.md` — _adding a board is data, not code_:
+
+- **Factory trees**: `stock/mortal-t1/board.dtb` = the kernel DTB from the eMMC `boot` partition
+  (both FDTs in `boot.img` byte-identical, md5 `7e4cf9b6…`); `stock/mortal-t1/uboot.dtb` = U-Boot
+  control DT from the `uboot` partition (embedded twice, md5 `c252300d…`).
+- **Factory kernel DTB vs r69's**: 26 diff lines total, all 1:1 — the IR key tables/usercodes
+  (different remotes) and one `status` (`u2phy_otg`: r69 okay, ours disabled). Line numbering is
+  identical, so r69's proven `board.patch` context applies verbatim at `-F0`.
+- **Factory U-Boot DT vs r69's**: one line — `max-frequency` 80 MHz (ours) vs 50 MHz (r69), outside
+  every patch hunk.
+- `firmware/mortal-t1/board.patch` / `uboot.patch` = r69's with only `model` + board `compatible`
+  adapted. Grafted-tree diff vs factory shows exactly the 11 documented grafts, nothing else.
+- Board data copied from r69 (AIC8800D80 Wi-Fi policy — our DT is r69-identical, same SDIO +
+  `sdio-pwrseq` wiring), `mac-oui` = `wlan0 00:1c:79` (label MAC `001C79A17192`; no ethernet).
+- Toolchain: Solus has no cross-gcc → pixi/conda-forge `gcc_linux-aarch64`
+  (`CROSS_COMPILE=aarch64-conda-linux-gnu-`), plus `swig`, `libgnutls-devel`, `e2fsprogs-devel`,
+  `pyelftools` for the host tools.
+
+## 5. Status / next
+
+- [x] board.dts + board.dtb built and verified (round-trip clean, graft-only diff)
+- [x] board data (board.conf, payload.list, mac-oui, identity, BT/firstboot scripts)
+- [x] e2tools (patched, self-test pass), Armbian 26.8.1 Rock-2f trixie vendor 6.1.115 minimal
+      (sha256 OK)
+- [x] uboot.itb for mortal-t1 — `build-uboot-dts.sh` (29 clock / 11 reset cells retargeted, `-F0`
+      patch pass; vs r69 exactly 2 lines: `model` + factory `max-frequency` 80 MHz) → mainline
+      U-Boot v2026.04 FIT built with the conda cross-gcc
+- [x] **`build-image.sh`** → `Armbian_26.8.1_Rock-2f_trixie_vendor_6.1.115_minimal-mortal-t1.img` (2
+      327 838 720 B)
+- [x] **Offline verification** (docs/board-bringup.md checklist, all green): idbloader @64 and
+      uboot.itb @16384 byte-identical to `firmware/mortal-t1/`; `board.dtb` md5 `6e58584e…` at both
+      `/usr/local/share/rk35xx/` and `/boot/dtb-6.1.115-vendor-rk35xx/rockchip/`; `armbianEnv.txt`
+      has `fdtfile=rockchip/board.dtb` + `earlycon … console=ttyS0,1500000`; identity dir complete;
+      no other board's payload data (the only `r69` strings are legacy pre-rename migration lines
+      inside the **family** scripts, byte-identical to repo source — present in every board's
+      image); `e2fsck -fn` clean.
+- [ ] **Validation** (human, blocking): serial console (`docs/board-bringup.md` § serial first), SD
+      boot, then the `docs/board-validation.md` checklist. Exact RAM figure gets its definitive
+      proof from Armbian `dmesg` (2 GB expected).
+- Assumption to check on hardware: Wi-Fi is AIC8800**D80** SDIO (inferred from the r69-identical
+  factory DT; XDA photos of another T1 mention AIC8800 without variant).
+
+## 7. Validation sweep, day 1 — three root causes (2026-09-27 – 28)
+
+Remote sweep ran against the flashed SD image over SSH (`.49`), per `docs/board-validation.md`.
+Passing checks: spec truth, fio, thermal, Wi-Fi 5 + 2.4, GPU/Mesa, MPP gate, codec matrix, overlays,
+watchdog, dmesg census, CEC/USB/input enums, ten-warm-reboot loop (10/10, log kept on the box at
+`/root/reboot-loop.log`). Numbers go to `board.md` in the docs pass.
+
+| #   | Symptom                                                                               | Root cause                                                                                                                                                     | Fix                                                                                                |
+| --- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | DHCP lease churn (.49/.16/.183…) read as a stranded box                               | `rk35xx-mac-pin derive()` shells out to `cut`; `/usr/bin/cut` corrupted on the SD                                                                              | restore from `coreutils_9.7-3_arm64.deb`; `dpkg -V coreutils` clean; `.49` stable every boot since |
+| 2   | `rk35xx-bt` never attached at boot — `hci0 did not appear on /dev/ttyS2`, 11/11 boots | `modules.alias.bin` corrupted on the SD — starts `p000`, index magic is `b007f457` — so `modprobe tty-ldisc-15` fails `FATAL` and `hciattach` cannot set N_HCI | `depmod -a`; `rk35xx-bt` now `modprobe hci_uart` by name before attaching                          |
+| 3   | tty1 renders substituted glyphs                                                       | per-VC unicode→cell step (font, unimap, keymap byte-identical to tty2; `vcsu1` clean while `vcs1` substituted)                                                 | open ❓ — clean on both boots 09-28; every garbled boot preceded the `depmod` fix                  |
+
+- Corruption is box-side only: image copy healthy — `/usr/bin/cut` md5
+  `202326548155a0b39ade6938a77c5b31` (box had `65113eada64dc44c7b860e8bb5f0cce1`), all five depmod
+  indexes start `b0 07 f4 57`.
+- Cause of the box-side rot unknown ❓: `tune2fs -l /dev/mmcblk1p1` state clean, no EXT4 or I/O
+  errors in dmesg, no mmc CRC lines. `modules.alias.bin` mtime lost when `depmod -a` regenerated it.
+- BT boot fix verified on reboot 2026-09-28 08:30: `rk35xx-bt` active, `hci0` present,
+  `Device setup complete`, BD address `0B:3B:22:AC:88:20`.
+- `permaddr` is a fresh random `88:00:33:77:xx:xx` per boot (…`31:d9` → …`06:a6` across boots
+  09-28); `wlan0` stays `02:1c:79:97:7b:ae` derived — that is the churn the pin exists for.
+- `rk35xx-bt` + unit moved to `firmware/common/`: they were byte-identical on r69 and mortal-t1;
+  both `payload.list`s updated in the same change.
+- Console forensics: `setfont -o` dumps and `GIO_UNIMAP` (791 entries) identical across ttys;
+  `KDGKBMODE` equal; `dpkg-reconfigure console-setup` and a re-sent `ESC % G` did not clear it.
+  Probe = marker line to `/dev/ttyN` → `/dev/vcsN` cells vs `/dev/vcsuN` Unicode.
+- Wrong turn, kept: console garble was first blamed on the rotted `cut` — `console-setup` scripts
+  never invoke `cut` (the grep matched "ex**cut**e" in comments).
+
+Still open: garble root cause ❓; dpkg corruption scope (`debsums` flagged six `.md5sums`/`.list`
+files: `cec-utils`, `libdrm2`, `libncurses6`, `liborc-0.4-0t64`, `x11proto-dev`,
+`xorg-sgml-doctools`) → `apt-get install --reinstall` then the full-upgrade test; display tests and
+the cold-boot physical batch await the human.
+
+## 8. Validation sweep, day 2 — dpkg rot, a retracted test, clean-slate restart (2026-09-28)
+
+Continuing §7 remotely; ends with a decision to reflash the SD clean and restart the sweep with no
+package upgrade. Off-box state preserved first (`/tmp/opencode/preserve/`).
+
+### dpkg corruption — scope and repair
+
+- `debsums -c` → 7 packages, not 6: `cec-utils`, `x11proto-dev`, `xorg-sgml-doctools`, `libdrm2`,
+  `libncurses6`, `liborc-0.4-0t64`, `libx11-6`.
+- Two shapes: `.list` missing, and control-file content rotated among the seven (e.g. `libdrm2`'s
+  `.triggers` held its md5sums content; four `.triggers` corrupt the same way).
+- dpkg is fatal on a corrupt control file but only warns on a missing one → delete the corrupt file,
+  `apt-get install --reinstall <pkg>`, `dpkg --configure -a`.
+- After: all 7 `dpkg -V` clean, `dpkg --audit` empty, re-verified after `drop_caches` (persist at
+  rest); `debsums -c` changed-list = only expected artifacts (firstboot files, depmod indexes,
+  image-build tweaks).
+- Scope sweep: every `/var/lib/dpkg/info/{*.md5sums,*.list,*.triggers}` + maintainer script scanned
+  — no other corruption; 24 non-comment `.triggers` all legit.
+- Preserved on host: corrupt `xorg-sgml-doctools.list` + zeroed `/var/log/dpkg.log`,
+  `apt/history.log`, `apt/term.log` (zeroed 09-27 20:00, cause ❓; dpkg.log worked again after) →
+  `/tmp/opencode/preserve/forensics.tar`.
+
+### Storage tests — one retraction
+
+- The failing checklist was a harness bug: `sha256sum -c` with filename field `-` hashes empty stdin
+  and prints `-: FAILED` unconditionally (reproduced on the host). Retracted.
+- Corrected, all PASS: 1200 MB write→sync→`drop_caches`→re-hash; 4000×32 KB small-file storm; 256 MB
+  python round trip; `modprobe tty-ldisc-15` silent after cache eviction.
+- Verdict: card **suspect, not convicted**. Live corruption evidence = §7's file forensics only —
+  historical, mechanism unknown, not reproducible: `tune2fs -l` clean, zero EXT4/I/O errors in
+  dmesg, synthetic tests clean.
+
+### At-rest sweeps vs the image
+
+- `usr/bin`+`usr/sbin` (880 files): only `curl` differs — the post-firstboot update was exactly
+  `curl`/`libcurl4t64` 8.14.1-2+deb13u4→deb13u5; 58 box-only = toolkit; none missing.
+- `lib/modules`+`lib/firmware`+`usr/lib/aarch64-linux-gnu` (2279 joined): only depmod indexes +
+  `libcurl.so.4.8.0` differ (expected); 3 only-in-image =
+  `updates/dkms/aic{8800_fdrv,btusb,load_fw}_usb.ko` ❓ — the box has
+  `rockchip_pwm_remotectl_rk35xx.ko` there instead, `dkms status` = rockchip-pwm + v4l2loopback, no
+  aic sources in `/usr/src`. Non-blocking: box Wi-Fi runs the kernel-tree SDIO `aic8800_fdrv.ko`, BT
+  is UART — the USB variants are unused here; how the box dropped them without a directory-mtime
+  bump ❓.
+- `apt-get -s full-upgrade` ran clean ("65 not upgraded", would pull `linux-image-vendor-rk35xx`
+  26.8.3) — the survival test itself was dropped, see below.
+
+### Donor-era mtimes = `fake-hwclock-load`
+
+- Box files created during firstlogin carry Aug 15 14:18–14:20 mtimes: the image ships
+  `/etc/fake-hwclock.data` = `2026-08-15 06:17:16` UTC (donor build clock), the enabled
+  `fake-hwclock-load.service` (`sysinit.target.wants`) applies it at boot, NTP corrects only after
+  Wi-Fi comes up. The Wi-Fi YAML is born load+3m18s (`2026-08-15 14:20:34 +0800`); `authorized_keys`
+  (19:10) and the toolkit install (19:20) are real time.
+- `systemctl is-enabled fake-hwclock` → `masked` is the legacy unit (Debian default, symlink from
+  the package build) — not the load unit, and not ours.
+
+### Clean-slate restart (user decision)
+
+- Reflash the SD from `FLASH-THIS_Mortal-T1_Armbian.img` (built 09-28 08:35, sha256
+  `e11c9c09…65de`), start the sweep over, **no package upgrade** — full-upgrade survival test
+  dropped (`docs/apt-upgrade.md`: r69 ✅, T1 ❓).
+- Reasoning: card-side corruption never explained; a clean baseline with no upgrade isolates the
+  variable. If rot returns, the signal is sharper.
+- Off-box state in `/tmp/opencode/preserve/`: `secrets.tar` (`authorized_keys`, BT pairing
+  `0B:3B:22:AC:88:20`), `30-wifis-dhcp.yaml` (Wi-Fi is box-side: firstlogin-created, absent from the
+  image), `forensics.tar`, `toolkit-pkgs.txt` (114 = box-minus-image, arch-normalized),
+  `box-pkgs.txt`.
+- Image carries neither Wi-Fi config nor SSH keys → after reflash: console firstlogin on the TV
+  (root pw, Wi-Fi), first SSH contact by password (no sshpass/expect on the host → python pty), key
+  restored from `secrets.tar`. mac-pin is image-baked → expect `.49`.
+
+## 9. Validation sweep, run 2 — full remote pass, codec matrix, one shipped fix (2026-09-28)
+
+Run 2 on §8's clean image (sha256 `e11c9c09…65de`), no package upgrade of any kind (user decision;
+toolkit via `apt-get install --no-upgrade`, 114/114; `dpkg -V` baseline 29, integrity re-test clean
+after `drop_caches`). Root password chosen per boot (kept out of these docs). Numbers live in
+`board.md`; this is how they got here.
+
+### The 8 GB card dies — convicted, retired
+
+- During run 2 the original card went read-only twice across two flashes; CID PNM `asdfg` — a
+  placeholder string, not a vendor. Convicted on the spot evidence, retired.
+- The user's 16 GB spare (`SU16G`, 14.8 G, now `mmcblk0`) was never implicated and became the
+  running card. With it went the full-upgrade survival test (dropped by decision before the card
+  died anyway) → `docs/apt-upgrade.md` keeps T1 ❓, and dtb-persist's kernel-update leg is a note,
+  not a ❌: no upgrade was run.
+- bluez gap: confirmed documented behavior (README pairing section, `toolkit-pkgs.txt`), not a repo
+  bug — nothing to fix.
+
+### Wi-Fi and radio — one section closed, one impossible
+
+- Under-load A/B interleaved 12 runs: TX 11.6–23.2 / RX 8.5–40.3 Mbps either phase, `tx failed: 0`
+  everywhere, run-to-run variance 6.8–38 Mbps swamps any load effect → **no defect**, neither remedy
+  ships (rps_cpus, IRQ 57 affinity): the remedy ships only with the measurement that justified it.
+- IRQ 57 (`dw-mci`) is the SDIO Wi-Fi controller (61,382 ints in 12 s of RX, all CPU0); IRQ 59
+  (`mmc2`, eMMC) silent on Wi-Fi traffic.
+- Regdomain criterion trivial: `iw reg set` rc=0 + the box answers — global stays `country 98`
+  (vendor-permissive), `phy#0 (self-managed country 00)`: the driver owns the radio, so user hints
+  never reach it; effective `US` comes from the AP Country IE via wpa.
+- `chrt -f` EPERM even as root: `CONFIG_RT_GROUP_SCHED=y` + cgroup v2 (also via `systemd-run`;
+  `nice -5` works). Board fact, not a defect — the RT-priority test row cannot run here.
+- 2.4 GHz band measured without touching config: AP steered the box to ch4 (2457) after a reboot →
+  10.7 up / 8.5 down / 8.8 Mbps under 4-core load, post-load PHY back to 103.2 HE-MCS8 — no latch.
+- Tool quirks worth remembering: `station dump` empty → `station get <bssid>`; `pkill`/`pgrep`
+  self-match over SSH; `xxd` absent on the box → `od -A d -c`.
+
+### Codec matrix — MPP as `twilight` (53 sections, `/home/twilight/codec-matrix.log`)
+
+- Root-built trees are unreadable to a normal-user test → MPP built as `twilight`
+  (`/home/twilight/mpp-build`, `MPP-BUILD-OK` in `/root/build-mpp.log`); tests run via
+  `su - twilight`. Gate: `match chip name: rk3528a`, `dec 00f0079c enc 00100180`, plus benign
+  `confliction found at client_type 3` (kernel vcodec_type `0x3001320a` vs soc `0x00013202`).
+- **VP8 above 1080p is silent corruption**: 4K/8K report rc=0 and 30 frames at _higher_ fps than
+  1080p (203/77 — the tell), `-o` output is frame 0 real then all-zero black. 1080p and below real.
+- **MPEG-2/MPEG-4 above 1920×1088 hang**: parser loops `Warning: unsupport larger than 1920x1088`,
+  zero codec IRQs, `timeout` rc=124, process-local (next run unaffected).
+- **AV1 refused by name**: `mpp: unable to create dec av1 for soc rk3528a unsupported` rc=255.
+- **AVS/AVS+/AVS2 create accepted** (`-t 16777221/2/3` build the decoder, then stall on the foreign
+  bitstream — no refusal) → 🟡 no clip is honest, not ❌/➖. h96max-3518d's "AVS2 357 fps" still has
+  no worklog provenance — flagged in `board.md`, not inherited.
+- H.263 accepts only its fixed sizes; matrix cell runs CIF 352×288 (833.2 fps).
+- IRQ map from 30-frame deltas (one IRQ per frame): 65 `rkvdec` H.264/HEVC/VP9 · 64 `jpegd` MJPEG ·
+  63 `avsd_plus`+`vdpu` shared VP8/MPEG-2/MPEG-4/H.263 · 66 `rkvenc` encoders.
+
+### Ten warm reboots + a BD loop (11 snapshots, `/root/warmboot.log`)
+
+- Root mounted every boot (PARTUUID); SD block index flipped mmcblk0↔mmcblk1 on 3 of 11 — the AGENTS
+  rule about `mmcblk` numbering is now measured, not theoretical.
+- `.49` and both MACs every boot (end0 `a2:ef:8d:dd:ca:58`, wlan0 `02:1c:79:97:7b:ae` derived);
+  wlan0 associated 0 s wait; `hci0` up; all input nodes + `ir-target=event9`; `/dev/video0`;
+  `fake-hwclock.data` saved 11/11.
+- Dedicated BD loop: `0B:3B:22:AC:88:20` captured 4× over three more reboots — identical.
+
+### Storage — one measurement bug found and corrected, one accident recorded
+
+- **fio SD read was an artifact**: `time_based` read of a partly-unwritten file — DIO reads of
+  unwritten extents zero-fill in RAM → a "143 MB/s seq read" that no 50 MHz card can do. Redone on a
+  fully-written file with caches dropped: seq read 23.9 MB/s, raw `dd iflag=direct` 23.7 MB/s — the
+  High Speed ceiling. DT (stock-identical) has no `vqmmc-supply` → no 1.8 V → UHS/SDR104 impossible,
+  same as h313. Writes were always real (5.4 MB/s, consistent across both runs).
+- **eMMC fio from offset 16 M overwrote stock partitions** (`misc`, `super`; `boot` lost
+  `ANDROID!`). Verified scope: `uboot`@16384 `d00dfeed` intact, GPT + boot0/1 untouched, `DVKR`@7168
+  and `SSKR`@8192 still tagged, vendor storage `lan` = `00:1c:79:a1:71:92` = the sticker. Restore =
+  `dd` of `mortal-t1-eMMC-stock.img`, no maskrom needed.
+- Full-disk read one pass: 7.8 GB / 94.7 s / 82.5 MB/s, no stall (eMMC).
+
+### System facts harvested
+
+- Second boot 20.650 s; blame top `rk35xx-bt` 6.2 s, `armbian-ramlog` 3.0 s, `rk35xx-mac-pin` 2.7 s
+  — nothing waits on end0/DHCP (the PHY probe fails async, outside the critical chain).
+- Watchdog: journal `hardware timeout of 1min 29s` = 89.5 s = `2^(16+15)/24 MHz` → granted step is
+  TOP 15, the largest the clock allows; `wdctl` busy under systemd.
+- Thermal: idle 48.3 °C, 300 s peak 58.3 °C, no throttle; `stress-ng --vm --verify` 4/0; OPP
+  `{1200000, 1416000}` — `dtc` diff of stock vs ours `operating-points-v2` blocks empty (factory
+  comparison, not by eye).
+- RTC absent (no `/dev/rtc*`, no `/sys/class/rtc`, no dmesg line) → absence recorded, not ❌.
+- `v4l2loopback` shipped in the image but never loaded → box-side
+  `/etc/modules-load.d/v4l2loopback.conf`; persists across all reboots.
+- dmesg census: gmac pair + `WARNING … devm_gpiod_put` (`stmmac_mdio_reset` on absent reset-gpios)
+  once per boot, `Cannot find any crtc or sizes` ×2, everything else a singleton — all named in
+  `board.md`. Our gmac and mmc nodes are byte-identical to stock: the `-110` is this PCB's PHY not
+  answering, and the RJ45 look (physical) decides whether `gmac` gets its `NOT FITTED` hunk.
+- DKMS rmmod/modprobe cycle: both modules return, `ir-remote`/`video0` recreated. `btmgmt find`:
+  discovery starts, LE devices found (`BLE MF8470`).
+- `egl-tri` (surfaceless, no display): 157/163/168 Mpix/s at 720p/1080p/4K, Mali450, Mesa 25.0.7.
+- `build-board-dts.sh mortal-t1` regen byte-identical to the shipped DTB (`6e58584e…`, same as the
+  running box) → rebuild check cite-able, no tree change this run.
+
+### Update paths — one defect found and fixed
+
+- `./rk35xx-deploy root@… --no-reboot` from the host: full pass rc=0 (payload, DKMS rebuild, DTB
+  "unchanged — no reboot needed", FIT slots current, systemd reloaded). Host had no rsync (Solus, no
+  apt) → built rsync 3.4.1 from source into `/tmp/opencode/rsyncroot` — no system change, no
+  upgrade; routine deploys still need a host rsync install (physical handoff item).
+- `rk35xx-update --pull`: clean clone to `/usr/local/share/rk35xx/repo` then expected
+  `unknown board 'mortal-t1'` rc=1 (GitHub remote lists h96max-3518d, h96max-h313, r69 only — T1
+  unpushed).
+- **Defect**: pull after deploy aborted — deploy's `rsync -a` writes host uids (1000:1000, dir
+  twilight) next to root-owned `.git` → git's safe.directory check fails under `set -e`; without a
+  stale `.git` the clone would land in a non-empty dir instead. Fixed in `rk35xx-update`: probe
+  `git rev-parse --git-dir` instead of `-d .git`, and `rm -rf` + fresh clone at the machine-managed
+  path (in-place checkouts keep pull-in-place, never deleted). Retested on the box: clean re-clone
+  root:root → `unknown board` rc=1. Box copy scp'd to `/usr/local/sbin/rk35xx-update` mode 0755;
+  payload line already ships it.
+
+### Still open after this run
+
+- Display-dependent checks and the physical batch (cold boot, maskrom button, IR/BLE per-transport
+  keymaps, LEDs, suspend/wake, USB sticks, power meter, eMMC migration + restore, RJ45 look) —
+  handed over as one list in `board.md`.
+- Console garble root cause (❓): tty1 substitutes CP437-ish glyphs, tty2 clean; probe recipe in §7.

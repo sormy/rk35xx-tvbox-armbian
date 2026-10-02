@@ -1,4 +1,4 @@
-# R69 firmware payload — files copied verbatim into the rootfs (mode src dest, src under firmware/).
+# Mortal T1 firmware payload — files copied verbatim into the rootfs (mode src dest, src under firmware/).
 # Mechanism scripts are family-level (rk35xx-*, firmware/common/); this list is mostly board data.
 # DKMS *sources* are fetched by board.conf's board_stage_dkms, built by rk35xx-firstboot.
 
@@ -6,14 +6,14 @@
 # first-boot work: the AIC8800 Wi-Fi stack and Bluetooth policy
 0755 common/rk35xx-firstboot                        /usr/local/sbin/rk35xx-firstboot
 0644 common/rk35xx-firstboot.service                /etc/systemd/system/rk35xx-firstboot.service
-0755 r69/rk35xx-firstboot-board                     /usr/local/sbin/rk35xx-firstboot-board
+0755 mortal-t1/rk35xx-firstboot-board                     /usr/local/sbin/rk35xx-firstboot-board
 
 # per-boot MAC pin: factory address from eMMC vendor storage, else derived from the SoC id.
 # mac-oui lists this board's interfaces; a board without it opts out.
 0755 common/rk35xx-vendor-storage                   /usr/local/sbin/rk35xx-vendor-storage
 0755 common/rk35xx-mac-pin                          /usr/local/sbin/rk35xx-mac-pin
 0644 common/rk35xx-mac-pin.service                  /etc/systemd/system/rk35xx-mac-pin.service
-0644 r69/mac-oui                                    /usr/local/share/rk35xx/mac-oui
+0644 mortal-t1/mac-oui                                    /usr/local/share/rk35xx/mac-oui
 
 # Bluetooth attach — stands in for hci_h4 serdev until the kernel binds uart2's bluetooth child
 0755 common/rk35xx-bt                               /usr/local/sbin/rk35xx-bt
@@ -35,18 +35,18 @@
 # login-banner board name (reads /usr/local/share/rk35xx/board-name)
 0755 common/rk35xx-boardname                        /usr/local/sbin/rk35xx-boardname
 0644 common/rk35xx-boardname.apt                    /etc/apt/apt.conf.d/99-rk35xx-boardname
-0644 r69/board-name                                 /usr/local/share/rk35xx/board-name
+0644 mortal-t1/board-name                                 /usr/local/share/rk35xx/board-name
 # board key (= firmware/<board>/), so rk35xx-update knows which payload to install
-0644 r69/board-id                                   /usr/local/share/rk35xx/board-id
+0644 mortal-t1/board-id                                   /usr/local/share/rk35xx/board-id
 
 # DTB master copy + kernel postinst.d hooks
-0644 r69/board.dtb                                  /usr/local/share/rk35xx/board.dtb
+0644 mortal-t1/board.dtb                                  /usr/local/share/rk35xx/board.dtb
 0755 common/rk35xx-dtb-persist                      /etc/kernel/postinst.d/rk35xx-dtb-persist
 0755 common/rk35xx-kernel-prepare                   /etc/kernel/postinst.d/00-rk35xx-kernel-prepare
 
 # board loader pair + write_uboot_platform override (armbian-install soft-brick guard)
-0644 r69/factory_idbloader.bin                      /usr/local/share/rk35xx/factory_idbloader.bin
-0644 r69/uboot.itb                                  /usr/local/share/rk35xx/uboot.itb
+0644 mortal-t1/factory_idbloader.bin                      /usr/local/share/rk35xx/factory_idbloader.bin
+0644 mortal-t1/uboot.itb                                  /usr/local/share/rk35xx/uboot.itb
 0644 common/rk35xx-platform-install                 /usr/lib/u-boot/platform_install.sh
 
 # hardware watchdog: systemd pings it, the SoC resets the box if it stops (node enabled in board.dtb)

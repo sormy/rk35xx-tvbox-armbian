@@ -13,9 +13,12 @@ systemctl mask --now "serial-getty@$tty.service" 2>/dev/null || true
 fuser -k "$dev" 2>/dev/null || true
 sleep 1
 
+# by name: the kernel's tty-ldisc-15 autoload needs a readable modules.alias.bin
+modprobe hci_uart || true
+
 # the controller drops the first HCI reset often enough to need one retry
 for attempt in 1 2; do
-  hciattach -s 1500000 "$dev" any 1500000 flow nosleep 2>/dev/null || true
+  hciattach -s 1500000 "$dev" any 1500000 flow nosleep || true
   sleep 2
   [ -e /sys/class/bluetooth/hci0 ] && { logger -t rk35xx-bt "hci0 on $dev (try $attempt)"; exit 0; }
   pkill -f "hciattach.*$dev" 2>/dev/null || true

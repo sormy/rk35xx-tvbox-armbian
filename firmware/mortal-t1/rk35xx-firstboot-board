@@ -1,0 +1,39 @@
+#!/bin/sh
+# AIC8800D80 Wi-Fi and Bluetooth policy. Idempotent.
+set -e
+
+# aic8800_sdio and aic8800-usb-dkms export the same symbol, so a blacklist is not enough
+if dpkg -l aic8800-usb-dkms 2>/dev/null | grep -q '^ii'; then
+  apt-get remove -y aic8800-usb-dkms || dpkg --remove --force-depends aic8800-usb-dkms
+fi
+# the driver opens un-suffixed names; the package ships them suffixed
+FW=/lib/firmware/aic8800/SDIO/aic8800D80
+if [ -d "$FW" ]; then
+  for pair in \
+    "fw_patch_table_8800d80_u02.bin fw_patch_table.bin" \
+    "fw_patch_8800d80_u02.bin fw_patch.bin" \
+    "fmacfw_8800d80_u02.bin fmacfw.bin" \
+    "fw_adid_8800d80_u02.bin fw_adid.bin" \
+    "lmacfw_rf_8800d80_u02.bin lmacfw_rf.bin" \
+    "aic_userconfig_8800d80.txt aic_userconfig.txt"; do
+    set -- $pair
+    [ -e "$FW/$1" ] && ln -sf "$1" "$FW/$2"
+  done
+fi
+depmod -a || true
+# only safe once the USB DKMS is gone: baked into the image it fails systemd-modules-load on boot 1
+echo aic8800_fdrv > /etc/modules-load.d/aic8800.conf
+modprobe aic8800_fdrv 2>/dev/null || true
+
+# bluez is never installed here; configure it only if the user already did
+if command -v hciattach >/dev/null 2>&1; then
+  if [ -f /etc/bluetooth/main.conf ] && ! grep -qiE '^[[:space:]]*AutoEnable[[:space:]]*=[[:space:]]*true' /etc/bluetooth/main.conf; then
+    if grep -qiE '^[[:space:]]*#?[[:space:]]*AutoEnable=' /etc/bluetooth/main.conf; then
+      sed -i -E 's/^[[:space:]]*#?[[:space:]]*AutoEnable=.*/AutoEnable=true/' /etc/bluetooth/main.conf
+    else
+      printf '\n[Policy]\nAutoEnable=true\n' >> /etc/bluetooth/main.conf
+    fi
+  fi
+  systemctl restart bluetooth 2>/dev/null || true
+  systemctl start rk35xx-bt 2>/dev/null || true
+fi

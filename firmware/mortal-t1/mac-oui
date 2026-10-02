@@ -1,0 +1,3 @@
+# <iface> <prefix> — fallback only; vendor storage wins when it holds an address.
+# no ethernet on this PCB; wlan0 prefix = the Rockchip OUI printed on the label (001C79A17192)
+wlan0 00:1c:79

@@ -1,0 +1,15 @@
+disk: 15269855 sectors = 7455 MiB (label claims 256 GB)
+ 0 security         LBA     8192..   16383      4 MiB
+ 1 uboot            LBA    16384..   24575      4 MiB
+ 2 trust            LBA    24576..   32767      4 MiB
+ 3 misc             LBA    32768..   40959      4 MiB
+ 4 dtbo             LBA    40960..   49151      4 MiB
+ 5 vbmeta           LBA    49152..   51199      1 MiB
+ 6 boot             LBA    51200..  182271     64 MiB
+ 7 recovery         LBA   182272..  378879     96 MiB
+ 8 backup           LBA   378880.. 1165311    384 MiB
+ 9 cache            LBA  1165312.. 1951743    384 MiB
+10 metadata         LBA  1951744.. 2082815     64 MiB
+11 baseparameter    LBA  2082816.. 2084863      1 MiB
+12 super            LBA  2084864.. 7000063   2400 MiB
+13 userdata         LBA  7000064..15269823   4037 MiB

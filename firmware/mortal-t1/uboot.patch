@@ -1,0 +1,57 @@
+--- xlat.dts
++++ uboot.dts
+@@ -4,7 +4,9 @@
+ 	compatible = "rockchip,rk3528-evb", "rockchip,rk3528";
+ 	#address-cells = <0x02>;
+ 	#size-cells = <0x02>;
+-	model = "Rockchip RK3528 Evaluation Board";
++	/* the U-Boot banner's "Model:" line, so three near-identical boxes are
++	 * distinguishable on a serial console; nothing else reads it */
++	model = "Mortal T1 XR8223518K-V1.0";
+ 
+ 	aliases {
+ 		gpio0 = "/pinctrl/gpio@ff610000";
+@@ -92,6 +94,24 @@
+ 		bootph-pre-ram;
+ 	};
+ 
++	/* Mainline picks its console from stdout-path, and the factory tree holds exactly one serial
++	 * node - uart2 at ffa00000, status okay - so left alone the console binds there and the debug
++	 * header falls silent once pre-relocation DEBUG_UART output stops. The header is uart0; the
++	 * factory tree describes no uart0 because vendor U-Boot reaches it from code instead
++	 * (boot log "PreSerial: 0, raw, 0xff9f0000"), which mainline has no equivalent of. */
++	serial@ff9f0000 {
++		compatible = "rockchip,rk3528-uart", "snps,dw-apb-uart";
++		reg = <0x0 0xff9f0000 0x0 0x100>;
++		clocks = <&{/clock-controller@ff4a0000} 19>,	/* SCLK_UART0 */
++			 <&{/clock-controller@ff4a0000} 107>;	/* PCLK_UART0 */
++		clock-names = "baudclk", "apb_pclk";
++		clock-frequency = <24000000>;
++		reg-io-width = <4>;
++		reg-shift = <2>;
++		bootph-all;
++		status = "okay";
++	};
++
+ 	saradc@ffae0000 {
+ 		compatible = "rockchip,rk3528-saradc";
+ 		reg = <0x00 0xffae0000 0x00 0x10000>;
+@@ -100,6 +120,9 @@
+ 		clocks = <&{/clock-controller@ff4a0000} 0xc3 &{/clock-controller@ff4a0000} 0xc2>;
+ 		resets = <&{/clock-controller@ff4a0000} 0x6f>;
+ 		reset-names = "saradc-apb";
++		/* mainline's saradc driver fails probe with no vref-supply and no explicit reference;
++		 * the vendor's defaulted, so the factory tree carries neither */
++		vdd-microvolts = <1800000>;
+ 		status = "okay";
+ 		bootph-all;
+ 		phandle = <0x10000062>;
+@@ -370,7 +393,7 @@
+ 	};
+ 
+ 	chosen {
+-		stdout-path = "/serial@ffa00000";
++		stdout-path = "/serial@ff9f0000";
+ 		u-boot,spl-boot-order = "/mmc@ffc30000", "/mmc@ffbf0000", "/spi@ffc00000/flash@0", "/spi@ffc00000/flash@1";
+ 	};
+ 
