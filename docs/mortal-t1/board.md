@@ -313,6 +313,7 @@ reaches logind as instant → short → suspend.
 | `DVKR`/`SSKR` tagged + vendor `LAN_MAC` = sticker |  ✅  | both read back; `00:1c:79:a1:71:92`         |
 | Maskrom full-disk read (backup)                   |  ✅  | stock image exists (read path proven)       |
 | Maskrom entry at power-on                         |  ❓  | physical — the backup may predate this repo |
+| Maskrom entry from the OS (`reboot maskrom`)      |  ✅  | `ld` → `Maskrom` (`2207:350c`), 2026-09-30  |
 | Maskrom `wl` write path                           |  ❓  | physical (pattern write + restore)          |
 | `rl` = `factory_idbloader`                        |  ✅  | sector 64 md5 `6a2f0b52…` = identity        |
 | Full-disk write (the restore claim)               |  ❓  | physical, destructive — then restore        |
@@ -455,13 +456,8 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 - Console garble: dirty SD card, caused by a faulty card reader (user-confirmed, worklog §7).
 - `h96max-3518d/board.md` "AVS2 357 fps" has no worklog provenance — flagged, not inherited here.
-- `board.patch` ships `mode-maskrom` (`reboot maskrom` to BootROM, no button) — untested; it would
-  strand the box until a physical power cycle.
 
 ### Needs the human — one trip
 
-- Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only
-  entry left is `reboot maskrom` (DT hunk, untested): flash USB on a host first, power cycle to
-  recover; optional `wl` pattern test.
 - eMMC migration + full-disk write + restore (`dd` of the stock image); the device name it confirms.
 - SD insert/remove deferred: the only slot holds the boot card.

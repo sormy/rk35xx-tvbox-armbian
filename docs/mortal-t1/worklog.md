@@ -398,9 +398,10 @@ kind of copy that gives this box its false 16 GB / 256 GB label.
 Earlier reports called it the maskrom trigger (no toothpick hole exists — first useful fact). The
 user then tested every pattern: single press, two presses 1-2 s apart, third press held 10 s — **it
 never reaches maskrom and never powers off**; by all appearances inert. Maskrom entry on this unit
-is therefore the software path only: `reboot maskrom` via the `mode-maskrom` hunk (still untested),
-with the flash USB on a host beforehand, and a power cycle to get out again. An RK box that shows no
-force-off either suggests nothing is wired to it — worth one look inside during the eMMC trip.
+is therefore the software path only: `reboot maskrom` via the `mode-maskrom` hunk (✅ since §22,
+2026-09-30), with the flash USB on a host beforehand, and a power cycle to get out again. An RK box
+that shows no force-off either suggests nothing is wired to it — worth one look inside during the
+eMMC trip.
 
 ### Build, deploy, verify
 
@@ -587,3 +588,22 @@ linked rkmpp. Numbers in `board.md`.
   Max measured in `docs/mpp.md`. 4K60 realtime misses (48 < 60); 4K30 and 1080p60 clear it.
 - Trivia: box `time` is the shell builtin (`/usr/bin/time` absent); first SSH after the TV came up
   timed out once while wlan0 sat at 2/3 packet loss, 101 ms RTT — it recovered on retry.
+
+## 22. F — `reboot maskrom` proven, and the box boots off host VBUS (2026-09-30)
+
+The `mode-maskrom` hunk was the last untested DT change and this unit's only maskrom entry (the
+button beside HDMI is inert, §11). Rows in `board.md`, node in `dtb.md`.
+
+- Prereqs: host `rkdeveloptool` 1.32 runs at user level (no sudo — first `ld` on an empty bus
+  printed `not found any devices!`, not a permission error), `rk3528_spl_loader-mortal-t1.bin`
+  present. SD stays in: BootROM halts before storage is read.
+- Sequence per the single-5V rule: **PSU out first**, USB-A m-m cable box-blue-port ↔ host. The box
+  **booted the full OS off host VBUS** — SSH back in ~30 s, uptime 0 min, wlan0 at `.49`. That was
+  the open caveat; it is answered: VBUS alone runs it, network and all.
+- Baseline `ld`: `not found any devices!` (OS mode enumerates nothing on the port). Then
+  `reboot maskrom` over SSH — connection closed by remote host, and on the second poll:
+  `DevNo=1 Vid=0x2207,Pid=0x350c,LocationID=204 Maskrom`. BootROM reachable in ~5 s, no button, no
+  serial.
+- Recovery as designed: cable out, PSU in, power cycle → new `boot_id`, root back on `mmcblk0` (SD),
+  `mmcblk2` (eMMC) untouched. Stranding is real but costs one power cycle.
+- Not attempted: `db` / `wl` pattern write — separate rows, G's restore covers the write path.
