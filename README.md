@@ -241,8 +241,15 @@ image over USB**.
 
 ## Credits
 
-Bring-up method from
-[juliovendramini/rk3518_armbian](https://github.com/juliovendramini/rk3518_armbian).
+- Bring-up method from
+  [juliovendramini/rk3518_armbian](https://github.com/juliovendramini/rk3518_armbian).
+- [Armbian](https://github.com/armbian) — the stock image and the kernel this layer sits on.
+- [LibreELEC.tv](https://github.com/LibreELEC/LibreELEC.tv) — reference tree.
+- [rockchip-linux](https://github.com/rockchip-linux) — `mpp`, `rkbin`, `rkdeveloptool`.
+- [u-boot](https://github.com/u-boot/u-boot) — mainline U-Boot for `uboot.itb`.
+- [retro98boy/seekwave-swt6621s](https://github.com/retro98boy/seekwave-swt6621s) — SWT6621S driver
+  source (H96 Max).
+- [nyanmisaka/rk-mirrors](https://github.com/nyanmisaka/rk-mirrors) — GStreamer Rockchip plugins.
 
 ## License
 
