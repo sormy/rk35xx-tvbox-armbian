@@ -98,7 +98,7 @@ watchdog, dmesg census, CEC/USB/input enums, ten-warm-reboot loop (10/10, log ke
 | --- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | 1   | DHCP lease churn (.49/.16/.183…) read as a stranded box                               | `rk35xx-mac-pin derive()` shells out to `cut`; `/usr/bin/cut` corrupted on the SD                                                                              | restore from `coreutils_9.7-3_arm64.deb`; `dpkg -V coreutils` clean; `.49` stable every boot since |
 | 2   | `rk35xx-bt` never attached at boot — `hci0 did not appear on /dev/ttyS2`, 11/11 boots | `modules.alias.bin` corrupted on the SD — starts `p000`, index magic is `b007f457` — so `modprobe tty-ldisc-15` fails `FATAL` and `hciattach` cannot set N_HCI | `depmod -a`; `rk35xx-bt` now `modprobe hci_uart` by name before attaching                          |
-| 3   | tty1 renders substituted glyphs                                                       | per-VC unicode→cell step (font, unimap, keymap byte-identical to tty2; `vcsu1` clean while `vcs1` substituted)                                                 | open ❓ — clean on both boots 09-28; every garbled boot preceded the `depmod` fix                  |
+| 3   | tty1 renders substituted glyphs                                                       | dirty SD card, caused by a faulty card reader                                                                                                                  | closed by user — no probe run                                                                      |
 
 - Corruption is box-side only: image copy healthy — `/usr/bin/cut` md5
   `202326548155a0b39ade6938a77c5b31` (box had `65113eada64dc44c7b860e8bb5f0cce1`), all five depmod
@@ -117,10 +117,10 @@ watchdog, dmesg census, CEC/USB/input enums, ten-warm-reboot loop (10/10, log ke
 - Wrong turn, kept: console garble was first blamed on the rotted `cut` — `console-setup` scripts
   never invoke `cut` (the grep matched "ex**cut**e" in comments).
 
-Still open: garble root cause ❓; dpkg corruption scope (`debsums` flagged six `.md5sums`/`.list`
-files: `cec-utils`, `libdrm2`, `libncurses6`, `liborc-0.4-0t64`, `x11proto-dev`,
-`xorg-sgml-doctools`) → `apt-get install --reinstall` then the full-upgrade test; display tests and
-the cold-boot physical batch await the human.
+Still open: dpkg corruption scope (`debsums` flagged six `.md5sums`/`.list` files: `cec-utils`,
+`libdrm2`, `libncurses6`, `liborc-0.4-0t64`, `x11proto-dev`, `xorg-sgml-doctools`) →
+`apt-get install --reinstall` then the full-upgrade test; display tests and the cold-boot physical
+batch await the human. Console garble closed by user: dirty SD card, caused by a faulty card reader.
 
 ## 8. Validation sweep, day 2 — dpkg rot, a retracted test, clean-slate restart (2026-09-28)
 
@@ -312,7 +312,8 @@ after `drop_caches`). Root password chosen per boot (kept out of these docs). Nu
 - Display-dependent checks and the physical batch (cold boot, maskrom button, IR/BLE per-transport
   keymaps, LEDs, suspend/wake, USB sticks, power meter, eMMC migration + restore, RJ45 look) —
   handed over as one list in `board.md`.
-- Console garble root cause (❓): tty1 substitutes CP437-ish glyphs, tty2 clean; probe recipe in §7.
+- Console garble root cause (❓ at the time): tty1 substitutes CP437-ish glyphs, tty2 clean; probe
+  recipe in §7 — since closed: dirty SD card, caused by a faulty card reader.
 
 ## 10. Display across three TVs, Kodi 21.2, one locked box (2026-09-28 – 29)
 

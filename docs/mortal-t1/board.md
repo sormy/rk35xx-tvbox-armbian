@@ -429,7 +429,7 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 ### Open
 
-- Console garble (❓): tty1 substitutes CP437-ish glyphs, tty2 clean; probe recipe `worklog.md` §7.
+- Console garble: dirty SD card, caused by a faulty card reader (user-confirmed, worklog §7).
 - `h96max-3518d/board.md` "AVS2 357 fps" has no worklog provenance — flagged, not inherited here.
 - `board.patch` ships `mode-maskrom` (`reboot maskrom` to BootROM, no button) — untested; it would
   strand the box until a physical power cycle.
