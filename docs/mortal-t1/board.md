@@ -361,18 +361,19 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 
 ### USB
 
-| Check                      | Mark | Note                                         |
-| -------------------------- | :--: | -------------------------------------------- |
-| `lsusb -t` before bench    |  ✅  | xhci 480M + 5000M, ehci 480M, ohci 12M       |
-| USB 2 enumerates at 480M   |  ✅  | dongle, reader, SSD, SanDisk                 |
-| USB 2 throughput, fio read |  ✅  | SanDisk seq 16.0, rand 4K 2.2 MB/s           |
-| Reader path write / read   |  ✅  | 5.4 / 5.5–5.6 MB/s — card-limited            |
-| Card-via-reader integrity  |  ✅  | 512 M PASS; run-1 points at slot/host path   |
-| USB 3 BOS `SuperSpeed`     |  ✅  | SanDisk: FS + HS + SS 5 Gbps, in socket      |
-| USB 3 negotiates 5000M     |  ❌  | drops 0.3–1.7 s under traffic → 480M (§19)   |
-| `uas` bound, not BOT       |  ❓  | SanDisk is BOT-only; no UAS device known     |
-| Hotplug each device        |  ✅  | SSD / reader / SanDisk; renumbers only       |
-| Every port exercised       |  ✅  | one USB-A 3.0 (port list); all devices in it |
+| Check                      | Mark | Note                                          |
+| -------------------------- | :--: | --------------------------------------------- |
+| `lsusb -t` before bench    |  ✅  | xhci 480M + 5000M, ehci 480M, ohci 12M        |
+| USB 2 enumerates at 480M   |  ✅  | dongle, reader, SSD, SanDisk                  |
+| USB 2 throughput, fio read |  ✅  | SanDisk seq 16.0, rand 4K 2.2 MB/s            |
+| Reader path write / read   |  ✅  | 5.4 / 5.5–5.6 MB/s — card-limited             |
+| Card-via-reader integrity  |  ✅  | 512 M PASS; run-1 points at slot/host path    |
+| USB 3 BOS `SuperSpeed`     |  ✅  | SanDisk: FS + HS + SS 5 Gbps, in socket       |
+| USB 3 negotiates 5000M     |  ✅  | JMicron straight in socket; SanDisk fell back |
+| `uas` bound, not BOT       |  ✅  | JMicron `152d:a583`, protocol 62              |
+| USB 3 throughput, fio read |  ✅  | seq 343, rand 4K 44.1 MB/s @5000M             |
+| Hotplug each device        |  ✅  | SSD / reader / SanDisk / JMicron; renumbers   |
+| Every port exercised       |  ✅  | one USB-A 3.0 (port list); all devices in it  |
 
 ### IR, buttons, LEDs, keymap
 
@@ -440,6 +441,5 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
   entry left is `reboot maskrom` (DT hunk, untested): flash USB on a host first, power cycle to
   recover; optional `wl` pattern test.
 - Power meter, bare board — idle / suspended / off (the last unmeasured row).
-- Optional: a second USB 3 stick — splits drive-vs-port on the 5 Gbps fault (worklog §19).
 - eMMC migration + full-disk write + restore (`dd` of the stock image); the device name it confirms.
 - SD insert/remove deferred: the only slot holds the boot card.

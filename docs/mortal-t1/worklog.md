@@ -552,3 +552,11 @@ live, typing confirmed by eye.
   `drop_caches`: the card is clean, so run-1's corruption points at the slot/host path.
 - Debugging lore: xhci debugfs `portsc` read `Connected Link:U0 PortSpeed:3` while dmesg had no
   SuperSpeed line at all — on this BSP kernel dmesg is the witness, not `portsc`.
+- The JMicron enclosure (`152d:a583`, UAS) settled the port question. Session 1: SS enum after
+  setup-address retries (`error -71`), `uas` bound at 5000M, then `uas_pre_reset: timed out` and
+  `Read Capacity(16)/(10)` failed `ASC=0x44/ASCQ=0x81` → 0 B disk; the USB link itself held. Session
+  2 (replug): enum clean, capacity OK (28131328 × 512 B, 4096-byte physical blocks), stable 5000M —
+  fio seq 1M QD8 **343 MB/s**, rand 4K QD32 **44.1 MB/s** (read-only, fixed params).
+- **The blue port is true USB 3.0**: 5000M on the `1d6b:0003` root hub, `uas` bound, BOS SuperSpeed
+  capability, `fio` recorded. The SanDisk stick fell back to 480M in every session — device and port
+  recorded as seen, no attribution.
