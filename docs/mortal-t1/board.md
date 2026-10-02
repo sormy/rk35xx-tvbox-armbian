@@ -223,17 +223,17 @@ the same day: OK selects, the remote drives the UI end-to-end. The BLE transport
 
 ### CPU, thermal, power
 
-| Check                                         | Mark | Note                                    |
-| --------------------------------------------- | :--: | --------------------------------------- |
-| `scaling_available_frequencies` = factory OPP |  ✅  | dtc diff empty                          |
-| 5 min 4-core stress, no throttling            |  ✅  | 48.3 → 58.3 °C                          |
-| Draw metered                                  |  ❓  | physical                                |
-| Suspend `deep` + `mem_sleep` bracket          |  ✅  | `s2idle [deep]`                         |
-| Suspend/resume, stays up                      |  ✅  | IR power both ways, `boot_id` unchanged |
-| Suspend > watchdog window, same `boot_id`     |  ❓  | physical                                |
-| BLE wake (`hdev->wakeup`)                     |  ❓  | physical                                |
-| Cold-boot time                                |  ❓  | physical                                |
-| RTC present, or absence recorded              |  ✅  | absence                                 |
+| Check                                         | Mark | Note                                                                 |
+| --------------------------------------------- | :--: | -------------------------------------------------------------------- |
+| `scaling_available_frequencies` = factory OPP |  ✅  | dtc diff empty                                                       |
+| 5 min 4-core stress, no throttling            |  ✅  | 48.3 → 58.3 °C                                                       |
+| Draw metered                                  |  ❓  | physical                                                             |
+| Suspend `deep` + `mem_sleep` bracket          |  ✅  | `s2idle [deep]`                                                      |
+| Suspend/resume, stays up                      |  ✅  | IR power both ways, `boot_id` unchanged                              |
+| Suspend > watchdog window, same `boot_id`     |  ❓  | physical                                                             |
+| BLE wake (`hdev->wakeup`)                     |  ❓  | physical                                                             |
+| Cold-boot time                                |  ✅  | 29.711 s (11.242 kernel + 18.469 userspace); power-on leg unmeasured |
+| RTC present, or absence recorded              |  ✅  | absence                                                              |
 
 ### Storage
 
@@ -280,6 +280,7 @@ the same day: OK selects, the remote drives the UI end-to-end. The BLE transport
 | BD identical across three reboots, from the part |  ✅  | `0B:3B:22:AC:88:20` ×3 (and ×3 in run 1) |
 | Samsung keyboard pairs, HID types                |  ✅  | `v04E8:7021` (worklog §13)               |
 | Re-binds after suspend/resume                    |  ✅  | `input17`, typed by eye (worklog §14)    |
+| Re-binds after cold power-off                    |  ✅  | unplug → getty, typed (worklog §15)      |
 | Bundled remote pairs                             |  ❓  | physical                                 |
 | A2DP                                             |  ❓  | untested, no speaker                     |
 

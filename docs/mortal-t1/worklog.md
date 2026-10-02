@@ -450,3 +450,12 @@ live, typing confirmed by eye.
 - Back up clean: SSH alive, `wlan0` re-associated `.49`, `aicwf_sdio_suspend exit`.
 - Keyboard re-bound after resume (`input17`, `.0008`), typed by eye; LED suspend red, running blue.
 - Short cycle only — watchdog-window suspend and BLE wake still ❓.
+
+## 15. Cold power cycle — full unplug (2026-09-29)
+
+- Power off → plug out → wait → plug in: new `boot_id` (`986f4ae9…`), booted 12:36:20.
+- `systemd-analyze` 29.711 s (kernel 11.242 + userspace 18.469); power-on → kernel leg unmeasured,
+  no serial attached.
+- `date` sane after total power loss (fake-hwclock), `wlan0` `.49`, console at getty.
+- Bond survived full power loss: keyboard typed at the login screen, `Connected: yes` on first SSH
+  after.
