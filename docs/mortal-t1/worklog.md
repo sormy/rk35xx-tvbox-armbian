@@ -441,3 +441,12 @@ live, typing confirmed by eye.
   seconds after HID bind, twice (reason 1, cause ❓); remove + re-pair on the stronger `…:00:11`
   held.
 - Cadence in one live session: `pair` → 8 s → `trust` → `connect` → 15 s → `info`.
+
+## 14. First suspend cycle — remote power both ways (2026-09-29)
+
+- 12:28: logind `Power key pressed short` → `PM: suspend entry (deep)`; second press →
+  `PM: suspend exit` (same wall second — no RTC mid-sleep). `boot_id` unchanged (`a121946a…`),
+  booted 10:48.
+- Back up clean: SSH alive, `wlan0` re-associated `.49`, `aicwf_sdio_suspend exit`.
+- Keyboard re-bound after resume (`input17`, `.0008`), typed by eye; LED suspend red, running blue.
+- Short cycle only — watchdog-window suspend and BLE wake still ❓.

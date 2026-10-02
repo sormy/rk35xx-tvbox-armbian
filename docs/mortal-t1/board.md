@@ -223,17 +223,17 @@ the same day: OK selects, the remote drives the UI end-to-end. The BLE transport
 
 ### CPU, thermal, power
 
-| Check                                         | Mark | Note           |
-| --------------------------------------------- | :--: | -------------- |
-| `scaling_available_frequencies` = factory OPP |  ✅  | dtc diff empty |
-| 5 min 4-core stress, no throttling            |  ✅  | 48.3 → 58.3 °C |
-| Draw metered                                  |  ❓  | physical       |
-| Suspend `deep` + `mem_sleep` bracket          |  ❓  | physical       |
-| Suspend/resume, stays up                      |  ❓  | physical       |
-| Suspend > watchdog window, same `boot_id`     |  ❓  | physical       |
-| BLE wake (`hdev->wakeup`)                     |  ❓  | physical       |
-| Cold-boot time                                |  ❓  | physical       |
-| RTC present, or absence recorded              |  ✅  | absence        |
+| Check                                         | Mark | Note                                    |
+| --------------------------------------------- | :--: | --------------------------------------- |
+| `scaling_available_frequencies` = factory OPP |  ✅  | dtc diff empty                          |
+| 5 min 4-core stress, no throttling            |  ✅  | 48.3 → 58.3 °C                          |
+| Draw metered                                  |  ❓  | physical                                |
+| Suspend `deep` + `mem_sleep` bracket          |  ✅  | `s2idle [deep]`                         |
+| Suspend/resume, stays up                      |  ✅  | IR power both ways, `boot_id` unchanged |
+| Suspend > watchdog window, same `boot_id`     |  ❓  | physical                                |
+| BLE wake (`hdev->wakeup`)                     |  ❓  | physical                                |
+| Cold-boot time                                |  ❓  | physical                                |
+| RTC present, or absence recorded              |  ✅  | absence                                 |
 
 ### Storage
 
@@ -279,6 +279,7 @@ the same day: OK selects, the remote drives the UI end-to-end. The BLE transport
 | `btmgmt find` returns devices                    |  ✅  | LE devices found                         |
 | BD identical across three reboots, from the part |  ✅  | `0B:3B:22:AC:88:20` ×3 (and ×3 in run 1) |
 | Samsung keyboard pairs, HID types                |  ✅  | `v04E8:7021` (worklog §13)               |
+| Re-binds after suspend/resume                    |  ✅  | `input17`, typed by eye (worklog §14)    |
 | Bundled remote pairs                             |  ❓  | physical                                 |
 | A2DP                                             |  ❓  | untested, no speaker                     |
 
@@ -330,7 +331,7 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 | Button beside HDMI        |  ❌  | inert: 1×, 2× @1–2 s, 3rd held 10 s — never maskrom, never powers off |
 | Power-on remote cold-boot |  ❓  | physical                                                              |
 | Long press in each mode   |  ❓  | physical                                                              |
-| LED polarity by eye       |  ❓  | physical                                                              |
+| LED polarity by eye       |  ✅  | suspend: red, running: blue; off state = power-off pending            |
 | IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                       |
 | BLE keymap, per transport |  ❓  | physical (pairing first)                                              |
 | IR-extender jack          |  ➖  | none on the port list                                                 |
