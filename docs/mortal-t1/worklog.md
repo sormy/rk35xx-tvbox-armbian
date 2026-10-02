@@ -422,4 +422,22 @@ force-off either suggests nothing is wired to it — worth one look inside durin
 - IR capture rounds moved into `stock/mortal-t1/` (`ev9-*.log`) — §11's raw material, re-capturable
   only by pressing the remote again.
 - Repo stays local (user decision). `backup/mortal-t1/` now holds the eMMC stock image, its flash
-  log and `mortal-t1-6commits.bundle` (the six unpushed commits); board.md's restore path updated.
+  log and `mortal-t1-unpushed.bundle` (every commit past `origin/main`); board.md's restore path
+  updated.
+
+## 13. First BLE bond — the user's keyboard (2026-09-29)
+
+Not the bundled remote: the user's Samsung keyboard (`v04E8:7021`), exercised pair → bond → HID →
+input before the remote's BLE round. End state `Paired/Bonded/Trusted/Connected: yes`, input node
+live, typing confirmed by eye.
+
+- Race: bluetoothctl commands inside the first ~3 s lose to bluetoothd ("Failed to register agent
+  object") — `sleep 3` before `agent`.
+- `Pairable: no` rejects pairing — `bluetoothctl pairable on`, verify with `show`.
+- `bluetoothctl remove` empties bluetoothd's device cache: `devices` shows nothing while
+  `btmgmt find` still sees the device — rediscover in-session (`scan on`) or parse the MAC out of
+  `btmgmt find`.
+- Two public identities seen, `…:00:10` and `…:00:11`: bond on `…:10` completed but the link dropped
+  seconds after HID bind, twice (reason 1, cause ❓); remove + re-pair on the stronger `…:00:11`
+  held.
+- Cadence in one live session: `pair` → 8 s → `trust` → `connect` → 15 s → `info`.

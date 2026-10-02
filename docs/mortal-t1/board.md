@@ -278,6 +278,7 @@ the same day: OK selects, the remote drives the UI end-to-end. The BLE transport
 | `hci0` up, `errors:0`                            |  ✅  |                                          |
 | `btmgmt find` returns devices                    |  ✅  | LE devices found                         |
 | BD identical across three reboots, from the part |  ✅  | `0B:3B:22:AC:88:20` ×3 (and ×3 in run 1) |
+| Samsung keyboard pairs, HID types                |  ✅  | `v04E8:7021` (worklog §13)               |
 | Bundled remote pairs                             |  ❓  | physical                                 |
 | A2DP                                             |  ❓  | untested, no speaker                     |
 
