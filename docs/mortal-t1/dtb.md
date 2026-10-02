@@ -9,22 +9,25 @@ Rule: every edit must have a functional consumer. Factory values stay untouched 
 consumer needs otherwise; `compatible` and `model` are the two that do.
 
 The factory tree differs from the R69's by 26 lines (IR key tables for a different remote, one
-`u2phy_otg` status), so this patch is the R69's verbatim but for those two lines — `board.md`:
+`u2phy_otg` status), so the shared grafts are the R69's verbatim — plus two additions of its own:
+the `gmac0` `NOT FITTED` hunk and this remote's key tables, both below. Details in `board.md`:
 
-| Node                      | Change                                                                                                                | Why                                                                                              |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `/` (root)                | `compatible` prepends `"mortal-t1-xr822,rk3518-tvbox"`, appends `"rockchip,rk3528a"`; factory `rockchip,rk3518` kept  | rkmpp has no `rk3518` entry and cannot find the VPU without the alias                            |
-| `/` (root)                | `model` → `Mortal T1 XR8223518K-V1.0`                                                                                 | the factory string names the reference EVB, not this box                                         |
-| `reboot-mode` (in `grf`)  | adds `mode-maskrom = <0xef08a53c>`                                                                                    | `reboot maskrom` from the OS — factory SPL hands to the BootROM; ❓ untested, it strands the box |
-| `serial@ff9f0000` (uart0) | `status` → `okay`, `pinctrl-0 = <&uart0m0_xfer>`                                                                      | debug-header UART → `ttyS0` @ 1500000; header not yet located (`board.md`)                       |
-| `fiq-debugger`            | `status` → `disabled`                                                                                                 | 🟡 questionable — frees `ff9f0000` for `ttyS0`; stock runs `ttyFIQ0` on it fine                  |
-| `serial@ffa00000` (uart2) | `bluetooth` child added, **commented out**                                                                            | see below: the driver it needs is not merged yet                                                 |
-| `pwm@ffa90030` (IR)       | `remote_support_psci` `0` → `1`                                                                                       | IR as ATF wake source (remote powers the box from off)                                           |
-| `gpu@ff700000`            | `interrupt-names`/`clocks`/`clock-names` → lima style (`bus`/`core`)                                                  | Armbian uses mainline `lima`, not the vendor Mali blob                                           |
-| `vop@ff840000`            | `esmart_lb_mode` `[03]` → `[02]`                                                                                      | 🟡 4K line buffer for Esmart0; `03` caps every window at 2K — no 4K display tried here           |
-| `leds`                    | `normal` → `power` (label and node), active-low, `default-state`, `retain-state-*`; `standby` loses its timer trigger | family-uniform `/sys/class/leds` names; polarity ❓ by eye; LEDs survive poweroff/suspend        |
-| `watchdog@ffac0000`       | `status` → `okay`                                                                                                     | `/dev/watchdog` for systemd's `RuntimeWatchdogSec` — granted 89.5 s (`board.md`)                 |
-| `chosen`                  | **removed**                                                                                                           | u-boot supplies bootargs, and the factory string names `ttyFIQ0`                                 |
+| Node                        | Change                                                                                                                | Why                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `/` (root)                  | `compatible` prepends `"mortal-t1-xr822,rk3518-tvbox"`, appends `"rockchip,rk3528a"`; factory `rockchip,rk3518` kept  | rkmpp has no `rk3518` entry and cannot find the VPU without the alias                                                  |
+| `/` (root)                  | `model` → `Mortal T1 XR8223518K-V1.0`                                                                                 | the factory string names the reference EVB, not this box                                                               |
+| `reboot-mode` (in `grf`)    | adds `mode-maskrom = <0xef08a53c>`                                                                                    | `reboot maskrom` from the OS — factory SPL hands to the BootROM; ❓ untested, it strands the box                       |
+| `serial@ff9f0000` (uart0)   | `status` → `okay`, `pinctrl-0 = <&uart0m0_xfer>`                                                                      | debug-header UART → `ttyS0` @ 1500000; header not yet located (`board.md`)                                             |
+| `fiq-debugger`              | `status` → `disabled`                                                                                                 | 🟡 questionable — frees `ff9f0000` for `ttyS0`; stock runs `ttyFIQ0` on it fine                                        |
+| `serial@ffa00000` (uart2)   | `bluetooth` child added, **commented out**                                                                            | see below: the driver it needs is not merged yet                                                                       |
+| `pwm@ffa90030` (IR)         | `remote_support_psci` `0` → `1`                                                                                       | IR as ATF wake source (remote powers the box from off)                                                                 |
+| `pwm@ffa90030` (IR)         | `ir_key1` + `ir_key4` `rockchip,key_table` rewritten, 25 pairs, tables byte-identical                                 | this remote's own buttons, decoded 2026-09-29 — stock made OK emit `KEY_REPLY`, dead in Kodi; full table in `board.md` |
+| `gpu@ff700000`              | `interrupt-names`/`clocks`/`clock-names` → lima style (`bus`/`core`)                                                  | Armbian uses mainline `lima`, not the vendor Mali blob                                                                 |
+| `vop@ff840000`              | `esmart_lb_mode` `[03]` → `[02]`                                                                                      | 🟡 4K line buffer for Esmart0; `03` caps every window at 2K — no 4K display tried here                                 |
+| `leds`                      | `normal` → `power` (label and node), active-low, `default-state`, `retain-state-*`; `standby` loses its timer trigger | family-uniform `/sys/class/leds` names; polarity ❓ by eye; LEDs survive poweroff/suspend                              |
+| `watchdog@ffac0000`         | `status` → `okay`                                                                                                     | `/dev/watchdog` for systemd's `RuntimeWatchdogSec` — granted 89.5 s (`board.md`)                                       |
+| `ethernet@ffbd0000` (gmac0) | `status` → `disabled` + `NOT FITTED` comment; `rmii0_phy` child not probed                                            | no RJ45 on this PCB — stock probes a missing RMII PHY and logs `-110` every boot (`board.md`)                          |
+| `chosen`                    | **removed**                                                                                                           | u-boot supplies bootargs, and the factory string names `ttyFIQ0`                                                       |
 
 > **The `fiq-debugger` graft is optional.** Disabling it frees `ff9f0000` for a conventional
 > `ttyS0`; keeping it reaches the same UART as `ttyFIQ0`, which is what stock does. The debugger
@@ -51,8 +54,10 @@ regenerate with `./build-board-dts.sh mortal-t1`, and drop `rk35xx-bt` + its uni
 ## Rebuild
 
 `./build-board-dts.sh mortal-t1` — decompiles the stock DTB, applies `board.patch`, re-emits both
-files. Round-trips byte-identically: md5 `6e58584e…` = the shipped DTB = the running box
-(re-verified 2026-09-28). No `upstream/mortal-t1/` submission exists yet.
+files. The patch round-trips: the generated `board.dts` compared byte-identical to the intended tree
+(`cmp`), and the DTB diff is exactly the two IR tables plus gmac `status`. DTB md5 `8e11307b…` after
+the 2026-09-29 gmac + IR changes; deployed the same day and read back from the live tree
+(`status = "disabled"`). No `upstream/mortal-t1/` submission exists yet.
 
 ## What U-Boot injects at boot
 

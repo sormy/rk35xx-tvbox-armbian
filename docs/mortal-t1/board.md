@@ -104,7 +104,7 @@ therefore reuses the R69's grafts verbatim (only `model`/`compatible` adapted) �
 | regdom    | effective `US` (AP Country IE); global `country 98`, `phy#0 (self-managed)` — `iw reg set` never reaches the radio                     |
 | wlan0 MAC | `02:1c:79:97:7b:ae`, stable 11/11 — derived (chip permaddr is random per boot, so no eFUSE address exists), absent from every aic blob |
 | Bluetooth | `hci0` UP RUNNING `errors:0`; BD `0B:3B:22:AC:88:20` identical across three reboots — the controller's own, never set by us            |
-| end0      | ❌ no PHY answers: `phy_poll_reset failed: -110` + `Cannot attach to PHY`, once per boot                                               |
+| end0      | ➖ not created — no RJ45 on this PCB, `gmac0` carries a `NOT FITTED` hunk (device tree below); boot log has no gmac/phy lines at all   |
 
 ### GPU — surfaceless EGL (`egl-tri`, needs no display)
 
@@ -163,6 +163,48 @@ Encode fps — all decode back rc=0:
 | USB digital-X 0513:0318 | event4–7       | keyboard/mouse/consumer/system     |
 | CEC adapter             | `/dev/cec0`    | `dwhdmi-rockchip` / `dw_hdmi`      |
 
+### IR keymap — decoded, in the device tree, evdev-verified
+
+`ir_key1` (usercode `fb05`) and `ir_key4` (usercode `fb04`) are byte-identical and between them
+cover every button; both carry the table below since 2026-09-29 (`board.patch`). Decoded with
+anchored `evtest` rounds — one button per burst, settings gear pressed last as an anchor that
+confirms the order held — then inverted through the table and re-verified after deploy (OK →
+`KEY_ENTER`, home → `KEY_HOME`, source → `KEY_VIDEO_NEXT`; the {`d2`,`60`} pair was the one
+ambiguity and the first guess was right).
+
+| Button      | pair (scancode → keycode) | evdev key             | Kodi 21 default     |
+| ----------- | ------------------------- | --------------------- | ------------------- |
+| power       | `f7` → `74`               | `KEY_POWER`           | logind              |
+| OK          | `bb` → `1c`               | `KEY_ENTER`           | **Select** ✅       |
+| back        | `e5` → `0e`               | `KEY_BACKSPACE`       | **Back** ✅         |
+| home        | `d2` → `66`               | `KEY_HOME`            | FirstPage           |
+| X           | `e4` → `6f`               | `KEY_DELETE`          | Delete (file views) |
+| dpad up     | `ba` → `67`               | `KEY_UP`              | **Up** ✅           |
+| dpad down   | `b9` → `6c`               | `KEY_DOWN`            | **Down** ✅         |
+| dpad left   | `b8` → `69`               | `KEY_LEFT`            | **Left** ✅         |
+| dpad right  | `b7` → `6a`               | `KEY_RIGHT`           | **Right** ✅        |
+| vol +       | `fd` → `73`               | `KEY_VOLUMEUP`        | volume              |
+| vol −       | `fc` → `72`               | `KEY_VOLUMEDOWN`      | volume              |
+| mute        | `f6` → `71`               | `KEY_MUTE`            | volume              |
+| P +         | `ff` → `192`              | `KEY_CHANNELUP`       | — unbound           |
+| P −         | `fe` → `193`              | `KEY_CHANNELDOWN`     | — unbound           |
+| settings    | `4d` → `8d`               | `KEY_SETUP`           | — unbound           |
+| source      | `60` → `f1`               | `KEY_VIDEO_NEXT`      | — unbound           |
+| mouse       | `d0` → `212`              | `KEY_TOUCHPAD_TOGGLE` | — unbound           |
+| voice       | `5b` → `d9`               | `KEY_SEARCH`          | — unbound           |
+| LIVE TV     | `4a` → `179`              | `KEY_TV`              | — unbound           |
+| apps        | `49` → `244`              | `KEY_APPSELECT`       | — unbound           |
+| YouTube     | `04` → `94`               | `KEY_PROG1`           | — unbound           |
+| Netflix     | `14` → `95`               | `KEY_PROG2`           | — unbound           |
+| Prime Video | `4c` → `ca`               | `KEY_PROG3`           | — unbound           |
+| Google Play | `4b` → `cb`               | `KEY_PROG4`           | — unbound           |
+
+Icon-sane keycodes everywhere, no two buttons share one. One stock pair (`b5` → `8b` `KEY_MENU`)
+never fired in any round and is kept untouched. "Unbound" keys emit correctly (evdev-proven) but
+have no default Kodi action — a Kodi keymap can claim them later. Confirmed in Kodi on the Toshiba
+the same day: OK selects, the remote drives the UI end-to-end. The BLE transport is not decoded yet
+(needs pairing first — "Needs the human").
+
 ## Validation — `docs/board-validation.md`, run 2
 
 ### System
@@ -212,10 +254,10 @@ Encode fps — all decode back rc=0:
 
 ### Ethernet — not on this box
 
-| Check                             | Mark | Note                                                  |
-| --------------------------------- | :--: | ----------------------------------------------------- |
-| Link, PHY driver, throughput, MAC |  ➖  | no PHY answers (`-110`); RJ45 look = physical         |
-| Wake-on-LAN                       |  ➖  | `phy-is-integrated`, and nothing fitted there to wake |
+| Check                             | Mark | Note                                                                                                                       |
+| --------------------------------- | :--: | -------------------------------------------------------------------------------------------------------------------------- |
+| Link, PHY driver, throughput, MAC |  ➖  | no ethernet on this PCB (no RJ45); `gmac` NOT FITTED — wireless-first by design, online LAN specs copied from other boards |
+| Wake-on-LAN                       |  ➖  | `phy-is-integrated`, and nothing fitted there to wake                                                                      |
 
 ### Wi-Fi
 
@@ -284,24 +326,24 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 | Check                     | Mark | Note                            |
 | ------------------------- | :--: | ------------------------------- |
 | Input nodes exist         |  ✅  | Input table                     |
-| IR IRQ counts on press    |  ❓  | physical (IRQ 27, baseline 149) |
+| IR IRQ counts on press    |  ✅  | IRQ 27, pass 1: 63368 → 76561   |
 | Toothpick on `adc-keys`   |  ❓  | physical                        |
 | Power-on remote cold-boot |  ❓  | physical                        |
 | Long press in each mode   |  ❓  | physical                        |
 | LED polarity by eye       |  ❓  | physical                        |
-| IR keymap, per transport  |  ❓  | physical                        |
-| BLE keymap, per transport |  ❓  | physical                        |
+| IR keymap, per transport  |  ✅  | IR: table above, evdev-verified |
+| BLE keymap, per transport |  ❓  | physical (pairing first)        |
 | IR-extender jack          |  ➖  | none on the port list           |
 
 ### Device tree
 
-| Check                               | Mark | Note                                                                                                       |
-| ----------------------------------- | :--: | ---------------------------------------------------------------------------------------------------------- |
-| No node claims absent hardware      |  ❌  | `gmac` + `rmii0_phy` claim a PHY that answers `-110`; stock-identical tree — the RJ45 look decides the fix |
-| Ghosts disabled, `NOT FITTED` hunks |  ❌  | same root: `board.patch` has no `NOT FITTED` hunk yet                                                      |
-| Every hunk carries its rationale    |  ✅  | all commented                                                                                              |
-| `upstream/build.sh` VERIFIED        |  ➖  | no `upstream/mortal-t1/`                                                                                   |
-| Untouched nodes re-checked          |  ✅  | `build-board-dts.sh mortal-t1` regen byte-identical; eMMC enumerates 11/11                                 |
+| Check                               | Mark | Note                                                                                                             |
+| ----------------------------------- | :--: | ---------------------------------------------------------------------------------------------------------------- |
+| No node claims absent hardware      |  ✅  | `gmac0` + `rmii0_phy` carry the `NOT FITTED` hunk; live DT `status = "disabled"`, zero gmac/phy lines in `dmesg` |
+| Ghosts disabled, `NOT FITTED` hunks |  ✅  | `board.patch` hunk for `gmac0` (no RJ45 on this PCB); rebuilt + deployed 2026-09-29                              |
+| Every hunk carries its rationale    |  ✅  | all commented                                                                                                    |
+| `upstream/build.sh` VERIFIED        |  ➖  | no `upstream/mortal-t1/`                                                                                         |
+| Untouched nodes re-checked          |  ✅  | `build-board-dts.sh mortal-t1` regen byte-identical; eMMC enumerates 11/11                                       |
 
 ### Overlay mode
 
@@ -321,8 +363,6 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 
 | Line                                                                 | Per boot | Why                                            |
 | -------------------------------------------------------------------- | :------: | ---------------------------------------------- |
-| `WARNING … devm_gpiod_put` in `stmmac_mdio_reset`                    |    1     | stock gmac has no mdio reset-gpio              |
-| `phy_poll_reset failed: -110` + `Cannot attach to PHY`               |  1 pair  | no PHY answers; one networkd attempt           |
 | `Cannot find any crtc or sizes`                                      |    2     | before the first mode is set                   |
 | `Looking up …-supply failed` / `could not add device link … -ENOENT` |   many   | optional supplies absent in the stock tree     |
 | `optee … -22`, `scmi protocol 17/22 not active`, `DMI not present`   |  1 each  | not fitted / unused                            |
@@ -336,8 +376,6 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 ### Open
 
 - Console garble (❓): tty1 substitutes CP437-ish glyphs, tty2 clean; probe recipe `worklog.md` §7.
-- RJ45 look (physical) → disable `gmac` + `rmii0_phy` with a `NOT FITTED` hunk, or document a
-  fitted-but-dead PHY.
 - `h96max-3518d/board.md` "AVS2 357 fps" has no worklog provenance — flagged, not inherited here.
 - `board.patch` ships `mode-maskrom` (`reboot maskrom` to BootROM, no button) — untested; it would
   strand the box until a physical power cycle.
@@ -346,8 +384,9 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 - Cold power cycle: BT at boot, `.49`, console, `date`; timed cold-boot.
 - TV input leftovers: a 1440p/2K panel, a PC monitor, a CEC menu check on a set that exposes one.
-- Remote: every button under `evtest` **per transport** (IR IRQ 27 + BLE), mic, power-on from off,
-  long press per mode, BT pairing; digital-X dongle keys (event4–7).
+- Remote (BLE side): pairing, BLE keymap, mic, power-on from off, long press per mode; digital-X
+  dongle keys (event4–7). The IR side is decoded, deployed, and confirmed working in Kodi; only IR
+  cold-boot power-on is left.
 - LEDs by eye (running/suspended/off); suspend/resume + wake in IR **and** BLE; suspend longer than
   the watchdog window (`boot_id` check).
 - Toothpick → maskrom (optional `wl` pattern test; `reboot maskrom` with USB attached); power button
@@ -355,5 +394,4 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 - USB stick each port (USB 2 throughput, USB 3 `uas`/BOS; a USB-write integrity test doubles as the
   card-vs-slot discriminator for run-1's corruption); power meter, bare board.
 - eMMC migration + full-disk write + restore (`dd` of the stock image); the device name it confirms.
-- RJ45 present? — decides the gmac fix.
 - SD insert/remove deferred: the only slot holds the boot card.

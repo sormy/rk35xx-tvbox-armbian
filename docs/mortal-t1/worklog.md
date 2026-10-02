@@ -356,3 +356,51 @@ in `board.md`; this is how they got here.
   `1920x1080`, no 4K), which is what made both boots look like the Prism+ losing its 4K. Kodi
   restarted there fine, and the sink set in Kodi's audio settings was heard through the TV. No
   pipewire/pulse exists (`pactl` absent, 0 processes) — ALSA card 0 is the entire audio story.
+
+## 11. IR remote decoded, gmac gets its NOT FITTED hunk (2026-09-29)
+
+Both fixes ride in one `board.patch` rebuild; numbers in `board.md`, node list in `dtb.md`.
+
+### Decoding the remote
+
+- Transport was settled first: keys arrive on `event9` (pwm remotectl, IRQ 27) — the USB dongle
+  (`0513:0318`, event4–7) logged 0 events while keys flowed, and `hci0` has no paired device. The
+  handset also advertises BLE on its own a few minutes after boot (Android announced it), so BLE
+  stays an open, separate keymap per `docs/remote-keymap.md`.
+- **The trap:** unanchored ordered passes misalign. The user does not press strictly in the printed
+  order, and one pass lost four presses mid-list — which silently shifts every later label (that is
+  how OK first looked like `KEY_HOME` and vol− like `KEY_SETUP`). The fix was method, not more
+  presses: one button per burst with the **settings gear pressed last as an anchor**; if the anchor
+  lands where it should, the order held. Two to three identical repetitions per round then make the
+  mapping overdetermined. (This driver emits no `MSC_SCAN`, so scancodes can only come from
+  inverting the table itself.)
+- Result: all 24 buttons decoded, `ir_key1`/`ir_key4` (usercodes `fb05`/`fb04`, byte-identical)
+  cover them, plus one stock pair (`b5` → `KEY_MENU`) that never fires. OK was the blocker: stock
+  maps it to `KEY_REPLY`, which Kodi never binds; `KEY_ENTER` is what it needed.
+- The table rewrite picks icon-sane keycodes (OK → `ENTER`, back → `BACKSPACE`, X → `DELETE`,
+  dpad/levels sane already, P± → `CHANNELUP/DOWN`, app row → `PROG1…PROG4` — `PROG3/4` are 202/203,
+  not 150/151, per this kernel's header). home/source was the one true ambiguity — both emit
+  `KEY_HOME`, scancodes `d2`/`60` — so the guess had to survive a post-deploy test: it did, three
+  buttons × three rounds, `28`/`102`/`241`, no flip needed.
+
+### gmac
+
+The user's photo shows no RJ45, and the RMII PHY answered `-110` every boot
+(`phy_poll_reset failed`, `Cannot attach to PHY`). One hunk disables `gmac0` with the reason in a
+comment; `rmii0_phy` is its child and never probes. `mac-oui` already documented "no ethernet on
+this PCB" — untouched. The user later confirmed the design intent: wireless-first cost cut (no jack,
+no magnetics), and the online specs that list a LAN port are copied from other boards — the same
+kind of copy that gives this box its false 16 GB / 256 GB label.
+
+### Build, deploy, verify
+
+- Patch regenerated from the stock decompile (12 hunks); `build-board-dts.sh` round-trip `cmp`
+  clean; the binary DTB diff is exactly the two IR tables + gmac `status` (6 lines).
+- The host had no `rsync` (Solus: `eopkg install rsync`, 3.5.0) — deploy otherwise unchanged:
+  `rk35xx-deploy --no-reboot`, then an explicit watched reboot.
+- Back in 60 s: zero gmac/phy/stmmac lines in `dmesg`, no `end0`, live tree `status = "disabled"`,
+  wlan0 + SSH up, both tolerated gmac rows now deletable from the log. evdev re-verify as above;
+  `kodi --standalone` restarted (GBM, ALSA card 0).
+- Open: BLE pairing + BLE keymap, mic, LED polarity, suspend/wake, IR cold-boot power-on — one
+  physical batch in `board.md`. The in-Kodi check closed the same day: the user reports the remote
+  works perfectly, OK selects.
