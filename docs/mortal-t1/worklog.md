@@ -413,3 +413,13 @@ force-off either suggests nothing is wired to it — worth one look inside durin
 - Open: BLE pairing + BLE keymap, mic, LED polarity, suspend/wake, IR cold-boot power-on — one
   physical batch in `board.md`. The in-Kodi check closed the same day: the user reports the remote
   works perfectly, OK selects.
+
+## 12. Housekeeping — evidence in-repo, backups together (2026-09-29)
+
+- The host reboot wiped `/tmp/opencode/preserve/`: regenerable copies gone (the SSH key is live, BLE
+  pairing never happened, root password is per-boot, Wi-Fi is the user's own) — `forensics.tar`
+  lost, so the cause of the 09-27 zeroed logs stays ❓.
+- IR capture rounds moved into `stock/mortal-t1/` (`ev9-*.log`) — §11's raw material, re-capturable
+  only by pressing the remote again.
+- Repo stays local (user decision). `backup/mortal-t1/` now holds the eMMC stock image, its flash
+  log and `mortal-t1-6commits.bundle` (the six unpushed commits); board.md's restore path updated.

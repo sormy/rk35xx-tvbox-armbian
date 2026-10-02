@@ -1,0 +1,293 @@
+Input driver version is 1.0.1
+Input device ID: bus 0x19 vendor 0x524b product 0x6 version 0x100
+Input device name: "ffa90030.pwm"
+Supported events:
+  Event type 0 (EV_SYN)
+  Event type 1 (EV_KEY)
+    Event code 2 (KEY_1)
+    Event code 3 (KEY_2)
+    Event code 4 (KEY_3)
+    Event code 5 (KEY_4)
+    Event code 6 (KEY_5)
+    Event code 7 (KEY_6)
+    Event code 8 (KEY_7)
+    Event code 9 (KEY_8)
+    Event code 10 (KEY_9)
+    Event code 11 (KEY_0)
+    Event code 13 (KEY_EQUAL)
+    Event code 14 (KEY_BACKSPACE)
+    Event code 59 (KEY_F1)
+    Event code 60 (KEY_F2)
+    Event code 61 (KEY_F3)
+    Event code 62 (KEY_F4)
+    Event code 63 (KEY_F5)
+    Event code 66 (KEY_F8)
+    Event code 68 (KEY_F10)
+    Event code 69 (KEY_NUMLOCK)
+    Event code 102 (KEY_HOME)
+    Event code 103 (KEY_UP)
+    Event code 104 (KEY_PAGEUP)
+    Event code 105 (KEY_LEFT)
+    Event code 106 (KEY_RIGHT)
+    Event code 107 (KEY_END)
+    Event code 108 (KEY_DOWN)
+    Event code 109 (KEY_PAGEDOWN)
+    Event code 113 (KEY_MUTE)
+    Event code 114 (KEY_VOLUMEDOWN)
+    Event code 115 (KEY_VOLUMEUP)
+    Event code 116 (KEY_POWER)
+    Event code 128 (KEY_STOP)
+    Event code 138 (KEY_HELP)
+    Event code 139 (KEY_MENU)
+    Event code 141 (KEY_SETUP)
+    Event code 143 (KEY_WAKEUP)
+    Event code 158 (KEY_BACK)
+    Event code 164 (KEY_PLAYPAUSE)
+    Event code 168 (KEY_REWIND)
+    Event code 184 (KEY_F14)
+    Event code 185 (KEY_F15)
+    Event code 189 (KEY_F19)
+    Event code 208 (KEY_FASTFORWARD)
+    Event code 232 (KEY_REPLY)
+    Event code 248 (KEY_MICMUTE)
+    Event code 249 (?)
+    Event code 250 (?)
+    Event code 251 (?)
+    Event code 252 (?)
+    Event code 253 (?)
+    Event code 254 (?)
+    Event code 255 (?)
+    Event code 256 (BTN_0)
+    Event code 257 (BTN_1)
+    Event code 258 (BTN_2)
+    Event code 259 (BTN_3)
+    Event code 260 (BTN_4)
+    Event code 261 (BTN_5)
+    Event code 262 (BTN_6)
+    Event code 263 (BTN_7)
+    Event code 264 (BTN_8)
+    Event code 265 (BTN_9)
+    Event code 266 (?)
+    Event code 267 (?)
+    Event code 270 (?)
+    Event code 388 (KEY_TEXT)
+    Event code 400 (KEY_YELLOW)
+    Event code 401 (KEY_BLUE)
+Properties:
+Testing ... (interrupt to exit)
+Event: time 1790648899.182305, type 1 (EV_KEY), code 158 (KEY_BACK), value 1
+Event: time 1790648899.182305, -------------- SYN_REPORT ------------
+Event: time 1790648899.267591, type 1 (EV_KEY), code 158 (KEY_BACK), value 0
+Event: time 1790648899.267591, -------------- SYN_REPORT ------------
+Event: time 1790648899.556805, type 1 (EV_KEY), code 158 (KEY_BACK), value 1
+Event: time 1790648899.556805, -------------- SYN_REPORT ------------
+Event: time 1790648899.737599, type 1 (EV_KEY), code 158 (KEY_BACK), value 0
+Event: time 1790648899.737599, -------------- SYN_REPORT ------------
+Event: time 1790648900.317075, type 1 (EV_KEY), code 158 (KEY_BACK), value 1
+Event: time 1790648900.317075, -------------- SYN_REPORT ------------
+Event: time 1790648900.497589, type 1 (EV_KEY), code 158 (KEY_BACK), value 0
+Event: time 1790648900.497589, -------------- SYN_REPORT ------------
+Event: time 1790648903.875605, type 1 (EV_KEY), code 102 (KEY_HOME), value 1
+Event: time 1790648903.875605, -------------- SYN_REPORT ------------
+Event: time 1790648904.054257, type 1 (EV_KEY), code 102 (KEY_HOME), value 0
+Event: time 1790648904.054257, -------------- SYN_REPORT ------------
+Event: time 1790648904.537527, type 1 (EV_KEY), code 102 (KEY_HOME), value 1
+Event: time 1790648904.537527, -------------- SYN_REPORT ------------
+Event: time 1790648904.717591, type 1 (EV_KEY), code 102 (KEY_HOME), value 0
+Event: time 1790648904.717591, -------------- SYN_REPORT ------------
+Event: time 1790648905.320184, type 1 (EV_KEY), code 102 (KEY_HOME), value 1
+Event: time 1790648905.320184, -------------- SYN_REPORT ------------
+Event: time 1790648905.500934, type 1 (EV_KEY), code 102 (KEY_HOME), value 0
+Event: time 1790648905.500934, -------------- SYN_REPORT ------------
+Event: time 1790648908.038369, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 1
+Event: time 1790648908.038369, -------------- SYN_REPORT ------------
+Event: time 1790648908.217593, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 0
+Event: time 1790648908.217593, -------------- SYN_REPORT ------------
+Event: time 1790648908.683571, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 1
+Event: time 1790648908.683571, -------------- SYN_REPORT ------------
+Event: time 1790648908.864258, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 0
+Event: time 1790648908.864258, -------------- SYN_REPORT ------------
+Event: time 1790648909.292722, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 1
+Event: time 1790648909.292722, -------------- SYN_REPORT ------------
+Event: time 1790648909.474255, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 0
+Event: time 1790648909.474255, -------------- SYN_REPORT ------------
+Event: time 1790648912.990473, type 1 (EV_KEY), code 103 (KEY_UP), value 1
+Event: time 1790648912.990473, -------------- SYN_REPORT ------------
+Event: time 1790648913.170925, type 1 (EV_KEY), code 103 (KEY_UP), value 0
+Event: time 1790648913.170925, -------------- SYN_REPORT ------------
+Event: time 1790648913.914883, type 1 (EV_KEY), code 103 (KEY_UP), value 1
+Event: time 1790648913.914883, -------------- SYN_REPORT ------------
+Event: time 1790648914.094255, type 1 (EV_KEY), code 103 (KEY_UP), value 0
+Event: time 1790648914.094255, -------------- SYN_REPORT ------------
+Event: time 1790648914.543861, type 1 (EV_KEY), code 103 (KEY_UP), value 1
+Event: time 1790648914.543861, -------------- SYN_REPORT ------------
+Event: time 1790648914.724258, type 1 (EV_KEY), code 103 (KEY_UP), value 0
+Event: time 1790648914.724258, -------------- SYN_REPORT ------------
+Event: time 1790648916.981620, type 1 (EV_KEY), code 108 (KEY_DOWN), value 1
+Event: time 1790648916.981620, -------------- SYN_REPORT ------------
+Event: time 1790648917.160930, type 1 (EV_KEY), code 108 (KEY_DOWN), value 0
+Event: time 1790648917.160930, -------------- SYN_REPORT ------------
+Event: time 1790648917.731084, type 1 (EV_KEY), code 108 (KEY_DOWN), value 1
+Event: time 1790648917.731084, -------------- SYN_REPORT ------------
+Event: time 1790648917.910931, type 1 (EV_KEY), code 108 (KEY_DOWN), value 0
+Event: time 1790648917.910931, -------------- SYN_REPORT ------------
+Event: time 1790648918.394272, type 1 (EV_KEY), code 108 (KEY_DOWN), value 1
+Event: time 1790648918.394272, -------------- SYN_REPORT ------------
+Event: time 1790648918.574255, type 1 (EV_KEY), code 108 (KEY_DOWN), value 0
+Event: time 1790648918.574255, -------------- SYN_REPORT ------------
+Event: time 1790648921.146366, type 1 (EV_KEY), code 105 (KEY_LEFT), value 1
+Event: time 1790648921.146366, -------------- SYN_REPORT ------------
+Event: time 1790648921.327596, type 1 (EV_KEY), code 105 (KEY_LEFT), value 0
+Event: time 1790648921.327596, -------------- SYN_REPORT ------------
+Event: time 1790648921.765628, type 1 (EV_KEY), code 105 (KEY_LEFT), value 1
+Event: time 1790648921.765628, -------------- SYN_REPORT ------------
+Event: time 1790648921.944257, type 1 (EV_KEY), code 105 (KEY_LEFT), value 0
+Event: time 1790648921.944257, -------------- SYN_REPORT ------------
+Event: time 1790648922.321300, type 1 (EV_KEY), code 105 (KEY_LEFT), value 1
+Event: time 1790648922.321300, -------------- SYN_REPORT ------------
+Event: time 1790648922.500921, type 1 (EV_KEY), code 105 (KEY_LEFT), value 0
+Event: time 1790648922.500921, -------------- SYN_REPORT ------------
+Event: time 1790648924.974502, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 1
+Event: time 1790648924.974502, -------------- SYN_REPORT ------------
+Event: time 1790648925.154257, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 0
+Event: time 1790648925.154257, -------------- SYN_REPORT ------------
+Event: time 1790648925.655928, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 1
+Event: time 1790648925.655928, -------------- SYN_REPORT ------------
+Event: time 1790648925.740941, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 0
+Event: time 1790648925.740941, -------------- SYN_REPORT ------------
+Event: time 1790648926.244480, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 1
+Event: time 1790648926.244480, -------------- SYN_REPORT ------------
+Event: time 1790648926.424256, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 0
+Event: time 1790648926.424256, -------------- SYN_REPORT ------------
+Event: time 1790648928.895808, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 1
+Event: time 1790648928.895808, -------------- SYN_REPORT ------------
+Event: time 1790648929.077586, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 0
+Event: time 1790648929.077586, -------------- SYN_REPORT ------------
+Event: time 1790648929.710499, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 1
+Event: time 1790648929.710499, -------------- SYN_REPORT ------------
+Event: time 1790648929.890919, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 0
+Event: time 1790648929.890919, -------------- SYN_REPORT ------------
+Event: time 1790648930.508074, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 1
+Event: time 1790648930.508074, -------------- SYN_REPORT ------------
+Event: time 1790648930.687586, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 0
+Event: time 1790648930.687586, -------------- SYN_REPORT ------------
+Event: time 1790648933.594033, type 1 (EV_KEY), code 141 (KEY_SETUP), value 1
+Event: time 1790648933.594033, -------------- SYN_REPORT ------------
+Event: time 1790648933.774252, type 1 (EV_KEY), code 141 (KEY_SETUP), value 0
+Event: time 1790648933.774252, -------------- SYN_REPORT ------------
+Event: time 1790648934.568862, type 1 (EV_KEY), code 141 (KEY_SETUP), value 1
+Event: time 1790648934.568862, -------------- SYN_REPORT ------------
+Event: time 1790648934.747585, type 1 (EV_KEY), code 141 (KEY_SETUP), value 0
+Event: time 1790648934.747585, -------------- SYN_REPORT ------------
+Event: time 1790648935.598649, type 1 (EV_KEY), code 141 (KEY_SETUP), value 1
+Event: time 1790648935.598649, -------------- SYN_REPORT ------------
+Event: time 1790648935.777588, type 1 (EV_KEY), code 141 (KEY_SETUP), value 0
+Event: time 1790648935.777588, -------------- SYN_REPORT ------------
+Event: time 1790648947.389630, type 1 (EV_KEY), code 158 (KEY_BACK), value 1
+Event: time 1790648947.389630, -------------- SYN_REPORT ------------
+Event: time 1790648947.570920, type 1 (EV_KEY), code 158 (KEY_BACK), value 0
+Event: time 1790648947.570920, -------------- SYN_REPORT ------------
+Event: time 1790648948.317549, type 1 (EV_KEY), code 158 (KEY_BACK), value 1
+Event: time 1790648948.317549, -------------- SYN_REPORT ------------
+Event: time 1790648948.497588, type 1 (EV_KEY), code 158 (KEY_BACK), value 0
+Event: time 1790648948.497588, -------------- SYN_REPORT ------------
+Event: time 1790648949.288274, type 1 (EV_KEY), code 158 (KEY_BACK), value 1
+Event: time 1790648949.288274, -------------- SYN_REPORT ------------
+Event: time 1790648949.467599, type 1 (EV_KEY), code 158 (KEY_BACK), value 0
+Event: time 1790648949.467599, -------------- SYN_REPORT ------------
+Event: time 1790648951.700202, type 1 (EV_KEY), code 102 (KEY_HOME), value 1
+Event: time 1790648951.700202, -------------- SYN_REPORT ------------
+Event: time 1790648951.880918, type 1 (EV_KEY), code 102 (KEY_HOME), value 0
+Event: time 1790648951.880918, -------------- SYN_REPORT ------------
+Event: time 1790648952.683784, type 1 (EV_KEY), code 102 (KEY_HOME), value 1
+Event: time 1790648952.683784, -------------- SYN_REPORT ------------
+Event: time 1790648952.864261, type 1 (EV_KEY), code 102 (KEY_HOME), value 0
+Event: time 1790648952.864261, -------------- SYN_REPORT ------------
+Event: time 1790648953.550389, type 1 (EV_KEY), code 102 (KEY_HOME), value 1
+Event: time 1790648953.550389, -------------- SYN_REPORT ------------
+Event: time 1790648953.730919, type 1 (EV_KEY), code 102 (KEY_HOME), value 0
+Event: time 1790648953.730919, -------------- SYN_REPORT ------------
+Event: time 1790648957.846441, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 1
+Event: time 1790648957.846441, -------------- SYN_REPORT ------------
+Event: time 1790648958.027588, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 0
+Event: time 1790648958.027588, -------------- SYN_REPORT ------------
+Event: time 1790648958.543646, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 1
+Event: time 1790648958.543646, -------------- SYN_REPORT ------------
+Event: time 1790648958.724252, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 0
+Event: time 1790648958.724252, -------------- SYN_REPORT ------------
+Event: time 1790648959.454319, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 1
+Event: time 1790648959.454319, -------------- SYN_REPORT ------------
+Event: time 1790648959.634251, type 1 (EV_KEY), code 14 (KEY_BACKSPACE), value 0
+Event: time 1790648959.634251, -------------- SYN_REPORT ------------
+Event: time 1790648964.453820, type 1 (EV_KEY), code 103 (KEY_UP), value 1
+Event: time 1790648964.453820, -------------- SYN_REPORT ------------
+Event: time 1790648964.634251, type 1 (EV_KEY), code 103 (KEY_UP), value 0
+Event: time 1790648964.634251, -------------- SYN_REPORT ------------
+Event: time 1790648965.323590, type 1 (EV_KEY), code 103 (KEY_UP), value 1
+Event: time 1790648965.323590, -------------- SYN_REPORT ------------
+Event: time 1790648965.504257, type 1 (EV_KEY), code 103 (KEY_UP), value 0
+Event: time 1790648965.504257, -------------- SYN_REPORT ------------
+Event: time 1790648966.151523, type 1 (EV_KEY), code 103 (KEY_UP), value 1
+Event: time 1790648966.151523, -------------- SYN_REPORT ------------
+Event: time 1790648966.330916, type 1 (EV_KEY), code 103 (KEY_UP), value 0
+Event: time 1790648966.330916, -------------- SYN_REPORT ------------
+Event: time 1790648967.912606, type 1 (EV_KEY), code 108 (KEY_DOWN), value 1
+Event: time 1790648967.912606, -------------- SYN_REPORT ------------
+Event: time 1790648968.094257, type 1 (EV_KEY), code 108 (KEY_DOWN), value 0
+Event: time 1790648968.094257, -------------- SYN_REPORT ------------
+Event: time 1790648968.773444, type 1 (EV_KEY), code 108 (KEY_DOWN), value 1
+Event: time 1790648968.773444, -------------- SYN_REPORT ------------
+Event: time 1790648968.950919, type 1 (EV_KEY), code 108 (KEY_DOWN), value 0
+Event: time 1790648968.950919, -------------- SYN_REPORT ------------
+Event: time 1790648969.739396, type 1 (EV_KEY), code 108 (KEY_DOWN), value 1
+Event: time 1790648969.739396, -------------- SYN_REPORT ------------
+Event: time 1790648969.920919, type 1 (EV_KEY), code 108 (KEY_DOWN), value 0
+Event: time 1790648969.920919, -------------- SYN_REPORT ------------
+Event: time 1790648971.947295, type 1 (EV_KEY), code 105 (KEY_LEFT), value 1
+Event: time 1790648971.947295, -------------- SYN_REPORT ------------
+Event: time 1790648972.127584, type 1 (EV_KEY), code 105 (KEY_LEFT), value 0
+Event: time 1790648972.127584, -------------- SYN_REPORT ------------
+Event: time 1790648972.650632, type 1 (EV_KEY), code 105 (KEY_LEFT), value 1
+Event: time 1790648972.650632, -------------- SYN_REPORT ------------
+Event: time 1790648972.830921, type 1 (EV_KEY), code 105 (KEY_LEFT), value 0
+Event: time 1790648972.830921, -------------- SYN_REPORT ------------
+Event: time 1790648973.430047, type 1 (EV_KEY), code 105 (KEY_LEFT), value 1
+Event: time 1790648973.430047, -------------- SYN_REPORT ------------
+Event: time 1790648973.610915, type 1 (EV_KEY), code 105 (KEY_LEFT), value 0
+Event: time 1790648973.610915, -------------- SYN_REPORT ------------
+Event: time 1790648975.126965, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 1
+Event: time 1790648975.126965, -------------- SYN_REPORT ------------
+Event: time 1790648975.214257, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 0
+Event: time 1790648975.214257, -------------- SYN_REPORT ------------
+Event: time 1790648975.927731, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 1
+Event: time 1790648975.927731, -------------- SYN_REPORT ------------
+Event: time 1790648976.014250, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 0
+Event: time 1790648976.014250, -------------- SYN_REPORT ------------
+Event: time 1790648976.744211, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 1
+Event: time 1790648976.744211, -------------- SYN_REPORT ------------
+Event: time 1790648976.924260, type 1 (EV_KEY), code 106 (KEY_RIGHT), value 0
+Event: time 1790648976.924260, -------------- SYN_REPORT ------------
+Event: time 1790648978.263374, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 1
+Event: time 1790648978.263374, -------------- SYN_REPORT ------------
+Event: time 1790648978.444249, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 0
+Event: time 1790648978.444249, -------------- SYN_REPORT ------------
+Event: time 1790648979.268358, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 1
+Event: time 1790648979.268358, -------------- SYN_REPORT ------------
+Event: time 1790648979.447583, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 0
+Event: time 1790648979.447583, -------------- SYN_REPORT ------------
+Event: time 1790648980.144491, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 1
+Event: time 1790648980.144491, -------------- SYN_REPORT ------------
+Event: time 1790648980.324251, type 1 (EV_KEY), code 115 (KEY_VOLUMEUP), value 0
+Event: time 1790648980.324251, -------------- SYN_REPORT ------------
+Event: time 1790648983.554135, type 1 (EV_KEY), code 141 (KEY_SETUP), value 1
+Event: time 1790648983.554135, -------------- SYN_REPORT ------------
+Event: time 1790648983.730917, type 1 (EV_KEY), code 141 (KEY_SETUP), value 0
+Event: time 1790648983.730917, -------------- SYN_REPORT ------------
+Event: time 1790648984.445620, type 1 (EV_KEY), code 141 (KEY_SETUP), value 1
+Event: time 1790648984.445620, -------------- SYN_REPORT ------------
+Event: time 1790648984.627582, type 1 (EV_KEY), code 141 (KEY_SETUP), value 0
+Event: time 1790648984.627582, -------------- SYN_REPORT ------------
+Event: time 1790648985.434597, type 1 (EV_KEY), code 141 (KEY_SETUP), value 1
+Event: time 1790648985.434597, -------------- SYN_REPORT ------------
+Event: time 1790648985.614250, type 1 (EV_KEY), code 141 (KEY_SETUP), value 0
+Event: time 1790648985.614250, -------------- SYN_REPORT ------------

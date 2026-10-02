@@ -1,0 +1,2 @@
+=== hidraw0 report descriptor:
+=== hidraw1 report descriptor:

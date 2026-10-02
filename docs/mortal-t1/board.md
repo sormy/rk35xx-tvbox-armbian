@@ -43,9 +43,8 @@ reports everything honestly — `dmesg` states `Memory: 1570816K` (1.5 GB), meas
 | `gpt.bin`        | GPT header + entries, first 34 sectors                                                                   |
 | `partitions.txt` | partition map with measured sizes (disk = 7455 MiB)                                                      |
 
-Full stock image (7.8 GB, verified) lives outside the repo at
-`~/Projects/mortal-t1-backup/mortal-t1-eMMC-stock.img` — restore with
-`rkdeveloptool wl 0 <sectors> <img>` after a `db` of `rk3528_spl_loader-mortal-t1.bin`.
+Full stock image (7.8 GB, verified) in `backup/mortal-t1/mortal-t1-eMMC-stock.img` (gitignored) —
+restore with `rkdeveloptool wl 0 <sectors> <img>` after a `db` of `rk3528_spl_loader-mortal-t1.bin`.
 
 ## Relation to the R69
 
