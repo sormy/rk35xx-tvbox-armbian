@@ -507,3 +507,23 @@ live, typing confirmed by eye.
   auto-reconnect came in 60 s cold, 4 s warm. The only stable IR window is `bluetoothctl power off`.
   The first long-press round went to `/tmp` and died with the reboot; later captures went to `/root`
   and survived.
+
+## 18. Batch B — long suspend, wake paths, poweroff LED (2026-09-29)
+
+- **Long suspend beats the watchdog window**: `echo mem > /sys/power/state` at 15:26:25; real sleep
+  segments 15:26:25→15:26:59 (34 s) and 15:26:59→15:29:38 (**159 s**) against the 89.5 s window
+  (`2^(16+15)` @ 24 MHz). `boot_id` `849d593d` identical before/after, uptime continuous, no restart
+  entries: deep sleep is sleep, not a hidden reboot. The board has no RTC — `rtcwake` fails
+  (`/dev/rtc*` absent) and wall-clock stamps freeze across suspend, so timed wake does not exist and
+  the sleeper must be woken by input or power cycle.
+- **BLE wake ❌ — IR is the only wake path.** `ttyS2` (`ffa00000.serial`) `power/wakeup` was enabled
+  before the test; afterwards `/sys/kernel/debug/wakeup_sources` shows `ttyS2` event count **0**,
+  and the waker is `rockchip_pwm_remote`. The failure is structural: suspend drops the BLE link
+  (uhid nodes removed, HOG reads fail on resume), so the remote cannot deliver anything over BLE
+  while the box sleeps — covered-OK presses (IR blocked, per the test plan) produced no wake; both
+  wakes came from aimed IR power presses. Couch rule: point the remote at the box to wake it, and
+  prefer a non-power button — the 15:26:59 wake had its power press read post-resume and logind
+  instantly re-suspended (the 15:29:38 wake did not).
+- **Poweroff LED**: `systemctl poweroff` → LED red, then dark; soft-off stays off (no self-boot);
+  unplug/replug cold-boots (new `bcd60fd6`). Dongle keys (A5) dropped by user decision — not a core
+  accessory for the box.

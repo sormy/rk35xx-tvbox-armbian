@@ -274,8 +274,8 @@ reaches logind as instant → short → suspend.
 | Draw metered                                  |  ❓  | physical                                                             |
 | Suspend `deep` + `mem_sleep` bracket          |  ✅  | `s2idle [deep]`                                                      |
 | Suspend/resume, stays up                      |  ✅  | IR power both ways, `boot_id` unchanged                              |
-| Suspend > watchdog window, same `boot_id`     |  ❓  | physical                                                             |
-| BLE wake (`hdev->wakeup`)                     |  ❓  | physical                                                             |
+| Suspend > watchdog window, same `boot_id`     |  ✅  | 159 s vs 89.5 s window, `boot_id` unchanged (worklog §18)            |
+| BLE wake (`hdev->wakeup`)                     |  ❌  | impossible: link drops in sleep, UART never fires; IR only (§18)     |
 | Cold-boot time                                |  ✅  | 29.711 s (11.242 kernel + 18.469 userspace); power-on leg unmeasured |
 | RTC present, or absence recorded              |  ✅  | absence                                                              |
 
@@ -376,7 +376,7 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 | Button beside HDMI        |  ❌  | inert: 1×, 2× @1–2 s, 3rd held 10 s — never maskrom, never powers off   |
 | Power-on remote cold-boot |  ➖  | self-boots on wall power; IR dead unplugged, no button (user-confirmed) |
 | Long press in each mode   |  ✅  | gesture differs per transport (worklog §17)                             |
-| LED polarity by eye       |  ✅  | suspend: red, running: blue; off state = power-off pending              |
+| LED polarity by eye       |  ✅  | suspend: red, running: blue; poweroff: red → dark                       |
 | IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                         |
 | BLE keymap, per transport |  ✅  | BLE: table above, hwdb-verified (worklog §17)                           |
 | IR-extender jack          |  ➖  | none on the port list                                                   |
@@ -429,10 +429,6 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 ### Needs the human — one trip
 
 - TV input leftovers: a 1440p/2K panel, a PC monitor, a CEC menu check on a set that exposes one.
-- Remote: digital-X dongle keys (today: event6/7/12/13). Both transports decoded and deployed (IR
-  confirmed in Kodi).
-- LED off state; suspend longer than the watchdog window (`boot_id` check); wake via BLE (after the
-  remote pairs).
 - Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only
   entry left is `reboot maskrom` (DT hunk, untested): flash USB on a host first, power cycle to
   recover; optional `wl` pattern test.
