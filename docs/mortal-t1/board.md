@@ -460,3 +460,5 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 - Console garble: dirty SD card, caused by a faulty card reader (user-confirmed, worklog §7).
 - `h96max-3518d/board.md` "AVS2 357 fps" has no worklog provenance — flagged, not inherited here.
+- `armbian-led-state.service` fails at boot: Armbian's restore (`armbian-bsp-cli`) exits on its own
+  saved `trigger=` (empty) line for `input8::compose` — SD activity LED comes up dark (cosmetic).
