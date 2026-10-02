@@ -150,6 +150,29 @@ Encode fps — all decode back rc=0:
   = MJPEG · `63 ff7c1000.avsd_plus, ff7c0400.vdpu` shared = VP8/MPEG-2/ MPEG-4/H.263 ·
   `66 ff780000.rkvenc` = encoders.
 
+### Playback — `jellyfin-ffmpeg7` rkmpp → fbdev, measured 2026-09-30
+
+`jellyfin-ffmpeg7_7.1.4-3-trixie`, `apt-get install --no-upgrade` (0 upgraded); bundles its own
+`librockchip_mpp.so.1` + `librga.so.2`. Clips: 10 s `testsrc2` — 3840x2160@60 libx265 40M,
+1920x1080@60 libx264 20M.
+
+| Path                                | 4K60 HEVC | 1080p60 H.264 |
+| ----------------------------------- | :-------: | :-----------: |
+| hw `-f null` (decode only)          |    89     |      168      |
+| + `scale_rkrga` 720p + `hwdownload` |    56     |       —       |
+| + `-f fbdev /dev/fb0` (full path)   |   46–48   |      108      |
+| SW `-f null` baseline               |    13     |       —       |
+
+```sh
+$FF -hwaccel rkmpp -hwaccel_output_format drm_prime -c:v hevc_rkmpp -i clip.mp4 -an \
+   -vf "scale_rkrga=w=1280:h=720:format=bgra,hwdownload,format=bgra" -f fbdev /dev/fb0
+```
+
+- Full path on screen ✅: connector `connected`, rc=0, no errors, picture human-confirmed — CPU ≈1
+  core of 4 (13.2 s wall / 13.3 s CPU).
+- The copy is the cost, not the decoder: `hwdownload` + fbdev write halves 4K (89 → 48). 4K60
+  realtime misses (48 < 60); 4K30 and 1080p60 clear it.
+
 ### Input
 
 | Node                    | Device         | Note                                                    |
@@ -346,8 +369,8 @@ reaches logind as instant → short → suspend.
 | Kodi hwdec                   |  ❌  | vaapi/mediacodec only; libva `-1`                        |
 | AV jack                      |  ➖  | not fitted                                               |
 
-Kodi: `kodi --standalone` as root; no autostart, no unit. No hwdec exists on this box — Debian's
-build carries no rkmpp/v4l2 backend, so every player decodes in software.
+Kodi: `kodi --standalone` as root; no autostart, no unit. Debian's build carries no rkmpp/v4l2
+backend, so Kodi and mpv decode in software — hw decode lives in `jellyfin-ffmpeg7` (codec section).
 
 ### Video codec
 
@@ -358,6 +381,7 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 | AV1 absent          |  ✅  | refusal recorded                  |
 | AVS · AVS+          |  🟡  | create accepted, no clip          |
 | Real 4K HEVC smooth |  ✅  | mpv 90 s @4K60, 1 drop; SW decode |
+| rkmpp → screen      |  ✅  | 46–48 fps 4K60, human-confirmed   |
 
 ### USB
 

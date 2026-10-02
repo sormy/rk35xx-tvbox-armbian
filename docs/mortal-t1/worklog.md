@@ -566,3 +566,24 @@ live, typing confirmed by eye.
 
 - User has no watt meter; `Draw metered` stays ❓ with the reason recorded. D's USB legs —
   throughput, integrity, card-vs-slot discriminator, USB 3 characterization — are all in §19.
+
+## 21. Hardware decode to the panel — jellyfin-ffmpeg rkmpp → fbdev (2026-09-30)
+
+Closing the gap the Kodi/mpv rows left: the VPU decodes (§ day-1 matrix) but no player on the box
+linked rkmpp. Numbers in `board.md`.
+
+- `jellyfin-ffmpeg7_7.1.4-3-trixie_arm64.deb`, `apt-get install --no-upgrade` — `Install:` line
+  only, 0 upgraded. Bundles `librockchip_mpp.so.1` + `librga.so.2` in its own `lib/`, so the
+  `/root/mpp-build` tree is not needed for playback; `-decoders | grep rkmpp` lists 10 decoders,
+  `-filters | grep rk` the three RGA filters.
+- Clips built on the host: 10 s `testsrc2`, 4K60 libx265 40M, 1080p60 libx264 20M; scp to `/root`.
+- Stage-by-stage at 4K60 HEVC, `-f null` vs `-f fbdev`: decode **89 fps** (SW 13, 6.8×), + RGA 720p
+  scale + `hwdownload` **56**, + fbdev write **46–48**. 1080p60 H.264 full path **108 fps**. CPU on
+  the full path ≈1 core of 4 (`time`: 13.2 s wall, 13.3 s CPU).
+- Connector was `disconnected` for the first runs (TV off) — writes to `/dev/fb0` complete rc=0
+  regardless, so fps is measurable with no sink; the picture check waited for HPD (t=2640), then the
+  full clip ran live at 46 fps, rc=0, 0 errors, human-confirmed on screen.
+- The cost sits in `hwdownload` + the fbdev full-frame copy, not the decoder — same shape as the H96
+  Max measured in `docs/mpp.md`. 4K60 realtime misses (48 < 60); 4K30 and 1080p60 clear it.
+- Trivia: box `time` is the shell builtin (`/usr/bin/time` absent); first SSH after the TV came up
+  timed out once while wlan0 sat at 2/3 packet loss, 101 ms RTT — it recovered on retry.
