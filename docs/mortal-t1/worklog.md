@@ -81,13 +81,13 @@ Per `docs/board-bringup.md` — _adding a board is data, not code_:
       no other board's payload data (the only `r69` strings are legacy pre-rename migration lines
       inside the **family** scripts, byte-identical to repo source — present in every board's
       image); `e2fsck -fn` clean.
-- [ ] **Validation** (human, blocking): serial console (`docs/board-bringup.md` § serial first), SD
+- [x] **Validation** (human, blocking): serial console (`docs/board-bringup.md` § serial first), SD
       boot, then the `docs/board-validation.md` checklist. Exact RAM figure gets its definitive
-      proof from Armbian `dmesg` (2 GB expected).
+      proof from Armbian `dmesg` (2 GB expected). Closed by the §6–§8 sweeps.
 - Assumption to check on hardware: Wi-Fi is AIC8800**D80** SDIO (inferred from the r69-identical
   factory DT; XDA photos of another T1 mention AIC8800 without variant).
 
-## 7. Validation sweep, day 1 — three root causes (2026-09-27 – 28)
+## 6. Validation sweep, day 1 — three root causes (2026-09-27 – 28)
 
 Remote sweep ran against the flashed SD image over SSH (`.49`), per `docs/board-validation.md`.
 Passing checks: spec truth, fio, thermal, Wi-Fi 5 + 2.4, GPU/Mesa, MPP gate, codec matrix, overlays,
@@ -122,9 +122,9 @@ Still open: dpkg corruption scope (`debsums` flagged six `.md5sums`/`.list` file
 `apt-get install --reinstall` then the full-upgrade test; display tests and the cold-boot physical
 batch await the human. Console garble closed by user: dirty SD card, caused by a faulty card reader.
 
-## 8. Validation sweep, day 2 — dpkg rot, a retracted test, clean-slate restart (2026-09-28)
+## 7. Validation sweep, day 2 — dpkg rot, a retracted test, clean-slate restart (2026-09-28)
 
-Continuing §7 remotely; ends with a decision to reflash the SD clean and restart the sweep with no
+Continuing §6 remotely; ends with a decision to reflash the SD clean and restart the sweep with no
 package upgrade. Off-box state preserved first (`/tmp/opencode/preserve/`).
 
 ### dpkg corruption — scope and repair
@@ -150,7 +150,7 @@ package upgrade. Off-box state preserved first (`/tmp/opencode/preserve/`).
   and prints `-: FAILED` unconditionally (reproduced on the host). Retracted.
 - Corrected, all PASS: 1200 MB write→sync→`drop_caches`→re-hash; 4000×32 KB small-file storm; 256 MB
   python round trip; `modprobe tty-ldisc-15` silent after cache eviction.
-- Verdict: card **suspect, not convicted**. Live corruption evidence = §7's file forensics only —
+- Verdict: card **suspect, not convicted**. Live corruption evidence = §6's file forensics only —
   historical, mechanism unknown, not reproducible: `tune2fs -l` clean, zero EXT4/I/O errors in
   dmesg, synthetic tests clean.
 
@@ -193,9 +193,9 @@ package upgrade. Off-box state preserved first (`/tmp/opencode/preserve/`).
   (root pw, Wi-Fi), first SSH contact by password (no sshpass/expect on the host → python pty), key
   restored from `secrets.tar`. mac-pin is image-baked → expect `.49`.
 
-## 9. Validation sweep, run 2 — full remote pass, codec matrix, one shipped fix (2026-09-28)
+## 8. Validation sweep, run 2 — full remote pass, codec matrix, one shipped fix (2026-09-28)
 
-Run 2 on §8's clean image (sha256 `e11c9c09…65de`), no package upgrade of any kind (user decision;
+Run 2 on §7's clean image (sha256 `e11c9c09…65de`), no package upgrade of any kind (user decision;
 toolkit via `apt-get install --no-upgrade`, 114/114; `dpkg -V` baseline 29, integrity re-test clean
 after `drop_caches`). Root password chosen per boot (kept out of these docs). Numbers live in
 `board.md`; this is how they got here.
@@ -313,9 +313,9 @@ after `drop_caches`). Root password chosen per boot (kept out of these docs). Nu
   keymaps, LEDs, suspend/wake, USB sticks, power meter, eMMC migration + restore, RJ45 look) —
   handed over as one list in `board.md`.
 - Console garble root cause (❓ at the time): tty1 substitutes CP437-ish glyphs, tty2 clean; probe
-  recipe in §7 — since closed: dirty SD card, caused by a faulty card reader.
+  recipe in §6 — since closed: dirty SD card, caused by a faulty card reader.
 
-## 10. Display across three TVs, Kodi 21.2, one locked box (2026-09-28 – 29)
+## 9. Display across three TVs, Kodi 21.2, one locked box (2026-09-28 – 29)
 
 Run-2 follow-up on the display criterion, plus Kodi the next day; `--no-upgrade` throughout. Numbers
 in `board.md`; this is how they got here.
@@ -358,7 +358,7 @@ in `board.md`; this is how they got here.
   restarted there fine, and the sink set in Kodi's audio settings was heard through the TV. No
   pipewire/pulse exists (`pactl` absent, 0 processes) — ALSA card 0 is the entire audio story.
 
-## 11. IR remote decoded, gmac gets its NOT FITTED hunk (2026-09-29)
+## 10. IR remote decoded, gmac gets its NOT FITTED hunk (2026-09-29)
 
 Both fixes ride in one `board.patch` rebuild; numbers in `board.md`, node list in `dtb.md`.
 
@@ -398,7 +398,7 @@ kind of copy that gives this box its false 16 GB / 256 GB label.
 Earlier reports called it the maskrom trigger (no toothpick hole exists — first useful fact). The
 user then tested every pattern: single press, two presses 1-2 s apart, third press held 10 s — **it
 never reaches maskrom and never powers off**; by all appearances inert. Maskrom entry on this unit
-is therefore the software path only: `reboot maskrom` via the `mode-maskrom` hunk (✅ since §22,
+is therefore the software path only: `reboot maskrom` via the `mode-maskrom` hunk (✅ since §21,
 2026-09-30), with the flash USB on a host beforehand, and a power cycle to get out again. An RK box
 that shows no force-off either suggests nothing is wired to it — worth one look inside during the
 eMMC trip.
@@ -416,18 +416,18 @@ eMMC trip.
   physical batch in `board.md`. The in-Kodi check closed the same day: the user reports the remote
   works perfectly, OK selects.
 
-## 12. Housekeeping — evidence in-repo, backups together (2026-09-29)
+## 11. Housekeeping — evidence in-repo, backups together (2026-09-29)
 
 - The host reboot wiped `/tmp/opencode/preserve/`: regenerable copies gone (the SSH key is live, BLE
   pairing never happened, root password is per-boot, Wi-Fi is the user's own) — `forensics.tar`
   lost, so the cause of the 09-27 zeroed logs stays ❓.
-- IR capture rounds moved into `stock/mortal-t1/` (`ev9-*.log`) — §11's raw material, re-capturable
+- IR capture rounds moved into `stock/mortal-t1/` (`ev9-*.log`) — §10's raw material, re-capturable
   only by pressing the remote again.
 - Repo stays local (user decision). `backup/mortal-t1/` now holds the eMMC stock image, its flash
   log and `mortal-t1-unpushed.bundle` (every commit past `origin/main`); board.md's restore path
   updated.
 
-## 13. First BLE bond — the user's keyboard (2026-09-29)
+## 12. First BLE bond — the user's keyboard (2026-09-29)
 
 Not the bundled remote: the user's Samsung keyboard (`v04E8:7021`), exercised pair → bond → HID →
 input before the remote's BLE round. End state `Paired/Bonded/Trusted/Connected: yes`, input node
@@ -444,7 +444,7 @@ live, typing confirmed by eye.
   held.
 - Cadence in one live session: `pair` → 8 s → `trust` → `connect` → 15 s → `info`.
 
-## 14. First suspend cycle — remote power both ways (2026-09-29)
+## 13. First suspend cycle — remote power both ways (2026-09-29)
 
 - 12:28: logind `Power key pressed short` → `PM: suspend entry (deep)`; second press →
   `PM: suspend exit` (same wall second — no RTC mid-sleep). `boot_id` unchanged (`a121946a…`),
@@ -453,7 +453,7 @@ live, typing confirmed by eye.
 - Keyboard re-bound after resume (`input17`, `.0008`), typed by eye; LED suspend red, running blue.
 - Short cycle only — watchdog-window suspend and BLE wake still ❓.
 
-## 15. Cold power cycle — full unplug (2026-09-29)
+## 14. Cold power cycle — full unplug (2026-09-29)
 
 - Power off → plug out → wait → plug in: new `boot_id` (`986f4ae9…`), booted 12:36:20.
 - `systemd-analyze` 29.711 s (kernel 11.242 + userspace 18.469); power-on → kernel leg unmeasured,
@@ -462,7 +462,7 @@ live, typing confirmed by eye.
 - Bond survived full power loss: keyboard typed at the login screen, `Connected: yes` on first SSH
   after.
 
-## 16. Power-on rows reclassified — structural, not pending (2026-09-29)
+## 15. Power-on rows reclassified — structural, not pending (2026-09-29)
 
 - No power button on the PCB; the box self-boots the moment wall power returns, and with the plug
   out the IR receiver has no rail. Cold IR power-on and power-button cold boot cannot occur — row
@@ -470,7 +470,7 @@ live, typing confirmed by eye.
 - Soft `poweroff` with the wall on stays ❓: the pending LED-off observation answers whether it
   latches; recovery is a wall cycle either way.
 
-## 17. Bundled remote over BLE — paired, decoded, hwdb-corrected (2026-09-29)
+## 16. Bundled remote over BLE — paired, decoded, hwdb-corrected (2026-09-29)
 
 - Pairing mode = hold ◀+▶ until the LED blinks (H313 recipe); a watcher script caught
   `18:24:39:34:F7:95` and ran agent/pair/trust/connect in one session —
@@ -510,7 +510,7 @@ live, typing confirmed by eye.
   The first long-press round went to `/tmp` and died with the reboot; later captures went to `/root`
   and survived.
 
-## 18. Batch B — long suspend, wake paths, poweroff LED (2026-09-29)
+## 17. Batch B — long suspend, wake paths, poweroff LED (2026-09-29)
 
 - **Long suspend beats the watchdog window**: `echo mem > /sys/power/state` at 15:26:25; real sleep
   segments 15:26:25→15:26:59 (34 s) and 15:26:59→15:29:38 (**159 s**) against the 89.5 s window
@@ -530,7 +530,7 @@ live, typing confirmed by eye.
   unplug/replug cold-boots (new `bcd60fd6`). Dongle keys (A5) dropped by user decision — not a core
   accessory for the box.
 
-## 19. USB bring-up — hub ceiling, 5 Gbps fault, BOS, uas (2026-09-29)
+## 18. USB bring-up — hub ceiling, 5 Gbps fault, BOS, uas (2026-09-29)
 
 - The all-in-one dongle was caught by `lsusb -t` before any benchmark: two nested `214b:7260` hubs,
   `Product: USB2.0 HUB`, everything behind them at 480M with bus 2 empty — the dongle's own hub chip
@@ -563,12 +563,12 @@ live, typing confirmed by eye.
   capability, `fio` recorded. The SanDisk stick fell back to 480M in every session — device and port
   recorded as seen, no attribution.
 
-## 20. D closed — power meter dropped, no equipment (2026-09-29)
+## 19. D closed — power meter dropped, no equipment (2026-09-29)
 
 - User has no watt meter; `Draw metered` stays ❓ with the reason recorded. D's USB legs —
-  throughput, integrity, card-vs-slot discriminator, USB 3 characterization — are all in §19.
+  throughput, integrity, card-vs-slot discriminator, USB 3 characterization — are all in §18.
 
-## 21. Hardware decode to the panel — jellyfin-ffmpeg rkmpp → fbdev (2026-09-30)
+## 20. Hardware decode to the panel — jellyfin-ffmpeg rkmpp → fbdev (2026-09-30)
 
 Closing the gap the Kodi/mpv rows left: the VPU decodes (§ day-1 matrix) but no player on the box
 linked rkmpp. Numbers in `board.md`.
@@ -589,10 +589,10 @@ linked rkmpp. Numbers in `board.md`.
 - Trivia: box `time` is the shell builtin (`/usr/bin/time` absent); first SSH after the TV came up
   timed out once while wlan0 sat at 2/3 packet loss, 101 ms RTT — it recovered on retry.
 
-## 22. F — `reboot maskrom` proven, and the box boots off host VBUS (2026-09-30)
+## 21. F — `reboot maskrom` proven, and the box boots off host VBUS (2026-09-30)
 
 The `mode-maskrom` hunk was the last untested DT change and this unit's only maskrom entry (the
-button beside HDMI is inert, §11). Rows in `board.md`, node in `dtb.md`.
+button beside HDMI is inert, §10). Rows in `board.md`, node in `dtb.md`.
 
 - Prereqs: host `rkdeveloptool` 1.32 runs at user level (no sudo — first `ld` on an empty bus
   printed `not found any devices!`, not a permission error), `rk3528_spl_loader-mortal-t1.bin`
@@ -608,7 +608,7 @@ button beside HDMI is inert, §11). Rows in `board.md`, node in `dtb.md`.
   `mmcblk2` (eMMC) untouched. Stranding is real but costs one power cycle.
 - Not attempted: `db` / `wl` pattern write — separate rows, G's restore covers the write path.
 
-## 23. G — maskrom write/restore, SD → eMMC migration, eMMC boot (2026-09-30)
+## 22. G — maskrom write/restore, SD → eMMC migration, eMMC boot (2026-09-30)
 
 The storage criteria of done, one day: the maskrom `wl` path proven non-destructively and then for
 real, the migration spliced byte-exact, the box booted from eMMC with the SD out. Rows in

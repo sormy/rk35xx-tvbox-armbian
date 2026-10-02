@@ -301,8 +301,8 @@ reaches logind as instant → short → suspend.
 | Draw metered                                  |  ❓  | no meter available                                                   |
 | Suspend `deep` + `mem_sleep` bracket          |  ✅  | `s2idle [deep]`                                                      |
 | Suspend/resume, stays up                      |  ✅  | IR power both ways, `boot_id` unchanged                              |
-| Suspend > watchdog window, same `boot_id`     |  ✅  | 159 s vs 89.5 s window, `boot_id` unchanged (worklog §18)            |
-| BLE wake (`hdev->wakeup`)                     |  ❌  | impossible: link drops in sleep, UART never fires; IR only (§18)     |
+| Suspend > watchdog window, same `boot_id`     |  ✅  | 159 s vs 89.5 s window, `boot_id` unchanged (worklog §17)            |
+| BLE wake (`hdev->wakeup`)                     |  ❌  | impossible: link drops in sleep, UART never fires; IR only (§17)     |
 | Cold-boot time                                |  ✅  | 29.711 s (11.242 kernel + 18.469 userspace); power-on leg unmeasured |
 | RTC present, or absence recorded              |  ✅  | absence                                                              |
 
@@ -350,10 +350,10 @@ reaches logind as instant → short → suspend.
 | `hci0` up, `errors:0`                            |  ✅  |                                          |
 | `btmgmt find` returns devices                    |  ✅  | LE devices found                         |
 | BD identical across three reboots, from the part |  ✅  | `0B:3B:22:AC:88:20` ×3 (and ×3 in run 1) |
-| Samsung keyboard pairs, HID types                |  ✅  | `v04E8:7021` (worklog §13)               |
-| Re-binds after suspend/resume                    |  ✅  | `input17`, typed by eye (worklog §14)    |
-| Re-binds after cold power-off                    |  ✅  | unplug → getty, typed (worklog §15)      |
-| Bundled remote pairs                             |  ✅  | `2B54:1600` (worklog §17)                |
+| Samsung keyboard pairs, HID types                |  ✅  | `v04E8:7021` (worklog §12)               |
+| Re-binds after suspend/resume                    |  ✅  | `input17`, typed by eye (worklog §13)    |
+| Re-binds after cold power-off                    |  ✅  | unplug → getty, typed (worklog §14)      |
+| Bundled remote pairs                             |  ✅  | `2B54:1600` (worklog §16)                |
 | A2DP                                             |  ❓  | untested, no speaker                     |
 
 ### Display
@@ -412,10 +412,10 @@ backend, so Kodi and mpv decode in software — hw decode lives in `jellyfin-ffm
 | IR IRQ counts on press    |  ✅  | IRQ 27, pass 1: 63368 → 76561                                           |
 | Button beside HDMI        |  ❌  | inert: 1×, 2× @1–2 s, 3rd held 10 s — never maskrom, never powers off   |
 | Power-on remote cold-boot |  ➖  | self-boots on wall power; IR dead unplugged, no button (user-confirmed) |
-| Long press in each mode   |  ✅  | gesture differs per transport (worklog §17)                             |
+| Long press in each mode   |  ✅  | gesture differs per transport (worklog §16)                             |
 | LED polarity by eye       |  ✅  | suspend: red, running: blue; poweroff: red → dark                       |
 | IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                         |
-| BLE keymap, per transport |  ✅  | BLE: table above, hwdb-verified (worklog §17)                           |
+| BLE keymap, per transport |  ✅  | BLE: table above, hwdb-verified (worklog §16)                           |
 | IR-extender jack          |  ➖  | none on the port list                                                   |
 
 ### Device tree
@@ -458,7 +458,7 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 
 ### Open
 
-- Console garble: dirty SD card, caused by a faulty card reader (user-confirmed, worklog §7).
+- Console garble: dirty SD card, caused by a faulty card reader (user-confirmed, worklog §6).
 - `h96max-3518d/board.md` "AVS2 357 fps" has no worklog provenance — flagged, not inherited here.
 - `armbian-led-state.service` fails at boot: Armbian's restore (`armbian-bsp-cli`) exits on its own
   saved `trigger=` (empty) line for `input8::compose` — SD activity LED comes up dark (cosmetic).
