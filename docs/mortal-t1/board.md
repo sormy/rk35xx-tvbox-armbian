@@ -159,7 +159,8 @@ Encode fps — all decode back rc=0:
 | `cec-remote`            | event1         |                                                         |
 | `bt-powerkey`           | event3         |                                                         |
 | `hdmi`, `hdmi-sound`    | event0, event2 |                                                         |
-| USB digital-X 0513:0318 | event4–7       | keyboard/mouse/consumer/system                          |
+| USB digital-X 0513:0318 | event6,7,12,13 | keyboard/mouse/consumer/system; renumbers on replug     |
+| BT remote 2B54:1600     | event4,5,10,11 | consumer/mouse/keyboard/vendor; renumbers on reconnect  |
 | CEC adapter             | `/dev/cec0`    | `dwhdmi-rockchip` / `dw_hdmi`                           |
 
 ### IR keymap — decoded, in the device tree, evdev-verified
@@ -201,8 +202,46 @@ ambiguity and the first guess was right).
 Icon-sane keycodes everywhere, no two buttons share one. One stock pair (`b5` → `8b` `KEY_MENU`)
 never fired in any round and is kept untouched. "Unbound" keys emit correctly (evdev-proven) but
 have no default Kodi action — a Kodi keymap can claim them later. Confirmed in Kodi on the Toshiba
-the same day: OK selects, the remote drives the UI end-to-end. The BLE transport is not decoded yet
-(needs pairing first — "Needs the human").
+the same day: OK selects, the remote drives the UI end-to-end.
+
+### BLE keymap — decoded over the air, hwdb-corrected, evdev-verified
+
+Paired 2026-09-29, `2B54:1600` `18:24:39:34:F7:95`; pairing mode = hold ◀+▶ until the LED blinks.
+Anchored rounds on the Consumer Control node (logs `stock/mortal-t1/bt-r*.log`).
+
+| Button      | usage   | BLE keycode       | IR keycode            |
+| ----------- | ------- | ----------------- | --------------------- |
+| power       | `c0030` | `KEY_POWER`       | `KEY_POWER`           |
+| OK          | `c0041` | `KEY_SELECT`      | `KEY_ENTER`           |
+| back        | `c0224` | `KEY_BACK`        | `KEY_BACKSPACE`       |
+| home        | `c0223` | `KEY_HOMEPAGE`    | `KEY_HOME`            |
+| X           | `c0040` | `KEY_DELETE`      | `KEY_DELETE`          |
+| dpad up     | `c0042` | `KEY_UP`          | `KEY_UP`              |
+| dpad down   | `c0043` | `KEY_DOWN`        | `KEY_DOWN`            |
+| dpad left   | `c0044` | `KEY_LEFT`        | `KEY_LEFT`            |
+| dpad right  | `c0045` | `KEY_RIGHT`       | `KEY_RIGHT`           |
+| vol +       | `c00e9` | `KEY_VOLUMEUP`    | `KEY_VOLUMEUP`        |
+| vol −       | `c00ea` | `KEY_VOLUMEDOWN`  | `KEY_VOLUMEDOWN`      |
+| mute        | `c00e2` | `KEY_MUTE`        | `KEY_MUTE`            |
+| P +         | `c009c` | `KEY_CHANNELUP`   | `KEY_CHANNELUP`       |
+| P −         | `c009d` | `KEY_CHANNELDOWN` | `KEY_CHANNELDOWN`     |
+| settings    | `c008f` | `KEY_SETUP`       | `KEY_SETUP`           |
+| source      | `c0029` | `KEY_VIDEO_NEXT`  | `KEY_VIDEO_NEXT`      |
+| mouse       | —       | no event          | `KEY_TOUCHPAD_TOGGLE` |
+| voice       | `c0221` | `KEY_SEARCH`      | `KEY_SEARCH`          |
+| LIVE TV     | `c003f` | `KEY_TV`          | `KEY_TV`              |
+| apps        | `c003a` | `KEY_APPSELECT`   | `KEY_APPSELECT`       |
+| YouTube     | `c0056` | `KEY_PROG1`       | `KEY_PROG1`           |
+| Netflix     | `c003b` | `KEY_PROG2`       | `KEY_PROG2`           |
+| Prime Video | `c003d` | `KEY_PROG3`       | `KEY_PROG3`           |
+| Google Play | `c003e` | `KEY_PROG4`       | `KEY_PROG4`           |
+
+Nine scancodes — `c0029`, `c003a`, `c003b`, `c003d`, `c003e`, `c003f`, `c0040`, `c0056`, `c008f` —
+were `KEY_UNKNOWN`/`KEY_GAMES`/`KEY_MENU` from the raw usages and are remapped by
+`firmware/mortal-t1/bt-remote.hwdb`, deployed to `/etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb`; all
+nine were re-read off the handset. Mouse button emits no event over BLE — pointer `REL_*` flows
+regardless; `hwdb` cannot fix silence. Voice sends one usage per press; `arecord -l` is empty —
+audio rides the `0xfeb3` vendor GATT service and needs a userspace client (out of scope).
 
 ## Validation — `docs/board-validation.md`, run 2
 
@@ -281,7 +320,7 @@ the same day: OK selects, the remote drives the UI end-to-end. The BLE transport
 | Samsung keyboard pairs, HID types                |  ✅  | `v04E8:7021` (worklog §13)               |
 | Re-binds after suspend/resume                    |  ✅  | `input17`, typed by eye (worklog §14)    |
 | Re-binds after cold power-off                    |  ✅  | unplug → getty, typed (worklog §15)      |
-| Bundled remote pairs                             |  ❓  | physical                                 |
+| Bundled remote pairs                             |  ✅  | `2B54:1600` (worklog §17)                |
 | A2DP                                             |  ❓  | untested, no speaker                     |
 
 ### Display
@@ -334,7 +373,7 @@ build carries no rkmpp/v4l2 backend, so every player decodes in software.
 | Long press in each mode   |  ❓  | physical                                                                |
 | LED polarity by eye       |  ✅  | suspend: red, running: blue; off state = power-off pending              |
 | IR keymap, per transport  |  ✅  | IR: table above, evdev-verified                                         |
-| BLE keymap, per transport |  ❓  | physical (pairing first)                                                |
+| BLE keymap, per transport |  ✅  | BLE: table above, hwdb-verified (worklog §17)                           |
 | IR-extender jack          |  ➖  | none on the port list                                                   |
 
 ### Device tree
@@ -385,8 +424,8 @@ Nothing else repeats at any level; systemd's per-target "skipped" notices repeat
 ### Needs the human — one trip
 
 - TV input leftovers: a 1440p/2K panel, a PC monitor, a CEC menu check on a set that exposes one.
-- Remote (BLE side): pairing, BLE keymap, mic, long press per mode; digital-X dongle keys
-  (event4–7). The IR side is decoded, deployed, and confirmed working in Kodi.
+- Remote: long press per mode; digital-X dongle keys (today: event6/7/12/13). Both transports
+  decoded and deployed (IR confirmed in Kodi).
 - LED off state; suspend longer than the watchdog window (`boot_id` check); wake via BLE (after the
   remote pairs).
 - Maskrom: the button beside HDMI is inert (no maskrom, no power-off in any pattern) — the only

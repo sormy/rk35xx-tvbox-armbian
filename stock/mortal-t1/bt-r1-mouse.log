@@ -1,0 +1,47 @@
+Input driver version is 1.0.1
+Input device ID: bus 0x5 vendor 0x2b54 product 0x1600 version 0x0
+Input device name: "Bluetooth remote Mouse"
+Supported events:
+  Event type 0 (EV_SYN)
+  Event type 1 (EV_KEY)
+    Event code 272 (BTN_LEFT)
+    Event code 273 (BTN_RIGHT)
+    Event code 274 (BTN_MIDDLE)
+    Event code 275 (BTN_SIDE)
+    Event code 276 (BTN_EXTRA)
+  Event type 2 (EV_REL)
+    Event code 0 (REL_X)
+    Event code 1 (REL_Y)
+  Event type 4 (EV_MSC)
+    Event code 4 (MSC_SCAN)
+Properties:
+Testing ... (interrupt to exit)
+Event: time 1790661767.621511, type 2 (EV_REL), code 0 (REL_X), value -5
+Event: time 1790661767.621511, -------------- SYN_REPORT ------------
+Event: time 1790661768.914110, type 2 (EV_REL), code 1 (REL_Y), value -5
+Event: time 1790661768.914110, -------------- SYN_REPORT ------------
+Event: time 1790661768.914579, type 2 (EV_REL), code 1 (REL_Y), value -7
+Event: time 1790661768.914579, -------------- SYN_REPORT ------------
+Event: time 1790661769.972901, type 2 (EV_REL), code 0 (REL_X), value -5
+Event: time 1790661769.972901, -------------- SYN_REPORT ------------
+Event: time 1790661770.014057, type 2 (EV_REL), code 0 (REL_X), value -7
+Event: time 1790661770.014057, -------------- SYN_REPORT ------------
+Event: time 1790661770.990380, type 2 (EV_REL), code 1 (REL_Y), value 5
+Event: time 1790661770.990380, -------------- SYN_REPORT ------------
+Event: time 1790661771.045395, type 2 (EV_REL), code 1 (REL_Y), value 7
+Event: time 1790661771.045395, -------------- SYN_REPORT ------------
+Event: time 1790661772.049665, type 2 (EV_REL), code 0 (REL_X), value 5
+Event: time 1790661772.049665, -------------- SYN_REPORT ------------
+Event: time 1790661772.090393, type 2 (EV_REL), code 0 (REL_X), value 7
+Event: time 1790661772.090393, -------------- SYN_REPORT ------------
+Event: time 1790661772.145424, type 2 (EV_REL), code 0 (REL_X), value 9
+Event: time 1790661772.145424, -------------- SYN_REPORT ------------
+Event: time 1790661772.887957, type 4 (EV_MSC), code 4 (MSC_SCAN), value 90001
+Event: time 1790661772.887957, type 1 (EV_KEY), code 272 (BTN_LEFT), value 1
+Event: time 1790661772.887957, -------------- SYN_REPORT ------------
+Event: time 1790661773.066651, type 4 (EV_MSC), code 4 (MSC_SCAN), value 90001
+Event: time 1790661773.066651, type 1 (EV_KEY), code 272 (BTN_LEFT), value 0
+Event: time 1790661773.066651, -------------- SYN_REPORT ------------
+expected 24 bytes, got -1
+
+evtest: error reading: No such device

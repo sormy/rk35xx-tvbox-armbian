@@ -1,0 +1,11 @@
+# Bundled BLE remote 2B54:1600 — scancodes are raw HID usages (c…=consumer page); mortal-t1 capture, 2026-09-29.
+evdev:input:b0005v2B54p1600*
+ KEYBOARD_KEY_c0029=video_next
+ KEYBOARD_KEY_c003a=appselect
+ KEYBOARD_KEY_c003b=prog2
+ KEYBOARD_KEY_c003d=prog3
+ KEYBOARD_KEY_c003e=prog4
+ KEYBOARD_KEY_c003f=tv
+ KEYBOARD_KEY_c0040=delete
+ KEYBOARD_KEY_c0056=prog1
+ KEYBOARD_KEY_c008f=setup

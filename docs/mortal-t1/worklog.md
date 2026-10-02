@@ -467,3 +467,32 @@ live, typing confirmed by eye.
   moved to ➖, batch bullets dropped (user-confirmed).
 - Soft `poweroff` with the wall on stays ❓: the pending LED-off observation answers whether it
   latches; recovery is a wall cycle either way.
+
+## 17. Bundled remote over BLE — paired, decoded, hwdb-corrected (2026-09-29)
+
+- Pairing mode = hold ◀+▶ until the LED blinks (H313 recipe); a watcher script caught
+  `18:24:39:34:F7:95` and ran agent/pair/trust/connect in one session —
+  `Paired/Bonded/Trusted/ Connected: yes`, battery 76 %. Same `2B54:1600` model as the H313's
+  handset.
+- Anchored rounds, logs `stock/mortal-t1/bt-r*.log`: r1 mixed (18 presses, user order), r2 ordered
+  23 buttons → full attribution, r4 micro-round (gear/source/mouse ×3) resolved the last three,
+  r6/r7 empty and full respectively (two launch windows were missed before r7 — keep them long).
+- Raw usages: seven came back `KEY_UNKNOWN` (source, LIVE TV, apps, the four app keys), the cog sent
+  `c008f` → `KEY_GAMES`, X sent `c0040` → `KEY_MENU`; the mouse button emits **no event at all**
+  over BLE (pointer `REL_*` flows regardless) — `hwdb` cannot fix silence.
+- `firmware/mortal-t1/bt-remote.hwdb` — nine overrides from this unit's capture only. The H313's
+  shipped file maps `c0040=backspace`; T1's `c0040` is the X button and T1's IR table says delete,
+  so this board got `delete` — the shared-model trap `docs/remote-keymap.md` warns about, caught
+  before deploy. H313's `700aa=reserved` not needed: T1's voice sends one usage per press.
+- Deployed per the doc: tee → md5 matched → `systemd-hwdb update --strict` → query hit →
+  `udevadm trigger --subsystem-match=input --action=change` → all nine `KEYBOARD_KEY_*` properties
+  on the live node (a `/dev/input/bt-remote-consumer` symlink exists). Every override re-read off
+  the handset in two identical rounds: setup, video_next, delete, tv, appselect, prog1–prog4.
+- Mic: `arecord -l` empty — voice key reports `KEY_SEARCH`, audio rides the `0xfeb3` GATT service
+  (same out-of-scope answer as the H313).
+- Power over BLE = power over IR: `c0030` → `KEY_POWER` → logind suspend cycled twice today
+  (13:55:49, probably IR fallback while pairing was still running; 14:05:18 BLE-confirmed from r1).
+  Both woke on a power key; the wake transport is not distinguishable in logind and the BT input
+  nodes drop during sleep — BLE wake row stays ❓.
+- Node numbers shift on every reconnect (uhid 10–13 → 4/5/10/11; dongle 4–7 → 6/7/12/13) — names
+  carry identity, not event numbers.
