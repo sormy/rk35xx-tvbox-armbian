@@ -690,6 +690,10 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
   logind logged `Power key pressed short` → `PM: suspend entry (deep)` → `suspend exit` 7 s later;
   IRQ 27 CPU1 7 → 19 (+12); uptime continuous, no reboot. Matches `board.md`'s table (`f7` → `74` →
   `KEY_POWER`). Sample IRQ 27's **CPU1 column** — CPU0 never moves.
+- The silent path behind the earlier failure — `dkms_rebuild()`'s `continuing` absorbed a missing
+  `dkms` and the script still exited 0 — is now a guard at `[2/6]`: dkms required and absent →
+  message + exit 1. Tested both ways 2026-10-03: `PATH` without `/usr/sbin` → rc 1; normal → rc 0
+  with the rebuild running.
 
 ## 25. The window §24 could not see — an undocumented reinstall, two packages gone (2026-10-03)
 

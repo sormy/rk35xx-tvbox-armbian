@@ -151,6 +151,16 @@ done < "$FW/$BOARD_PAYLOAD"
 "/usr/local/sbin/$P-boardname"   # re-assert the login-banner name (apt upgrades reset it)
 
 echo "[2/6] refreshing DKMS driver sources + rebuilding"
+# dkms_rebuild() absorbs per-step failures with "continuing", so a missing dkms would read as a
+# successful update while nothing rebuilt — and the next kernel update then ships without the
+# IR module. Decide here, loudly, instead of three messages deep.
+if [ -f "$DKMS_IR/dkms.conf" ] || [ -n "${BOARD_DKMS_FETCH:-}" ]; then
+  command -v dkms >/dev/null 2>&1 || {
+    echo "  dkms is not installed: these modules cannot be rebuilt and a kernel update would drop them." >&2
+    echo "  fix: apt-get install --no-upgrade dkms   then re-run" >&2
+    exit 1
+  }
+fi
 # a board with no IR receiver ships neither the Makefile nor dkms.conf that the fetch needs
 if [ -f "$DKMS_IR/dkms.conf" ]; then "$FW/common/fetch-dkms-src.sh" "$DKMS_IR"; fi
 
