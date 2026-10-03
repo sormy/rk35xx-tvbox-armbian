@@ -156,6 +156,8 @@ Encode fps — all decode back rc=0:
 
 ### Playback — `jellyfin-ffmpeg7` rkmpp → fbdev, measured 2026-09-30
 
+> Not on the box since 2026-10-02 — removed, user decision. The numbers below describe that install.
+
 `jellyfin-ffmpeg7_7.1.4-3-trixie`, `apt-get install --no-upgrade` (0 upgraded); bundles its own
 `librockchip_mpp.so.1` + `librga.so.2`. Clips: 10 s `testsrc2` — 3840x2160@60 libx265 40M,
 1920x1080@60 libx264 20M.
@@ -376,6 +378,8 @@ reaches logind as instant → short → suspend.
 
 Kodi: `kodi --standalone` as root; no autostart, no unit. Debian's build carries no rkmpp/v4l2
 backend, so Kodi and mpv decode in software — hw decode lives in `jellyfin-ffmpeg7` (codec section).
+Neither package is on the box since 2026-10-02 — removed, user decision; the rows above describe the
+2026-09-28 – 30 install.
 
 ### Video codec
 

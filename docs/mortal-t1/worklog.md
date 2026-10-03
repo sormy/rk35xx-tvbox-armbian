@@ -702,4 +702,6 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
   `/usr/lib/jellyfin-ffmpeg/ffmpeg` → no such file. §9's Debian `kodi` and §20's `jellyfin-ffmpeg7`
   both belonged to the pre-Oct-1 install.
 - Consequence: `board.md` §9 (Kodi GBM on screen) and §20 (46–48 fps 4K60 to fbdev) are evidence
-  about software the box no longer carries. Reinstall the packages or restate the rows — open.
+  about software the box no longer carries.
+- Both the Oct 1 reinstall and the Oct 2 removal confirmed deliberate by the user, 2026-10-03. The
+  rows stay as dated evidence with a removal note; nothing was reinstalled.
