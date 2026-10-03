@@ -667,9 +667,10 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
 - `rk35xx-update --pull` → **rc 0**; origin `enoshei-beep/rk35xx-tvbox-armbian`, HEAD `deab340`;
   `board.dtb` `8e11307b…` unchanged → no reboot, uptime continuous.
 - `[2/6]` logged `dkms: not found` and continued — **`dkms` was not installed**: `dpkg-query` → _no
-  packages found matching dkms_, no `/usr/sbin/dkms`, `PATH` normal. The `.ko` was built 09-29
-  10:47, so the tooling worked then. `apt/history.log` has no `dkms` line and `dpkg.log` now spans
-  only 10-02 21:04–21:05, so the install record is unrecoverable — same shape as §7's zeroed logs.
+  packages found matching dkms_, no `/usr/sbin/dkms`, `PATH` normal. The `.ko` carries a 09-29 10:47
+  mtime. `dpkg.log` opens only at 10-02 21:04 and `apt/history.log` has no `dkms` line — neither
+  covers the earlier state, so _absent from the log_ says nothing about when it went. §25 is that
+  window.
 - Found with it: `v4l2loopback` had no package, no `/usr/src` tree, no `.ko`, no
   `/etc/modules-load.d/v4l2loopback.conf` — nothing in `dpkg` either, while `board.md` claimed it
   loaded every boot.
@@ -683,6 +684,22 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
   10-03 09:49.
 - `/etc/modules-load.d/v4l2loopback.conf` recreated — §8's box-side file, in no payload.
 - `/dev/video0` is the loopback's dummy node as in §8; `/dev/mpp_service` (240, 0) untouched, so the
-  codec and playback numbers stand.
+  §8 codec matrix stands. §20's playback path does not — `jellyfin-ffmpeg7` is gone, §25.
 - Both update paths re-verified: `rk35xx-deploy` (§8) and `rk35xx-update --pull` (here).
 - Not verified: an actual IR keypress — IRQ 27 sat at 7 across samples taken with no key held.
+
+## 25. The window §24 could not see — an undocumented reinstall, two packages gone (2026-10-03)
+
+- Root fs `/dev/mmcblk2p1`, UUID `ea63219a…`, **`Filesystem created: Thu Oct 1 13:35:12 2026`** —
+  not §22's eMMC migration (`6c18175f…`, 09-30) and not the SD (`2f63de46…`). An Oct 1 install with
+  no worklog entry; this is the first record of it.
+- `lsblk -d` lists `mmcblk2`, `mmcblk2boot0/1` and zram only — no SD. Boots from eMMC, as §22 left
+  it.
+- `dpkg.log` opens `2026-10-02 21:04:16 startup packages remove` — 38 removals, headed by
+  `jellyfin-ffmpeg7` and `kodi-rockchip-gbm` with their dependency trees (avahi, bluetooth, mariadb,
+  samba, libinput, wacom …).
+- Neither is on the box: `dpkg -l | grep -Ei "kodi|jellyfin"` → none, no `kodi` on `PATH`,
+  `/usr/lib/jellyfin-ffmpeg/ffmpeg` → no such file. §9's Debian `kodi` and §20's `jellyfin-ffmpeg7`
+  both belonged to the pre-Oct-1 install.
+- Consequence: `board.md` §9 (Kodi GBM on screen) and §20 (46–48 fps 4K60 to fbdev) are evidence
+  about software the box no longer carries. Reinstall the packages or restate the rows — open.
