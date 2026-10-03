@@ -139,6 +139,23 @@ migrate() {
 }
 migrate
 
+# Step 5 restarts these; snapshot their bytes before the payload install rewrites them.
+# Restarting an unchanged rk35xx-bt.service tears down a live radio for nothing.
+UPDATE_UNITS="${BOARD_UPDATE_RESTART:-} ${BOARD_UPDATE_TRY_RESTART:-}"
+unitsum() {
+	for u in $UPDATE_UNITS; do
+		f=$(systemctl show -p FragmentPath --value "$u" 2>/dev/null) || f=""
+		echo "$u $f"
+		if [ -f "$f" ]; then
+			cat "$f"
+			sed -n 's/^Exec[A-Za-z]*= *-*\([^ ]*\).*/\1/p' "$f" | while IFS= read -r b; do
+				if [ -f "$b" ]; then md5sum "$b"; fi
+			done
+		fi
+	done
+}
+UNITS_BEFORE=$(unitsum)
+
 echo "[1/6] installing firmware payload ($BOARD)"
 while read -r mode src dest; do
   case "$mode" in ''|\#*) continue ;; esac
@@ -229,8 +246,12 @@ systemctl daemon-reload
 udevadm control --reload
 udevadm trigger --subsystem-match=mpp_class --subsystem-match=misc --subsystem-match=dma_heap \
   --subsystem-match=input
-for s in ${BOARD_UPDATE_RESTART:-}; do systemctl restart "$s" 2>/dev/null || true; done
-for s in ${BOARD_UPDATE_TRY_RESTART:-}; do systemctl try-restart "$s" 2>/dev/null || true; done
+if [ "$(unitsum)" = "$UNITS_BEFORE" ]; then
+  echo "  (restart-listed units unchanged — no service restarted)"
+else
+  for s in ${BOARD_UPDATE_RESTART:-}; do systemctl restart "$s" 2>/dev/null || true; done
+  for s in ${BOARD_UPDATE_TRY_RESTART:-}; do systemctl try-restart "$s" 2>/dev/null || true; done
+fi
 echo "  (power-key / suspend drop-ins take effect after 'systemctl restart systemd-logind' or a reboot)"
 
 echo "[6/6] done"
