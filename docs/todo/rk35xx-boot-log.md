@@ -117,8 +117,14 @@ Bluetooth: hci0: Opcode 0x0c03 failed: -49
 
 `Frame reassembly failed (-84)` and `Bad flag given (0x1) vs supported (0x0)` follow on the way back
 up. 13 err/warn lines over four runs on the T1 (09:41:52, 09:49:07, 10:16:50, 10:21:41) and none in
-between. Both fixes are ours: restart only when the unit's bytes changed, or bring `hci0` down
-before the detach.
+between.
+
+Shipped 2026-10-03 (`571e4db`): step `[5/6]` restarts only when the unit's bytes changed, so an
+update no longer touches it — skip runs add 0 lines. A restart that does happen still costs ~3 lines
+**and orphans bluez about half the time** (sysfs `hci0` present, `hciconfig up` succeeds, but
+`btmgmt info` reports no index and bluez has no controller). Recovery:
+`systemctl restart rk35xx-bt`. The attach criterion that lets that read as success is `TODO.md`; the
+evidence is `mortal-t1/worklog.md` §26.
 
 ## Order
 

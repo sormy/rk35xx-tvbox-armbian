@@ -712,3 +712,34 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
   about software the box no longer carries.
 - Both the Oct 1 reinstall and the Oct 2 removal confirmed deliberate by the user, 2026-10-03. The
   rows stay as dated evidence with a removal note; nothing was reinstalled.
+
+## 26. The updater stops restarting what it did not change — and what those restarts cost (2026-10-03)
+
+- Step `[5/6]` of `rk35xx-update` restarted `BOARD_UPDATE_RESTART` + `BOARD_UPDATE_TRY_RESTART`
+  unconditionally, though its own echo promised "changed services". On this board that meant
+  `rk35xx-bt.service` — a live `hciattach` torn down on **every** run, for a payload that had
+  rewritten every file identically.
+- Each stop dropped the UART line discipline while `hci0` still had a command in flight
+  (`sending frame failed (-49)`, `Opcode 0x0c03 failed: -49`), with `Frame reassembly failed (-84)`
+  and `Bad flag given` on the way back up: 13 err/warn lines across this morning's four runs, none
+  between them.
+- Fix (`571e4db`): `unitsum()` snapshots each listed unit's bytes — the unit file plus whatever it
+  `Exec*s` — before the payload install, and step 5 compares. Unchanged → no restart, with the skip
+  printed.
+- Three runs tested all branches: unchanged → skip, `hci0` lines 13 → 13 · forced change (a comment
+  appended to the installed unit) → restart, and the payload restored repo bytes (md5 identical) ·
+  re-lock → skip, 32 → 32. Each run rc 0, DTB unchanged, no reboot.
+- **The restarts were costing more than lines. Found while testing:** they orphan bluez about half
+  the time. Signature — sysfs node present, `hciconfig hci0 up` succeeds (raw HCI is fine, counters
+  advance, 0 errors), but `btmgmt info` → `Index list with 0 items`, `busctl tree org.bluez` → no
+  `/org/bluez/hci0`, `bluetoothctl show` → empty. Setup fails inside the desync window, so
+  `mgmt_index_added` never runs — and `rk35xx-bt` exits 0 regardless, because its success test is
+  `[ -e /sys/class/bluetooth/hci0 ]`.
+- Seven restarts this boot: 09:41:52, 09:49:07, 11:28:36, 11:33 recovered; 10:16:50, 10:21:41,
+  11:30:49 orphaned. bluez was blind from 10:16:50 to 11:28:36 — 1 h 11 min of a dead radio nothing
+  reported.
+- Recovery: `systemctl restart rk35xx-bt`, 2/2 here (11:28, 11:33), retry if the first attempt lands
+  in the same window. Ends `UP RUNNING`, `Powered: yes`, the paired devices re-enumerated.
+- Closeout: `hci0` UP RUNNING, bluez holds the adapter, updater runs add zero lines — err/warn total
+  240 at 2 h 46, `hci0` share 32. The attach criterion that lets a failed setup read as success is
+  `TODO.md`.
