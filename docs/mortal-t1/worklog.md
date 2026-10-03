@@ -743,3 +743,44 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
 - Closeout: `hci0` UP RUNNING, bluez holds the adapter, updater runs add zero lines — err/warn total
   240 at 2 h 46, `hci0` share 32. The attach criterion that lets a failed setup read as success is
   `TODO.md`.
+
+## 27. Codec engine rebuilt and re-verified — the H.264 row that did not reproduce (2026-10-03)
+
+- The §25 reinstall had wiped the userspace half: `/dev/mpp_service` and the udev rule still there,
+  no `librockchip_mpp` via `ldconfig`, no source tree, no jellyfin/kodi. Rebuild as `twilight` (§8
+  did the same — root hides a missing udev rule).
+  `apt-get install -s --no-upgrade build-essential cmake git` → 0 upgraded, 0 newly installed;
+  dry-run only, nothing installed. `git clone --depth 1 rockchip-linux/mpp` → `14729dd` (2026-09-18,
+  still upstream head, so §8's tree and this one are byte-identical source), cmake + `make -j4`
+  rc=0, `make install` skipped.
+- Gate reproduces line for line: `match chip name: rk3528a`, `dec 00f0079c enc 00100180`, the
+  confliction lines unchanged. Encode 1080p H.264 54.84 / 55.14 fps against the row's 54.9 —
+  reproduces.
+- **Decode H.264 does not: 324.0 / 151.2 / 38.4 / 8.5 (720p/1080p/4K/8K) against the recorded 632.9
+  / 338.9 / 87.0 / 15.2** — ~2× on every column.
+- Ruled out, in order: **content** — heavier clips run _slower_ (testsrc2 125–131 vs testsrc 151–154
+  @1080p; 720p 284 vs 324) and real SBBR720 lands with testsrc (319.4), so content moves numbers
+  ±15%, never toward 339; **clocking** — `aclk_rkvdec` 339.4 MHz equals the DT's
+  `assigned-clock-rates` _and_ its `rockchip,normal-rates` (340/600 M), i.e. vendor normal; rkvenc
+  likewise (live 297 M, assigned 300 M); **CPU/DDR/load** — cpu0 pinned 1416000 for 80/80 samples
+  across five runs, `dmc` at its 780 M max, load 0.08, no strays; **method flags** — `-o /dev/null`
+  slower (41.97 — the output write is not the cost), `-v q` equal (153.97), `-s 2` equal (151.03 /
+  329.75, vdpu IRQs untouched), warm reruns 150.2–152.4; **environment** — kernel 26.8.1 on both
+  installs (neither ever upgraded), same MPP commit, same DTB clocks.
+- **The cross-check that closed it: `docs/h96max-h313/board.md` measures the same silicon** (RK3518
+  grafted to `rk3528a`; R69 "within noise") at **329.5 / 152.8 / 39.7 / 9.6** — today's T1 matches
+  all four cells (1–11%). Every _other_ T1 decode row matches h313 within noise too (HEVC
+  594.4/605.8 · 320.9/326.1 · VP9 640.5/634.2 · VP8 130.3/129.6 · MPEG-2 176.2/175.4 · MPEG-4
+  196.7/197.3 · H.263 833.2/831.1) — only H.264 was off. The recorded row was wrong and how it was
+  produced is unknown (`-s 2`, `-o`, content, clock theories all tested and dead); `board.md`
+  carries today's numbers, the siblings stand.
+- IRQ accounting corrected, not discarded: today's 30-frame deltas are `35 rkvdec` / `30 rkvenc` —
+  one per frame + setup. §8's `65/64/63/66` are 60-frame-class counts (a `-n 60` decode reproduced
+  63), mislabeled "30-frame run". mpp.md's one-IRQ-per-frame criterion was right.
+- Wrong turns, kept so they are not repeated: an ssh `bash -s` heredoc fed stdin to every child —
+  `ffmpeg` and `mpi_dec_test` polled it and ate the rest of the script (hence `-nostdin` and
+  `</dev/null` inside every later heredoc); `od -tu4` on big-endian DT properties without
+  `--endian=big` reads byte-swapped garbage (briefly "proved" an underclocked decoder); `git -C` as
+  root on `twilight`'s clone fails `dubious ownership` — read as the owner; and `-c copy -f data`
+  from an mp4 emits length-prefixed AVCC — zero IRQs, no fps line, which reads exactly like dead
+  hardware (the `-bsf:v h264_mp4toannexb` trap is now in `mpp.md`).

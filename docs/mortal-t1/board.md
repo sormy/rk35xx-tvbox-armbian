@@ -124,11 +124,11 @@ Mali-450 via lima, Mesa 25.0.7; `GL_MAX_TEXTURE_SIZE` = 4096.
 Gate: `match chip name: rk3528a`, `dec 00f0079c enc 00100180` (+ benign
 `confliction found at client_type 3`: kernel vcodec_type `0x3001320a` vs soc info `0x00013202`).
 
-Decode fps — `mpi_dec_test -n 30`, content spot-checked real:
+Decode fps — `mpi_dec_test -n 30`, content spot-checked real; H.264 row re-measured 2026-10-03:
 
 | Codec  | 720p                     | 1080p | 4K       | 8K       |
 | ------ | ------------------------ | ----- | -------- | -------- |
-| H.264  | 632.9                    | 338.9 | 87.0     | 15.2     |
+| H.264  | 324.0                    | 151.2 | 38.4     | 8.5      |
 | HEVC   | 594.4                    | 320.9 | 81.4     | 19.5     |
 | VP9    | 640.5                    | 328.5 | 83.6     | 20.1     |
 | MJPEG  | 509.7                    | 290.2 | 90.7     | 16.0     |
@@ -137,7 +137,7 @@ Decode fps — `mpi_dec_test -n 30`, content spot-checked real:
 | MPEG-4 | 196.7                    | 93.0  | ❌ hang  | ❌ hang  |
 | H.263  | 833.2 (CIF, fixed sizes) |       |          |          |
 
-Encode fps — all decode back rc=0:
+Encode fps — all decode back rc=0; 1080p H.264 re-measured 54.84/55.14 fps, 2026-10-03:
 
 | Codec | 720p  | 1080p | 4K   | 8K   |
 | ----- | ----- | ----- | ---- | ---- |
@@ -150,9 +150,10 @@ Encode fps — all decode back rc=0:
   `Warning: unsupport larger than 1920x1088`, zero codec IRQs, `timeout` rc=124, process-local.
 - AV1 refused by name: `mpp: unable to create dec av1 for soc rk3528a unsupported`.
 - AVS/AVS+/AVS2 decoder create accepted (no AVS-style refusal) — 🟡, no clip exists.
-- IRQs per 30-frame run (one per frame): `65 ff740100.rkvdec` = H.264/HEVC/VP9 · `64 ff870000.jpegd`
-  = MJPEG · `63 ff7c1000.avsd_plus, ff7c0400.vdpu` shared = VP8/MPEG-2/ MPEG-4/H.263 ·
-  `66 ff780000.rkvenc` = encoders.
+- One IRQ per frame. 30-frame deltas 2026-10-03: `35 ff740100.rkvdec` decode, `30 ff780000.rkvenc`
+  encode. The earlier `65/64/63/66` were 60-frame windows (two runs), not 30: rkvdec =
+  H.264/HEVC/VP9 · `64 ff870000.jpegd` = MJPEG · `63 ff7c1000.avsd_plus, ff7c0400.vdpu` shared =
+  VP8/MPEG-2/ MPEG-4/H.263 · `66 ff780000.rkvenc` = encoders.
 
 ### Playback — `jellyfin-ffmpeg7` rkmpp → fbdev, measured 2026-09-30
 

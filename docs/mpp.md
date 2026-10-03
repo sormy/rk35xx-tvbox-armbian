@@ -68,7 +68,11 @@ timeout 150 mpi_dec_test -t 7 -i clip.264 -n 30
   _output_ frame format. H.264, HEVC, MPEG-2/4, H.263 and AVS2 are raw ES and need no special name.
 - **Anything in another container must be demuxed first**:
   `ffmpeg -i in.mpg -map 0:v:0 -c copy -f data out.es`. `-f data` needs the explicit `-map`, or
-  ffmpeg exits with "Output file does not contain any stream".
+  ffmpeg exits with "Output file does not contain any stream". **`mp4` additionally needs
+  `-bsf:v h264_mp4toannexb`**
+  (`ffmpeg -i in.mp4 -map 0:v:0 -c copy -bsf:v h264_mp4toannexb -f h264 out.264`): mp4 stores H.264
+  length-prefixed, and the decoder then reads length bytes as NALs — no fps line and zero codec
+  IRQs, which reads like dead hardware.
 - **MJPEG decode needs explicit `-w`/`-h`**, or it dies at `mpp_buffer_get … size 0` and reads like
   broken hardware.
 - **Always `-pix_fmt yuv420p`** — otherwise ffmpeg hands you VP9 profile 1, which the hardware
