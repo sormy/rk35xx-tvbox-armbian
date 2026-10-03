@@ -285,7 +285,7 @@ reaches logind as instant → short → suspend.
 | Second-boot time                                   |  ✅  | 20.650 s                                                         |
 | `dmesg` line by line, repeats accounted            |  ✅  | tolerated lines below                                            |
 | hostname / board name                              |  ✅  | `mortal-t1`; `BOARD_NAME=rock-2f` (base), `board-id` `mortal-t1` |
-| `dkms status` installed + in `lsmod`               |  ✅  | both modules; v4l2loopback now loaded every boot                 |
+| `dkms status` installed + in `lsmod`               |  ✅  | both modules; tooling restored 2026-10-03, worklog §24           |
 | Ten warm reboots, every device                     |  ✅  | 11/11 above                                                      |
 | `free` + `stress-ng --vm --verify`                 |  ✅  | 1536 MiB; 4/0                                                    |
 | Watchdog device, taken, `wdctl` busy               |  ✅  |                                                                  |
@@ -437,7 +437,7 @@ backend, so Kodi and mpv decode in software — hw decode lives in `jellyfin-ffm
 | No foreign board names             |  ✅  | r69 / h313 / 3518d globs empty                                       |
 | Loaders on disk = identity         |  ✅  | sector 64 `6a2f0b52…`, sector 16384 `227ea087…`                      |
 | Survives `apt full-upgrade`        |  ❓  | dropped by decision — no upgrade this run                            |
-| Both update paths                  |  ✅  | deploy full pass; `--pull` fixed + retested                          |
+| Both update paths                  |  ✅  | deploy full pass; `--pull` rc=0 from the fork, 2026-10-03            |
 | DKMS rmmod + modprobe back         |  ✅  | both return; `ir-remote`/`video0` recreated                          |
 | Payload udev `SYMLINK` fires       |  ✅  | `ir-target=event9` every boot                                        |
 | dtb-persist across a kernel update |  ❓  | hook present + current match; update leg needs an upgrade            |

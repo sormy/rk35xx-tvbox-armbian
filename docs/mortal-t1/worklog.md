@@ -654,4 +654,35 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
 - Affects all four boards: `--pull` now fetches this tree, so sibling boxes receive this repo's
   `firmware/<board>/` rather than upstream's. `rk35xx-deploy` never reads `REPO_URL` and is
   unaffected.
-- Not yet run on a box ❓ — `board.md`'s "Both update paths" row keeps its prior evidence.
+- Not yet run on a box at the time of writing — rc 0 from the box in §24.
+
+## 24. On-box verification of §23, and the tooling that had vanished (2026-10-03)
+
+- Box `mortal-t1` at `192.168.50.49`, root key auth. `/usr/local/share/rk35xx/repo` was an rsync
+  tree from `rk35xx-deploy`, not a git checkout, so `--pull` takes the `rm -rf` + `clone` branch and
+  the installed updater still carried sormy's URL. Snapshotted first:
+  `/root/repo-rsync-20261003-094003.tar.gz` (32 MB).
+- Installed updater vs repo copy: `diff` = line 43 only, no drift.
+- `git ls-remote` from the box returned `deab340` before anything was deleted.
+- `rk35xx-update --pull` → **rc 0**; origin `enoshei-beep/rk35xx-tvbox-armbian`, HEAD `deab340`;
+  `board.dtb` `8e11307b…` unchanged → no reboot, uptime continuous.
+- `[2/6]` logged `dkms: not found` and continued — **`dkms` was not installed**: `dpkg-query` → _no
+  packages found matching dkms_, no `/usr/sbin/dkms`, `PATH` normal. The `.ko` was built 09-29
+  10:47, so the tooling worked then. `apt/history.log` has no `dkms` line and `dpkg.log` now spans
+  only 10-02 21:04–21:05, so the install record is unrecoverable — same shape as §7's zeroed logs.
+- Found with it: `v4l2loopback` had no package, no `/usr/src` tree, no `.ko`, no
+  `/etc/modules-load.d/v4l2loopback.conf` — nothing in `dpkg` either, while `board.md` claimed it
+  loaded every boot.
+- IR was unaffected throughout: `event9` = `ffa90030.pwm`, `platform-ffa90030.pwm-event` symlink,
+  IRQ 27 present, module loaded.
+- Both fixes `--no-upgrade`, 0 upgraded:
+  - `apt-get install --no-upgrade dkms` → 3.2.2-1~deb13u1, sole install, no dependencies.
+  - `apt-get install --no-upgrade v4l2loopback-dkms` → 0.15.0-2, built for `6.1.115-vendor-rk35xx`.
+- `rk35xx-update --pull --no-reboot` → rc 0; `[2/6]` now runs the full
+  `dkms add → build → install → depmod`. `dkms status` = both modules `installed`; `.ko` rebuilt
+  10-03 09:49.
+- `/etc/modules-load.d/v4l2loopback.conf` recreated — §8's box-side file, in no payload.
+- `/dev/video0` is the loopback's dummy node as in §8; `/dev/mpp_service` (240, 0) untouched, so the
+  codec and playback numbers stand.
+- Both update paths re-verified: `rk35xx-deploy` (§8) and `rk35xx-update --pull` (here).
+- Not verified: an actual IR keypress — IRQ 27 sat at 7 across samples taken with no key held.
