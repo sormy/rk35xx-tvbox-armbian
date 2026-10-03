@@ -40,7 +40,7 @@ if [ -z "$BOARD" ]; then
   fi
 fi
 
-REPO_URL=https://github.com/sormy/rk35xx-tvbox-armbian
+REPO_URL=https://github.com/enoshei-beep/rk35xx-tvbox-armbian
 SELF="$(cd "$(dirname "$0")" && pwd)"
 if [ "$PULL" = 1 ]; then
   # pull in place when we're already in a checkout; otherwise clone beside the board's identity dir

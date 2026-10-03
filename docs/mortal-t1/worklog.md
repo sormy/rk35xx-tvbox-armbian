@@ -641,3 +641,17 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
 - eMMC boot: SD out → new `boot_id 24f892fd…`, root `/dev/mmcblk2p1`, no `mmcblk0` in lsblk at all.
   Hotplug cycle in dmesg: insert 206 s, remove 575 s, reinsert 695 s — the card returns as `mmcblk1`
   while the SD is absent (numbering shifts, as `AGENTS.md` warns), root stayed on eMMC throughout.
+
+## 23. `--pull` retargeted at the fork — the URL, not the mechanism (2026-10-03)
+
+- §8's `unknown board 'mortal-t1'` rc=1 had a second cause beyond the T1 being unpushed:
+  `rk35xx-update` line 43 hardcoded `REPO_URL=…/sormy/rk35xx-tvbox-armbian`, so `--pull` cloned a
+  tree with no `firmware/mortal-t1/` regardless of what this repo held. The T1 was pushed to
+  `enoshei-beep/rk35xx-tvbox-armbian` (local `main` = `8974fb1` = the fork's `main`, 125 commits).
+- `REPO_URL` retargeted to the fork. Lines 49/59 `remote set-url origin "$REPO_URL"` re-point the
+  clone on every pull — that mechanism is deliberate (`docs/h96max-h313/worklog.md`, rename
+  readiness) and is unchanged; only the value was wrong.
+- Affects all four boards: `--pull` now fetches this tree, so sibling boxes receive this repo's
+  `firmware/<board>/` rather than upstream's. `rk35xx-deploy` never reads `REPO_URL` and is
+  unaffected.
+- Not yet run on a box ❓ — `board.md`'s "Both update paths" row keeps its prior evidence.
