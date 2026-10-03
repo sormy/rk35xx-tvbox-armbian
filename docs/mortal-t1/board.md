@@ -448,20 +448,32 @@ Neither package is on the box since 2026-10-02 — removed, user decision; the r
 
 ### Tolerated dmesg lines
 
-| Line                                                                 | Per boot | Why                                            |
-| -------------------------------------------------------------------- | :------: | ---------------------------------------------- |
-| `Cannot find any crtc or sizes`                                      |    2     | before the first mode is set                   |
-| `Looking up …-supply failed` / `could not add device link … -ENOENT` |   many   | optional supplies absent in the stock tree     |
-| `optee … -22`, `scmi protocol 17/22 not active`, `DMI not present`   |  1 each  | not fitted / unused                            |
-| `rkvdec2 clk_get … failed`, `rkvenc devfreq`, `vop2 opp info`        |  1 each  | optional clks/devfreq; codecs measured working |
-| `[BT_RFKILL] clk_get failed`, `usb2phy IRQ index 0 not found`        |  1 each  | optional; BT and USB work                      |
-| `bpf-restrict-fs: Failed to link`                                    |    1     | BPF LSM not in this kernel                     |
-| `vop2 … primary plane phy id: INVALID[-1]`                           |   bind   | planes attach later; display works             |
+| Line                                                                 | Count  | Why                                                                |
+| -------------------------------------------------------------------- | :----: | ------------------------------------------------------------------ |
+| `Cannot find any crtc or sizes`                                      |   2    | before the first mode is set                                       |
+| `Looking up …-supply failed` / `could not add device link … -ENOENT` |  many  | optional supplies absent in the stock tree                         |
+| `optee … -22`, `scmi protocol 17/22 not active`, `DMI not present`   | 1 each | not fitted / unused                                                |
+| `rkvdec2 clk_get … failed`, `rkvenc devfreq`, `vop2 opp info`        | 1 each | optional clks/devfreq; codecs measured working                     |
+| `[BT_RFKILL] clk_get failed`, `usb2phy IRQ index 0 not found`        | 1 each | optional; BT and USB work                                          |
+| `bpf-restrict-fs: Failed to link`                                    |   1    | BPF LSM not in this kernel                                         |
+| `vop2 … primary plane phy id: INVALID[-1]`                           |  bind  | planes attach later; display works                                 |
+| `rockchip_drm_dclk_round_rate … may be NULL`                         |   64   | unclockable modes — `todo/rk35xx-hdmi-modes.md`                    |
+| AIC8800 progress (`aicbsp` · `rwnx_*` · `AICWFDBG` · `done=1 …`)     |   70   | one vendor driver at err/warn — `todo/rk35xx-boot-log.md`          |
+| `Bluetooth: hci0: …`, four bursts                                    |   13   | `rk35xx-update` restarting `rk35xx-bt` — `todo/rk35xx-boot-log.md` |
+| `cacheinfo: Unable to detect cache hierarchy …`                      |   8    | this SoC exposes none                                              |
+| `SPI driver inv-icm42600-spi has no spi_device_id …`                 |   4    | not our hardware                                                   |
+| `dwmmc_rockchip … No normal/idle pinctrl state`                      |   4    | optional states absent                                             |
+| regdb `CAUTION: … PERMISSIVE CUSTOM REGULATORY RULES`                |   3    | Armbian's own regdb, printed at err                                |
 
-Nothing else repeats at any level; systemd's per-target "skipped" notices repeat by design.
+Counted 2026-10-03 at 2 h 07 uptime: 1048 lines, 207 err/warn, 38 err — the cleanest of the three
+boxes in `todo/rk35xx-boot-log.md`. The growing rows (dclk, AIC8800, Bluetooth) keep accumulating
+after boot; everything else is fixed at boot. systemd's per-target "skipped" notices repeat by
+design.
 
 ### Open
 
+- `[drm] failed to init overlay plane Esmart1-win0/win1` — 4× at 6.06 s, unexplained. The primary
+  plane drives the display and 4K is verified, so nothing visible is broken.
 - Console garble: dirty SD card, caused by a faulty card reader (user-confirmed, worklog §6).
 - `h96max-3518d/board.md` "AVS2 357 fps" has no worklog provenance — flagged, not inherited here.
 - `armbian-led-state.service` fails at boot: Armbian's restore (`armbian-bsp-cli`) exits on its own

@@ -64,6 +64,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
     remains, each board's `dtb.md`, and `upstream/h96max-3518d/header.dts`, which contrasts itself
     with the ZX.
   - Verify on each box: the serial login prompt, and a boot log with no new errors.
+- [ ] **Stop `rk35xx-update` churning `rk35xx-bt`.** Step `[5/6]` `try-restart`s it on every run
+      (`BOARD_UPDATE_TRY_RESTART`, R69 and the T1), and each restart drops the UART line discipline
+      while `hci0` still has a command in flight — 13 err-level lines per four runs on the T1.
+      Restart only when the unit's bytes changed, or take `hci0` down before the detach.
+      `docs/todo/rk35xx-boot-log.md` has the sequence.
 - [ ] **Clean the live M20:** drop `mt7668_patch_e1_hdr.bin`, `TxPwrLimit_MT76x8.dat` and
       `BT_RAM_CODE_MT7668_1_1_hdr.bin` from `/lib/firmware/mediatek`, which nothing reads.
 - [ ] **Settle the R69's AV jack.** `docs/r69/worklog.md` §8 lists `analog AV audio` among the
