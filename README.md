@@ -43,42 +43,42 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 | Hardware                                    | R69 | H96 Max H313 | H96 Max 3518D | Mortal T1 |
 | ------------------------------------------- | :-: | :----------: | :-----------: | :-------- |
 | **Storage**                                 |     |              |               |           |
-| eMMC — boot and rootfs                      | ✅  |      ✅      |      ✅       | ❓        |
+| eMMC — boot and rootfs                      | ✅  |      ✅      |      ✅       | ✅        |
 | microSD — boot and rootfs                   | ✅  |      ✅      |      ➖       | ✅        |
-| microSD hotplug                             | 🟡  |      🟡      |      ➖       | ❓        |
+| microSD hotplug                             | 🟡  |      🟡      |      ➖       | ✅        |
 | microSD SDR104 (UHS)                        | ✅  |      ❌      |      ➖       | ❌        |
 | USB 2.0                                     | ✅  |      ✅      |      ✅       | ✅        |
-| USB 3.0 — 5 Gbps, `uas`                     | ✅  |      ✅      |      ➖       | ❓        |
+| USB 3.0 — 5 Gbps, `uas`                     | ✅  |      ✅      |      ➖       | ✅        |
 | **Network**                                 |     |              |               |           |
 | Ethernet 10/100                             | ✅  |      ✅      |      ➖       | ➖        |
 | Wi-Fi 2.4 GHz                               | ✅  |      ✅      |      ✅       | ✅        |
 | Wi-Fi 5 GHz                                 | ✅  |      ✅      |      ✅       | ✅        |
 | Bluetooth                                   | ✅  |      ✅      |      ✅       | ✅        |
 | **Display and video**                       |     |              |               |           |
-| HDMI video                                  | ✅  |      ✅      |      ✅       | ❓        |
-| HDMI audio                                  | ✅  |      ✅      |      ✅       | ❓        |
-| HDMI EDID mode list                         | 🟡  |      🟡      |      ✅       | ❓        |
-| HDMI hotplug re-detect                      | 🟡  |      🟡      |      ✅       | ❓        |
-| HDMI 4K60                                   | 🟡  |      🟡      |      ✅       | ❓        |
-| HDMI-CEC                                    | 🟡  |      🟡      |      ✅       | ❓        |
+| HDMI video                                  | ✅  |      ✅      |      ✅       | ✅        |
+| HDMI audio                                  | ✅  |      ✅      |      ✅       | ✅        |
+| HDMI EDID mode list                         | 🟡  |      🟡      |      ✅       | ✅        |
+| HDMI hotplug re-detect                      | 🟡  |      🟡      |      ✅       | ✅        |
+| HDMI 4K60                                   | 🟡  |      🟡      |      ✅       | ✅        |
+| HDMI-CEC                                    | 🟡  |      🟡      |      ✅       | ❌        |
 | AV jack — composite video and audio         | 🟡  |      🟡      |      ➖       | ➖        |
 | GPU — Mali-450 under lima                   | ✅  |      ✅      |      ✅       | ✅        |
 | Decode H.264 · HEVC · VP9 · MJPEG, to 8K    | ✅  |      ✅      |      ✅       | ✅        |
 | Decode MPEG-2 · MPEG-4 · VP8 · H.263, 1080p | ✅  |      ✅      |      ✅       | ✅        |
 | Encode HEVC · MJPEG · H.264, to 8K          | ✅  |      ✅      |      ✅       | ✅        |
 | **Input and indicators**                    |     |              |               |           |
-| Bundled remote over IR                      | ✅  |      ✅      |      ➖       | ❓        |
-| Bundled remote over Bluetooth, air-mouse    | ✅  |      ✅      |      ✅       | ❓        |
-| Remote voice mic                            | 🟡  |      🟡      |      🟡       | ❓        |
+| Bundled remote over IR                      | ✅  |      ✅      |      ➖       | ✅        |
+| Bundled remote over Bluetooth, air-mouse    | ✅  |      ✅      |      ✅       | ✅        |
+| Remote voice mic                            | 🟡  |      🟡      |      🟡       | 🟡        |
 | IR-extender jack                            | 🟡  |      ➖      |      ➖       | ➖        |
-| Recovery button → Maskrom                   | ✅  |      ✅      |      ✅       | ❓        |
-| Power button on the remote                  | ✅  |      ✅      |      ✅       | ❓        |
-| Front LEDs                                  | ✅  |      ✅      |      ✅       | ❓        |
+| Recovery button → Maskrom                   | ✅  |      ✅      |      ✅       | ❌        |
+| Power button on the remote                  | ✅  |      ✅      |      ✅       | ➖        |
+| Front LEDs                                  | ✅  |      ✅      |      ✅       | ✅        |
 | **Power and recovery**                      |     |              |               |           |
-| Sleep/Wake from Remote                      | ✅  |      ✅      |      ❌       | ❓        |
+| Sleep/Wake from Remote                      | ✅  |      ✅      |      ❌       | ✅        |
 | Hardware watchdog                           | ✅  |      ✅      |      ✅       | ✅        |
 | Serial console                              | ✅  |      ✅      |      ✅       | ❓        |
-| Maskrom recovery over USB                   | ✅  |      ✅      |      ✅       | 🟡        |
+| Maskrom recovery over USB                   | ✅  |      ✅      |      ✅       | ✅        |
 
 ## Build
 
