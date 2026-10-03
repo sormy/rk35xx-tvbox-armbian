@@ -66,6 +66,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
   - Verify on each box: the serial login prompt, and a boot log with no new errors.
 - [ ] **Clean the live M20:** drop `mt7668_patch_e1_hdr.bin`, `TxPwrLimit_MT76x8.dat` and
       `BT_RAM_CODE_MT7668_1_1_hdr.bin` from `/lib/firmware/mediatek`, which nothing reads.
+- [ ] **Settle the R69's AV jack.** `docs/r69/worklog.md` §8 lists `analog AV audio` among the
+      things verified over SSH; `docs/h96max-h313/worklog.md` says AV audio and composite video are
+      untested on both boards. The README row keeps 🟡 until they agree — no doc claims composite
+      video on any board.
 
 ## Bigger todos
 

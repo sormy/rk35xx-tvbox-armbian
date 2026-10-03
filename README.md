@@ -46,7 +46,7 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 | eMMC — boot and rootfs                      | ✅  |      ✅      |      ✅       | ✅        |
 | microSD — boot and rootfs                   | ✅  |      ✅      |      ➖       | ✅        |
 | microSD hotplug                             | 🟡  |      🟡      |      ➖       | ✅        |
-| microSD SDR104 (UHS)                        | ✅  |      ❌      |      ➖       | ❌        |
+| microSD SDR104 (UHS)                        | ❌  |      ❌      |      ➖       | ❌        |
 | USB 2.0                                     | ✅  |      ✅      |      ✅       | ✅        |
 | USB 3.0 — 5 Gbps, `uas`                     | ✅  |      ✅      |      ➖       | ✅        |
 | **Network**                                 |     |              |               |           |
@@ -61,7 +61,7 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 | HDMI hotplug re-detect                      | 🟡  |      🟡      |      ✅       | ✅        |
 | HDMI 4K60                                   | 🟡  |      🟡      |      ✅       | ✅        |
 | HDMI-CEC                                    | 🟡  |      🟡      |      ✅       | ❌        |
-| AV jack — composite video and audio         | 🟡  |      🟡      |      ➖       | ➖        |
+| AV jack — composite video and audio         | 🟡  |      ❓      |      ➖       | ➖        |
 | GPU — Mali-450 under lima                   | ✅  |      ✅      |      ✅       | ✅        |
 | Decode H.264 · HEVC · VP9 · MJPEG, to 8K    | ✅  |      ✅      |      ✅       | ✅        |
 | Decode MPEG-2 · MPEG-4 · VP8 · H.263, 1080p | ✅  |      ✅      |      ✅       | ✅        |
@@ -70,9 +70,9 @@ bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. No
 | Bundled remote over IR                      | ✅  |      ✅      |      ➖       | ✅        |
 | Bundled remote over Bluetooth, air-mouse    | ✅  |      ✅      |      ✅       | ✅        |
 | Remote voice mic                            | 🟡  |      🟡      |      🟡       | 🟡        |
-| IR-extender jack                            | 🟡  |      ➖      |      ➖       | ➖        |
+| IR-extender jack                            | ❓  |      ➖      |      ➖       | ➖        |
 | Recovery button → Maskrom                   | ✅  |      ✅      |      ✅       | ❌        |
-| Power button on the remote                  | ✅  |      ✅      |      ✅       | ➖        |
+| Power button on the remote                  | ✅  |      ✅      |      ❌       | ➖        |
 | Front LEDs                                  | ✅  |      ✅      |      ✅       | ✅        |
 | **Power and recovery**                      |     |              |               |           |
 | Sleep/Wake from Remote                      | ✅  |      ✅      |      ❌       | ✅        |
