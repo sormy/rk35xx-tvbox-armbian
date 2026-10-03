@@ -686,7 +686,10 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
 - `/dev/video0` is the loopback's dummy node as in §8; `/dev/mpp_service` (240, 0) untouched, so the
   §8 codec matrix stands. §20's playback path does not — `jellyfin-ffmpeg7` is gone, §25.
 - Both update paths re-verified: `rk35xx-deploy` (§8) and `rk35xx-update --pull` (here).
-- Not verified: an actual IR keypress — IRQ 27 sat at 7 across samples taken with no key held.
+- IR keypress verified 2026-10-03 10:11: `evtest /dev/input/event9` decoded `KEY_POWER` (116);
+  logind logged `Power key pressed short` → `PM: suspend entry (deep)` → `suspend exit` 7 s later;
+  IRQ 27 CPU1 7 → 19 (+12); uptime continuous, no reboot. Matches `board.md`'s table (`f7` → `74` →
+  `KEY_POWER`). Sample IRQ 27's **CPU1 column** — CPU0 never moves.
 
 ## 25. The window §24 could not see — an undocumented reinstall, two packages gone (2026-10-03)
 
