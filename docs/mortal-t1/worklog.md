@@ -784,3 +784,39 @@ real, the migration spliced byte-exact, the box booted from eMMC with the SD out
   root on `twilight`'s clone fails `dubious ownership` — read as the owner; and `-c copy -f data`
   from an mp4 emits length-prefixed AVCC — zero IRQs, no fps line, which reads exactly like dead
   hardware (the `-bsf:v h264_mp4toannexb` trap is now in `mpp.md`).
+
+## 28. Kodi across both unknowns — the plane split, and the binary that was missing (2026-10-03)
+
+- Provenance first: no repo carries `kodi-rockchip-gbm` (`apt-cache policy` empty), and the deb did
+  not survive the 10-02 purge — only its version did: `20261001-1630-kodi-master-ffmpeg-81rkmpp`,
+  release tag `20261001-1630` of `armsurvivors/kodi-rockchip-deb`, trixie asset, 149 MB, fetched to
+  `/root/`. §25 called that purge "§9's Debian kodi" — two packages: Debian's `kodi 21.2` (§9) and
+  this one, which the Oct 1 rootfs carried and 10-02 removed.
+- Dry-run, then install: `apt-get install -s --no-upgrade ./kodi-rockchip-gbm_…trixie.deb` →
+  `0 upgraded, 37 newly installed, 0 to remove, 68 not upgraded`, no pre-installed package among
+  the 37. Real run rc=0 with the same line. Deploys to `/usr/local`; its display-manager disable
+  found nothing to disable.
+- Unknown #2, linkage: the binary is `/usr/local/lib/kodi/kodi-gbm` and `ldd` shows no dynamic
+  `libav*` — ffmpeg 8.1 is static (`strings` 221 rkmpp hits: `AV_HWDEVICE_TYPE_RKMPP`,
+  `AV_PIX_FMT_DRM_PRIME`), and `/usr/local/bin/ffmpeg -decoders` lists `h264_rkmpp`…`vp9_rkmpp`,
+  `-hwaccels` → `drm`, `rkmpp`. §9's ❌ was Debian's build — wrong binary, not a broken stack.
+- Start gated on the screen: `card0-HDMI-A-1/status` polled 2 s — `disconnected` → `connected`
+  12:50:32 → `systemctl start kodi`. GBM took DRM master (`FindConnector HDMI-A-1`, gui plane id:57
+  AR24), `GL_RENDERER = Mali450`, then "Running the application...".
+- Unknown #1, at first playback:
+  `FindVideoAndGuiPlane(): Using gui plane [1280x720] id:57, video plane [3840x2160] id:73 on crtc id:89 for video format:NV12, video modifier:LINEAR`
+  — the split `kmssink` never managed. Per frame: `ffmpeg[hevc_rkmpp]: Received a frame` /
+  `Wrote 81499 bytes to decoder`; rkvdec IRQs moved in every window (628 / 8 s mid-play, 142 / 4 s).
+- Test: 4K60 HEVC `testsrc2`, 15 s, encoded on the box (`hevc_rkmpp`) to `/root/clip-4k60.mp4` (74
+  MB, kept), played over JSON-RPC `127.0.0.1:9090` (`Player.Open` → `OK`, repeated). Human verdict
+  on the TV: picture present, smooth, sharp. `systemctl enable kodi` afterwards.
+- Display context: that TV's EDID advertises no mode above `1920x1080` and the CRTC ran
+  `1280x720 @ 60` — the 4K frames decode and are VOP2-scaled, so "sharp" is not 4K output.
+- Not published: every CPU figure. kodi's debug logging flooded journald
+  (`Suppressed 9231 messages`, ~11 k over the session) — log-derived frame counts undercount and CPU
+  readings (109 % playing, 49 % idle) are inflated; no logging-off re-measure was run. Wrong turns
+  kept: the first CPU/IRQ window outlived the 15 s clip (read post-`OnStop`), and `MainPID` names
+  the wrapper shell — `kodi-gbm` is the child.
+- Still open here: home-share playback inside Kodi, GUI at 1080p (CRTC never left 720p), remote, CEC
+  and HDMI audio re-checked on this build — the board.md audio/remote rows still describe the Debian
+  kodi.

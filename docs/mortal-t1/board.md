@@ -373,14 +373,18 @@ reaches logind as instant → short → suspend.
 | HDMI audio + default sink    |  ✅  | card 0 `rockchiphdmi` only; heard in Kodi on the Toshiba |
 | CEC traffic                  |  ❌  | no ACK (Sharp, Prism+); `Tx, Not Acknowledged (4)`       |
 | kmscube on screen            |  ✅  | 50.002 fps                                               |
-| Kodi 21.2 GBM on screen      |  ✅  | DRM master, `GL_RENDERER = Mali450`                      |
-| Kodi hwdec                   |  ❌  | vaapi/mediacodec only; libva `-1`                        |
+| Kodi 21.2 GBM on screen      |  ✅  | Debian build, 2026-09-29; DRM master, `Mali450`          |
+| Kodi hwdec (Debian build)    |  ❌  | vaapi/mediacodec only; libva `-1`, 2026-09-29            |
+| Kodi 23 GBM on screen        |  ✅  | rkmpp build, 2026-10-03; `GL_RENDERER = Mali450`         |
+| Kodi hwdec + zero-copy plane |  ✅  | 2026-10-03: `hevc_rkmpp` → video plane 73; smooth, sharp |
 | AV jack                      |  ➖  | not fitted                                               |
 
-Kodi: `kodi --standalone` as root; no autostart, no unit. Debian's build carries no rkmpp/v4l2
-backend, so Kodi and mpv decode in software — hw decode lives in `jellyfin-ffmpeg7` (codec section).
-Neither package is on the box since 2026-10-02 — removed, user decision; the rows above describe the
-2026-09-28 – 30 install.
+Kodi: `kodi-rockchip-gbm` (armsurvivors, static ffmpeg 8.1 rkmpp) since 2026-10-03, unit enabled at
+boot, JSON-RPC on `127.0.0.1:9090`; GBM splits gui plane 57 from video plane 73 `[3840x2160]` NV12 —
+human-confirmed smooth and sharp on a 1080p-max TV (CRTC `1280x720@60`, so 4K frames decode then
+VOP2-scale). `jellyfin-ffmpeg7` still absent — removed 10-02, user decision. The Debian-build rows
+are the 2026-09-29 install: that binary links Debian's ffmpeg, no rkmpp. CPU figures withheld — kodi
+debug logging flooded journald (~11 k suppressed).
 
 ### Video codec
 

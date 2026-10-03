@@ -2,7 +2,8 @@
 
 One stick, HDMI into whatever screen is to hand, everything else over Wi-Fi. Opened 2026-09-12.
 Measured on the H96 Max 3518D; `docs/h96max-3518d/board.md` is what that **board** still needs, this
-is what the **stack** needs. None of it is built yet.
+is what the **stack** needs. Steps 1–2 of the build order landed 2026-10-03 (T1); the rest is
+unbuilt.
 
 ## The capabilities, against what is measured
 
@@ -14,7 +15,7 @@ is what the **stack** needs. None of it is built yet.
 | Box drives the TV                 |  🟡   | transmit ✅; nothing sends One Touch Play or Standby        |
 | Volume keys reach the TV          |  ❓   | CEC passthrough; today they would move ALSA instead         |
 | **Playback**                      |       |                                                             |
-| Kodi, from a home share           |  ❓   | decoders exist; no player here does zero-copy KMS           |
+| Kodi, from a home share           |  🟡   | zero-copy plane ✅ T1 2026-10-03; share path ❓             |
 | YouTube on a Premium account      |  ❓   | VP9 ✅ 364 fps @1080p; addon login never tried              |
 | Play from a USB stick             |  ✅   | 35.1 MB/s — if the stick is in before power                 |
 | Hot-plugging that stick           |  ❌   | the 5 V rail cannot absorb the inrush; the box resets       |
@@ -37,10 +38,11 @@ is what the **stack** needs. None of it is built yet.
 
 ## What decides the design
 
-**The display path is the ceiling, and it is one fix.** 4K HEVC decodes at 51 fps and reaches the
+**The display path is the ceiling, and it is crossed.** 4K HEVC decodes at 51 fps and reaches the
 screen at 27, because every frame is a full-frame copy into `/dev/fb0`. A DRM-prime frame handed
-straight to a VOP2 overlay plane is what Kodi, AirPlay mirroring and Remote Play all need, and no
-packaged player does it here. Five rows above move together the day it works.
+straight to a VOP2 overlay plane is what Kodi, AirPlay mirroring and Remote Play all need — Kodi
+takes that path on the T1 (`kodi-rockchip-gbm`, gui plane 57 + video plane 73 NV12, human-confirmed
+2026-10-03). ❓ every other consumer: the GStreamer chain below is what `uxplay` would inherit.
 
 **There is no `/dev/video*`.** The vendor kernel ships `CONFIG_ROCKCHIP_MPP_SERVICE`, so the decoder
 speaks the MPP ABI on `/dev/mpp_service` and nothing binds `h264_v4l2m2m`. Any player must reach MPP
@@ -93,10 +95,13 @@ for the same clip down `hwdownload` + `fbdev`. 4K60 has headroom once nothing co
 `gst_video_decoder_negotiate_default` with width 0 — H.264 and HEVC, parsed or via `decodebin`. MPP
 opens each stream first and ffmpeg decodes at 110 fps, so it is the plugin, not the hardware.
 
-**Then the player.** Kodi in **GBM mode** has a DRMPRIME renderer that hands the frame straight to a
-plane, GUI still on lima. It needs an ffmpeg carrying `rkmpp`, and **Debian's Kodi links Debian's
-ffmpeg, which has none** — `jellyfin-ffmpeg7` proves the decoders work here but is a separate
-binary. That is the one unproven link. Two sources, neither tried:
+**Then the player — proven 2026-10-03 (T1).** Kodi in **GBM mode** has a DRMPRIME renderer that
+hands the frame straight to a plane, GUI still on lima. It needs an ffmpeg carrying `rkmpp`, and
+**Debian's Kodi links Debian's ffmpeg, which has none** — that is why §9 measured hwdec ❌.
+`kodi-rockchip-gbm` (armsurvivors) closes the link: static ffmpeg 8.1 rkmpp, so no system libavcodec
+can win; `hevc_rkmpp` decodes, plane split `gui 57 / video 73 NV12`, human-confirmed smooth — unit
+enabled at boot on the T1. Still ❓ on this doc's own board: the 3518D has not run it, and the
+home-share path has not been played through it. Two other routes, still untried:
 
 - **Armbian's `rockchip-multimedia` repo**, packaging Kodi and GStreamer against the vendor MPP
   stack. ❓ whether it carries an RK3528 build and runs GBM on lima — the community builds around it
@@ -161,10 +166,11 @@ observed acting on power and OK — a CEC standby and an IR power press can undo
 ## Kodi and YouTube
 
 Kodi is the fit: hardware decode, a UI a D-pad can drive, USB browsing, a UPnP renderer, and addons
-for Plex, Jellyfin and YouTube in one process. Unknown is whether it renders here at all.
+for Plex, Jellyfin and YouTube in one process. It renders — measured on the T1 2026-10-03.
 
-- GUI at 1080p, 4K left to the video plane — ❓ whether Kodi's GBM renderer splits it that way on
-  this VOP.
+- Video plane split ✅ on the T1: gui plane 57 [1280x720] + video plane 73 [3840x2160] NV12,
+  `hevc_rkmpp`, smooth and sharp human-confirmed. ❓ GUI at 1080p — the run sat at `1280x720@60` on
+  a 1080p-max TV, and the 3518D has not run this build.
 - **YouTube:** the addon signs in with a personal account, Premium removes the ads. Pin it to VP9 —
   AV1 has no hardware here and software AV1 is 40.6 fps with all four cores pegged.
 - **From home:** a 4K remux is ~80 Mbit/s against 185–206 Mbit/s measured on 5 GHz. It fits, but the
@@ -233,8 +239,8 @@ point, and this is the only input device the board has.
 
 | #   | Step                                        | Unblocks                      |
 | --- | ------------------------------------------- | ----------------------------- |
-| 1   | Zero-copy KMS video path                    | Kodi, AirPlay video, Chiaki   |
-| 2   | Kodi on GBM, GUI at 1080p                   | everything with a UI          |
+| 1   | Zero-copy KMS video path ✅ T1 2026-10-03   | Kodi, AirPlay video, Chiaki   |
+| 2   | Kodi on GBM ✅ T1 (GUI res still ❓)        | everything with a UI          |
 | 3   | CEC: One Touch Play, Standby, TV remote in  | the remote experience         |
 | 4   | YouTube addon, Premium login, pinned to VP9 | the most-used source          |
 | 5   | Powered hub                                 | flash playback, port count    |
