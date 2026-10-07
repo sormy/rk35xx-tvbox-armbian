@@ -73,6 +73,10 @@ another, so nothing rots when one is rewritten.
 | `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete  |
 | `patches/linux-rockchip/README.md`    | the kernel fixes and their PRs; why an overlay box cannot apply them  |
 | `patches/seekwave-swt6621s/README.md` | the H96 Max Wi-Fi driver patches and their PRs                        |
+| `patches/mt76-mt7668/README.md`       | mainline mt76 for the MT7668S: what it does, its gaps, its firmware   |
+| `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, shipped as DKMS                   |
+| `patches/mt76x8-mt7668/README.md`     | the vendor MT7668 driver on 6.18: the fallback, not shipped           |
+| `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds                |
 
 # Standing rules
 
