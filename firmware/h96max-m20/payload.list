@@ -13,6 +13,12 @@
 0644 h96max-m20/mt7668/WIFI_RAM_CODE2_SDIO_MT7668.bin /lib/firmware/mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin
 0644 h96max-m20/mt7668/EEPROM_MT7668.bin              /lib/firmware/mediatek/EEPROM_MT7668.bin
 
+# DKMS builds - first boot, updates, kernel upgrades - on two cores
+0644 h96max-m20/rk35xx-dkms-jobs.conf /etc/dkms/framework.conf.d/rk35xx-jobs.conf
+
+# hardware watchdog: systemd pings it, the SoC resets the box if it stops
+0644 common/rk35xx-watchdog.conf     /etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf
+
 # login-banner board name (reads /usr/local/share/rk35xx/board-name)
 0755 common/rk35xx-boardname         /usr/local/sbin/rk35xx-boardname
 0644 common/rk35xx-boardname.apt     /etc/apt/apt.conf.d/99-rk35xx-boardname

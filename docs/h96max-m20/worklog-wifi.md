@@ -3060,3 +3060,106 @@ Backup replaced first: `.bak/2026-09-25-swept/`.
 - Forced to one stream, the phy advertises antennas `0x1` and HT MCS 0-7, and the firmware takes one
   stream with path 1 on 2.4 GHz and path 0 on 5 GHz. 2.4 GHz halves, as one stream at 20 MHz should;
   5 GHz does not, one stream at 80 MHz still outrunning the sdio bus.
+
+## 2026-10-01 — a firmware assert on joining a second access point
+
+- A full validation pass after a deploy saw the combo firmware dump its core twice, each time taking
+  Bluetooth down with it (`hci0: command tx timeout`) and leaving mt76 unable to reload without a
+  host cycle: `firmware did not power down`, then `probe … failed with error -110`.
+- Patch `0002` of `btmtksdio-mt7668` drops the dump. A throwaway build printing its first 40 packets
+  as text caught the assert:
+
+      <ASSERT> wifi_uni_mac_7668/mgmt/ar.c #6368 - 0x0, 0x0, 0x0, 0x0
+      , id=0x2 WIFI, isr=0x0, irq=0x2
+
+  `ar.c` is the firmware's auto-rate module, so this is not the credit assert of 2026-09-24.
+
+- The trigger is a second BSS without a reload. The 2.4 and 5 GHz radios of the access point are two
+  BSSIDs:
+
+| Sequence                            | First 5 GHz upload | Dumps  |
+| ----------------------------------- | ------------------ | ------ |
+| 2.4 GHz, then 5 GHz                 | 0 Mbit/s           | 3 of 3 |
+| 2.4 GHz, reload, then 5 GHz         | 146-152 Mbit/s     | 0 of 3 |
+| the same, the join deactivating BSS | 0 Mbit/s           | 3 of 3 |
+
+- Every gate before this one reloaded the driver before each join, and the reconnect tests stayed on
+  one access point, so none could have seen it.
+- Ruled out on the way: CPU load, the band itself, and the overnight power cut, which the box had
+  rebooted from hours before the first dump.
+- Found on the way: the first driver to load patches the shared core, and the other finds it patched
+  and skips. mt76 logged `HW/SW Version` on 2 of 23 boots in the journal; on the rest the chip ran
+  Bluetooth's `mt7668pr2h.bin` from `firmware-mediatek`, a `7668_trunk` build of 2018-05-17, under
+  RAM code from the `mp2_1801` branch. The stock `mt7668_patch_e2_hdr.bin` is `mp2_1802`,
+  2019-01-06. Installed as `/lib/firmware/updates/mediatek/mt7668pr2h.bin`, both drivers load the
+  stock one and Bluetooth works on it, but the assert came back in round 1, so it was not the cause.
+  Reverted.
+- A test script stopped on the dump before removing its `192.168.1.0/24` route on `wlan0`, and the
+  box answered nothing on `eth0` until power-cycled. The watchdog did not fire because nothing hung.
+
+## 2026-10-06 — the second-BSS assert, narrowed; the patch race
+
+- The trigger, measured with a reload before each case, two rounds each:
+
+| Sequence                                   | Dumps  |
+| ------------------------------------------ | ------ |
+| 2.4 GHz, no traffic, then 5 GHz            | 2 of 2 |
+| 5 GHz, full rejoin of the same 5 GHz BSS   | 0 of 2 |
+| 5 GHz, then 2.4 GHz                        | 2 of 2 |
+| 2.4 GHz, interface down and up, then 5 GHz | 2 of 2 |
+
+- So it needs only an association with another BSS since the firmware loaded; traffic on the old
+  one, the direction and mt76's interface state do not matter, and only a firmware reload clears it.
+- MediaTek's driver, traced with kprobes on `wlanSendSetQueryCmd`, makes the same move and carries
+  149 Mbit/s with no assert. Our two 5 GHz joins, after a switch and after a reload, send the same
+  commands with the same payloads and the same transmit descriptors.
+- Each tried alone against the switch, 3 of 3 still asserting:
+  - no write of the MU group registers on a disconnect - mt7615 writes six `GID_TAB` registers
+    there, which this firmware owns, but they are not the cause;
+  - a BSS deactivate before the join;
+  - `ROAMING_TRANSIT` abort on leaving, `0x30`;
+  - no stale `SET_BSS_CONNECTED` on a disassociation - `mt7615_mac_set_beacon_filter()` sends one
+    with the old AID whatever its `enable`;
+  - every command the vendor sends and we do not: `INFRASTRUCTURE`, roaming start and abort,
+    `SET_BSS_RLM_PARAM`, the receive filter on leaving;
+  - `ADD_REMOVE_KEY` removing the old keys;
+  - a bare station record ahead of the real one, as the vendor sends.
+- A station on a table entry other than 3 does not join at all.
+- The patch race. Whichever driver loads first downloads the shared core's patch. When mt76 does,
+  Bluetooth logs `Firmware already downloaded` within milliseconds and does not finish setup: `hci0`
+  down on 2 of 2 such boots, and on one of them its WMT command timed out mid-download and took mt76
+  down with it (`Failed to start patch`, `MCU init failed: -11`). Bluetooth won 7 of 8 boots, all
+  clean. Shipping the stock patch under Bluetooth's name does not stop the race; reverted.
+
+## 2026-10-06 — Bluetooth after mt76: fixed
+
+- Forced, the race reproduces every time: unload both, cycle the host, load mt76, load `btmtksdio`
+  0.05-0.6 s later. `Firmware already downloaded`, then `command 0xfc7a tx timeout`, and
+  `hciconfig hci0 up` fails the same way after. Given 4 s instead, Bluetooth sets up in 20 ms.
+- Not the semaphore: the firmware reports the patch done within 0.05 s, so there is no "held" state
+  to wait out. Holding it across the ram code fails too - released after it, the command times out.
+- `0003` waits 2 s when Bluetooth finds the patch already there. Forced: 6 of 6 up, against 0 of 10.
+  Bluetooth first: 2 of 2. Ten reboots with both built by DKMS: 10 of 10, one of them mt76 first
+  (setup 2.0 s).
+- `btmtksdio` had never shipped: it was hand-built into `updates/` on this box. A fresh image would
+  have run the in-tree module, without `0001`. It is now `btmtksdio-mt7668`, fetched and staged like
+  mt76.
+- First boot skipped any DKMS package whose module the kernel also ships, so a fresh image would
+  have built neither. It now skips only a built-in driver; no Rockchip image ships a loadable
+  in-tree copy of its DKMS modules, so their first boot is unchanged.
+
+## 2026-10-06 — the second-BSS assert, worked around
+
+- Ruled out after the morning's list, each 3 of 3 still asserting: the vendor's full command set at
+  once, including its key removal; the new band's rates and phy types in the join's first BSS info;
+  own-mac index 1 as the vendor uses; no spatial extension on data; no transmit status on data,
+  which also cost a third of the throughput; a channel token per request, released after the
+  association; mac80211's flush, which mt7615 lacks; the receive filter a fresh join writes; a 30 s
+  wait.
+- The vendor driver, traced at `kalDevPortWrite` - every byte it sends - makes the same move with no
+  command or descriptor field mt76 lacks for it. The state the assert trips on is the firmware's
+  own.
+- `0013` reloads the Wi-Fi firmware before a join to a BSS other than the last one joined. The
+  Bluetooth function keeps running. Switch 3 of 3 at 136-151 Mbit/s, against 0 of 3; five joins
+  alternating the bands with no reload, all carrying traffic, `hci0` up; the regular gate unchanged,
+  reconnects to the same access point 111-366 ms. A switching join takes 6 s against 5.

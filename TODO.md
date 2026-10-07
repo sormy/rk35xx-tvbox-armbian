@@ -4,16 +4,7 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 ## Open
 
-- [ ] **Rename the installed prefix `rk35xx-` to `tvb-`.** It is SoC-specific and the repo now
-      carries an Amlogic board. Keep a prefix — the files share `/usr/local/sbin`, `udev`, `systemd`
-      and `modprobe.d` with the distro, and the updater prunes by it.
-  - `BOARD_PREFIX` becomes one constant in `firmware/common/`, not a per-board setting.
-  - Rockchip-only pieces keep a Rockchip name: `rockchip-pwm-remotectl-rk35xx`, vendor storage, VPU.
-  - A deployed box migrates through its old `rk35xx-update --pull`: install `tvb-*`, disable the old
-    units, delete `rk35xx-*`, move the known-good DTB out of `/usr/local/share/rk35xx/`.
-  - Rename the repo to `tvbox-armbian` and the `--pull` URL with it.
-  - Test on a box on the old layout: one update, one reboot, one kernel reinstall with the DTB
-    intact.
+- [ ] **Rename the installed prefix `rk35xx-` to `tvb-`.** Design: `docs/todo/tvb-namespace.md`.
 
 - [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`
       mixes the two in one string.
@@ -65,7 +56,8 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
     with the ZX.
   - Verify on each box: the serial login prompt, and a boot log with no new errors.
 - [ ] **Clean the live M20:** drop `mt7668_patch_e1_hdr.bin`, `TxPwrLimit_MT76x8.dat` and
-      `BT_RAM_CODE_MT7668_1_1_hdr.bin` from `/lib/firmware/mediatek`, which nothing reads.
+      `BT_RAM_CODE_MT7668_1_1_hdr.bin` from `/lib/firmware/mediatek`, which nothing reads, and the
+      development `rtnl-watchdog` units and `/root` scratch.
 
 ## Bigger todos
 
@@ -82,3 +74,4 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport |
 | `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset      |
 | `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                          |
+| `docs/todo/tvb-namespace.md`            | the `tvb-` rename and its migration        |

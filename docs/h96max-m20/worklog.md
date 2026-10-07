@@ -1044,3 +1044,29 @@ is sold as.
   a checksum U-Boot verifies (`_verify_dtb_checksum()`: `calc 74a83725, store 74a83725`,
   `total valid 2`): not signed, but an edited copy needs a matching checksum. What BL33 does with an
   invalid DTB is not in the log.
+
+## 2026-10-01 — validation after a deploy
+
+- `rk35xx-deploy` from the host: payload, DKMS rebuild, the tree with its new model string. Rebooted
+  onto it in under a minute.
+- The watchdog was never armed: the payload carried no drop-in, `RuntimeWatchdogUSec=0`. It now
+  ships the Rockchip boards' `zz-rk35xx-watchdog.conf`. The GXBB watchdog counts at 1 kHz into 16
+  bits, a 65.5 s hardware maximum; systemd asks for 80 s and the kernel pings in between:
+  `Watchdog running with a hardware timeout of 1min 20s`.
+- mt76 at boot: the box's development blacklist of `mt7663s` removed, `wpa_supplicant@wlan0`
+  enabled. 18 warm reboots: the driver loads and joins on its own every time, boot 14.1-16.7 s, no
+  failed units. `hci0` read `DOWN` twice at 22 s of uptime and `UP` at 60 s on eight more boots:
+  setup timing, not a failure.
+- USB drive, the fixed `fio` set: 21.3 MiB/s read, 21.1 write, 1842 and 1644 random 4K IOPS; USB 3
+  on a USB 2.0 host behind a hub, `usb-storage`.
+- `btmgmt find` read 0 under `timeout 20`: killed before it flushed its output. Run to completion it
+  finds devices.
+- The Wi-Fi findings of the day are in `worklog-wifi.md`.
+
+## 2026-10-07 — the hang under a build is a machine check
+
+- A DKMS build of mt76 at four jobs took the box down mid-build; the watchdog reset it. ramoops kept
+  the cause: `Kernel panic - not syncing: Asynchronous SError Interrupt` in `cc1`, tainted
+  `MACHINE_CHECK` - an external abort from the memory system under load, not a software fault.
+- Every build that completed here ran two jobs. The payload now caps DKMS at two through
+  `/etc/dkms/framework.conf.d/`, which first boot, `rk35xx-update` and kernel upgrades all read.

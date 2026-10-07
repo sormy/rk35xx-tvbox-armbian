@@ -41,20 +41,27 @@ Kernel 6.18.44, image of 2026-09-17. `fio --direct=1`, `iperf3` to a wired host.
 
 | Measure                     | Value                                      |
 | --------------------------- | ------------------------------------------ |
-| Boot to `graphical.target`  | 16.18 s (6.11 kernel + 10.07 userspace) ✅ |
+| Boot to `graphical.target`  | 14.1-16.7 s over 10 boots, mt76 at boot ✅ |
 | RAM                         | 1954 MB ✅                                 |
 | eMMC sequential read        | 43.3 MiB/s ✅                              |
 | eMMC sequential write       | 32.7 MiB/s ✅                              |
 | eMMC random 4K read         | 2711 IOPS, 10.6 MiB/s ✅                   |
 | eMMC random 4K write        | 3839 IOPS, 15.0 MiB/s ✅                   |
-| USB stick (rootfs) read     | 21.2 MiB/s ✅                              |
-| USB stick (rootfs) write    | 20.8 MiB/s ✅                              |
+| USB drive (rootfs) read     | 21.3 MiB/s ✅                              |
+| USB drive (rootfs) write    | 21.1 MiB/s ✅                              |
+| USB drive random 4K read    | 1842 IOPS ✅                               |
+| USB drive random 4K write   | 1644 IOPS ✅                               |
 | USB throughput (via Gb NIC) | 196 Mbit/s, idle and under 4-core load ✅  |
 | `stress-ng` 4×cpu + 2×vm    | 120 s `--verify`, 6 passed, 0 failed ✅    |
-| Watchdog                    | `/dev/watchdog0`, Meson GXBB, 30 s ✅      |
+| Watchdog                    | systemd 80 s, hardware 65.5 s ✅           |
 
 The eMMC write figures were taken in the last 128 MiB, outside the factory partitions, and the
 region was saved and restored byte-identical afterwards.
+
+The USB drive is USB 3, on this USB 2.0 host at `480M` through a hub, bound to `usb-storage`.
+
+The watchdog counts at 1 kHz into 16 bits, so the hardware stops at 65.5 s; systemd asks for the
+same 80 s as the Rockchip boards and the kernel pings the hardware in between.
 
 **The Ethernet number is a USB measurement.** No Ethernet is fitted, so it is a USB-attached RTL8153
 on a USB 2.0 host that is also serving the rootfs — 196 Mbit/s is the bus, not the NIC.
@@ -207,8 +214,10 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Item                 | State                                                            |
 | -------------------- | ---------------------------------------------------------------- |
 | Wi-Fi, mainline mt76 | ✅ both bands — its gaps in `patches/mt76-mt7668/README.md`      |
+| Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast |
+| Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`      |
 | Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                      |
-| Bluetooth            | ✅ `btmgmt find` discovers devices — needs the `btmtksdio` quirk |
+| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait      |
 | cpufreq              | ❌ no scaling: the tree has no `operating-points-v2`             |
 | Thermal              | ❌ no zones: the vendor tree models the sensor its own way       |
 | VPU power domain     | ❌ `meson_ee_pwrc` wants resets and clocks the vendor node lacks |
@@ -219,9 +228,9 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Button               | ❓ the ADC registers; the key mapping is untested                |
 | Standby LED          | ➖ not fitted on this unit; the node is kept, active low         |
 | Install to eMMC      | ❓ the single-boot image verifies offline; never flashed         |
-| Hang under a build   | ❓ stopped answering twice during a module build; cause unknown  |
+| Panic under a build  | ❌ SError machine check in `cc1` at 4 cores; DKMS limited to 2   |
 | Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot  |
-| mt76 at boot         | ❓ loads by name; autoload at boot never run                     |
+| mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots             |
 | Fresh image          | ❓ rebuilt with the trimmed payload; not booted since            |
 | DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                    |
 | Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3           |

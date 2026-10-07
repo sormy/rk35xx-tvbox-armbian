@@ -38,6 +38,7 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | Ethernet, USB adapter              |     ✅      |
 | Wi-Fi 2.4 GHz — mainline mt76      |     ✅      |
 | Wi-Fi 5 GHz — mainline mt76        |     ✅      |
+| Wi-Fi, another access point — mt76 |     ✅      |
 | Wi-Fi 2.4 GHz — vendor, fallback   |     ✅      |
 | Wi-Fi 5 GHz — vendor, fallback     |     ✅      |
 | Bluetooth                          |     ✅      |
@@ -137,7 +138,7 @@ Writes the image's own regions over the OTG cable; the bootloader and this unit'
 the backup, which must be this box's:
 
 ```sh
-./tools/aml/amlcmd connect                       # hold the button, then plug in the OTG cable
+./tools/aml/amlcmd connect                       # hold the button (may not be needed); plug in OTG
 scripts/aml-emmc-install Armbian_..._-<board>.img backup/<board>/emmc-full.img
 ./tools/aml/amlcmd reset
 ```
@@ -169,7 +170,7 @@ without typing, GND and TX are enough — GND off any metal shield on the board 
 ## Recovery
 
 ```sh
-./tools/aml/amlcmd connect                       # hold the button, then plug in the OTG cable
+./tools/aml/amlcmd connect                       # hold the button (may not be needed); plug in OTG
 ./tools/aml/amlcmd restore backup/<board>/emmc-full.img
 ```
 
