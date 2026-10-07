@@ -28,11 +28,10 @@ for conf in /usr/src/*/dkms.conf; do
   ver=$(sed -n 's/^PACKAGE_VERSION="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$conf")
   [ -n "$name" ] && [ -n "$ver" ] || continue
   dkms status "$name/$ver" 2>/dev/null | grep -q installed && continue
-  # the kernel may already provide this driver, as a module or built in; either way ours cannot
-  # take over the device, and dkms cannot override an unversioned module
+  # a driver built into the kernel holds the device first; one built as a module is overridden,
+  # since dkms installs to updates/
   mod=$(sed -n 's/^BUILT_MODULE_NAME\[0\]="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$conf")
-  if [ -n "$mod" ] && { find "/lib/modules/$(uname -r)/kernel" -name "$mod.ko*" 2>/dev/null | grep -q . \
-       || grep -q "/$mod\.ko" "/lib/modules/$(uname -r)/modules.builtin" 2>/dev/null; }; then
+  if [ -n "$mod" ] && grep -q "/$mod\.ko" "/lib/modules/$(uname -r)/modules.builtin" 2>/dev/null; then
     echo "$name: kernel provides $mod, skipping" >&2
     continue
   fi

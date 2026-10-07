@@ -1,13 +1,14 @@
 # btmtksdio-mt7668 — mainline Bluetooth for the MT7668S
 
-Two patches to mainline's `btmtksdio`, built out of tree against the running kernel. They apply in
-order to the `btmtksdio.c` in Linux 6.18.44. Both apply to chip id `0x7668` alone; the MT7663 and
-MT7921 behave as before.
+Three patches to mainline's `btmtksdio`, built as DKMS against the running kernel. They apply in
+order to the `btmtksdio.c` in Linux 6.18.44. All three apply to chip id `0x7668` alone; the MT7663
+and MT7921 behave as before.
 
 | Patch  | Fixes                                                                   |
 | ------ | ----------------------------------------------------------------------- |
 | `0001` | `hci0` closes again during setup                                        |
 | `0002` | a Wi-Fi firmware core dump logged per packet holds the shared sdio host |
+| `0003` | `hci0` stays down when the Wi-Fi driver loads the shared patch first    |
 
 ## 0001
 
@@ -34,23 +35,37 @@ opening with the vendor event `0xfc6f`. btmtksdio logged each as `Invalid bt typ
 console that starved the Wi-Fi driver until the box hung. MediaTek's own driver drops the type; the
 patch does the same and logs one `firmware core dump` a minute.
 
+## 0003
+
+Whichever driver loads first downloads the patch both functions share. When mt76 does, it loads its
+own ram code for about 0.9 s after, and Bluetooth enabled in that window stops answering:
+
+    Bluetooth: hci0: Firmware already downloaded
+    Bluetooth: hci0: command 0xfc7a tx timeout
+    Bluetooth: hci0: Failed to apply low power setting (-110)
+
+`hciconfig hci0 up` then fails the same way until the part is reset. The patch semaphore cannot gate
+it: mt76 releases it before the ram code, and the running firmware no longer answers it. Found
+patched, Bluetooth waits 2 s before enabling.
+
 ## Build
 
-    curl -O https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/plain/drivers/bluetooth/btmtksdio.c?h=v<ver>
+    firmware/common/fetch-btmtksdio-src.sh <dir>
 
-`btmtk.h` and `hci_uart.h` come from the same directory, `obj-m += btmtksdio.o` is the whole
-Makefile, and `btmtk`'s exports are already in the kernel's `Module.symvers`. Install to
-`/lib/modules/<ver>/updates/` so it wins over the in-tree module.
+stages the source with the patches applied, a Makefile and a `dkms.conf`; a board lists it in
+`BOARD_DKMS_FETCH`. `btmtk`'s exports are already in the kernel's `Module.symvers`, and DKMS
+installs to `updates/`, which wins over the in-tree module.
 
 ## What would have to change before submission
 
 - **The quirk is a blunt instrument.** `HCI_QUIRK_BROKEN_LOCAL_COMMANDS` makes the core treat every
   optional command as absent, not just the one this part gets wrong. A targeted quirk is the right
   shape, and needs a core change this repo cannot carry.
+- **`0003` waits a fixed time.** Bluetooth has no signal that the Wi-Fi ram code is running; one
+  would replace the 2 s with the actual load.
 
 ## Ordering
 
-`btmtksdio` must not probe before the Wi-Fi driver. Function 2 and function 1 share the part's WMT
-path, and a `btmtksdio` that binds first leaves the Wi-Fi side unable to download firmware
-(`Patch status check timeout`). MediaTek's own `install.sh` blacklists it for the same reason. With
-Wi-Fi up first, BT setup drops from 3.2 s to 43 ms because the shared ROM patch is already loaded.
+With mt76 the two load in either order: Bluetooth first, mt76 waits out the held patch semaphore;
+mt76 first, `0003` waits out its ram code. MediaTek's own Wi-Fi driver cannot follow a `btmtksdio`
+that bound first (`Patch status check timeout`), and its `install.sh` blacklists it.

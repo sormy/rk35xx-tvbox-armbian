@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Tue, 6 Oct 2026 12:00:00 -0400
+Subject: [PATCH] Bluetooth: btmtksdio: wait out the MT7668 Wi-Fi firmware
+ load
+
+The MT7668S is a combo part: one patch serves both functions, and
+whichever driver loads first downloads it. When the Wi-Fi driver does,
+it goes on to load its own ram code for about 0.9 s, and Bluetooth
+enabled in that window stops answering: setup sees the patch done, then
+the low power command times out, and every later attempt fails the same
+way until the part is reset.
+
+When the patch is already there, wait for the Wi-Fi load to finish
+before enabling Bluetooth. With the Wi-Fi driver forced to load first,
+Bluetooth comes up 6 times of 6, against 0 of 10 without.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+  drivers/bluetooth/btmtksdio.c |    8 ++++++++
+  1 file changed, 8 insertions(+)
+
+--- a/drivers/bluetooth/btmtksdio.c
++++ b/drivers/bluetooth/btmtksdio.c
+@@ -800,6 +800,9 @@
+ 	return status;
+ }
+ 
++/* the Wi-Fi ram code loads in about 0.9 s after the patch */
++#define MT7668_WIFI_LOAD_MS	2000
++
+ static int mt76xx_setup(struct hci_dev *hdev, const char *fwname)
+ {
+ 	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
+@@ -824,6 +827,11 @@
+ 
+ 	if (status == BTMTK_WMT_PATCH_DONE) {
+ 		bt_dev_info(hdev, "Firmware already downloaded");
++		/* by the MT7668's Wi-Fi function, which loads its own ram code
++		 * next; Bluetooth enabled meanwhile stops answering
++		 */
++		if (bdev->data->chipid == 0x7668)
++			msleep(MT7668_WIFI_LOAD_MS);
+ 		goto ignore_setup_fw;
+ 	}
+ 
