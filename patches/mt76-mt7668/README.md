@@ -21,7 +21,8 @@ register map, connac descriptors and firmware download - whose firmware owns the
 | 0010 | mt7615: running a part whose firmware owns the MAC         | yes      |
 | 0011 | mt7615: the MT7668S's sdio id and profile                  | yes      |
 | 0012 | mt7615: streams and bands from the firmware's report       | yes      |
-| 0013 | build the SDIO stack out of tree, over the in-tree modules | no       |
+| 0013 | mt7615: a firmware reload before joining a second BSS      | yes      |
+| 0014 | build the SDIO stack out of tree, over the in-tree modules | no       |
 
 Each patch builds on its own at `W=1`. `cover-letter.txt` introduces the set for submission.
 
@@ -51,6 +52,7 @@ back by cycling the sdio host:
 
 | Gap                        | State                                                  |
 | -------------------------- | ------------------------------------------------------ |
+| Joining another AP         | ✅ by a firmware reload, `0013`: about 1 s more        |
 | AP, P2P, mesh              | not implemented; the firmware takes AP role commands   |
 | Remain-on-channel          | 🟡 mac80211's software one; no channel-switch command  |
 | System suspend             | ❓ sends the MT7663's HIF commands                     |

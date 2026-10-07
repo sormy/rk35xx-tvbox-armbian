@@ -1,0 +1,137 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Tue, 6 Oct 2026 12:00:00 -0400
+Subject: [PATCH 13/14] wifi: mt76: mt7615: reload an MT7668's firmware before it joins another BSS
+
+Once an MT7668's firmware has joined one BSS, its first data frame to a
+different one asserts in the firmware, at line 6368 of
+wifi_uni_mac_7668/mgmt/ar.c, and the Bluetooth half sharing that
+firmware goes down with it.
+Moving between an access point's two bands is enough. A rejoin of the
+same BSS is fine, and so is any BSS on a freshly loaded firmware.
+
+The commands the host sends for the second join match the first in every
+field, including those MediaTek's driver sends and mt76 does not; none of
+them, alone or together, avoids the assert, and neither does waiting.
+
+So before joining a BSS other than the last one, power the firmware down
+and load it again. The Bluetooth function keeps running across it. It
+costs about a second on such a join; joining the same BSS again costs
+nothing.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/mt7615/mt7615.h
++++ b/mt7615/mt7615.h
+@@ -320,6 +320,12 @@
+ 		bool wf0_only;
+ 	} hw_cap;
+ 	u8 spe_idx[NUM_NL80211_BANDS];
++	/* the bus reloads a firmware that owns the mac, which keeps state from
++	 * the last bss it joined
++	 */
++	int (*fw_restart)(struct mt7615_dev *dev);
++	u8 joined_bssid[ETH_ALEN];
++	struct mt7615_mcu_ops *bus_mcu_ops;
+ 
+ 	u8 fw_ver;
+ 
+--- a/mt7615/mcu_ce.c
++++ b/mt7615/mcu_ce.c
+@@ -821,9 +821,34 @@
+ 	if (ret)
+ 		return ret;
+ 
++	ether_addr_copy(phy->dev->joined_bssid, sta->addr);
++
+ 	return mt7668_mcu_rx_filter(phy->dev);
+ }
+ 
++/* After joining one bss the firmware asserts on its first data frame to
++ * another (ar.c #6368), and only a fresh load avoids it; the one-time setup
++ * goes again with it.
++ */
++static int mt7668_mcu_fw_restart(struct mt7615_phy *phy)
++{
++	struct mt7615_dev *dev = phy->dev;
++	int ret;
++
++	ret = dev->fw_restart(dev);
++	if (ret)
++		return ret;
++
++	ret = mt7615_mcu_set_eeprom(dev);
++	if (ret)
++		return ret;
++
++	mt76_clear(dev, MT_DMA_DCR0, MT_DMA_DCR0_RX_HDR_TRANS_EN);
++	eth_zero_addr(dev->joined_bssid);
++
++	return mt76_connac_mcu_set_channel_domain(phy->mt76);
++}
++
+ static int mt7668_mcu_join(struct mt7615_phy *phy, struct ieee80211_vif *vif,
+ 			   struct ieee80211_sta *sta, bool enable)
+ {
+@@ -842,6 +867,13 @@
+ 		return mt7668_mcu_privilege(phy, vif, false);
+ 	}
+ 
++	if (dev->fw_restart && !is_zero_ether_addr(dev->joined_bssid) &&
++	    !ether_addr_equal(dev->joined_bssid, sta->addr)) {
++		ret = mt7668_mcu_fw_restart(phy);
++		if (ret)
++			return ret;
++	}
++
+ 	ret = mt7668_mcu_bss(phy, vif, sta, MT7668_BSS_DISCONNECTED);
+ 	if (ret)
+ 		return ret;
+--- a/mt7615/sdio.c
++++ b/mt7615/sdio.c
+@@ -109,6 +109,13 @@
+ 	{ }	/* Terminating entry */
+ };
+ 
++static int mt7663s_fw_restart(struct mt7615_dev *dev)
++{
++	mt7663s_mcu_exit(dev);
++
++	return mt7663s_mcu_init(dev);
++}
++
+ static int mt7663s_probe(struct sdio_func *func,
+ 			 const struct sdio_device_id *id)
+ {
+@@ -178,6 +185,8 @@
+ 
+ 	if (fw)
+ 		mt7615_apply_fw_features(dev, fw);
++	if (dev->fw->owns_mac)
++		dev->fw_restart = mt7663s_fw_restart;
+ 
+ 	ret = mt76s_hw_init(mdev, func, MT76_CONNAC_SDIO);
+ 	if (ret)
+--- a/mt7615/sdio_mcu.c
++++ b/mt7615/sdio_mcu.c
+@@ -215,10 +215,16 @@
+ 	if (ret)
+ 		return ret;
+ 
+-	mcu_ops = devm_kmemdup(dev->mt76.dev, dev->mcu_ops, sizeof(*mcu_ops),
+-			       GFP_KERNEL);
+-	if (!mcu_ops)
+-		return -ENOMEM;
++	/* a restart comes back through here: copy into the same table */
++	mcu_ops = dev->bus_mcu_ops;
++	if (!mcu_ops) {
++		mcu_ops = devm_kzalloc(dev->mt76.dev, sizeof(*mcu_ops),
++				       GFP_KERNEL);
++		if (!mcu_ops)
++			return -ENOMEM;
++		dev->bus_mcu_ops = mcu_ops;
++	}
++	*mcu_ops = *dev->mcu_ops;
+ 
+ 	mcu_ops->set_drv_ctrl = mt7663s_mcu_drv_pmctrl;
+ 	mcu_ops->set_fw_ctrl = mt7663s_mcu_fw_pmctrl;
