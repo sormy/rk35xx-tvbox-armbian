@@ -55,6 +55,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
     remains, each board's `dtb.md`, and `upstream/h96max-3518d/header.dts`, which contrasts itself
     with the ZX.
   - Verify on each box: the serial login prompt, and a boot log with no new errors.
+- [ ] **Wake the H96 Max M20 from `s2idle` on its Bluetooth remote**, its only remote. The SDIO
+      interrupt carries the wake but `meson-gx-mmc` never arms it as a wake source, and `btmtksdio`
+      keeps the card powered only in runtime suspend. The other route is the combo chip's host-wake
+      GPIO 100, which needs the chip-side pin for the low-power command. Until one works, the M20's
+      keys ignore suspend and poweroff.
 - [ ] **Clean the live M20:** drop `mt7668_patch_e1_hdr.bin`, `TxPwrLimit_MT76x8.dat` and
       `BT_RAM_CODE_MT7668_1_1_hdr.bin` from `/lib/firmware/mediatek`, which nothing reads, and the
       development `rtnl-watchdog` units and `/root` scratch.

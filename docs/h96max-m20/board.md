@@ -226,11 +226,13 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | HDMI, audio, video   | ❓ never exercised                                               |
 | SD slot              | ➖ not fitted; the SD host registers with nothing behind it      |
 | Button               | ❓ the ADC registers; the key mapping is untested                |
+| Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff  |
 | Standby LED          | ➖ not fitted on this unit; the node is kept, active low         |
 | Install to eMMC      | ❓ the single-boot image verifies offline; never flashed         |
+| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`     |
 | Panic under a build  | ❌ SError machine check in `cc1` at 4 cores; DKMS limited to 2   |
 | Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot  |
 | mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots             |
-| Fresh image          | ❓ rebuilt with the trimmed payload; not booted since            |
+| Fresh image          | ❓ built with both DKMS sources staged; never booted             |
 | DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                    |
 | Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3           |

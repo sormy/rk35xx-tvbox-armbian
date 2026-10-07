@@ -16,6 +16,12 @@
 # DKMS builds - first boot, updates, kernel upgrades - on two cores
 0644 h96max-m20/rk35xx-dkms-jobs.conf /etc/dkms/framework.conf.d/rk35xx-jobs.conf
 
+# armbian-install refuses: it would wipe the vendor bootloader and the keys
+0644 h96max-m20/rk35xx-platform-install /usr/lib/u-boot/platform_install.sh
+
+# keys neither suspend nor power off a box nothing can wake
+0644 h96max-m20/rk35xx-powerkey.conf  /etc/systemd/logind.conf.d/zz-rk35xx-powerkey.conf
+
 # hardware watchdog: systemd pings it, the SoC resets the box if it stops
 0644 common/rk35xx-watchdog.conf     /etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf
 

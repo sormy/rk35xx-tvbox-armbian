@@ -58,6 +58,7 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | CPU frequency scaling              |     ❌      |
 | Thermal zones                      |     ❌      |
 | Hardware watchdog                  |     ✅      |
+| Suspend, woken by the BT remote    |     ❌      |
 | Serial console                     |     ✅      |
 | eMMC backup over USB, burning mode |     ✅      |
 | Unbrick from the mask ROM          |     ❓      |
@@ -129,8 +130,8 @@ Needs a USB adapter or Wi-Fi where no Ethernet is fitted.
 
 An on-box run of the eMMC installer below, from the booted stick. It is in `TODO.md`.
 
-> `armbian-install` is not this: it zeroes the vendor bootloader and partitions over `reserved`,
-> where this unit's keys live.
+> `armbian-install` refuses on this board: it would zero the vendor bootloader and partition over
+> `reserved`, where this unit's keys live.
 
 ### Straight to eMMC
 

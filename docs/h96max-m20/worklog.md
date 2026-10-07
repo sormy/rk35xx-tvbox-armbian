@@ -1070,3 +1070,16 @@ is sold as.
   `MACHINE_CHECK` - an external abort from the memory system under load, not a software fault.
 - Every build that completed here ran two jobs. The payload now caps DKMS at two through
   `/etc/dkms/framework.conf.d/`, which first boot, `rk35xx-update` and kernel upgrades all read.
+
+## 2026-10-07 — suspend and the keys
+
+- `/sys/power/mem_sleep` offers `s2idle` alone: the factory BL31 is PSCI 0.2, with no system
+  suspend.
+- With no IR receiver the Bluetooth remote is the only wake source, and it cannot wake `s2idle` yet:
+  its events arrive on the SDIO interrupt, which `meson-gx-mmc` does not arm for wake.
+- logind powered the box off on the power key, and nothing turns it back on short of a power cycle.
+  The M20 now ships a logind drop-in ignoring power, suspend and hibernate keys, short and long;
+  `busctl` reads `ignore` for each. The power LED is on at boot from the tree's `default-state`.
+- `armbian-install` would zero 0-10 MiB, partition over `reserved` and write Le Potato's u-boot. The
+  M20 ships a `platform_install.sh` defining no `write_uboot_platform`, so its pre-flight finds no
+  install method: against a loop device, exit 72, `refusing to modify`, the target unchanged.
