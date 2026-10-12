@@ -10,9 +10,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       before trying fixes (PLL fraction, a re-lock until stable). The worklog has what was ruled
       out.
 
-- [ ] **H96 Max M20: MPEG-2 at 720x576 hangs.** No picture, in the `meson-sm1-codecs` multi codec
-      with `0001`-`0006` alone; 1280x720 and 1920x1080 decode. PAL and DVD size.
-
 - [ ] **H96 Max M20: VC-1 needs GStreamer 1.26.6.** 1.26.2, trixie's, maps no caps to
       `V4L2_PIX_FMT_VC1_ANNEX_G`: `v4l2vc1dec` registers and fails "Invalid caps". By hand until
       trixie moves: `patches/gst-plugins-good/README.md`. Shipping it would mean a diverted system

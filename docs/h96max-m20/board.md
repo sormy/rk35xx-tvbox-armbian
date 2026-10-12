@@ -100,8 +100,6 @@ skipped frame yields no new picture, and the last two pictures of a stream stay 
 GStreamer configures a V4L2 VC-1 decoder from 1.26.6; trixie ships 1.26.2, and
 `patches/gst-plugins-good/README.md` rebuilds its plugin with the fix.
 
-MPEG-2 at 720x576: ❌ hangs with no picture, also before `0007`.
-
 **Not implemented:** the silicon decodes AVS, AVS2 and RealVideo — the factory loads `amvdec_avs`,
 `amvdec_avs2`, `amvdec_real` — but no V4L2 driver for them exists on this chip.
 

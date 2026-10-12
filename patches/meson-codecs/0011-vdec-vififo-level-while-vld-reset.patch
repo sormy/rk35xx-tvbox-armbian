@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: VIFIFO level while the VLD is reset
+
+The MPEG-1/2 multi codec resets the VLD between pictures, and until it
+restores the read pointer VLD_MEM_VIFIFO_LEVEL reads as the write
+pointer's address. The parser sampled it there, took a 16 MiB VIFIFO for
+full, and refused all input for good: a decode stalled at its start,
+intermittently, and 720x576 hit it most runs.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/vdec_1.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff -ruN a/vdec/vdec_1.c b/vdec/vdec_1.c
+--- a/vdec/vdec_1.c
++++ b/vdec/vdec_1.c
+@@ -219,8 +219,10 @@
+ static u32 vdec_1_vififo_level(struct amvdec_session *sess)
+ {
+ 	struct amvdec_core *core = sess->core;
++	u32 level = amvdec_read_dos(core, VLD_MEM_VIFIFO_LEVEL);
+ 
+-	return amvdec_read_dos(core, VLD_MEM_VIFIFO_LEVEL);
++	/* a frame-based codec resets the VLD between pictures: RP reads 0 */
++	return level > sess->vififo_size ? 0 : level;
+ }
+ 
+ static bool vdec_1_stbuf_pointer_valid(struct amvdec_session *sess, u32 ptr)

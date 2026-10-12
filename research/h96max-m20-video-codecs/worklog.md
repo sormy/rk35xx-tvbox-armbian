@@ -197,3 +197,17 @@
 - `patches/gst-plugins-good/README.md` run verbatim: the plugin diverted in place, `playbin` picks
   `v4l2vc1dec`, 1440x576 44 of 44 bit-exact, H.264 still bit-exact; removal leaves the package as
   `dpkg -V` expects.
+
+## 2026-10-12 — MPEG-2 at 720x576
+
+- Two hangs, both intermittent. Most runs: 2 inputs queued, no picture, and "VIFIFO usage
+  (1718652275) > VIFIFO size". The multi codec resets the VLD between pictures; until it restores
+  RP, `VLD_MEM_VIFIFO_LEVEL` reads as the WP address (`0x666f....`). The parser took the FIFO for
+  full and refused input for good. Clamped in `vdec_1_vififo_level()` (`0011`).
+- A run that started decoded all 50 pictures and ended through the codec's own EOS path; the "2 bufs
+  remain" count was the header buffers, not a stall.
+- With `0011`: 720x576 10 of 10 runs complete, 50 of 50 pictures, 62.8 dB worst; 720x576 with
+  B-frames, 1280x720 with and without, 1920x1080, five runs each, all complete, 65.5-69.1 dB. H.264
+  bit-exact to 4K; MPEG-4, MJPEG, VC-1 unchanged.
+- VC-1 720p's picture count varies 98-101 run to run, on this module and the installed one alike;
+  every picture bit-exact. GStreamer drops some around the skipped frames.
