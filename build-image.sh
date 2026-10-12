@@ -430,7 +430,7 @@ EOF
   cat > "$BOOTTMP/boot.cmd" <<EOF
 echo "== $BOARD: booting Armbian from \${devtype} \${devnum} =="
 part uuid \${devtype} \${devnum}:2 rootuuid
-setenv bootargs "root=PARTUUID=\${rootuuid} rootwait rw $SERIALCON net.ifnames=0"
+setenv bootargs "root=PARTUUID=\${rootuuid} rootwait rw $SERIALCON console=tty1 consoleblank=0 loglevel=1 net.ifnames=0"
 ext4load \${devtype} \${devnum}:2 $AML_KERNEL_ADDR /boot/vmlinuz-$KVER
 ext4load \${devtype} \${devnum}:2 $AML_INITRD_ADDR /boot/uInitrd-$KVER
 ext4load \${devtype} \${devnum}:2 $AML_UBOOT_ADDR /boot/dtb-$KVER/$FDT

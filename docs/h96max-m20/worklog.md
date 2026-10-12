@@ -1138,3 +1138,12 @@ is sold as.
   HDMI event. A fresh boot, playback and three rates did not bring it back.
 - `rmmod snd_soc_meson_aiu` while the card was up: NULL dereference at `0x13`, the watchdog reset
   the box; the journal kept no trace.
+
+## 2026-10-12 — boot output on HDMI
+
+- The generated `boot.scr` gave `console=ttyAML0` alone: kernel and systemd output reached serial
+  only. It now ends `console=tty1 consoleblank=0 loglevel=1`, as the Rockchip boards' command line
+  does: `/dev/console` is HDMI, systemd's status shows there from ~10 s, when the DKMS HDMI driver
+  brings up `fb0`, and kernel messages stay out of it. The box's own `boot.scr` got the same edit.
+- A shutdown logged `Failed unmounting tmp.mount` in 2 of 12 boots: the services' PrivateTmp
+  directories still in use.
