@@ -1,0 +1,320 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: VC-1 on GXLX2
+
+SMPTE 421M Advanced profile on the legacy VC-1 microcode, gxl_vc1.bin,
+after Amlogic's vvc1.c, booted and drained as MPEG-4.
+
+GStreamer hands over a container's VC-1: codec_data first, one byte and
+then the sequence and entry-point headers, followed by frames without
+start codes. A new codec hook, wrap_input, frames the input in place as
+Amlogic's players do: it drops the codec_data's first byte and prefixes
+each frame with a frame start code.
+
+The microcode emits no picture for a skipped frame, and pictures before
+the first I picture are recycled unseen.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/codec_vc1.c     |  201 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ vdec/codec_vc1.h     |   10 ++
+ vdec/esparser.c      |   11 +++
+ vdec/Makefile        |    2 
+ vdec/vdec_platform.c |   12 +++
+ vdec/vdec.h          |    2 
+ 6 files changed, 237 insertions(+), 1 deletion(-)
+
+diff -ruN a/vdec/codec_vc1.c b/vdec/codec_vc1.c
+--- a/vdec/codec_vc1.c
++++ b/vdec/codec_vc1.c
+@@ -0,0 +1,201 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * VC-1 on the legacy VDEC_1 microcode; protocol after Amlogic's vvc1.c.
++ */
++
++#include <media/v4l2-mem2mem.h>
++#include <media/videobuf2-dma-contig.h>
++
++#include "vdec_helpers.h"
++#include "dos_regs.h"
++
++#define SIZE_WORKSPACE		(2 * SZ_1M)
++/* Offset added by firmware, to substract from workspace paddr */
++#define DCAC_BUFF_START_IP	0x01f00000
++
++#define MREG_PROFILE		AV_SCRATCH_4
++#define MREG_SOS_COUNT		AV_SCRATCH_7
++#define MREG_BUFFERIN		AV_SCRATCH_8
++#define MREG_BUFFEROUT		AV_SCRATCH_9
++#define MREG_OFFSET		AV_SCRATCH_C
++#define MEM_OFFSET_REG		AV_SCRATCH_F
++
++#define PROFILE_ADVANCED	1
++
++#define BUF_IDX(reg)		((((reg) & 7) - 1) & 3)
++#define PIC_TYPE(reg)		(((reg) >> 3) & 7)
++#define PIC_TYPE_I		0
++#define INTERLACE_FLAG		BIT(7)
++#define BOTTOM_FIELD_FIRST_FLAG	BIT(6)
++
++#define SC_FRAME		0x0d
++#define SC_END_OF_SEQ		0x0a
++
++struct codec_vc1 {
++	void	  *workspace_vaddr;
++	dma_addr_t workspace_paddr;
++	bool	   input_seen;
++	bool	   i_seen;
++};
++
++static const u8 frame_start_code[] = { 0x00, 0x00, 0x01, SC_FRAME };
++static const u8 eos_sequence[SZ_4K] = { 0x00, 0x00, 0x01, SC_END_OF_SEQ };
++
++static const u8 *codec_vc1_eos_sequence(u32 *len)
++{
++	*len = ARRAY_SIZE(eos_sequence);
++	return eos_sequence;
++}
++
++static bool is_start_code(const u8 *p)
++{
++	return !p[0] && !p[1] && p[2] == 1;
++}
++
++/*
++ * GStreamer sends a container's VC-1: codec_data first, then frames without
++ * start codes. Frame them as the microcode expects.
++ */
++static u32 codec_vc1_wrap_input(struct amvdec_session *sess,
++				struct vb2_buffer *vb, u32 size)
++{
++	struct codec_vc1 *vc1 = sess->priv;
++	u8 *data = vb2_plane_vaddr(vb, 0);
++	bool first = !vc1->input_seen;
++
++	vc1->input_seen = true;
++	if (size >= 3 && is_start_code(data))
++		return size;
++	/* ASF and Matroska codec_data: one byte, then the headers */
++	if (first && size >= 4 && is_start_code(data + 1)) {
++		memmove(data, data + 1, size - 1);
++		return size - 1;
++	}
++	if (size + sizeof(frame_start_code) > vb2_plane_size(vb, 0))
++		return 0;
++	memmove(data + sizeof(frame_start_code), data, size);
++	memcpy(data, frame_start_code, sizeof(frame_start_code));
++	return size + sizeof(frame_start_code);
++}
++
++static int codec_vc1_can_recycle(struct amvdec_core *core)
++{
++	return !amvdec_read_dos(core, MREG_BUFFERIN);
++}
++
++static void codec_vc1_recycle(struct amvdec_core *core, u32 buf_idx)
++{
++	amvdec_write_dos(core, MREG_BUFFERIN, ~BIT(buf_idx));
++}
++
++static int codec_vc1_resume(struct amvdec_session *sess)
++{
++	int ret;
++
++	if (sess->canvas_reg_count) {
++		amvdec_restore_canvases(sess);
++		return 0;
++	}
++
++	ret = amvdec_set_canvases(sess, (u32[]){ AV_SCRATCH_0, 0 },
++				  (u32[]){ 4, 0 });
++	if (ret)
++		return ret;
++
++	return amvdec_reboot_firmware(sess);
++}
++
++static int codec_vc1_start(struct amvdec_session *sess)
++{
++	struct amvdec_core *core = sess->core;
++	struct codec_vc1 *vc1 = sess->priv;
++
++	if (!vc1) {
++		vc1 = kzalloc(sizeof(*vc1), GFP_KERNEL);
++		if (!vc1)
++			return -ENOMEM;
++		sess->priv = vc1;
++	}
++
++	if (!vc1->workspace_vaddr) {
++		vc1->workspace_vaddr =
++			dma_alloc_coherent(core->dev, SIZE_WORKSPACE,
++					   &vc1->workspace_paddr, GFP_KERNEL);
++		if (!vc1->workspace_vaddr)
++			return -ENOMEM;
++	}
++
++	amvdec_write_dos(core, MREG_PROFILE, PROFILE_ADVANCED);
++	amvdec_write_dos(core, MEM_OFFSET_REG,
++			 vc1->workspace_paddr - DCAC_BUFF_START_IP);
++	amvdec_write_dos(core, PSCALE_CTRL, 0);
++	amvdec_write_dos(core, MREG_SOS_COUNT, 0);
++	amvdec_write_dos(core, MREG_BUFFERIN, 0);
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++	amvdec_clear_dos_bits(core, MDEC_PIC_DC_CTRL, BIT(16));
++
++	if (sess->canvas_reg_count)
++		amvdec_restore_canvases(sess);
++	else
++		amvdec_src_change(sess, sess->width, sess->height,
++				  sess->fmt_out->min_buffers, 8);
++
++	return 0;
++}
++
++static int codec_vc1_stop(struct amvdec_session *sess)
++{
++	struct codec_vc1 *vc1 = sess->priv;
++	struct amvdec_core *core = sess->core;
++
++	if (vc1->workspace_vaddr) {
++		dma_free_coherent(core->dev, SIZE_WORKSPACE,
++				  vc1->workspace_vaddr, vc1->workspace_paddr);
++		vc1->workspace_vaddr = NULL;
++	}
++
++	return 0;
++}
++
++static irqreturn_t codec_vc1_isr(struct amvdec_session *sess)
++{
++	struct amvdec_core *core = sess->core;
++	struct codec_vc1 *vc1 = sess->priv;
++	u32 reg = amvdec_read_dos(core, MREG_BUFFEROUT);
++	u32 field = V4L2_FIELD_NONE;
++
++	if (!reg)
++		goto end;
++
++	/* pictures before the first I picture reference nothing decoded */
++	if (!vc1->i_seen && PIC_TYPE(reg) != PIC_TYPE_I) {
++		amvdec_write_dos(core, MREG_BUFFERIN, ~BIT(BUF_IDX(reg)));
++		goto out;
++	}
++	vc1->i_seen = true;
++
++	if (reg & INTERLACE_FLAG)
++		field = (reg & BOTTOM_FIELD_FIRST_FLAG) ?
++			V4L2_FIELD_INTERLACED_BT : V4L2_FIELD_INTERLACED_TB;
++
++	amvdec_dst_buf_done_idx(sess, BUF_IDX(reg),
++				amvdec_read_dos(core, MREG_OFFSET), field, 0);
++out:
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++end:
++	amvdec_write_dos(core, ASSIST_MBOX1_CLR_REG, 1);
++	return IRQ_HANDLED;
++}
++
++struct amvdec_codec_ops codec_vc1_ops = {
++	.start = codec_vc1_start,
++	.stop = codec_vc1_stop,
++	.isr = codec_vc1_isr,
++	.can_recycle = codec_vc1_can_recycle,
++	.recycle = codec_vc1_recycle,
++	.resume = codec_vc1_resume,
++	.wrap_input = codec_vc1_wrap_input,
++	.async_drain = true,
++	.drain = amvdec_drain_empty_last,
++	.eos_sequence = codec_vc1_eos_sequence,
++};
+diff -ruN a/vdec/codec_vc1.h b/vdec/codec_vc1.h
+--- a/vdec/codec_vc1.h
++++ b/vdec/codec_vc1.h
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++
++#ifndef __MESON_VDEC_CODEC_VC1_H_
++#define __MESON_VDEC_CODEC_VC1_H_
++
++#include "vdec.h"
++
++extern struct amvdec_codec_ops codec_vc1_ops;
++
++#endif
+diff -ruN a/vdec/esparser.c b/vdec/esparser.c
+--- a/vdec/esparser.c
++++ b/vdec/esparser.c
+@@ -385,6 +385,17 @@
+ 		}
+ 	}
+ 
++	if (codec_ops->wrap_input) {
++		payload_size = codec_ops->wrap_input(sess, vb, payload_size);
++		if (!payload_size) {
++			dev_warn_ratelimited(core->dev,
++					     "esparser: no room to frame the input, packet dropped\n");
++			amvdec_remove_ts(sess, vb->timestamp);
++			v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
++			return 0;
++		}
++	}
++
+ 	/*
+ 	 * The HEVC-core stream fetch reads ahead of the data. When a picture
+ 	 * is decoded before the next packet arrives (frame-based HEVC always,
+diff -ruN a/vdec/Makefile b/vdec/Makefile
+--- a/vdec/Makefile
++++ b/vdec/Makefile
+@@ -3,7 +3,7 @@
+ 
+ meson-vdec-objs = esparser.o vdec.o vdec_helpers.o vdec_platform.o
+ meson-vdec-objs += vdec_1.o vdec_hevc.o
+-meson-vdec-objs += codec_mpeg12.o codec_mpeg12_multi.o codec_mpeg4.o codec_mjpeg.o codec_h264.o codec_h264_g12a.o
++meson-vdec-objs += codec_mpeg12.o codec_mpeg12_multi.o codec_mpeg4.o codec_mjpeg.o codec_vc1.o codec_h264.o codec_h264_g12a.o
+ meson-vdec-objs += codec_h264_g12a_dpb.o v4l2-h264.o
+ meson-vdec-objs += codec_hevc_common.o codec_vp9.o codec_hevc.o
+ meson-vdec-$(CONFIG_VIDEO_MESON_VDEC_KUNIT_TEST) += codec_h264_g12a_dpb_test.o
+diff -ruN a/vdec/vdec_platform.c b/vdec/vdec_platform.c
+--- a/vdec/vdec_platform.c
++++ b/vdec/vdec_platform.c
+@@ -12,6 +12,7 @@
+ #include "codec_mpeg12.h"
+ #include "codec_mpeg4.h"
+ #include "codec_mjpeg.h"
++#include "codec_vc1.h"
+ #include "codec_mpeg12_multi.h"
+ #include "codec_h264.h"
+ #include "codec_h264_g12a.h"
+@@ -187,6 +188,17 @@
+ 		.firmware_path = "meson/vdec/gxl_mjpeg.bin",
+ 		.pixfmts_cap = { V4L2_PIX_FMT_YUV420M, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED,
++	}, {
++		.pixfmt = V4L2_PIX_FMT_VC1_ANNEX_G,
++		.min_buffers = 4,
++		.max_buffers = 4,
++		.max_width = 1920,
++		.max_height = 1088,
++		.vdec_ops = &vdec_1_ops,
++		.codec_ops = &codec_vc1_ops,
++		.firmware_path = "meson/vdec/gxl_vc1.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED,
+ 	},
+ };
+ 
+diff -ruN a/vdec/vdec.h b/vdec/vdec.h
+--- a/vdec/vdec.h
++++ b/vdec/vdec.h
+@@ -224,6 +224,8 @@
+ 	void (*drain)(struct amvdec_session *sess);
+ 	int (*resume)(struct amvdec_session *sess);
+ 	const u8 * (*eos_sequence)(u32 *len);
++	u32 (*wrap_input)(struct amvdec_session *sess, struct vb2_buffer *vb,
++			  u32 size);
+ 	void (*eos_queued)(struct amvdec_session *sess);
+ 	irqreturn_t (*isr)(struct amvdec_session *sess);
+ 	irqreturn_t (*threaded_isr)(struct amvdec_session *sess);

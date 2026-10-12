@@ -15,6 +15,7 @@ meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS
 | `0007` | CAPTURE formats other than NV12M                              |
 | `0008` | MPEG-4 Part 2                                                 |
 | `0009` | MJPEG                                                         |
+| `0010` | VC-1, Advanced profile                                        |
 
 | Package             | Module        | Device                |
 | ------------------- | ------------- | --------------------- |

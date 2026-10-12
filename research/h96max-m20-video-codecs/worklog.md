@@ -169,3 +169,31 @@
 - H.263 is not a hardware feature: the S905X datasheet's decoder list (rev 0.2, the GXL family; no
   S905L3 datasheet is public) has MPEG-4 ASP, VC-1, AVS, RealVideo and MJPEG, no H.263 or Sorenson.
   Kodi's Amlogic decoder refuses H.263 ("amcodec can't handle h263").
+
+## 2026-10-12 — VC-1
+
+- Protocol from Amlogic's legacy `vvc1.c`: 4 buffers, canvases in `AV_SCRATCH_0-3`, profile in
+  `AV_SCRATCH_4` (1 Advanced, 0 Simple/Main), done in `AV_SCRATCH_9`, recycle `~BIT(i)` into
+  `AV_SCRATCH_8`, stream offset in `AV_SCRATCH_C`, workspace less `0x01f00000` in `AV_SCRATCH_F`.
+  The MPEG-4 pattern otherwise: source change from start, canvases and a microcode reboot in resume.
+- Framing as Kodi's AMLCodec: the codec_data's first byte dropped, `00 00 01 0D` before each frame.
+- GStreamer 1.26.2 (trixie) registers `v4l2vc1dec` and cannot configure it: "Invalid caps", no
+  `video/x-wmv` case in `gst_v4l2_object_get_caps_info()`. Added in 1.26.6. Tested with trixie's
+  1.26.2 `gst-plugins-good` v4l2 plugin built on the box with the 1.26.6 change, loaded from a
+  private `GST_PLUGIN_SYSTEM_PATH_1_0`. Its sink caps are `WVC1` only, so Simple/Main (WMV3, Annex
+  L) has no client here and is left out. ffmpeg's `vc1_v4l2m2m`: no frames.
+- Factory `gxl_vc1`, Matroska remuxes of samples.ffmpeg.org clips: every picture bit-exact against
+  ffmpeg — 1280x720p60 P-only 101 of 120, 1440x576 IBPB 44 of 50, 1920x1080i IBBP 29 of 60.
+- Missing: skipped frames (1- and 6-byte packets; the microcode bumps its repeat count and outputs
+  nothing), and the last two pictures. Neither `00 00 01 0A`, nor zeros to 4 KiB, nor skipped
+  frames, nor the sequence header replayed after the stream releases them; Amlogic's newer V4L2
+  driver displays its last reference itself, a protocol this microcode lacks.
+- Not causes, ruled out: the VIFIFO level (`MEM_FIFO_CNT` 2, level 8, as the vendor writes), a
+  deferred recycle (B-frames identical either way).
+- A wrong turn: 1440x576 looked like drift from frame 1. `filesink` had written the decoder's padded
+  1472-byte rows; through `videoconvert` the same output is bit-exact. Compare packed frames only.
+- MPEG-2 at 720x576 hangs with no picture, with and without B-frames, and on a fresh build of
+  `0001`-`0006` alone; 1280x720 with B-frames decodes. One run of seven on the baseline completed.
+- `patches/gst-plugins-good/README.md` run verbatim: the plugin diverted in place, `playbin` picks
+  `v4l2vc1dec`, 1440x576 44 of 44 bit-exact, H.264 still bit-exact; removal leaves the package as
+  `dpkg -V` expects.

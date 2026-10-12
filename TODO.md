@@ -10,11 +10,13 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       before trying fixes (PLL fraction, a re-lock until stable). The worklog has what was ruled
       out.
 
-- [ ] **H96 Max M20: decoders not implemented — VC-1, AVS/AVS2, RealVideo.** The silicon has them
-      (the factory loads `amvdec_*` for each). VC-1 next, into `patches/meson-codecs/` on the MPEG-4
-      pattern (`vdec_1`, microcode rebooted once CAPTURE is mapped), its protocol from Amlogic's
-      `vvc1.c` and microcode from the factory container (`g12a_vc1`, `gxl_vc1`). AVS, AVS2 and
-      RealVideo: not planned.
+- [ ] **H96 Max M20: MPEG-2 at 720x576 hangs.** No picture, in the `meson-sm1-codecs` multi codec
+      with `0001`-`0006` alone; 1280x720 and 1920x1080 decode. PAL and DVD size.
+
+- [ ] **H96 Max M20: VC-1 needs GStreamer 1.26.6.** 1.26.2, trixie's, maps no caps to
+      `V4L2_PIX_FMT_VC1_ANNEX_G`: `v4l2vc1dec` registers and fails "Invalid caps". By hand until
+      trixie moves: `patches/gst-plugins-good/README.md`. Shipping it would mean a diverted system
+      plugin in the payload.
 
 - [ ] **RK3518 boards: revisit display and GPU against the H96 Max M20.** Same Mali-450 and the same
       BOE 2256x1504 panel: the M20 runs it native at 60 Hz with glmark2 **64**, where the RK3528

@@ -22,6 +22,7 @@
 0644 h96max-m20/meson/vdec/gxl_mpeg12_multi.bin /lib/firmware/meson/vdec/gxl_mpeg12_multi.bin
 0644 h96max-m20/meson/vdec/gxl_mpeg4_5.bin      /lib/firmware/meson/vdec/gxl_mpeg4_5.bin
 0644 h96max-m20/meson/vdec/gxl_mjpeg.bin        /lib/firmware/meson/vdec/gxl_mjpeg.bin
+0644 h96max-m20/meson/vdec/gxl_vc1.bin          /lib/firmware/meson/vdec/gxl_vc1.bin
 0644 h96max-m20/meson/venc/gxl_h264_enc.bin     /lib/firmware/meson/venc/gxl_h264_enc.bin
 0644 h96max-m20/meson/venc/ga_h264_enc_cabac.bin /lib/firmware/meson/venc/ga_h264_enc_cabac.bin
 0644 h96max-m20/meson/venc/monet.bin            /lib/firmware/meson/venc/monet.bin

@@ -86,7 +86,7 @@ Three DKMS packages, `meson-vdec-gxlx2`, `amvenc-avc-gxlx2` and `amvenc-hevc-gxl
 | VP9       | ✅              | ✅              | ✅              | ➖          | ➖    | ➖  |
 | MPEG-1/2  | ✅              | ✅              | ➖              | ➖          | ➖    | ➖  |
 | MPEG-4    | ✅              | ✅              | ➖              | ➖          | ➖    | ➖  |
-| VC-1      | not implemented | not implemented | ➖              | ➖          | ➖    | ➖  |
+| VC-1      | ✅              | ✅              | ➖              | ➖          | ➖    | ➖  |
 | MJPEG     | ✅              | ✅              | not implemented | ➖          | ➖    | ➖  |
 | AVS, AVS2 | not implemented | not implemented | not implemented | ➖          | ➖    | ➖  |
 | RealVideo | not implemented | not implemented | ➖              | ➖          | ➖    | ➖  |
@@ -95,11 +95,15 @@ Decode ✅ is bit-exact against ffmpeg's software decode over every frame, the r
 rounding: MPEG-1/2 66-68 dB, MPEG-4 59-66 dB, MJPEG 73 dB; encode ✅ is the PSNR below. ➖ is beyond
 the hardware: the H.264 encoder stops at 1920x1088.
 
-MJPEG decodes to I420 only: its microcode writes three planes.
+MJPEG decodes to I420 only: its microcode writes three planes. VC-1 is the Advanced profile; a
+skipped frame yields no new picture, and the last two pictures of a stream stay in the microcode.
+GStreamer configures a V4L2 VC-1 decoder from 1.26.6; trixie ships 1.26.2, and
+`patches/gst-plugins-good/README.md` rebuilds its plugin with the fix.
 
-**Not implemented:** the silicon decodes VC-1, AVS, AVS2 and RealVideo — the factory loads
-`amvdec_vc1`, `amvdec_avs`, `amvdec_avs2`, `amvdec_real` — but no V4L2 driver for them exists on
-this chip.
+MPEG-2 at 720x576: ❌ hangs with no picture, also before `0007`.
+
+**Not implemented:** the silicon decodes AVS, AVS2 and RealVideo — the factory loads `amvdec_avs`,
+`amvdec_avs2`, `amvdec_real` — but no V4L2 driver for them exists on this chip.
 
 | Measure, 60 frames of `testsrc2` | Value                                       |
 | -------------------------------- | ------------------------------------------- |
@@ -262,7 +266,7 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                    |
 | GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                         |
 | ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client              |
-| Other decoders       | not implemented: VC-1, AVS, RealVideo                                |
+| Other decoders       | not implemented: AVS, RealVideo                                      |
 | HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |
 | CEC                  | ❓ not grafted; this panel has no CEC to test against                |
 | SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |

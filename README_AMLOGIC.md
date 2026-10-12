@@ -49,7 +49,8 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | Video decode — H.264, HEVC, VP9 to 4K     |       ✅        |
 | Video decode — MPEG-1/2 to 1080p          |       ✅        |
 | Video decode — MPEG-4, MJPEG to 1080p     |       ✅        |
-| Video decode — VC-1, AVS, Real            | not implemented |
+| Video decode — VC-1 to 1080p              |       ✅        |
+| Video decode — AVS, Real                  | not implemented |
 | Video encode — H.264 to 1080p, HEVC to 4K |       ✅        |
 | CMA reservation                           |       ✅        |
 | **Input and indicators**                  |                 |

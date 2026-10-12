@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 14:00:00 -0400
+Subject: [PATCH] v4l2: map video/x-wmv to the VC-1 formats
+
+The 1.26.6 change, on 1.26.2: without it a V4L2 VC-1 decoder registers
+and every caps event fails with "Invalid caps".
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/sys/v4l2/gstv4l2object.c
++++ b/sys/v4l2/gstv4l2object.c
+@@ -1582,10 +1582,13 @@
+           G_TYPE_STRING, "au", NULL);
+       break;
+     case V4L2_PIX_FMT_VC1_ANNEX_G:
+-    case V4L2_PIX_FMT_VC1_ANNEX_L:
+       structure = gst_structure_new ("video/x-wmv",
+           "wmvversion", G_TYPE_INT, 3, "format", G_TYPE_STRING, "WVC1", NULL);
+       break;
++    case V4L2_PIX_FMT_VC1_ANNEX_L:
++      structure = gst_structure_new ("video/x-wmv",
++          "wmvversion", G_TYPE_INT, 3, "format", G_TYPE_STRING, "WMV3", NULL);
++      break;
+     case V4L2_PIX_FMT_VP8:
+       structure = gst_structure_new_empty ("video/x-vp8");
+       break;
+@@ -2024,6 +2027,14 @@
+           break;
+       }
+     }
++  } else if (g_str_equal (mimetype, "video/x-wmv")) {
++    const gchar *format = gst_structure_get_string (structure, "format");
++    if (format) {
++      if (!g_ascii_strcasecmp (format, "WVC1"))
++        fourcc = V4L2_PIX_FMT_VC1_ANNEX_G;
++      else if (!g_ascii_strcasecmp (format, "WMV3"))
++        fourcc = V4L2_PIX_FMT_VC1_ANNEX_L;
++    }
+   } else if (g_str_equal (mimetype, "video/x-fwht")) {
+     fourcc = V4L2_PIX_FMT_FWHT;
+   } else if (g_str_equal (mimetype, "video/x-h263")) {

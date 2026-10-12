@@ -78,6 +78,7 @@ another, so nothing rots when one is rewritten.
 | `patches/mt76x8-mt7668/README.md`     | the vendor MT7668 driver on 6.18: the fallback, not shipped           |
 | `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), shipped as DKMS                 |
 | `patches/meson-codecs/README.md`      | the video decoder and encoders on the GXLX2, shipped as DKMS          |
+| `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand    |
 | `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds                |
 
 # Standing rules
