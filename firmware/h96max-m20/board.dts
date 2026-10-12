@@ -1900,23 +1900,17 @@
 		compatible = "gpio-leds";
 		status = "okay";
 
-		/* power/standby are the names the shared LED hooks drive. The factory called this
-		   one sys_red and left it off at boot, so it is the standby half; the lens is red. */
-		standby {
-			label = "standby";
-			/* The factory's own disabled `sysled` node names this same pin with
-			   led_active_low, so gpio-leds' active-high here is wrong. */
-			gpios = <&gpio 73 0x01>;
-			default-state = "off";
-		};
-
-		/* the factory called this one sys_green and left it on at boot, so it is the power
-		   half. The lens is blue, whatever the vendor name says. */
+		/* The board's one LED, blue: the factory's sys_red. Its disabled sysled node names
+		   the pin led_active_low, which is why the factory's active-high "off" lit it.
+		   power is the name the shared LED hooks drive. */
 		power {
 			label = "power";
-			gpios = <&gpio 0x0e 0x00>;
+			gpios = <&gpio 73 0x01>;
 			default-state = "on";
 		};
+
+		/* NOT FITTED - the factory's sys_green, GPIOZ_14: driven either way, it lights
+		   nothing on this unit. */
 	};
 
 	gpio_keypad {

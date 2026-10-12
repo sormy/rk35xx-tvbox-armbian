@@ -197,7 +197,7 @@ index copied into our tree lands on the wrong pad and the node does nothing.
 | combo chip power-on | `wifi/power_on_pin`  | 88         | 85       |
 | Bluetooth enable    | `bt-dev/gpio_en`     | 99         | 96       |
 | Wi-Fi host wake     | `wifi/interrupt_pin` | 100        | 97       |
-| second LED          | `gpioleds/sys_red`   | 76         | 73       |
+| the LED             | `gpioleds/sys_red`   | 76         | 73       |
 
 Read the number off a mainline tree for the same SoC, or off
 `/sys/kernel/debug/pinctrl/pinctrl@4b0-pinctrl-meson/pins` on the box. Both name the pin.
@@ -206,7 +206,8 @@ Read the number off a mainline tree for the same SoC, or off
 and back up on every MMC power cycle. Without that the part keeps whatever state the last boot left
 it in, and the firmware download fails in a different place each time.
 
-The board has one two-pin LED. The factory tree describes two, and the second is very likely not
-fitted — that tree is a generic Amlogic reference carrying blocks this box does not have.
+The board has one LED, blue, on `GPIODV_24`: the factory's `sys_red`, active low as its disabled
+`sysled` node says, which is why the factory's active-high "off" lit it. `sys_green` on `GPIOZ_14`
+lights nothing, driven either way. Our tree names the one LED `power`, on by default.
 
 ## Still to convert

@@ -360,33 +360,34 @@
  		phandle = <0xc2>;
  	};
  
-@@ -1816,14 +1900,20 @@
+@@ -1816,15 +1900,15 @@
  		compatible = "gpio-leds";
  		status = "okay";
  
 -		sys_red {
 -			label = "sys_red";
 -			gpios = <&gpio 0x4c 0x00>;
-+		/* power/standby are the names the shared LED hooks drive. The factory called this
-+		   one sys_red and left it off at boot, so it is the standby half; the lens is red. */
-+		standby {
-+			label = "standby";
-+			/* The factory's own disabled `sysled` node names this same pin with
-+			   led_active_low, so gpio-leds' active-high here is wrong. */
-+			gpios = <&gpio 73 0x01>;
- 			default-state = "off";
- 		};
- 
+-			default-state = "off";
+-		};
+-
 -		sys_green {
 -			label = "sys_green";
-+		/* the factory called this one sys_green and left it on at boot, so it is the power
-+		   half. The lens is blue, whatever the vendor name says. */
+-			gpios = <&gpio 0x0e 0x00>;
+-			default-state = "on";
+-		};
++		/* The board's one LED, blue: the factory's sys_red. Its disabled sysled node names
++		   the pin led_active_low, which is why the factory's active-high "off" lit it.
++		   power is the name the shared LED hooks drive. */
 +		power {
 +			label = "power";
- 			gpios = <&gpio 0x0e 0x00>;
- 			default-state = "on";
- 		};
-@@ -2109,6 +2199,38 @@
++			gpios = <&gpio 73 0x01>;
++			default-state = "on";
++		};
++
++		/* NOT FITTED - the factory's sys_green, GPIOZ_14: driven either way, it lights
++		   nothing on this unit. */
+ 	};
+@@ -2109,6 +2193,38 @@
  		gpio_reset = <0x14 0x63 0x00>;
  	};
  
@@ -425,7 +426,7 @@
  	wifi {
  		compatible = "amlogic, aml_wifi";
  		dev_name = "aml_wifi";
-@@ -2140,18 +2262,27 @@
+@@ -2140,18 +2256,27 @@
  
  	sd_emmc_c: emmc@d0074000 {
  		status = "okay";
@@ -459,7 +460,7 @@
  		non-removable;
  		disable-wp;
  		phandle = <0xc8>;
-@@ -2171,20 +2302,19 @@
+@@ -2171,20 +2296,19 @@
  
  	sd_emmc_b: sd@d0072000 {
  		status = "okay";
@@ -490,7 +491,7 @@
  		clock-names = "core", "clkin0", "clkin1";
  		bus-width = <0x04>;
  		cap-sd-highspeed;
-@@ -2208,22 +2338,34 @@
+@@ -2208,22 +2332,34 @@
  
  	sd_emmc_a: sdio@d0070000 {
  		status = "okay";
@@ -531,7 +532,7 @@
  		sdio {
  			pinname = "sdio";
  			ocr_avail = <0x200080>;
-@@ -2311,7 +2461,12 @@
+@@ -2311,7 +2447,12 @@
  	};
  
  	ethmac: ethernet@0xc9410000 {
@@ -545,7 +546,7 @@
  		reg = <0xc9410000 0x10000 0xc8834540 0x08 0xc8834558 0x0c 0xc1104408 0x04>;
  		interrupts = <0x00 0x08 0x01>;
  		pinctrl-names = "external_eth_pins";
-@@ -2329,30 +2484,72 @@
+@@ -2329,30 +2470,72 @@
  		phandle = <0xcb>;
  	};
  

@@ -10,18 +10,18 @@ bottom.
 
 ## Identity
 
-| Property    | Value                                                                  |
-| ----------- | ---------------------------------------------------------------------- |
-| SoC         | Amlogic S905L3 — GXLX2, `p291` reference board, RevE                   |
-| CPU         | 4× Cortex-A53, 1200 MHz                                                |
-| RAM         | 2 GB LPDDR3, rank0+1 @ 600 MHz                                         |
-| eMMC        | SanDisk `DF4016`, 30777344 sectors = 15.76 GB                          |
-| Wi-Fi / BT  | MediaTek MT7668 on SDIO, func1 Wi-Fi and func2 Bluetooth               |
-| Ethernet    | ➖ no connector fitted; the SoC MAC block binds anyway                 |
-| USB         | 2.0 only; USB-C is OTG, USB-A host-only                                |
-| Front panel | one blue LED, lit at power on; one button; ❓ no IR receiver confirmed |
-| Serial      | 115200 on three pads centre-back: HDMI <- TX GND [RX]                  |
-| PCB marking | `905_DG_ZX01_V01`, date code `2025/09/03`                              |
+| Property    | Value                                                               |
+| ----------- | ------------------------------------------------------------------- |
+| SoC         | Amlogic S905L3 — GXLX2, `p291` reference board, RevE                |
+| CPU         | 4× Cortex-A53, 1200 MHz                                             |
+| RAM         | 2 GB LPDDR3, rank0+1 @ 600 MHz                                      |
+| eMMC        | SanDisk `DF4016`, 30777344 sectors = 15.76 GB                       |
+| Wi-Fi / BT  | MediaTek MT7668 on SDIO, func1 Wi-Fi and func2 Bluetooth            |
+| Ethernet    | ➖ no connector fitted; the SoC MAC block binds anyway              |
+| USB         | 2.0 only; USB-C is OTG, USB-A host-only                             |
+| Front panel | one blue LED on `GPIODV_24`, active low; one button; no IR receiver |
+| Serial      | 115200 on three pads centre-back: HDMI <- TX GND [RX]               |
+| PCB marking | `905_DG_ZX01_V01`, date code `2025/09/03`                           |
 
 <img src="board2.jpeg" width="640">
 
@@ -211,28 +211,28 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 
 ## Known gaps
 
-| Item                 | State                                                            |
-| -------------------- | ---------------------------------------------------------------- |
-| Wi-Fi, mainline mt76 | ✅ both bands — its gaps in `patches/mt76-mt7668/README.md`      |
-| Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast |
-| Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`      |
-| Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                      |
-| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait      |
-| cpufreq              | ❌ no scaling: the tree has no `operating-points-v2`             |
-| Thermal              | ❌ no zones: the vendor tree models the sensor its own way       |
-| VPU power domain     | ❌ `meson_ee_pwrc` wants resets and clocks the vendor node lacks |
-| GPU                  | ❌ `lima` cannot get its bus clock                               |
-| CMA                  | ❌ the reserved-memory region fails to set up                    |
-| HDMI, audio, video   | ❓ never exercised                                               |
-| SD slot              | ➖ not fitted; the SD host registers with nothing behind it      |
-| Button               | ❓ the ADC registers; the key mapping is untested                |
-| Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff  |
-| Standby LED          | ➖ not fitted on this unit; the node is kept, active low         |
-| Install to eMMC      | ❓ the single-boot image verifies offline; never flashed         |
-| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`     |
-| Panic under a build  | ❌ SError machine check in `cc1` at 4 cores; DKMS limited to 2   |
-| Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot  |
-| mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots             |
-| Fresh image          | ❓ built with both DKMS sources staged; never booted             |
-| DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                    |
-| Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3           |
+| Item                 | State                                                                |
+| -------------------- | -------------------------------------------------------------------- |
+| Wi-Fi, mainline mt76 | ✅ both bands — its gaps in `patches/mt76-mt7668/README.md`          |
+| Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast     |
+| Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`          |
+| Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                          |
+| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait          |
+| cpufreq              | ❌ no scaling: the tree has no `operating-points-v2`                 |
+| Thermal              | ❌ no zones: the vendor tree models the sensor its own way           |
+| VPU power domain     | ❌ `meson_ee_pwrc` wants resets and clocks the vendor node lacks     |
+| GPU                  | ❌ `lima` cannot get its bus clock                                   |
+| CMA                  | ❌ the reserved-memory region fails to set up                        |
+| HDMI, audio, video   | ❓ never exercised                                                   |
+| SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |
+| Button               | ❓ the ADC registers; the key mapping is untested                    |
+| Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
+| Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing |
+| Install to eMMC      | ❓ the single-boot image verifies offline; never flashed             |
+| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`         |
+| Panic under a build  | ❌ SError machine check in `cc1` at 4 cores; DKMS limited to 2       |
+| Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot      |
+| mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                 |
+| Fresh image          | ❓ built with both DKMS sources staged; never booted                 |
+| DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                        |
+| Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3               |

@@ -1083,3 +1083,13 @@ is sold as.
 - `armbian-install` would zero 0-10 MiB, partition over `reserved` and write Le Potato's u-boot. The
   M20 ships a `platform_install.sh` defining no `write_uboot_platform`, so its pre-flight finds no
   install method: against a loop device, exit 72, `refusing to modify`, the target unchanged.
+
+## 2026-10-11 — the LED was on the other pin
+
+- The blue LED lit through boot and went dark once Linux was up. Blinking `GPIOZ_14`, our `power`
+  node, lit nothing; blinking `GPIODV_24`, our `standby`, blinked the LED.
+- The factory's `sys_red` on `GPIODV_24` is the fitted one. Its `gpioleds` node is active high and
+  "off", which on this active-low pin lit it, and Android's LED looked like the green one's.
+- The tree now has one LED, `power` on `GPIODV_24`, active low, on by default; `sys_green` is marked
+  not fitted. Lit through boot and after. The leds-gpio driver turns it off at shutdown and the LED
+  core on suspend, so it needs no hook.
