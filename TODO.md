@@ -4,6 +4,12 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 ## Open
 
+- [ ] **H96 Max M20: the BOE 2256x1504 panel blinks on about one boot in three.** Same registers on
+      blinking and steady boots; the transmitter sees no event; a blank/unblank re-lock stops it.
+      Next: a blank/unblank loop with the cycle number on screen, to get a blink rate per PLL lock
+      before trying fixes (PLL fraction, a re-lock until stable). The worklog has what was ruled
+      out.
+
 - [ ] **H96 Max M20: decoders not implemented — MPEG-4, H.263, VC-1, MJPEG, AVS/AVS2, RealVideo.**
       The silicon has them (the factory loads `amvdec_*` for each); neither mainline meson-vdec nor
       `meson-sm1-codecs` has a codec for them. Port from Amlogic's `media_modules` into

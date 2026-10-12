@@ -1147,3 +1147,17 @@ is sold as.
   brings up `fb0`, and kernel messages stay out of it. The box's own `boot.scr` got the same edit.
 - A shutdown logged `Failed unmounting tmp.mount` in 2 of 12 boots: the services' PrivateTmp
   directories still in use.
+
+## 2026-10-12 — the panel blinks on some boots
+
+- On about one boot in three the BOE panel loses sync at random, as if the cable were pulled; on the
+  others it holds. The mode, every clock, the HDMI PLL and PHY registers and the whole ENCP block
+  read the same on both kinds of boot. `HHI_HDMI_PLL_CNTL_I` differed, but it is a live monitor
+  field that changes by the second.
+- The transmitter sees nothing during a blink: no HDMI interrupt, no `EVENT=` with
+  `dw_hdmi.dyndbg=+p`. The 2827 interrupts every boot logs are the EDID reads. The panel's board
+  drops sync on its own.
+- Amlogic's driver picks the same PHY profile for a non-CEA mode, and the 3G profile (`0x33353382`,
+  `0x2036315b`) from a 200 MHz pixel clock did not stop it. Reverted.
+- Blanking and unblanking `fb0` on a blinking boot re-runs the PLL setup and stopped it. The 235.7
+  MHz pixel clock needs a fractional PLL; a lock that comes up marginal fits.
