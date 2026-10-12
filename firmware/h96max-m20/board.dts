@@ -2282,6 +2282,8 @@
 		assigned-clock-rates = <0x00 0x16e3600>;
 		pinctrl-0 = <&hdmitx_hpd &hdmitx_ddc>;
 		pinctrl-names = "default";
+		#sound-dai-cells = <0x00>;
+		sound-name-prefix = "HDMITX";
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
 
@@ -2326,6 +2328,51 @@
 		clock-names = "dos_parser", "dos", "vdec_1", "vdec_hevc";
 		resets = <&reset 0x28>;
 		reset-names = "esparser";
+	};
+
+	/* mainline's audio controller and card: I2S into the HDMI transmitter */
+	aiu: audio-controller@c1105400 {
+		compatible = "amlogic,aiu-gxl", "amlogic,aiu";
+		reg = <0xc1105400 0x2ac>;
+		interrupts = <0x00 0x30 0x01 0x00 0x32 0x01>;
+		interrupt-names = "i2s", "spdif";
+		clocks = <&clkc 0x26 &clkc 0x28 &clkc 0x50 &clkc 0x6b &clkc 0x2c
+			  &clkc 0x27 &clkc 0x51 &clkc 0x6e &clkc 0x71>;
+		clock-names = "pclk", "i2s_pclk", "i2s_aoclk", "i2s_mclk", "i2s_mixer",
+			      "spdif_pclk", "spdif_aoclk", "spdif_mclk", "spdif_mclk_sel";
+		resets = <&reset 0x06>;
+		#sound-dai-cells = <0x02>;
+		sound-name-prefix = "AIU";
+	};
+
+	sound {
+		compatible = "amlogic,gx-sound-card";
+		model = "H96-MAX-M20";
+		assigned-clocks = <&clkc 0x0d &clkc 0x0e &clkc 0x0f>;
+		assigned-clock-parents = <0x00 0x00 0x00>;
+		assigned-clock-rates = <0x11940000 0x10266000 0x17700000>;
+
+		dai-link-0 {
+			sound-dai = <&aiu 0x00 0x00>;
+		};
+
+		dai-link-1 {
+			sound-dai = <&aiu 0x00 0x02>;
+			dai-format = "i2s";
+			mclk-fs = <0x100>;
+
+			codec-0 {
+				sound-dai = <&aiu 0x01 0x00>;
+			};
+		};
+
+		dai-link-2 {
+			sound-dai = <&aiu 0x01 0x02>;
+
+			codec-0 {
+				sound-dai = <&hdmi_tx>;
+			};
+		};
 	};
 
 	rdma {

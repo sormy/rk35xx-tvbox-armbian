@@ -44,7 +44,7 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | Bluetooth                                     |       ✅        |
 | **Display and video**                         |                 |
 | HDMI video                                    |       ✅        |
-| HDMI audio                                    |       ❓        |
+| HDMI audio                                    |       ✅        |
 | GPU — Mali under lima                         |       ✅        |
 | Video decode — H.264, HEVC, VP9 to 4K         |       ✅        |
 | Video decode — MPEG-1/2 to 1080p              |       ✅        |

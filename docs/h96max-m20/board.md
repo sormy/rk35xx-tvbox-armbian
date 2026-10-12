@@ -260,7 +260,8 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                          |
 | ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client               |
 | Other decoders       | not implemented: MPEG-4, H.263, VC-1, MJPEG, AVS, RealVideo           |
-| HDMI audio, CEC      | ❓ not grafted                                                        |
+| HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                              |
+| CEC                  | ❓ not grafted; this panel has no CEC to test against                 |
 | SD slot              | ➖ not fitted; the SD host registers with nothing behind it           |
 | Button               | ❓ the ADC registers; the key mapping is untested                     |
 | Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff       |

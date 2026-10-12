@@ -586,7 +586,7 @@
 +		/* NOT FITTED - the factory's sys_green, GPIOZ_14: driven either way, it lights
 +		   nothing on this unit. */
  	};
-@@ -2083,10 +2236,100 @@
+@@ -2083,10 +2236,147 @@
  		clocks = <&clkc 0xc4 &clkc 0x59 &clkc 0x09 &clkc 0xb6 &clkc 0xba &clkc 0xbb>;
  		clock-names = "vapb_clk", "vpu_intr_gate", "gp_pll", "vpu_clk0", "vpu_clk1", "vpu_clk";
  		clk_level = <0x07>;
@@ -636,6 +636,8 @@
 +		assigned-clock-rates = <0x00 0x16e3600>;
 +		pinctrl-0 = <&hdmitx_hpd &hdmitx_ddc>;
 +		pinctrl-names = "default";
++		#sound-dai-cells = <0x00>;
++		sound-name-prefix = "HDMITX";
 +		#address-cells = <0x01>;
 +		#size-cells = <0x00>;
 +
@@ -682,12 +684,57 @@
 +		reset-names = "esparser";
 +	};
 +
++	/* mainline's audio controller and card: I2S into the HDMI transmitter */
++	aiu: audio-controller@c1105400 {
++		compatible = "amlogic,aiu-gxl", "amlogic,aiu";
++		reg = <0xc1105400 0x2ac>;
++		interrupts = <0x00 0x30 0x01 0x00 0x32 0x01>;
++		interrupt-names = "i2s", "spdif";
++		clocks = <&clkc 0x26 &clkc 0x28 &clkc 0x50 &clkc 0x6b &clkc 0x2c
++			  &clkc 0x27 &clkc 0x51 &clkc 0x6e &clkc 0x71>;
++		clock-names = "pclk", "i2s_pclk", "i2s_aoclk", "i2s_mclk", "i2s_mixer",
++			      "spdif_pclk", "spdif_aoclk", "spdif_mclk", "spdif_mclk_sel";
++		resets = <&reset 0x06>;
++		#sound-dai-cells = <0x02>;
++		sound-name-prefix = "AIU";
++	};
++
++	sound {
++		compatible = "amlogic,gx-sound-card";
++		model = "H96-MAX-M20";
++		assigned-clocks = <&clkc 0x0d &clkc 0x0e &clkc 0x0f>;
++		assigned-clock-parents = <0x00 0x00 0x00>;
++		assigned-clock-rates = <0x11940000 0x10266000 0x17700000>;
++
++		dai-link-0 {
++			sound-dai = <&aiu 0x00 0x00>;
++		};
++
++		dai-link-1 {
++			sound-dai = <&aiu 0x00 0x02>;
++			dai-format = "i2s";
++			mclk-fs = <0x100>;
++
++			codec-0 {
++				sound-dai = <&aiu 0x01 0x00>;
++			};
++		};
++
++		dai-link-2 {
++			sound-dai = <&aiu 0x01 0x02>;
++
++			codec-0 {
++				sound-dai = <&hdmi_tx>;
++			};
++		};
++	};
++
  	rdma {
  		compatible = "amlogic, meson, rdma";
  		dev_name = "amlogic-rdma";
  		status = "ok";
  		interrupts = <0x00 0x59 0x01>;
-@@ -2109,6 +2352,38 @@
+@@ -2109,6 +2399,38 @@
  		gpio_reset = <0x14 0x63 0x00>;
  	};
  
@@ -726,7 +773,7 @@
  	wifi {
  		compatible = "amlogic, aml_wifi";
  		dev_name = "aml_wifi";
-@@ -2140,18 +2415,27 @@
+@@ -2140,18 +2462,27 @@
  
  	sd_emmc_c: emmc@d0074000 {
  		status = "okay";
@@ -760,7 +807,7 @@
  		non-removable;
  		disable-wp;
  		phandle = <0xc8>;
-@@ -2171,20 +2455,19 @@
+@@ -2171,20 +2502,19 @@
  
  	sd_emmc_b: sd@d0072000 {
  		status = "okay";
@@ -791,7 +838,7 @@
  		clock-names = "core", "clkin0", "clkin1";
  		bus-width = <0x04>;
  		cap-sd-highspeed;
-@@ -2208,22 +2491,34 @@
+@@ -2208,22 +2538,34 @@
  
  	sd_emmc_a: sdio@d0070000 {
  		status = "okay";
@@ -832,7 +879,7 @@
  		sdio {
  			pinname = "sdio";
  			ocr_avail = <0x200080>;
-@@ -2311,7 +2606,12 @@
+@@ -2311,7 +2653,12 @@
  	};
  
  	ethmac: ethernet@0xc9410000 {
@@ -846,7 +893,7 @@
  		reg = <0xc9410000 0x10000 0xc8834540 0x08 0xc8834558 0x0c 0xc1104408 0x04>;
  		interrupts = <0x00 0x08 0x01>;
  		pinctrl-names = "external_eth_pins";
-@@ -2329,30 +2629,72 @@
+@@ -2329,30 +2676,72 @@
  		phandle = <0xcb>;
  	};
  

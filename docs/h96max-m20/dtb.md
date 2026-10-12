@@ -214,16 +214,18 @@ lights nothing, driven either way. Our tree names the one LED `power`, on by def
 
 Mainline's nodes, grafted beside the vendor's, which bind to nothing:
 
-| Node                   | Change                                                        |
-| ---------------------- | ------------------------------------------------------------- |
-| `pwrc`                 | the VPU domain's twelve resets, `vpu`/`vapb` clocks and rates |
-| `reserved-memory`      | vendor pools disabled; one 384 MiB `linux,cma`                |
-| `canvas`, `vpu`        | mainline's, `power-domains = <&pwrc 0>`                       |
-| `hdmi-tx@da800000`     | `gxlx2` + `gxl` fallback, resets without `reset-names`        |
-| `hdmitx_ddc`           | function `hdmi_ddc` → `hdmi_i2c`                              |
-| `hdmi-connector`       | type A                                                        |
-| `mali@d00c0000`        | lima's compatible, IRQ names, `bus`/`core` clocks, OPP table  |
-| `video-codec@c8820000` | `amlogic,gxlx-vdec`; HEVC's mailbox 0 as `mbox0`              |
+| Node                   | Change                                                            |
+| ---------------------- | ----------------------------------------------------------------- |
+| `pwrc`                 | the VPU domain's twelve resets, `vpu`/`vapb` clocks and rates     |
+| `reserved-memory`      | vendor pools disabled; one 384 MiB `linux,cma`                    |
+| `canvas`, `vpu`        | mainline's, `power-domains = <&pwrc 0>`                           |
+| `hdmi-tx@da800000`     | `gxlx2` + `gxl` fallback, resets without `reset-names`            |
+| `hdmitx_ddc`           | function `hdmi_ddc` → `hdmi_i2c`                                  |
+| `hdmi-connector`       | type A                                                            |
+| `mali@d00c0000`        | lima's compatible, IRQ names, `bus`/`core` clocks, OPP table      |
+| `video-codec@c8820000` | `amlogic,gxlx-vdec`; HEVC's mailbox 0 as `mbox0`                  |
+| `aiu`, `sound`         | mainline's AIU and `gx-sound-card`: I2S into the HDMI transmitter |
+| `hdmi_tx` audio        | `#sound-dai-cells`, the card's HDMI codec                         |
 
 **secmon overlaid BL31.** The vendor's reusable `linux,secmon` pool sits on the 2 MiB U-Boot
 `/memreserve/`s at `0x10000000`. Activating a CMA area hands its pages to the page allocator, so
@@ -246,5 +248,5 @@ index.
 | ------- | ------------------------------------------------------ |
 | cpufreq | no `operating-points-v2` on the CPUs                   |
 | thermal | the vendor sensor node; mainline's binding not checked |
-| audio   | HDMI and analogue audio nodes not grafted              |
+| audio   | analogue (`t9015` codec) not grafted                   |
 | CEC     | `cec@100` not grafted                                  |

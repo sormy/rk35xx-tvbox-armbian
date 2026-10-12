@@ -1125,3 +1125,16 @@ is sold as.
 ## Video codecs
 
 - Encoder and decoder work: `research/h96max-m20-video-codecs/worklog.md`.
+
+## 2026-10-12 — HDMI audio
+
+- No sound card: the vendor's audio nodes bind to nothing in mainline. Grafted mainline's GXL AIU at
+  `0xc1105400` with its nine clocks and `RESET_AIU`, a `gx-sound-card` linking the I2S encoder to
+  the HDMI transmitter, and `#sound-dai-cells` on `hdmi_tx`. `dw-hdmi-i2s-audio` was already there
+  through `meson-dw-hdmi-gxlx2`.
+- `H96-MAX-M20` registers; `AIU HDMI CTRL SRC` defaults to I2S. The panel's ELD offers 2-channel
+  LPCM, 32-192 kHz. `speaker-test` at 44.1, 48 and 96 kHz: heard, no driver error.
+- The screen blinked once after the first playback, with and without audio, and the kernel logged no
+  HDMI event. A fresh boot, playback and three rates did not bring it back.
+- `rmmod snd_soc_meson_aiu` while the card was up: NULL dereference at `0x13`, the watchdog reset
+  the box; the journal kept no trace.
