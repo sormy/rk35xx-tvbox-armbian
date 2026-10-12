@@ -189,6 +189,7 @@
 			enable-method = "psci";
 			clocks = <&scpi_dvfs 0x00>;
 			clock-names = "cpu-cluster.0";
+			#cooling-cells = <0x02>;
 			phandle = <0x09>;
 		};
 
@@ -199,6 +200,7 @@
 			enable-method = "psci";
 			clocks = <&scpi_dvfs 0x00>;
 			clock-names = "cpu-cluster.0";
+			#cooling-cells = <0x02>;
 			phandle = <0x0a>;
 		};
 
@@ -209,6 +211,7 @@
 			enable-method = "psci";
 			clocks = <&scpi_dvfs 0x00>;
 			clock-names = "cpu-cluster.0";
+			#cooling-cells = <0x02>;
 			phandle = <0x0b>;
 		};
 
@@ -219,6 +222,7 @@
 			enable-method = "psci";
 			clocks = <&scpi_dvfs 0x00>;
 			clock-names = "cpu-cluster.0";
+			#cooling-cells = <0x02>;
 			phandle = <0x0c>;
 		};
 	};
@@ -334,25 +338,54 @@
 		};
 	};
 
-	mailbox: mhu@c883c400 {
-		compatible = "amlogic, meson_mhu";
-		reg = <0xc883c400 0x4c 0xc8013000 0x800>;
-		interrupts = <0x00 0xd1 0x01 0x00 0xd2 0x01>;
+	/* CPU DVFS and the SoC sensor through the SCP firmware, as mainline's SCPI does it. The
+	   vendor nodes had the same blocks under bindings mainline does not match. */
+	mailbox: mhu@c883c404 {
+		compatible = "amlogic,meson-gxbb-mhu";
+		reg = <0xc883c404 0x4c>;
+		interrupts = <0x00 0xd0 0x01 0x00 0xd1 0x01 0x00 0xd2 0x01>;
 		#mbox-cells = <0x01>;
-		mbox-names = "cpu_to_scp_low", "cpu_to_scp_high";
-		mboxes = <&mailbox 0x00 &mailbox 0x01>;
 		phandle = <0x0f>;
 	};
 
-	scpi_clocks {
-		compatible = "arm, scpi-clks";
+	sram@c8000000 {
+		compatible = "mmio-sram";
+		reg = <0xc8000000 0x14000>;
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		ranges = <0x00 0xc8000000 0x14000>;
 
-		scpi_dvfs: scpi_clocks@0 {
-			compatible = "arm, scpi-clk-indexed";
-			#clock-cells = <0x01>;
-			clock-indices = <0x00>;
-			clock-output-names = "vcpu";
-			phandle = <0x0d>;
+		cpu_scp_lpri: scp-sram@13000 {
+			compatible = "amlogic,meson-gxbb-scp-shmem";
+			reg = <0x13000 0x400>;
+		};
+
+		cpu_scp_hpri: scp-sram@13400 {
+			compatible = "amlogic,meson-gxbb-scp-shmem";
+			reg = <0x13400 0x400>;
+		};
+	};
+
+	scpi {
+		compatible = "amlogic,meson-gxbb-scpi", "arm,scpi-pre-1.0";
+		mboxes = <&mailbox 0x01 &mailbox 0x02>;
+		shmem = <&cpu_scp_lpri &cpu_scp_hpri>;
+
+		scpi_clocks {
+			compatible = "arm,scpi-clocks";
+
+			scpi_dvfs: clocks-0 {
+				compatible = "arm,scpi-dvfs-clocks";
+				#clock-cells = <0x01>;
+				clock-indices = <0x00>;
+				clock-output-names = "vcpu";
+				phandle = <0x0d>;
+			};
+		};
+
+		scpi_sensors: sensors {
+			compatible = "amlogic,meson-gxbb-scpi-sensors";
+			#thermal-sensor-cells = <0x01>;
 		};
 	};
 
@@ -3158,67 +3191,42 @@
 
 	thermal-zones {
 
-		soc_thermal {
+		cpu-thermal {
+			polling-delay-passive = <0xfa>;
 			polling-delay = <0x3e8>;
-			polling-delay-passive = <0x64>;
-			sustainable-power = <0x866>;
-			thermal-sensors = <&aml_sensor0 0x03>;
+			thermal-sensors = <&scpi_sensors 0x00>;
 
 			trips {
 
-				switch_on: trip-point@0 {
-					temperature = <0x124f8>;
-					hysteresis = <0x3e8>;
+				cpu_passive: cpu-passive {
+					temperature = <0x13880>;
+					hysteresis = <0x7d0>;
 					type = "passive";
-					phandle = <0xd1>;
 				};
 
-				control: trip-point@1 {
-					temperature = <0x14c08>;
-					hysteresis = <0x3e8>;
-					type = "passive";
-					phandle = <0x82>;
-				};
-
-				hot: trip-point@2 {
-					temperature = <0x17318>;
-					hysteresis = <0x1388>;
+				cpu_hot: cpu-hot {
+					temperature = <0x15f90>;
+					hysteresis = <0x7d0>;
 					type = "hot";
-					phandle = <0xd2>;
 				};
 
-				critical: trip-point@3 {
-					temperature = <0x3f7a0>;
-					hysteresis = <0x3e8>;
+				cpu_critical: cpu-critical {
+					temperature = <0x1adb0>;
+					hysteresis = <0x7d0>;
 					type = "critical";
-					phandle = <0xd3>;
 				};
 			};
 
 			cooling-maps {
 
-				cpufreq_cooling_map {
-					trip = <0x82>;
-					cooling-device = <&cpufreq_cool0 0x00 0x04>;
-					contribution = <0x400>;
+				map0 {
+					trip = <&cpu_passive>;
+					cooling-device = <&CPU0 0xffffffff 0xffffffff &CPU1 0xffffffff 0xffffffff &CPU2 0xffffffff 0xffffffff &CPU3 0xffffffff 0xffffffff>;
 				};
 
-				cpucore_cooling_map {
-					trip = <0x82>;
-					cooling-device = <&cpucore_cool0 0x00 0x03>;
-					contribution = <0x400>;
-				};
-
-				gpufreq_cooling_map {
-					trip = <0x82>;
-					cooling-device = <&gpu 0x00 0x04>;
-					contribution = <0x400>;
-				};
-
-				gpucore_cooling_map {
-					trip = <0x82>;
-					cooling-device = <&gpucore_cool0 0x00 0x02>;
-					contribution = <0x400>;
+				map1 {
+					trip = <&cpu_hot>;
+					cooling-device = <&CPU0 0xffffffff 0xffffffff &CPU1 0xffffffff 0xffffffff &CPU2 0xffffffff 0xffffffff &CPU3 0xffffffff 0xffffffff>;
 				};
 			};
 		};

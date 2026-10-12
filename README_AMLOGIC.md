@@ -58,8 +58,8 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | Power LED                                     |       ✅        |
 | Standby LED                                   |       ➖        |
 | **Power and recovery**                        |                 |
-| CPU frequency scaling                         |       ❌        |
-| Thermal zones                                 |       ❌        |
+| CPU frequency scaling                         |       ✅        |
+| Thermal zones                                 |       ✅        |
 | Hardware watchdog                             |       ✅        |
 | Suspend, woken by the BT remote               |       ❌        |
 | Serial console                                |       ✅        |

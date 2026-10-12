@@ -39,24 +39,26 @@ Nothing is installed to eMMC. Known gaps are at the bottom.
 
 Kernel 6.18.44, image of 2026-09-17. `fio --direct=1`, `iperf3` to a wired host.
 
-| Measure                     | Value                                            |
-| --------------------------- | ------------------------------------------------ |
-| Boot to `graphical.target`  | 14.1-16.7 s over 10 boots, mt76 at boot ✅       |
-| RAM                         | 1954 MB ✅                                       |
-| eMMC sequential read        | 43.3 MiB/s ✅                                    |
-| eMMC sequential write       | 32.7 MiB/s ✅                                    |
-| eMMC random 4K read         | 2711 IOPS, 10.6 MiB/s ✅                         |
-| eMMC random 4K write        | 3839 IOPS, 15.0 MiB/s ✅                         |
-| USB drive (rootfs) read     | 21.3 MiB/s ✅                                    |
-| USB drive (rootfs) write    | 21.1 MiB/s ✅                                    |
-| USB drive random 4K read    | 1842 IOPS ✅                                     |
-| USB drive random 4K write   | 1644 IOPS ✅                                     |
-| USB throughput (via Gb NIC) | 196 Mbit/s, idle and under 4-core load ✅        |
-| `stress-ng` 4×cpu + 2×vm    | 120 s `--verify`, 6 passed, 0 failed ✅          |
-| Watchdog                    | systemd 80 s, hardware 65.5 s ✅                 |
-| HDMI                        | 2256x1504 @ 60.00 Hz, the panel's native mode ✅ |
-| GPU, `kmscube`              | 60.0 fps vsync-locked, Mali-450 at 744 MHz ✅    |
-| GPU, `glmark2-es2-drm`      | **64** at 2256x1504 on screen, no artifacts ✅   |
+| Measure                        | Value                                            |
+| ------------------------------ | ------------------------------------------------ |
+| Boot to `graphical.target`     | 14.1-16.7 s over 10 boots, mt76 at boot ✅       |
+| RAM                            | 1954 MB ✅                                       |
+| eMMC sequential read           | 43.3 MiB/s ✅                                    |
+| eMMC sequential write          | 32.7 MiB/s ✅                                    |
+| eMMC random 4K read            | 2711 IOPS, 10.6 MiB/s ✅                         |
+| eMMC random 4K write           | 3839 IOPS, 15.0 MiB/s ✅                         |
+| USB drive (rootfs) read        | 21.3 MiB/s ✅                                    |
+| USB drive (rootfs) write       | 21.1 MiB/s ✅                                    |
+| USB drive random 4K read       | 1842 IOPS ✅                                     |
+| USB drive random 4K write      | 1644 IOPS ✅                                     |
+| USB throughput (via Gb NIC)    | 196 Mbit/s, idle and under 4-core load ✅        |
+| `stress-ng` 4×cpu + 2×vm       | 120 s `--verify`, 6 passed, 0 failed ✅          |
+| Watchdog                       | systemd 80 s, hardware 65.5 s ✅                 |
+| CPU, idle                      | 67 °C                                            |
+| CPU, 5 min `stress-ng --cpu 4` | 88 °C peak; 1.0-1.2 GHz from 50 s                |
+| HDMI                           | 2256x1504 @ 60.00 Hz, the panel's native mode ✅ |
+| GPU, `kmscube`                 | 60.0 fps vsync-locked, Mali-450 at 744 MHz ✅    |
+| GPU, `glmark2-es2-drm`         | **64** at 2256x1504 on screen, no artifacts ✅   |
 
 The eMMC write figures were taken in the last 128 MiB, outside the factory partitions, and the
 region was saved and restored byte-identical afterwards.
@@ -69,8 +71,8 @@ same 80 s as the Rockchip boards and the kernel pings the hardware in between.
 **The Ethernet number is a USB measurement.** No Ethernet is fitted, so it is a USB-attached RTL8153
 on a USB 2.0 host that is also serving the rootfs — 196 Mbit/s is the bus, not the NIC.
 
-There is no `cpufreq` and there are no thermal zones, so no frequency or temperature figure can be
-taken; the four `thermal` lines in `dmesg` are governor registrations, not throttling.
+**The box cannot hold full speed.** Under four-core load the 80 °C passive trip holds it at 1.0-1.2
+GHz within a minute; bursts reach 1.752 GHz. Amlogic's tree throttled from 85 °C.
 
 ## Video codecs
 
@@ -254,8 +256,8 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`           |
 | Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                           |
 | Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait           |
-| cpufreq              | ❌ no scaling: the tree has no `operating-points-v2`                  |
-| Thermal              | ❌ no zones: the vendor tree models the sensor its own way            |
+| cpufreq              | ✅ `scpi-cpufreq`, 100 MHz-1.752 GHz, the factory's table             |
+| Thermal              | ✅ `cpu-thermal` on the SCPI sensor; passive 80 °C, hot 90 °C         |
 | HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                     |
 | GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                          |
 | ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client               |

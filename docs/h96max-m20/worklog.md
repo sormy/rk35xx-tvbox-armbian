@@ -1161,3 +1161,14 @@ is sold as.
   `0x2036315b`) from a 200 MHz pixel clock did not stop it. Reverted.
 - Blanking and unblanking `fb0` on a blinking boot re-runs the PLL setup and stopped it. The 235.7
   MHz pixel clock needs a fractional PLL; a lock that comes up marginal fits.
+
+## 2026-10-12 — cpufreq and thermal through SCPI
+
+- The factory ran the CPUs to 1.752 GHz through the SCP firmware; the tree had the MHU and SCPI
+  clock under vendor bindings mainline does not match, so no cpufreq and no thermal zone.
+- Mainline's GX SCPI grafted: the MHU at `0xc883c404` with SPI 208-210, SCP shared memory at SRAM
+  `0x13000`/`0x13400`, the SCPI node with `scpi_dvfs` and `scpi_sensors`, `#cooling-cells` on the
+  CPUs, and `cpu-thermal` in place of the vendor zone. `scpi-cpufreq` offers the factory table, 100
+  MHz-1.752 GHz; the sensor reads 66-67 °C idle.
+- Five minutes of `stress-ng --cpu 4`: 78 °C in 30 s, the 80 °C passive trip throttles to 1.0-1.2
+  GHz from 50 s, 88 °C at the end. No crash.
