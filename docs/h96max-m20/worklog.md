@@ -1172,3 +1172,10 @@ is sold as.
   MHz-1.752 GHz; the sensor reads 66-67 °C idle.
 - Five minutes of `stress-ng --cpu 4`: 78 °C in 30 s, the 80 °C passive trip throttles to 1.0-1.2
   GHz from 50 s, 88 °C at the end. No crash.
+
+## 2026-10-12 — four-job DKMS builds hold
+
+- `dkms build mt76-mt7668 -j 4 --force`, three times in a row with SCPI DVFS on: 9:37, 8:50 and
+  9:03, all clean, no SError in the kernel log. Two jobs took ~25 min. The crash under a 4-core
+  build was the reusable CMA pool over BL31; the two-job cap is gone, and `rk35xx-update` removes
+  the copy it installed.

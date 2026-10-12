@@ -25,8 +25,6 @@
 0644 h96max-m20/meson/venc/monet.bin            /lib/firmware/meson/venc/monet.bin
 0644 h96max-m20/meson/venc/LICENSE.monet.txt    /lib/firmware/meson/venc/LICENSE.monet.txt
 
-# DKMS builds - first boot, updates, kernel upgrades - on two cores
-0644 h96max-m20/rk35xx-dkms-jobs.conf /etc/dkms/framework.conf.d/rk35xx-jobs.conf
 
 # armbian-install refuses: it would wipe the vendor bootloader and the keys
 0644 h96max-m20/rk35xx-platform-install /usr/lib/u-boot/platform_install.sh

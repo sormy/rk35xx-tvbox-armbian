@@ -249,30 +249,30 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 
 ## Known gaps
 
-| Item                 | State                                                                 |
-| -------------------- | --------------------------------------------------------------------- |
-| Wi-Fi, mainline mt76 | ✅ both bands — its gaps in `patches/mt76-mt7668/README.md`           |
-| Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast      |
-| Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`           |
-| Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                           |
-| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait           |
-| cpufreq              | ✅ `scpi-cpufreq`, 100 MHz-1.752 GHz, the factory's table             |
-| Thermal              | ✅ `cpu-thermal` on the SCPI sensor; passive 80 °C, hot 90 °C         |
-| HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                     |
-| GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                          |
-| ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client               |
-| Other decoders       | not implemented: MPEG-4, H.263, VC-1, MJPEG, AVS, RealVideo           |
-| HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                              |
-| CEC                  | ❓ not grafted; this panel has no CEC to test against                 |
-| SD slot              | ➖ not fitted; the SD host registers with nothing behind it           |
-| Button               | ❓ the ADC registers; the key mapping is untested                     |
-| Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff       |
-| Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing  |
-| Install to eMMC      | ❓ the single-boot image verifies offline; never flashed              |
-| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`          |
-| Panic under a build  | ❌ SError in `cc1` at 4 cores; DKMS limited to 2; ❓ since secmon fix |
-| Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot       |
-| mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                  |
-| Fresh image          | ❓ built with both DKMS sources staged; never booted                  |
-| DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                         |
-| Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3                |
+| Item                 | State                                                                |
+| -------------------- | -------------------------------------------------------------------- |
+| Wi-Fi, mainline mt76 | ✅ both bands — its gaps in `patches/mt76-mt7668/README.md`          |
+| Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast     |
+| Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`          |
+| Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                          |
+| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait          |
+| cpufreq              | ✅ `scpi-cpufreq`, 100 MHz-1.752 GHz, the factory's table            |
+| Thermal              | ✅ `cpu-thermal` on the SCPI sensor; passive 80 °C, hot 90 °C        |
+| HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                    |
+| GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                         |
+| ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client              |
+| Other decoders       | not implemented: MPEG-4, H.263, VC-1, MJPEG, AVS, RealVideo          |
+| HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |
+| CEC                  | ❓ not grafted; this panel has no CEC to test against                |
+| SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |
+| Button               | ❓ the ADC registers; the key mapping is untested                    |
+| Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
+| Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing |
+| Install to eMMC      | ❓ the single-boot image verifies offline; never flashed             |
+| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`         |
+| Panic under a build  | ✅ three 4-job DKMS builds clean since the secmon fix                |
+| Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot      |
+| mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                 |
+| Fresh image          | ❓ built with both DKMS sources staged; never booted                 |
+| DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                        |
+| Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3               |

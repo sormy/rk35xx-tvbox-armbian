@@ -123,6 +123,13 @@ migrate() {
 		rm -f /etc/modules-load.d/rk35xx.conf
 	fi
 
+	# the M20's two-job DKMS cap went once four-job builds held; drop the copy it installed
+	if [ -e /etc/dkms/framework.conf.d/rk35xx-jobs.conf ] &&
+		! grep -q '/etc/dkms/framework.conf.d/rk35xx-jobs.conf' "$FW/$BOARD_PAYLOAD"; then
+		echo "  migrating: removing /etc/dkms/framework.conf.d/rk35xx-jobs.conf"
+		rm -f /etc/dkms/framework.conf.d/rk35xx-jobs.conf
+	fi
+
 	# u-boot.itb was renamed to uboot.itb; the payload install right after this puts the new one in
 	if [ -e "$SHARE/u-boot.itb" ]; then
 		echo "  migrating: removing $SHARE/u-boot.itb"
