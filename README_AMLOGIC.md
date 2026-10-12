@@ -30,7 +30,7 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | USB stick — boot and rootfs        |     ✅      |
 | eMMC — read and write              |     ✅      |
 | eMMC — boot and rootfs             |     ❓      |
-| microSD — boot and rootfs          |     ❓      |
+| microSD — boot and rootfs          |     ➖      |
 | USB 2.0                            |     ✅      |
 | USB 3.0                            |     ➖      |
 | **Network**                        |             |
@@ -49,7 +49,7 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | Video decode and encode            |     ❌      |
 | CMA reservation                    |     ❌      |
 | **Input and indicators**           |             |
-| Bundled remote over IR             |     ❓      |
+| Bundled remote over IR             |     ➖      |
 | Bundled remote over Bluetooth      |     ❓      |
 | Front button                       |     ❓      |
 | Power LED                          |     ✅      |
