@@ -1,0 +1,120 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 11 Oct 2026 22:00:00 -0400
+Subject: [PATCH] drm/meson: dw-hdmi: add GXLX2 support
+
+GXLX2 (S905L3) keeps the GXL display pipeline, clocks and HDMI PHY, but
+maps the DesignWare controller directly, as G12A does: DWC registers
+byte-addressed from 0xda800000, TOP registers at 0xda808000. The GXL
+match data reads it through the old address/data port and gets garbage:
+
+  meson-dw-hdmi: Unsupported HDMI controller (0d0d:0d:0d)
+
+Add GXLX2 match data with the G12A register access and the GXL PHY
+setup, its own 2.97 Gbps PHY value, and skip the APB3 fail-on-error
+bits, which exist only behind the indirect port.
+
+This is the driver half of "[RFC PATCH 0/2] drm/meson: add HDMI support
+for GXLX2" (linux-amlogic, 2026-07), rebased onto 6.18.44 without its
+meson_drv.c hunk: a GXL fallback compatible lets meson-drm find the
+component without it.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+  drivers/gpu/drm/meson/meson_dw_hdmi.c |   33 ++++++++++++++++++++++++++++-----
+  1 file changed, 28 insertions(+), 5 deletions(-)
+
+--- a/drivers/gpu/drm/meson/meson_dw_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_dw_hdmi.c
+@@ -134,6 +134,8 @@
+ 				     unsigned int addr, unsigned int data);
+ 	u32 cntl0_init;
+ 	u32 cntl1_init;
++	u32 phy_cntl0_3g;
++	bool uses_direct_regs;
+ };
+ 
+ struct meson_dw_hdmi {
+@@ -285,7 +287,9 @@
+ 	/* For 420, pixel clock is half unlike venc clock */
+ 	if (mode_is_420) pixel_clock /= 2;
+ 
+-	if (dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
++	if (dw_hdmi_is_compatible(dw_hdmi,
++				  "amlogic,meson-gxlx2-dw-hdmi") ||
++	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+ 	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxm-dw-hdmi")) {
+ 		if (pixel_clock >= 371250) {
+ 			/* 5.94Gbps, 3.7125Gbps */
+@@ -293,7 +297,8 @@
+ 			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2136315b);
+ 		} else if (pixel_clock >= 297000) {
+ 			/* 2.97Gbps */
+-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33303382);
++			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0,
++				     dw_hdmi->data->phy_cntl0_3g);
+ 			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2036315b);
+ 		} else if (pixel_clock >= 148500) {
+ 			/* 1.485Gbps */
+@@ -584,6 +589,7 @@
+ 	.dwc_write = dw_hdmi_dwc_write,
+ 	.cntl0_init = 0x0,
+ 	.cntl1_init = PHY_CNTL1_INIT,
++	.phy_cntl0_3g = 0x33303382,
+ };
+ 
+ static const struct meson_dw_hdmi_data meson_dw_hdmi_g12a_data = {
+@@ -593,6 +599,19 @@
+ 	.dwc_write = dw_hdmi_g12a_dwc_write,
+ 	.cntl0_init = 0x000b4242, /* Bandgap */
+ 	.cntl1_init = PHY_CNTL1_INIT,
++	.uses_direct_regs = true,
++};
++
++/* GXLX2 uses the direct register layout with the older GXL PHY setup. */
++static const struct meson_dw_hdmi_data meson_dw_hdmi_gxlx2_data = {
++	.top_read = dw_hdmi_g12a_top_read,
++	.top_write = dw_hdmi_g12a_top_write,
++	.dwc_read = dw_hdmi_g12a_dwc_read,
++	.dwc_write = dw_hdmi_g12a_dwc_write,
++	.cntl0_init = 0x0,
++	.cntl1_init = PHY_CNTL1_INIT,
++	.phy_cntl0_3g = 0x33353382,
++	.uses_direct_regs = true,
+ };
+ 
+ static void meson_dw_hdmi_init(struct meson_dw_hdmi *meson_dw_hdmi)
+@@ -610,8 +629,8 @@
+ 	reset_control_reset(meson_dw_hdmi->hdmitx_ctrl);
+ 	reset_control_reset(meson_dw_hdmi->hdmitx_phy);
+ 
+-	/* Enable APB3 fail on error */
+-	if (!meson_vpu_is_compatible(priv, VPU_COMPATIBLE_G12A)) {
++	/* The APB3 control registers exist only with the indirect interface. */
++	if (!meson_dw_hdmi->data->uses_direct_regs) {
+ 		writel_bits_relaxed(BIT(15), BIT(15),
+ 				    meson_dw_hdmi->hdmitx + HDMITX_TOP_CTRL_REG);
+ 		writel_bits_relaxed(BIT(15), BIT(15),
+@@ -767,7 +786,9 @@
+ 	dw_plat_data->disable_cec = true;
+ 	dw_plat_data->output_port = 1;
+ 
+-	if (dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
++	if (dw_hdmi_is_compatible(meson_dw_hdmi,
++				  "amlogic,meson-gxlx2-dw-hdmi") ||
++	    dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+ 	    dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxm-dw-hdmi") ||
+ 	    dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-g12a-dw-hdmi"))
+ 		dw_plat_data->use_drm_infoframe = true;
+@@ -848,6 +869,8 @@
+ 	  .data = &meson_dw_hdmi_gxl_data },
+ 	{ .compatible = "amlogic,meson-gxm-dw-hdmi",
+ 	  .data = &meson_dw_hdmi_gxl_data },
++	{ .compatible = "amlogic,meson-gxlx2-dw-hdmi",
++	  .data = &meson_dw_hdmi_gxlx2_data },
+ 	{ .compatible = "amlogic,meson-g12a-dw-hdmi",
+ 	  .data = &meson_dw_hdmi_g12a_data },
+ 	{ }
+-- 
+2.47.0
+

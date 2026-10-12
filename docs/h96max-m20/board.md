@@ -5,8 +5,8 @@ Measured on one unit; these numbers are per-unit and they decay. The full factor
 `stock/h96max-m20/README.md`.
 
 **In bring-up.** Armbian boots from a USB stick unattended and runs from it; eMMC, USB, Ethernet
-(via a USB adapter) and the power LED work. Nothing is installed to eMMC. Known gaps are at the
-bottom.
+(via a USB adapter), the power LED, HDMI, the GPU, and H.264, HEVC and VP9 decode and encode work.
+Nothing is installed to eMMC. Known gaps are at the bottom.
 
 ## Identity
 
@@ -39,21 +39,24 @@ bottom.
 
 Kernel 6.18.44, image of 2026-09-17. `fio --direct=1`, `iperf3` to a wired host.
 
-| Measure                     | Value                                      |
-| --------------------------- | ------------------------------------------ |
-| Boot to `graphical.target`  | 14.1-16.7 s over 10 boots, mt76 at boot ✅ |
-| RAM                         | 1954 MB ✅                                 |
-| eMMC sequential read        | 43.3 MiB/s ✅                              |
-| eMMC sequential write       | 32.7 MiB/s ✅                              |
-| eMMC random 4K read         | 2711 IOPS, 10.6 MiB/s ✅                   |
-| eMMC random 4K write        | 3839 IOPS, 15.0 MiB/s ✅                   |
-| USB drive (rootfs) read     | 21.3 MiB/s ✅                              |
-| USB drive (rootfs) write    | 21.1 MiB/s ✅                              |
-| USB drive random 4K read    | 1842 IOPS ✅                               |
-| USB drive random 4K write   | 1644 IOPS ✅                               |
-| USB throughput (via Gb NIC) | 196 Mbit/s, idle and under 4-core load ✅  |
-| `stress-ng` 4×cpu + 2×vm    | 120 s `--verify`, 6 passed, 0 failed ✅    |
-| Watchdog                    | systemd 80 s, hardware 65.5 s ✅           |
+| Measure                     | Value                                            |
+| --------------------------- | ------------------------------------------------ |
+| Boot to `graphical.target`  | 14.1-16.7 s over 10 boots, mt76 at boot ✅       |
+| RAM                         | 1954 MB ✅                                       |
+| eMMC sequential read        | 43.3 MiB/s ✅                                    |
+| eMMC sequential write       | 32.7 MiB/s ✅                                    |
+| eMMC random 4K read         | 2711 IOPS, 10.6 MiB/s ✅                         |
+| eMMC random 4K write        | 3839 IOPS, 15.0 MiB/s ✅                         |
+| USB drive (rootfs) read     | 21.3 MiB/s ✅                                    |
+| USB drive (rootfs) write    | 21.1 MiB/s ✅                                    |
+| USB drive random 4K read    | 1842 IOPS ✅                                     |
+| USB drive random 4K write   | 1644 IOPS ✅                                     |
+| USB throughput (via Gb NIC) | 196 Mbit/s, idle and under 4-core load ✅        |
+| `stress-ng` 4×cpu + 2×vm    | 120 s `--verify`, 6 passed, 0 failed ✅          |
+| Watchdog                    | systemd 80 s, hardware 65.5 s ✅                 |
+| HDMI                        | 2256x1504 @ 60.00 Hz, the panel's native mode ✅ |
+| GPU, `kmscube`              | 60.0 fps vsync-locked, Mali-450 at 744 MHz ✅    |
+| GPU, `glmark2-es2-drm`      | **64** at 2256x1504 on screen, no artifacts ✅   |
 
 The eMMC write figures were taken in the last 128 MiB, outside the factory partitions, and the
 region was saved and restored byte-identical afterwards.
@@ -68,6 +71,39 @@ on a USB 2.0 host that is also serving the rootfs — 196 Mbit/s is the bus, not
 
 There is no `cpufreq` and there are no thermal zones, so no frequency or temperature figure can be
 taken; the four `thermal` lines in `dmesg` are governor registrations, not throttling.
+
+## Video codecs
+
+Three DKMS packages, `meson-vdec-gxlx2`, `amvenc-avc-gxlx2` and `amvenc-hevc-gxlx2`; GStreamer's
+`v4l2*dec` and `v4l2*enc` drive them.
+
+| Codec     | Decode 720p     | 1080p           | 4K              | Encode 720p | 1080p | 4K  |
+| --------- | --------------- | --------------- | --------------- | ----------- | ----- | --- |
+| H.264     | ✅              | ✅              | ✅              | ✅          | ✅    | ➖  |
+| HEVC      | ✅              | ✅              | ✅              | ✅          | ✅    | ✅  |
+| VP9       | ✅              | ✅              | ✅              | ➖          | ➖    | ➖  |
+| MPEG-1/2  | ✅              | ✅              | ➖              | ➖          | ➖    | ➖  |
+| MPEG-4    | not implemented | not implemented | ➖              | ➖          | ➖    | ➖  |
+| H.263     | not implemented | not implemented | ➖              | ➖          | ➖    | ➖  |
+| VC-1      | not implemented | not implemented | ➖              | ➖          | ➖    | ➖  |
+| MJPEG     | not implemented | not implemented | not implemented | ➖          | ➖    | ➖  |
+| AVS, AVS2 | not implemented | not implemented | not implemented | ➖          | ➖    | ➖  |
+| RealVideo | not implemented | not implemented | ➖              | ➖          | ➖    | ➖  |
+
+Decode ✅ is bit-exact against ffmpeg's software decode over every frame, MPEG-1/2 within its IDCT
+rounding, 66-68 dB; encode ✅ is the PSNR below. ➖ is beyond the hardware: the H.264 encoder stops
+at 1920x1088.
+
+**Not implemented:** the silicon decodes MPEG-4, H.263, VC-1, MJPEG, AVS, AVS2 and RealVideo — the
+factory loads `amvdec_mpeg4`, `amvdec_vc1`, `amvdec_mjpeg`, `amvdec_avs`, `amvdec_avs2`,
+`amvdec_real` — but no V4L2 driver for them exists on this chip.
+
+| Measure, 60 frames of `testsrc2` | Value                                       |
+| -------------------------------- | ------------------------------------------- |
+| Decode, 4K                       | H.264 2.57 s, HEVC 2.94 s, VP9 2.64 s       |
+| H.264 encode, 8 Mbit/s           | 720p 51.5 dB, 1080p 45.7 dB                 |
+| HEVC encode, 8 Mbit/s            | 720p 51.1, 1080p 44.9, 4K 38.7 dB in 11.6 s |
+| Peak CMA, 4K decode              | VP9 254 MiB, HEVC 139, H.264 124            |
 
 ## eMMC over the OTG port
 
@@ -211,28 +247,29 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 
 ## Known gaps
 
-| Item                 | State                                                                |
-| -------------------- | -------------------------------------------------------------------- |
-| Wi-Fi, mainline mt76 | ✅ both bands — its gaps in `patches/mt76-mt7668/README.md`          |
-| Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast     |
-| Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`          |
-| Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                          |
-| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait          |
-| cpufreq              | ❌ no scaling: the tree has no `operating-points-v2`                 |
-| Thermal              | ❌ no zones: the vendor tree models the sensor its own way           |
-| VPU power domain     | ❌ `meson_ee_pwrc` wants resets and clocks the vendor node lacks     |
-| GPU                  | ❌ `lima` cannot get its bus clock                                   |
-| CMA                  | ❌ the reserved-memory region fails to set up                        |
-| HDMI, audio, video   | ❓ never exercised                                                   |
-| SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |
-| Button               | ❓ the ADC registers; the key mapping is untested                    |
-| Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
-| Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing |
-| Install to eMMC      | ❓ the single-boot image verifies offline; never flashed             |
-| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`         |
-| Panic under a build  | ❌ SError machine check in `cc1` at 4 cores; DKMS limited to 2       |
-| Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot      |
-| mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                 |
-| Fresh image          | ❓ built with both DKMS sources staged; never booted                 |
-| DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                        |
-| Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3               |
+| Item                 | State                                                                 |
+| -------------------- | --------------------------------------------------------------------- |
+| Wi-Fi, mainline mt76 | ✅ both bands — its gaps in `patches/mt76-mt7668/README.md`           |
+| Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast      |
+| Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`           |
+| Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                           |
+| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait           |
+| cpufreq              | ❌ no scaling: the tree has no `operating-points-v2`                  |
+| Thermal              | ❌ no zones: the vendor tree models the sensor its own way            |
+| HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                     |
+| GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                          |
+| ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client               |
+| Other decoders       | not implemented: MPEG-4, H.263, VC-1, MJPEG, AVS, RealVideo           |
+| HDMI audio, CEC      | ❓ not grafted                                                        |
+| SD slot              | ➖ not fitted; the SD host registers with nothing behind it           |
+| Button               | ❓ the ADC registers; the key mapping is untested                     |
+| Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff       |
+| Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing  |
+| Install to eMMC      | ❓ the single-boot image verifies offline; never flashed              |
+| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`          |
+| Panic under a build  | ❌ SError in `cc1` at 4 cores; DKMS limited to 2; ❓ since secmon fix |
+| Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot       |
+| mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                  |
+| Fresh image          | ❓ built with both DKMS sources staged; never booted                  |
+| DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                         |
+| Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3                |

@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 02:00:00 -0400
+Subject: [PATCH] media: meson: vdec: no EPOLLERR before CAPTURE streams
+
+The parser can take a short stream into its FIFO before the first source
+change, and the m2m core reports an empty OUTPUT queue with CAPTURE off
+as EPOLLERR. GStreamer gives up on it while waiting for the event.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/vdec.c |   16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --color -ruN B/vdec/vdec.c C/vdec/vdec.c
+--- a/vdec/vdec.c
++++ b/vdec/vdec.c
+@@ -1460,12 +1460,26 @@
+ 	return 0;
+ }
+ 
++/*
++ * The parser can take all of OUTPUT into its FIFO before the first source change, and the m2m
++ * core reports an empty OUTPUT queue with CAPTURE off as an error; it is not one yet.
++ */
++static __poll_t vdec_poll(struct file *file, poll_table *wait)
++{
++	struct amvdec_session *sess = file_to_amvdec_session(file);
++	__poll_t rc = v4l2_m2m_fop_poll(file, wait);
++
++	if (!sess->streamon_cap)
++		rc &= ~EPOLLERR;
++	return rc;
++}
++
+ static const struct v4l2_file_operations vdec_fops = {
+ 	.owner = THIS_MODULE,
+ 	.open = vdec_open,
+ 	.release = vdec_close,
+ 	.unlocked_ioctl = video_ioctl2,
+-	.poll = v4l2_m2m_fop_poll,
++	.poll = vdec_poll,
+ 	.mmap = v4l2_m2m_fop_mmap,
+ };
+ 
+-- 
+2.47.0
+

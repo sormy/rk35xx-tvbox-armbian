@@ -76,6 +76,8 @@ another, so nothing rots when one is rewritten.
 | `patches/mt76-mt7668/README.md`       | mainline mt76 for the MT7668S: what it does, its gaps, its firmware   |
 | `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, shipped as DKMS                   |
 | `patches/mt76x8-mt7668/README.md`     | the vendor MT7668 driver on 6.18: the fallback, not shipped           |
+| `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), shipped as DKMS                 |
+| `patches/meson-codecs/README.md`      | the video decoder and encoders on the GXLX2, shipped as DKMS          |
 | `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds                |
 
 # Standing rules

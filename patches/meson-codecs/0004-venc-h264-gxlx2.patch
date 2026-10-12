@@ -1,0 +1,196 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 02:00:00 -0400
+Subject: [PATCH] media: meson: venc-h264: GXLX2
+
+Find the gxlx-vdec node, the GIC through its interrupt parent, and run
+as GXLX2. A vendor tree carries an "amlogic, amvenc_avc" node with the
+mailbox_2 interrupt, which already makes a platform device of that
+name: adopt it. v4l2_m2m_buf_copy_metadata() still takes
+copy_frame_flags before 6.18.50.
+
+
+Export the match table, so udev loads the module for the vendor node.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ venc-h264/compat.c    |   50 +++++++++++++++++++++++++++++++++----------------
+ venc-h264/compat.h    |    6 ++++--
+ venc-h264/encoder.c   |    1 +
+ venc-h264/venc_v4l2.c |    5 +++++
+ 4 files changed, 44 insertions(+), 18 deletions(-)
+
+diff --color -ruN D/venc-h264/compat.c E/venc-h264/compat.c
+--- a/venc-h264/compat.c
++++ b/venc-h264/compat.c
+@@ -14,6 +14,7 @@
+ #include <linux/of.h>
+ #include <linux/of_address.h>
+ #include <linux/of_platform.h>
++#include <linux/of_irq.h>
+ 
+ #include "compat.h"
+ 
+@@ -93,7 +94,7 @@
+ 	return -EINVAL;
+ }
+ 
+-static int venc_map_irq(void)
++static int venc_map_irq(struct device_node *vdec_np)
+ {
+ 	struct device_node *gic;
+ 	struct irq_fwspec spec = {
+@@ -102,7 +103,7 @@
+ 	};
+ 	int irq;
+ 
+-	gic = of_find_compatible_node(NULL, NULL, "arm,gic-400");
++	gic = of_irq_find_parent(vdec_np);
+ 	if (!gic)
+ 		return -ENODEV;
+ 	spec.fwnode = of_fwnode_handle(gic);
+@@ -151,13 +152,21 @@
+ 	return 0;
+ }
+ 
++static void venc_put_pdev(void)
++{
++	if (venc_hw.pdev_from_dt)
++		put_device(&venc_hw.pdev->dev);
++	else
++		platform_device_unregister(venc_hw.pdev);
++}
++
+ int venc_hw_init(void)
+ {
+-	struct device_node *np, *hhi;
++	struct device_node *np, *hhi, *venc_np;
+ 	struct resource res, irq_res;
+ 	int ret, irq;
+ 
+-	np = of_find_compatible_node(NULL, NULL, "amlogic,sm1-vdec");
++	np = of_find_compatible_node(NULL, NULL, "amlogic,gxlx-vdec");
+ 	if (!np)
+ 		return -ENODEV;
+ 	ret = of_address_to_resource(np, 0, &res);	/* "dos" */
+@@ -185,16 +194,25 @@
+ 		ret = -ENOMEM;
+ 		goto free_canvas;
+ 	}
+-	irq = venc_map_irq();
+-	if (irq < 0) {
+-		ret = irq;
+-		goto unmap;
+-	}
+-	irq_res = (struct resource)DEFINE_RES_IRQ(irq);
+-	venc_hw.pdev = platform_device_register_simple("amvenc_avc", -1, &irq_res, 1);
+-	if (IS_ERR(venc_hw.pdev)) {
+-		ret = PTR_ERR(venc_hw.pdev);
+-		goto unmap;
++	/* a vendor tree carries the node itself, with its mailbox_2 interrupt */
++	venc_np = of_find_compatible_node(NULL, NULL, "amlogic, amvenc_avc");
++	venc_hw.pdev = venc_np ? of_find_device_by_node(venc_np) : NULL;
++	of_node_put(venc_np);
++	if (venc_hw.pdev) {
++		venc_hw.pdev_from_dt = true;
++		irq = platform_get_irq(venc_hw.pdev, 0);
++	} else {
++		irq = venc_map_irq(np);
++		if (irq < 0) {
++			ret = irq;
++			goto unmap;
++		}
++		irq_res = (struct resource)DEFINE_RES_IRQ(irq);
++		venc_hw.pdev = platform_device_register_simple("amvenc_avc", -1, &irq_res, 1);
++		if (IS_ERR(venc_hw.pdev)) {
++			ret = PTR_ERR(venc_hw.pdev);
++			goto unmap;
++		}
+ 	}
+ 	ret = dma_coerce_mask_and_coherent(&venc_hw.pdev->dev, DMA_BIT_MASK(32));
+ 	if (ret)
+@@ -205,7 +223,7 @@
+ 	return 0;
+ 
+ unreg:
+-	platform_device_unregister(venc_hw.pdev);
++	venc_put_pdev();
+ unmap:
+ 	iounmap(venc_hw.dos);
+ free_canvas:
+@@ -222,7 +240,7 @@
+ {
+ 	int i;
+ 
+-	platform_device_unregister(venc_hw.pdev);
++	venc_put_pdev();
+ 	iounmap(venc_hw.dos);
+ 	for (i = 0; i < VENC_NUM_CANVAS; i++)
+ 		meson_canvas_free(venc_hw.canvas, venc_hw.canvas_base + i);
+diff --color -ruN D/venc-h264/compat.h E/venc-h264/compat.h
+--- a/venc-h264/compat.h
++++ b/venc-h264/compat.h
+@@ -24,6 +24,7 @@
+ 	struct meson_canvas *canvas;
+ 	u8 canvas_base;
+ 	struct platform_device *pdev;
++	bool pdev_from_dt;
+ };
+ extern struct venc_hw venc_hw;
+ 
+@@ -95,6 +96,7 @@
+ #define MESON_CPU_MAJOR_ID_GXL		0x21
+ #define MESON_CPU_MAJOR_ID_TXL		0x23
+ #define MESON_CPU_MAJOR_ID_G12A		0x28
++#define MESON_CPU_MAJOR_ID_GXLX2	0x2a
+ #define MESON_CPU_MAJOR_ID_SM1		0x2b
+ #define MESON_CPU_MAJOR_ID_TL1		0x2e
+ #define MESON_CPU_MAJOR_ID_TM2		0x2f
+@@ -114,8 +116,8 @@
+ #define AM_MESON_CPU_MAJOR_ID_T3X	MESON_CPU_MAJOR_ID_T3X
+ #define AM_MESON_CPU_MAJOR_ID_TXHD2	MESON_CPU_MAJOR_ID_TXHD2
+ #define AM_MESON_CPU_MAJOR_ID_S7D	MESON_CPU_MAJOR_ID_S7D
+-static inline int get_cpu_type(void) { return MESON_CPU_MAJOR_ID_SM1; }
+-static inline int get_cpu_major_id(void) { return MESON_CPU_MAJOR_ID_SM1; }
++static inline int get_cpu_type(void) { return MESON_CPU_MAJOR_ID_GXLX2; }
++static inline int get_cpu_major_id(void) { return MESON_CPU_MAJOR_ID_GXLX2; }
+ 
+ /* ---- canvas ---- */
+ #define CANVAS_ADDR_NOWRAP	MESON_CANVAS_WRAP_NONE
+diff --color -ruN D/venc-h264/encoder.c E/venc-h264/encoder.c
+--- a/venc-h264/encoder.c
++++ b/venc-h264/encoder.c
+@@ -5102,6 +5102,7 @@
+ 	},
+ 	{},
+ };
++MODULE_DEVICE_TABLE(of, amlogic_avcenc_dt_match);
+ 
+ static struct platform_driver amvenc_avc_driver = {
+ 	.probe = amvenc_avc_probe,
+diff --color -ruN D/venc-h264/venc_v4l2.c E/venc-h264/venc_v4l2.c
+--- a/venc-h264/venc_v4l2.c
++++ b/venc-h264/venc_v4l2.c
+@@ -9,6 +9,7 @@
+  * SPS/PPS before every IDR. Frame-level rate control as in the venc tool.
+  */
+ #include <linux/module.h>
++#include <linux/version.h>
+ #include <linux/platform_device.h>
+ #include <media/v4l2-ctrls.h>
+ #include <media/v4l2-device.h>
+@@ -232,7 +233,11 @@
+ 	dst = v4l2_m2m_dst_buf_remove(m2m);
+ 	last = v4l2_m2m_is_last_draining_src_buf(m2m, src);
+ 	src->sequence = ctx->out_seq++;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 18, 50)
++	v4l2_m2m_buf_copy_metadata(src, dst, false);
++#else
+ 	v4l2_m2m_buf_copy_metadata(src, dst);
++#endif
+ 	dst->flags &= ~(V4L2_BUF_FLAG_KEYFRAME | V4L2_BUF_FLAG_PFRAME);
+ 	dst->flags |= idr ? V4L2_BUF_FLAG_KEYFRAME : V4L2_BUF_FLAG_PFRAME;
+ 	dst->sequence = ctx->cap_seq++;
+-- 
+2.47.0
+

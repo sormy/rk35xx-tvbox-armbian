@@ -1,6 +1,6 @@
 --- board.dts
 +++ armbian.dts
-@@ -1,13 +1,23 @@
+@@ -1,28 +1,42 @@
  /dts-v1/;
  
  / {
@@ -25,8 +25,75 @@
 +
  	gpu: mali@d00c0000 {
  		#cooling-cells = <0x02>;
- 		compatible = "arm,mali-450";
-@@ -137,7 +147,8 @@
+-		compatible = "arm,mali-450";
++		/* lima's binding: the vendor's extra reg windows, IRQ names and clocks are its own */
++		compatible = "amlogic,meson-gxl-mali", "arm,mali-450";
+ 		interrupt-parent = <&gic>;
+-		reg = <0xd00c0000 0x40000 0xc1104440 0x1000 0xc8100000 0x1000 0xc883c000 0x1000 0xc1104440 0x1000>;
++		reg = <0xd00c0000 0x40000>;
+ 		interrupts = <0x00 0xa0 0x04 0x00 0xa1 0x04 0x00 0xa2 0x04 0x00 0xa3 0x04 0x00 0xa4 0x04 0x00 0xa5 0x04 0x00 0xa6 0x04 0x00 0xa7 0x04>;
+-		interrupt-names = "IRQGP", "IRQGPMMU", "IRQPP", "IRQPMU", "IRQPP0", "IRQPPMMU0", "IRQPP1", "IRQPPMMU1";
++		interrupt-names = "gp", "gpmmu", "pp", "pmu", "pp0", "ppmmu0", "pp1", "ppmmu1";
+ 		pmu_domain_config = <0x01 0x02 0x04 0x00 0x00 0x00 0x00 0x00 0x00 0x01 0x02 0x00>;
+ 		pmu_switch_delay = <0xffff>;
+ 		num_of_pp = <0x02>;
+ 		def_clock = <0x03>;
+ 		sc_mpp = <0x02>;
+ 		tbl = <0x02 0x03 0x04 0x05 0x06 0x07>;
+-		clocks = <&clkc 0x97 &clkc 0x09>;
+-		clock-names = "gpu_mux", "gp0_pll";
++		clocks = <&clkc 0x0c &clkc 0x6a>;
++		clock-names = "bus", "core";
++		assigned-clocks = <&clkc 0x09>;
++		assigned-clock-rates = <0x2c588a00>;
++		operating-points-v2 = <&gpu_opp_table>;
+ 		control_interval = <0xc8>;
+ 		phandle = <0x85>;
+ 
+@@ -105,10 +119,42 @@
+ 			threshold = <0xe6 0xff>;
+ 			phandle = <0x88>;
+ 		};
+ 	};
+ 
++	gpu_opp_table: opp-table {
++		compatible = "operating-points-v2";
++
++		opp-125000000 {
++			opp-hz = <0x00 0x7735940>;
++		};
++
++		opp-250000000 {
++			opp-hz = <0x00 0xee6b280>;
++		};
++
++		opp-285714285 {
++			opp-hz = <0x00 0x1107a76d>;
++		};
++
++		opp-400000000 {
++			opp-hz = <0x00 0x17d78400>;
++		};
++
++		opp-500000000 {
++			opp-hz = <0x00 0x1dcd6500>;
++		};
++
++		opp-666666666 {
++			opp-hz = <0x00 0x27bc86aa>;
++		};
++
++		opp-744000000 {
++			opp-hz = <0x00 0x2c588a00>;
++		};
++	};
++
+ 	cpus: cpus {
+ 		#address-cells = <0x01>;
+ 		#size-cells = <0x00>;
+ 		phandle = <0x89>;
+ 
+@@ -137,7 +183,8 @@
  
  		CPU0: cpu@0 {
  			device_type = "cpu";
@@ -36,7 +103,7 @@
  			reg = <0x00>;
  			enable-method = "psci";
  			clocks = <&scpi_dvfs 0x00>;
-@@ -147,7 +158,7 @@
+@@ -147,7 +194,7 @@
  
  		CPU1: cpu@1 {
  			device_type = "cpu";
@@ -45,7 +112,7 @@
  			reg = <0x01>;
  			enable-method = "psci";
  			clocks = <&scpi_dvfs 0x00>;
-@@ -157,7 +168,7 @@
+@@ -157,7 +204,7 @@
  
  		CPU2: cpu@2 {
  			device_type = "cpu";
@@ -54,7 +121,7 @@
  			reg = <0x02>;
  			enable-method = "psci";
  			clocks = <&scpi_dvfs 0x00>;
-@@ -167,7 +178,7 @@
+@@ -167,7 +214,7 @@
  
  		CPU3: cpu@3 {
  			device_type = "cpu";
@@ -63,7 +130,7 @@
  			reg = <0x03>;
  			enable-method = "psci";
  			clocks = <&scpi_dvfs 0x00>;
-@@ -177,7 +188,8 @@
+@@ -177,7 +224,8 @@
  	};
  
  	timer {
@@ -73,7 +140,7 @@
  		interrupts = <0x01 0x0d 0xff01 0x01 0x0e 0xff01 0x01 0x0b 0xff01 0x01 0x0a 0xff01>;
  	};
  
-@@ -203,7 +215,8 @@
+@@ -203,7 +251,8 @@
  	};
  
  	arm_pmu {
@@ -83,7 +150,7 @@
  		interrupts = <0x00 0x89 0x04 0x00 0x8a 0x04 0x00 0x99 0x04 0x00 0x9a 0x04>;
  	};
  
-@@ -308,7 +321,10 @@
+@@ -308,7 +357,10 @@
  	};
  
  	wdt: watchdog@0xffd0f0d0 {
@@ -95,7 +162,7 @@
  		status = "okay";
  		default_timeout = <0x0a>;
  		reset_watchdog_method = <0x01>;
-@@ -397,7 +413,9 @@
+@@ -397,7 +449,9 @@
  	};
  
  	pinctrl_aobus: pinctrl@14 {
@@ -106,7 +173,7 @@
  		#address-cells = <0x01>;
  		#size-cells = <0x01>;
  		ranges;
-@@ -505,7 +523,9 @@
+@@ -505,7 +559,9 @@
  	};
  
  	pinctrl_periphs: pinctrl@4b0 {
@@ -117,7 +184,21 @@
  		#address-cells = <0x01>;
  		#size-cells = <0x01>;
  		ranges;
-@@ -1049,18 +1069,29 @@
+@@ -769,11 +825,12 @@
+ 		hdmitx_ddc: hdmitx_ddc {
+ 			phandle = <0x6e>;
+ 
+ 			mux {
+ 				groups = "hdmi_sda", "hdmi_scl";
+-				function = "hdmi_ddc";
++				/* mainline's name for the vendor's hdmi_ddc */
++				function = "hdmi_i2c";
+ 			};
+ 		};
+ 
+ 		a_i2c_master: a_i2c {
+ 			phandle = <0x98>;
+@@ -1049,18 +1106,29 @@
  			ranges = <0x00 0xc1100000 0x100000>;
  			phandle = <0xb0>;
  
@@ -150,7 +231,7 @@
  				fifosize = <0x80>;
  				pinctrl-names = "default";
  				pinctrl-0 = <&a_uart_pins>;
-@@ -1068,7 +1099,7 @@
+@@ -1068,7 +1136,7 @@
  			};
  
  			uart_B: serial@84dc {
@@ -159,7 +240,7 @@
  				reg = <0x84dc 0x18>;
  				interrupts = <0x00 0x4b 0x01>;
  				status = "disabled";
-@@ -1081,7 +1112,7 @@
+@@ -1081,7 +1149,7 @@
  			};
  
  			uart_C: serial@8700 {
@@ -168,7 +249,7 @@
  				reg = <0x8700 0x18>;
  				interrupts = <0x00 0x5d 0x01>;
  				status = "disabled";
-@@ -1094,7 +1125,7 @@
+@@ -1094,7 +1162,7 @@
  			};
  
  			pwm_ab: pwm@8550 {
@@ -177,7 +258,7 @@
  				reg = <0x8550 0x1c>;
  				#pwm-cells = <0x03>;
  				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1106,7 +1137,7 @@
+@@ -1106,7 +1174,7 @@
  			};
  
  			pwm_cd: pwm@8640 {
@@ -186,7 +267,7 @@
  				reg = <0x8640 0x1c>;
  				#pwm-cells = <0x03>;
  				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1116,17 +1147,24 @@
+@@ -1116,17 +1184,24 @@
  			};
  
  			pwm_ef: pwm@86c0 {
@@ -214,7 +295,7 @@
  				status = "disabled";
  				reg = <0x8500 0x20>;
  				interrupts = <0x00 0x15 0x01 0x00 0x2f 0x01>;
-@@ -1138,7 +1176,7 @@
+@@ -1138,7 +1213,7 @@
  			};
  
  			i2c1: i2c@87c0 {
@@ -223,7 +304,7 @@
  				status = "disabled";
  				reg = <0x87c0 0x20>;
  				interrupts = <0x00 0xd6 0x01 0x00 0x30 0x01>;
-@@ -1150,7 +1188,7 @@
+@@ -1150,7 +1225,7 @@
  			};
  
  			i2c2: i2c@87e0 {
@@ -232,7 +313,7 @@
  				status = "disabled";
  				reg = <0x87e0 0x20>;
  				interrupts = <0x00 0xd7 0x01 0x00 0x31 0x01>;
-@@ -1162,7 +1200,7 @@
+@@ -1162,7 +1237,7 @@
  			};
  
  			i2c3: i2c@8d20 {
@@ -241,7 +322,7 @@
  				status = "disabled";
  				reg = <0x8d20 0x20>;
  				interrupts = <0x00 0x27 0x01 0x00 0x32 0x01>;
-@@ -1182,17 +1220,36 @@
+@@ -1182,17 +1257,36 @@
  			ranges = <0x00 0xc8100000 0x100000>;
  			phandle = <0xba>;
  
@@ -281,7 +362,7 @@
  				xtal_tick_en = <0x01>;
  				fifosize = <0x40>;
  				pinctrl-names = "default";
-@@ -1201,7 +1258,9 @@
+@@ -1201,7 +1295,9 @@
  			};
  
  			uart_AO_B: serial@4e0 {
@@ -292,7 +373,7 @@
  				reg = <0x4e0 0x18>;
  				interrupts = <0x00 0xc5 0x01>;
  				status = "disable";
-@@ -1214,7 +1273,8 @@
+@@ -1214,7 +1310,8 @@
  			};
  
  			pwm_aoab: pwm@550 {
@@ -302,7 +383,7 @@
  				reg = <0x550 0x1c>;
  				#pwm-cells = <0x03>;
  				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1247,13 +1307,34 @@
+@@ -1247,13 +1344,46 @@
  			ranges = <0x00 0xc883c000 0x2000>;
  			phandle = <0xbf>;
  
@@ -337,13 +418,25 @@
 +					compatible = "amlogic,meson-gxbb-pwrc";
 +					#power-domain-cells = <0x01>;
 +					amlogic,ao-sysctrl = <&sysctrl_AO>;
++					resets = <&reset 0x05 &reset 0x0a &reset 0x0d &reset 0x25 &reset 0x84
++						  &reset 0x85 &reset 0x86 &reset 0x87 &reset 0x89 &reset 0x8c
++						  &reset 0x8d &reset 0xe7>;
++					reset-names = "viu", "venc", "vcbus", "bt656", "dvin", "rdma", "venci",
++						      "vencp", "vdac", "vdi6", "vencl", "vid_lock";
++					clocks = <&clkc 0x84 &clkc 0x8c>;
++					clock-names = "vpu", "vapb";
++					assigned-clocks = <&clkc 0x7e &clkc 0x80 &clkc 0x84 &clkc 0x85 &clkc 0x87
++							   &clkc 0x8b>;
++					assigned-clock-parents = <&clkc 0x05 0x00 &clkc 0x80 &clkc 0x06 0x00
++								  &clkc 0x87>;
++					assigned-clock-rates = <0x00 0x27bc86aa 0x00 0x00 0xee6b280 0x00>;
 +				};
  			};
 +
  		};
  	};
  
-@@ -1281,10 +1362,13 @@
+@@ -1281,10 +1411,13 @@
  		compatible = "amlogic,meson-gxl-saradc";
  		status = "okay";
  		#io-channel-cells = <0x01>;
@@ -360,7 +453,113 @@
  		phandle = <0xc2>;
  	};
  
-@@ -1816,15 +1900,15 @@
+@@ -1719,11 +1852,14 @@
+ 			record-size = <0x8000>;
+ 			console-size = <0x8000>;
+ 			ftrace-size = <0x40000>;
+ 		};
+ 
++		/* The vendor's pools, for drivers mainline does not have. secmon's overlaid BL31,
++		   which U-Boot /memreserve/s: as reusable CMA its pages went to the page allocator. */
+ 		secmon_reserved: linux,secmon {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+ 			size = <0x400000>;
+ 			alignment = <0x400000>;
+ 			alloc-ranges = <0x10000000 0x400000>;
+@@ -1737,73 +1873,90 @@
+ 			no-map;
+ 			phandle = <0xc6>;
+ 		};
+ 
+ 		logo_reserved: linux,meson-fb {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+ 			size = <0x800000>;
+ 			alignment = <0x400000>;
+ 			alloc-ranges = <0x7f800000 0x800000>;
+ 			phandle = <0x3d>;
+ 		};
+ 
+ 		di_cma_reserved: linux,di_cma {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+ 			size = <0x4400000>;
+ 			alignment = <0x400000>;
+ 			phandle = <0x42>;
+ 		};
+ 
+ 		ion_reserved: linux,ion-dev {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+ 			size = <0x7c00000>;
+ 			alignment = <0x400000>;
+ 			alloc-ranges = <0x30000000 0x50000000>;
+ 			phandle = <0x3b>;
+ 		};
+ 
+ 		ppmgr_reserved: linux,ppmgr {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			size = <0x00>;
+ 			phandle = <0x41>;
+ 		};
+ 
+ 		codec_mm_cma: linux,codec_mm_cma {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+ 			size = <0x10400000>;
+ 			alignment = <0x400000>;
+ 			linux,contiguous-region;
+ 			phandle = <0x3e>;
+ 		};
+ 
+ 		picdec_cma_reserved: linux,picdec {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+ 			size = <0x00>;
+ 			alignment = <0x00>;
+ 			linux,contiguous-region;
+ 			phandle = <0x40>;
+ 		};
+ 
+ 		codec_mm_reserved: linux,codec_mm_reserved {
++			status = "disabled";
+ 			compatible = "amlogic, codec-mm-reserved";
+ 			size = <0x00>;
+ 			alignment = <0x100000>;
+ 			phandle = <0x3f>;
+ 		};
+ 
+ 		vdin1_cma_reserved: linux,vdin1_cma {
++			status = "disabled";
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+ 			size = <0x1000000>;
+ 			alignment = <0x400000>;
+ 			phandle = <0x43>;
+ 		};
++
++		/* 4K VP9 decode peaks at 254 MiB; the rest is the display and one encoder */
++		linux,cma {
++			compatible = "shared-dma-pool";
++			reusable;
++			size = <0x18000000>;
++			alignment = <0x400000>;
++			linux,cma-default;
++		};
+ 	};
+ 
+ 	sysled {
+ 		compatible = "amlogic, sysled";
+ 		dev_name = "sysled";
+@@ -1816,15 +1969,15 @@
  		compatible = "gpio-leds";
  		status = "okay";
  
@@ -387,7 +586,108 @@
 +		/* NOT FITTED - the factory's sys_green, GPIOZ_14: driven either way, it lights
 +		   nothing on this unit. */
  	};
-@@ -2109,6 +2193,38 @@
+@@ -2083,10 +2236,100 @@
+ 		clocks = <&clkc 0xc4 &clkc 0x59 &clkc 0x09 &clkc 0xb6 &clkc 0xba &clkc 0xbb>;
+ 		clock-names = "vapb_clk", "vpu_intr_gate", "gp_pll", "vpu_clk0", "vpu_clk1", "vpu_clk";
+ 		clk_level = <0x07>;
+ 	};
+ 
++	/* The display pipeline, as mainline's meson-drm describes it. The vendor nodes beside
++	   it (vpu, vout, amhdmitx, canvas) bind to no mainline driver. */
++	canvas: video-lut@c8838048 {
++		compatible = "amlogic,canvas";
++		reg = <0xc8838048 0x14>;
++	};
++
++	vpu: vpu@d0100000 {
++		compatible = "amlogic,meson-gxl-vpu", "amlogic,meson-gx-vpu";
++		reg = <0xd0100000 0x100000 0xc883c000 0x1000>;
++		reg-names = "vpu", "hhi";
++		interrupts = <0x00 0x03 0x01>;
++		amlogic,canvas = <&canvas>;
++		power-domains = <&pwrc 0x00>;
++		#address-cells = <0x01>;
++		#size-cells = <0x00>;
++
++		port@1 {
++			reg = <0x01>;
++
++			hdmi_tx_out: endpoint {
++				remote-endpoint = <&hdmi_tx_in>;
++			};
++		};
++	};
++
++	/* GXLX2 maps the controller directly, as G12A does, where GXL went through an
++	   address/data port at 0xc883a000. Mainline has no driver for it yet: the gxlx2 half is
++	   the DKMS meson-dw-hdmi-gxlx2's, the GXL fallback is what built-in meson-drm matches.
++	   No reset-names: built-in meson-dw-hdmi binds first and must fail before it writes its
++	   GXL port layout into this window, which stops the boot. */
++	hdmi_tx: hdmi-tx@da800000 {
++		compatible = "amlogic,meson-gxlx2-dw-hdmi", "amlogic,meson-gxl-dw-hdmi";
++		reg = <0xda800000 0x10000>;
++		interrupts = <0x00 0x39 0x01>;
++		resets = <&reset 0x13 &reset 0x4f &reset 0x42>;
++		clocks = <&clkc 0xcd &clkc 0x3f &clkc 0x4d>;
++		clock-names = "isfr", "iahb", "venci";
++		power-domains = <&pwrc 0x00>;
++		assigned-clocks = <&clkc 0xcb &clkc 0xcd>;
++		assigned-clock-parents = <&xtal 0x00>;
++		assigned-clock-rates = <0x00 0x16e3600>;
++		pinctrl-0 = <&hdmitx_hpd &hdmitx_ddc>;
++		pinctrl-names = "default";
++		#address-cells = <0x01>;
++		#size-cells = <0x00>;
++
++		port@0 {
++			reg = <0x00>;
++
++			hdmi_tx_in: endpoint {
++				remote-endpoint = <&hdmi_tx_out>;
++			};
++		};
++
++		port@1 {
++			reg = <0x01>;
++
++			hdmi_tx_tmds_out: endpoint {
++				remote-endpoint = <&hdmi_connector_in>;
++			};
++		};
++	};
++
++	hdmi-connector {
++		compatible = "hdmi-connector";
++		type = "a";
++
++		port {
++			hdmi_connector_in: endpoint {
++				remote-endpoint = <&hdmi_tx_tmds_out>;
++			};
++		};
++	};
++
++	/* meson-vdec's decoder; the vendor vdec beside it binds to nothing in mainline */
++	video-codec@c8820000 {
++		compatible = "amlogic,gxlx-vdec", "amlogic,gx-vdec";
++		reg = <0xc8820000 0x10000 0xc110a580 0xe4>;
++		reg-names = "dos", "esparser";
++		interrupts = <0x00 0x2c 0x01 0x00 0x20 0x01 0x00 0x2b 0x01>;
++		interrupt-names = "vdec", "esparser", "mbox0";
++		amlogic,ao-sysctrl = <&sysctrl_AO>;
++		amlogic,canvas = <&canvas>;
++		clocks = <&clkc 0x36 &clkc 0x11 &clkc 0x99 &clkc 0x9c>;
++		clock-names = "dos_parser", "dos", "vdec_1", "vdec_hevc";
++		resets = <&reset 0x28>;
++		reset-names = "esparser";
++	};
++
+ 	rdma {
+ 		compatible = "amlogic, meson, rdma";
+ 		dev_name = "amlogic-rdma";
+ 		status = "ok";
+ 		interrupts = <0x00 0x59 0x01>;
+@@ -2109,6 +2352,38 @@
  		gpio_reset = <0x14 0x63 0x00>;
  	};
  
@@ -426,7 +726,7 @@
  	wifi {
  		compatible = "amlogic, aml_wifi";
  		dev_name = "aml_wifi";
-@@ -2140,18 +2256,27 @@
+@@ -2140,18 +2415,27 @@
  
  	sd_emmc_c: emmc@d0074000 {
  		status = "okay";
@@ -460,7 +760,7 @@
  		non-removable;
  		disable-wp;
  		phandle = <0xc8>;
-@@ -2171,20 +2296,19 @@
+@@ -2171,20 +2455,19 @@
  
  	sd_emmc_b: sd@d0072000 {
  		status = "okay";
@@ -491,7 +791,7 @@
  		clock-names = "core", "clkin0", "clkin1";
  		bus-width = <0x04>;
  		cap-sd-highspeed;
-@@ -2208,22 +2332,34 @@
+@@ -2208,22 +2491,34 @@
  
  	sd_emmc_a: sdio@d0070000 {
  		status = "okay";
@@ -532,7 +832,7 @@
  		sdio {
  			pinname = "sdio";
  			ocr_avail = <0x200080>;
-@@ -2311,7 +2447,12 @@
+@@ -2311,7 +2606,12 @@
  	};
  
  	ethmac: ethernet@0xc9410000 {
@@ -546,7 +846,7 @@
  		reg = <0xc9410000 0x10000 0xc8834540 0x08 0xc8834558 0x0c 0xc1104408 0x04>;
  		interrupts = <0x00 0x08 0x01>;
  		pinctrl-names = "external_eth_pins";
-@@ -2329,30 +2470,72 @@
+@@ -2329,30 +2629,72 @@
  		phandle = <0xcb>;
  	};
  

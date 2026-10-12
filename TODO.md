@@ -4,6 +4,29 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 ## Open
 
+- [ ] **H96 Max M20: decoders not implemented — MPEG-4, H.263, VC-1, MJPEG, AVS/AVS2, RealVideo.**
+      The silicon has them (the factory loads `amvdec_*` for each); neither mainline meson-vdec nor
+      `meson-sm1-codecs` has a codec for them. Port from Amlogic's `media_modules` into
+      `patches/meson-codecs/`, one codec at a time: MJPEG, then MPEG-4/H.263, then VC-1. AVS, AVS2
+      and RealVideo only if someone needs them - Chinese IPTV formats and a dead one, ffmpeg decodes
+      all three in software.
+
+- [ ] **RK3518 boards: revisit display and GPU against the H96 Max M20.** Same Mali-450 and the same
+      BOE 2256x1504 panel: the M20 runs it native at 60 Hz with glmark2 **64**, where the RK3528
+      boards score 41 at 1080p and 2048x1152 and cannot clock the native mode
+      (`docs/todo/rk35xx-hdmi-modes.md`). Record each board's GPU clock and devfreq governor, then
+      rerun glmark2 on the same panel.
+
+- [ ] **H96 Max M20: ffmpeg's `*_v4l2m2m` decoders.** 3 frames of 60 from H.264 on the shipped
+      decoder, where GStreamer's `v4l2h264dec` decodes all 60 bit-exact.
+- [ ] **H96 Max M20: root-cause the two box resets.**
+  - SError in `cc1` under a 4-core DKMS build, 2026-10-07, caught by ramoops. Suspect: the vendor's
+    reusable CMA pool over BL31 at `0x10000000`, now disabled. Rerun a 4-core build; if it passes,
+    lift the two-job cap.
+  - Silent reset during the first HEVC decode with the patched meson-vdec, 2026-10-12: empty pstore,
+    and the firmware copied just before was lost. Not reproduced since; netconsole to the host
+    (`modprobe netconsole netconsole=@/eth0,6667@<host>/<host-mac>`) catches the next one.
+
 - [ ] **Rename the installed prefix `rk35xx-` to `tvb-`.** Design: `docs/todo/tvb-namespace.md`.
 
 - [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`

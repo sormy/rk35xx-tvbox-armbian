@@ -29,9 +29,9 @@ the MT7668 running SDR50 at 50 MHz.
 
 ## What mainline adds
 
-`hdmi-tx@c883a000`, `cec@100`, `vpu@d0100000`, `video-codec@c8820000`, two `audio-controller`s,
-`crypto@c883e000`, `rng@0`, `rtc@a8` and `ethernet-phy@8` — blocks the vendor tree either describes
-through its own bindings or leaves out.
+`hdmi-tx@c883a000` (GXL's address; GXLX2's is `0xda800000`), `cec@100`, `vpu@d0100000`,
+`video-codec@c8820000`, two `audio-controller`s, `crypto@c883e000`, `rng@0`, `rtc@a8` and
+`ethernet-phy@8` — blocks the vendor tree either describes through its own bindings or leaves out.
 
 ## What has no mainline counterpart
 
@@ -210,4 +210,41 @@ The board has one LED, blue, on `GPIODV_24`: the factory's `sys_red`, active low
 `sysled` node says, which is why the factory's active-high "off" lit it. `sys_green` on `GPIOZ_14`
 lights nothing, driven either way. Our tree names the one LED `power`, on by default.
 
+## Display, GPU and decoder
+
+Mainline's nodes, grafted beside the vendor's, which bind to nothing:
+
+| Node                   | Change                                                        |
+| ---------------------- | ------------------------------------------------------------- |
+| `pwrc`                 | the VPU domain's twelve resets, `vpu`/`vapb` clocks and rates |
+| `reserved-memory`      | vendor pools disabled; one 384 MiB `linux,cma`                |
+| `canvas`, `vpu`        | mainline's, `power-domains = <&pwrc 0>`                       |
+| `hdmi-tx@da800000`     | `gxlx2` + `gxl` fallback, resets without `reset-names`        |
+| `hdmitx_ddc`           | function `hdmi_ddc` → `hdmi_i2c`                              |
+| `hdmi-connector`       | type A                                                        |
+| `mali@d00c0000`        | lima's compatible, IRQ names, `bus`/`core` clocks, OPP table  |
+| `video-codec@c8820000` | `amlogic,gxlx-vdec`; HEVC's mailbox 0 as `mbox0`              |
+
+**secmon overlaid BL31.** The vendor's reusable `linux,secmon` pool sits on the 2 MiB U-Boot
+`/memreserve/`s at `0x10000000`. Activating a CMA area hands its pages to the page allocator, so
+movable pages could land in BL31's memory. Disabled, the range is plain reserved.
+
+**GXLX2's HDMI controller is directly mapped**, as on G12A: DWC registers byte-addressed from
+`0xda800000`, TOP registers at `0xda808000`. GXL reaches it through an address/data port at
+`0xc883a000`, and mainline's GXL driver reads `Unsupported HDMI controller (0d0d:0d:0d)` there. The
+PHY, clocks and VPU are GXL's. `patches/meson-dw-hdmi/` carries the driver.
+
+**The node keeps a GXL fallback and drops `reset-names`.** Built-in meson-drm finds its HDMI
+component only by a compatible it knows, so the fallback stays. That also binds built-in
+meson-dw-hdmi first, and its GXL port writes into the direct window stop the boot; without
+`reset-names` its first reset lookup fails before it maps anything. The DKMS driver takes resets by
+index.
+
 ## Still to convert
+
+| Block   | State                                                  |
+| ------- | ------------------------------------------------------ |
+| cpufreq | no `operating-points-v2` on the CPUs                   |
+| thermal | the vendor sensor node; mainline's binding not checked |
+| audio   | HDMI and analogue audio nodes not grafted              |
+| CEC     | `cec@100` not grafted                                  |

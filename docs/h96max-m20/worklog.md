@@ -1093,3 +1093,35 @@ is sold as.
 - The tree now has one LED, `power` on `GPIODV_24`, active low, on by default; `sys_green` is marked
   not fitted. Lit through boot and after. The leds-gpio driver turns it off at shutdown and the LED
   core on suspend, so it needs no hook.
+
+## 2026-10-11 — HDMI and the GPU
+
+- Grafted mainline's display, GPU and decoder nodes one block at a time, rebooting on each. The VPU
+  power domain registered once `pwrc` had its twelve resets and two clocks.
+- The vendor CMA pools came to 480 MiB, none used by mainline, and one, `linux,secmon`, was reusable
+  CMA over BL31's 2 MiB that U-Boot `/memreserve/`s at `0x10000000`. All disabled; one 256 MiB
+  `linux,cma` instead. `MemAvailable` 1.81 GB after. The SError under a 4-core build may have been
+  movable pages landing in BL31's memory; not retested.
+- HDMI at mainline's `0xc883a000`: `Unsupported HDMI controller (0d0d:0d:0d)`. GXLX2 maps the
+  controller directly at `0xda800000`, as G12A does — "[RFC PATCH 0/2] drm/meson: add HDMI support
+  for GXLX2" (linux-amlogic, 2026-07), from an S905L3 FiberHome HG680-LC.
+- meson-drm and meson-dw-hdmi are built into Armbian's kernel. Wrong turn: the node at `0xda800000`
+  with a GXL fallback stopped the boot, no ping, nothing on netconsole — built-in meson-dw-hdmi
+  bound first and wrote its GXL port layout into the direct window. Recovered by writing the tree
+  onto the stick from the host.
+- Fixed by dropping `reset-names`: the built-in driver fails its first reset lookup before mapping
+  anything. `meson-dw-hdmi-gxlx2`, DKMS, takes resets by index, pins the node with `driver_override`
+  and releases it from the built-in one at load. `Detected HDMI TX controller v2.01a with HDCP`,
+  fbcon on `fb0`, 2256x1504@60.
+- lima: `Mali450` under Mesa 25.0.7, `kmscube` 60.0 fps vsync-locked, devfreq at 744 MHz.
+
+## 2026-10-11 — the panel and glmark2
+
+- The panel is a BOE `135` over HDMI, EDID-preferred 2256x1504, driven at it: 235.7 MHz over
+  2536x1549, 60.00 Hz. The console font renders at native size.
+- `glmark2-es2-drm` on screen at 2256x1504: score 64, every scene but `terrain` (GLES 2 lacks it),
+  no artifacts. `--off-screen -s 1920x1080` ignores the size under DRM and scored 47 at 2256x1504.
+
+## Video codecs
+
+- Encoder and decoder work: `research/h96max-m20-video-codecs/worklog.md`.

@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 03:00:00 -0400
+Subject: [PATCH] media: meson: vdec: mpeg12_multi: map canvases once CAPTURE is queued
+
+The codec maps a canvas pair per CAPTURE buffer once, at start or at the
+first run. GStreamer queues CAPTURE buffers after STREAMON, so the first
+run found two and mapped those: two references and a picture in flight
+need three, and the decode stalled after the second picture with every
+later buffer unmapped. Map only when every CAPTURE buffer is queued.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/codec_mpeg12_multi.c |   15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --color -ruN F/vdec/codec_mpeg12_multi.c G/vdec/codec_mpeg12_multi.c
+--- a/vdec/codec_mpeg12_multi.c
++++ b/vdec/codec_mpeg12_multi.c
+@@ -331,6 +331,15 @@
+  * One vendor run() for the next picture. commit: the previous picture was
+  * consumed (DONE), so save the VLD state; otherwise (DATA_EMPTY) replay it.
+  */
++/*
++ * Canvases are mapped once: mapping the first buffers queued leaves too few for two references and
++ * a picture in flight, and the decode stalls on the third.
++ */
++static bool mpeg12m_capture_complete(struct amvdec_session *sess)
++{
++	return v4l2_m2m_num_dst_bufs_ready(sess->m2m_ctx) >= sess->num_dst_bufs;
++}
++
+ static void mpeg12m_next_run(struct codec_mpeg12m *m, bool commit)
+ {
+ 	struct amvdec_session *sess = m->sess;
+@@ -352,7 +361,7 @@
+ 	 * start us without any: map the canvases once buffers exist.
+ 	 */
+ 	if (!sess->canvas_num) {
+-		if (!v4l2_m2m_num_dst_bufs_ready(sess->m2m_ctx) ||
++		if (!mpeg12m_capture_complete(sess) ||
+ 		    amvdec_set_canvases(sess, (u32[]){ ANC0_CANVAS_ADDR, 0 },
+ 					(u32[]){ MAX_BUFS, 0 })) {
+ 			m->waiting_buffer = true;
+@@ -449,8 +458,8 @@
+ 	m->dmc = ioremap(core->platform->revision == VDEC_REVISION_GXLX2 ?
+ 			 DMC_BASE_GX : DMC_BASE_G12A, 0x400);
+ 
+-	/* without CAPTURE buffers yet, next_run() maps the canvases */
+-	if (v4l2_m2m_num_dst_bufs_ready(sess->m2m_ctx)) {
++	/* until every CAPTURE buffer is queued, next_run() maps the canvases */
++	if (mpeg12m_capture_complete(sess)) {
+ 		ret = amvdec_set_canvases(sess, (u32[]){ ANC0_CANVAS_ADDR, 0 },
+ 					  (u32[]){ MAX_BUFS, 0 });
+ 		if (ret)
+-- 
+2.47.0
+

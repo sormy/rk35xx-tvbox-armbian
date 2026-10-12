@@ -1,0 +1,235 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 02:00:00 -0400
+Subject: [PATCH] media: meson: venc-hevc: GXLX2
+
+As venc-h264, plus GXL's clock IDs and CBUS reset base, and the vendor
+"cnm, HevcEnc" node adopted for its interrupt and io_reg_base. The
+factory kernel probed the WAVE420L on GXLX2, so it joins the chip list.
+
+
+Export the match table, so udev loads the module for the vendor node.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ venc-hevc/compat.c    |   59 ++++++++++++++++++++++++++++++++-----------------
+ venc-hevc/compat.h    |    4 ++-
+ venc-hevc/venc_v4l2.c |    5 ++++
+ venc-hevc/vpu.c       |    5 +++-
+ 4 files changed, 51 insertions(+), 22 deletions(-)
+
+diff --color -ruN E/venc-hevc/compat.c F/venc-hevc/compat.c
+--- a/venc-hevc/compat.c
++++ b/venc-hevc/compat.c
+@@ -13,11 +13,13 @@
+ #include <linux/of_address.h>
+ 
+ #include "compat.h"
++#include <linux/of_irq.h>
++#include <linux/of_platform.h>
+ 
+ MODULE_IMPORT_NS("DMA_BUF");
+ 
+ #define WAVE420L_SPI		187	/* vendor DT: interrupts = <0 0xbb 1> */
+-#define CBUS_RESET_BASE		0xffd01000
++#define CBUS_RESET_BASE		0xc1104400
+ 
+ struct henc_hw henc_hw;
+ 
+@@ -67,7 +69,7 @@
+ 	return -EINVAL;
+ }
+ 
+-static int henc_map_irq(void)
++static int henc_map_irq(struct device_node *vdec_np)
+ {
+ 	struct device_node *gic;
+ 	struct irq_fwspec spec = {
+@@ -76,7 +78,7 @@
+ 	};
+ 	int irq;
+ 
+-	gic = of_find_compatible_node(NULL, NULL, "arm,gic-400");
++	gic = of_irq_find_parent(vdec_np);
+ 	if (!gic)
+ 		return -ENODEV;
+ 	spec.fwnode = of_fwnode_handle(gic);
+@@ -85,8 +87,8 @@
+ 	return irq ? irq : -EINVAL;
+ }
+ 
+-#define CLKID_FCLK_DIV3		3	/* dt-bindings/clock/g12a-clkc.h */
+-#define CLKID_FCLK_DIV5		5
++#define CLKID_FCLK_DIV3		5	/* dt-bindings/clock/gxbb-clkc.h */
++#define CLKID_FCLK_DIV5		7
+ 
+ static struct clk *henc_get_clkc_clk(struct device_node *clkc, u32 id)
+ {
+@@ -120,7 +122,7 @@
+ 
+ 	struct clk *div3, *div5;
+ 
+-	clkc = of_find_compatible_node(NULL, NULL, "amlogic,sm1-clkc");
++	clkc = of_find_compatible_node(NULL, NULL, "amlogic,gxl-clkc");
+ 	if (!clkc)
+ 		return -ENODEV;
+ 	div3 = henc_get_clkc_clk(clkc, CLKID_FCLK_DIV3);
+@@ -151,13 +153,21 @@
+ 	return ret;
+ }
+ 
++static void henc_put_pdev(void)
++{
++	if (henc_hw.pdev_from_dt)
++		put_device(&henc_hw.pdev->dev);
++	else
++		platform_device_unregister(henc_hw.pdev);
++}
++
+ int henc_hw_init(void)
+ {
+-	struct device_node *np, *hhi;
++	struct device_node *np, *hhi, *henc_np;
+ 	struct resource res, irq_res;
+ 	int ret, irq;
+ 
+-	np = of_find_compatible_node(NULL, NULL, "amlogic,sm1-vdec");
++	np = of_find_compatible_node(NULL, NULL, "amlogic,gxlx-vdec");
+ 	if (!np)
+ 		return -ENODEV;
+ 	ret = of_address_to_resource(np, 0, &res);	/* "dos" */
+@@ -186,16 +196,25 @@
+ 		ret = -ENOMEM;
+ 		goto unmap;
+ 	}
+-	irq = henc_map_irq();
+-	if (irq < 0) {
+-		ret = irq;
+-		goto unmap;
+-	}
+-	irq_res = (struct resource)DEFINE_RES_IRQ_NAMED(irq, "wave420l_irq");
+-	henc_hw.pdev = platform_device_register_simple("HevcEnc", -1, &irq_res, 1);
+-	if (IS_ERR(henc_hw.pdev)) {
+-		ret = PTR_ERR(henc_hw.pdev);
+-		goto unmap;
++	/* a vendor tree carries the node itself, with its interrupt and io_reg_base */
++	henc_np = of_find_compatible_node(NULL, NULL, "cnm, HevcEnc");
++	henc_hw.pdev = henc_np ? of_find_device_by_node(henc_np) : NULL;
++	of_node_put(henc_np);
++	if (henc_hw.pdev) {
++		henc_hw.pdev_from_dt = true;
++		irq = platform_get_irq(henc_hw.pdev, 0);
++	} else {
++		irq = henc_map_irq(np);
++		if (irq < 0) {
++			ret = irq;
++			goto unmap;
++		}
++		irq_res = (struct resource)DEFINE_RES_IRQ_NAMED(irq, "wave420l_irq");
++		henc_hw.pdev = platform_device_register_simple("HevcEnc", -1, &irq_res, 1);
++		if (IS_ERR(henc_hw.pdev)) {
++			ret = PTR_ERR(henc_hw.pdev);
++			goto unmap;
++		}
+ 	}
+ 	ret = dma_coerce_mask_and_coherent(&henc_hw.pdev->dev, DMA_BIT_MASK(32));
+ 	if (ret)
+@@ -205,7 +224,7 @@
+ 	return 0;
+ 
+ unreg:
+-	platform_device_unregister(henc_hw.pdev);
++	henc_put_pdev();
+ unmap:
+ 	if (henc_hw.reset)
+ 		iounmap(henc_hw.reset);
+@@ -220,7 +239,7 @@
+ 
+ void henc_hw_exit(void)
+ {
+-	platform_device_unregister(henc_hw.pdev);
++	henc_put_pdev();
+ 	iounmap(henc_hw.reset);
+ 	iounmap(henc_hw.dos);
+ 	henc_put_fclks();
+diff --color -ruN E/venc-hevc/compat.h F/venc-hevc/compat.h
+--- a/venc-hevc/compat.h
++++ b/venc-hevc/compat.h
+@@ -26,6 +26,7 @@
+ 	 */
+ 	struct clk *fclk_div3, *fclk_div5;
+ 	struct platform_device *pdev;
++	bool pdev_from_dt;
+ };
+ extern struct henc_hw henc_hw;
+ 
+@@ -68,12 +69,13 @@
+ #define MESON_CPU_MAJOR_ID_TXLX		0x24
+ #define MESON_CPU_MAJOR_ID_GXLX		0x26
+ #define MESON_CPU_MAJOR_ID_G12A		0x28
++#define MESON_CPU_MAJOR_ID_GXLX2	0x2a
+ #define MESON_CPU_MAJOR_ID_G12B		0x29
+ #define MESON_CPU_MAJOR_ID_SM1		0x2b
+ #define MESON_CPU_MAJOR_ID_TL1		0x2e
+ #define MESON_CPU_MAJOR_ID_TM2		0x2f
+ #define MESON_CPU_MAJOR_ID_SC2		0x32
+-static inline int get_cpu_type(void) { return MESON_CPU_MAJOR_ID_SM1; }
++static inline int get_cpu_type(void) { return MESON_CPU_MAJOR_ID_GXLX2; }
+ 
+ /* G12A-only efuse check, never reached on SM1 */
+ #define EFUSE_LIC2		0
+diff --color -ruN E/venc-hevc/venc_v4l2.c F/venc-hevc/venc_v4l2.c
+--- a/venc-hevc/venc_v4l2.c
++++ b/venc-hevc/venc_v4l2.c
+@@ -9,6 +9,7 @@
+  * VPS/SPS/PPS before every IDR. Rate control by the firmware.
+  */
+ #include <linux/module.h>
++#include <linux/version.h>
+ #include <linux/platform_device.h>
+ #include <media/v4l2-ctrls.h>
+ #include <media/v4l2-device.h>
+@@ -188,7 +189,11 @@
+ 	dst = v4l2_m2m_dst_buf_remove(m2m);
+ 	last = v4l2_m2m_is_last_draining_src_buf(m2m, src);
+ 	src->sequence = ctx->out_seq++;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 18, 50)
++	v4l2_m2m_buf_copy_metadata(src, dst, false);
++#else
+ 	v4l2_m2m_buf_copy_metadata(src, dst);
++#endif
+ 	dst->flags &= ~(V4L2_BUF_FLAG_KEYFRAME | V4L2_BUF_FLAG_PFRAME);
+ 	dst->flags |= key ? V4L2_BUF_FLAG_KEYFRAME : V4L2_BUF_FLAG_PFRAME;
+ 	dst->sequence = ctx->cap_seq++;
+diff --color -ruN E/venc-hevc/vpu.c F/venc-hevc/vpu.c
+--- a/venc-hevc/vpu.c
++++ b/venc-hevc/vpu.c
+@@ -2502,6 +2502,7 @@
+ 	},
+ 	{},
+ };
++MODULE_DEVICE_TABLE(of, cnm_hevcenc_dt_match);
+ 
+ static struct platform_driver vpu_driver = {
+ 	.driver = {
+@@ -2523,6 +2524,7 @@
+ 	if ((get_cpu_type() != MESON_CPU_MAJOR_ID_GXM)
+ 		&& (get_cpu_type() != MESON_CPU_MAJOR_ID_G12A)
+ 			&& (get_cpu_type() != MESON_CPU_MAJOR_ID_GXLX)
++		&& (get_cpu_type() != MESON_CPU_MAJOR_ID_GXLX2)
+ 				&& (get_cpu_type() != MESON_CPU_MAJOR_ID_G12B)
+ 				&& (get_cpu_type() != MESON_CPU_MAJOR_ID_SM1)
+ 				&& (get_cpu_type() != MESON_CPU_MAJOR_ID_SC2)) {
+@@ -2555,7 +2557,8 @@
+ 	enc_pr(LOG_DEBUG, "vpu_exit\n");
+ 	if ((get_cpu_type() != MESON_CPU_MAJOR_ID_GXM) &&
+ 		(get_cpu_type() != MESON_CPU_MAJOR_ID_G12A) &&
+-		(get_cpu_type() != MESON_CPU_MAJOR_ID_GXLX) &&
++		(get_cpu_type() != MESON_CPU_MAJOR_ID_GXLX)
++		&& (get_cpu_type() != MESON_CPU_MAJOR_ID_GXLX2) &&
+ 		(get_cpu_type() != MESON_CPU_MAJOR_ID_G12B) &&
+ 		(get_cpu_type() != MESON_CPU_MAJOR_ID_SC2) &&
+ 		(get_cpu_type() != MESON_CPU_MAJOR_ID_SM1)) {
+-- 
+2.47.0
+

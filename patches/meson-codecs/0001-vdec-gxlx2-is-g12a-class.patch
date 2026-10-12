@@ -1,0 +1,223 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 02:00:00 -0400
+Subject: [PATCH] media: meson: vdec: GXLX2 is a G12A-class decoder
+
+Amlogic's media_modules place GXLX2 (S905L3, major id 0x2a) after G12B,
+give it G12A's capability entry field for field, and load g12a_hevc*,
+g12a_vp9* and gxl_mpeg12_multi on it. Driven as GXLX, HEVC stops after
+one frame and VP9 never starts.
+
+Add VDEC_REVISION_GXLX2 after G12B and use it for the gxlx platform, with
+HEVC and VP9 on the G12A ops and microcode and MPEG-1/2 on the multi
+codec. Two exceptions to G12A: the HEVC front clock does not exist (the
+factory clock tree has no clk_hevcb_mux), and HEVC_SAO_CTRL1[15:14],
+axi_linealign, must stay at its reset value - 0 or 2 writes the linear
+output at twice the pitch. The multi codec's DMC sits at 0xc8838000.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/codec_hevc.c         |    7 +++++--
+ vdec/codec_mpeg12_multi.c |    5 ++++-
+ vdec/codec_vp9.c          |    6 ++++--
+ vdec/vdec_hevc.c          |    4 ++--
+ vdec/vdec_platform.c      |   42 +++++++++++++++++++++++++++++++++---------
+ vdec/vdec_platform.h      |   12 ++++++++++++
+ vdec/vdec.c               |    2 +-
+ 7 files changed, 61 insertions(+), 17 deletions(-)
+
+diff --color -ruN A/vdec/codec_hevc.c B/vdec/codec_hevc.c
+--- a/vdec/codec_hevc.c
++++ b/vdec/codec_hevc.c
+@@ -1375,9 +1375,12 @@
+ 
+ 	val = amvdec_read_dos(core, HEVC_SAO_CTRL1);
+ 	if (multi) {
+-		val &= ~0xfff3;
++		val &= ~0x3ff3;
+ 		val |= 0xff0; /* Set endianness for 2-byte swaps (NV12). */
+-		val |= 2 << 14; /* Linear output with 64-byte line alignment. */
++		if (vdec_sao_linealign_64(core->platform->revision)) {
++			val &= ~(3 << 14);
++			val |= 2 << 14; /* Linear output with 64-byte line alignment. */
++		}
+ 		if (!codec_hevc_use_fbc(sess->pixfmt_cap, hevc->is_10bit))
+ 			val |= BIT(0); /* Disable compressed output. */
+ 	} else {
+diff --color -ruN A/vdec/codec_mpeg12_multi.c B/vdec/codec_mpeg12_multi.c
+--- a/vdec/codec_mpeg12_multi.c
++++ b/vdec/codec_mpeg12_multi.c
+@@ -52,6 +52,8 @@
+ #define DMC_REQ_CTRL		0x00
+ #define DMC_CHAN_STS		0xc8
+ #define DMC_DOS_VDEC		BIT(21)
++#define DMC_BASE_GX		0xc8838000
++#define DMC_BASE_G12A		0xff638000
+ 
+ #define BUFFEROUT_PIC_DONE	1
+ #define BUFFEROUT_DATA_EMPTY	2
+@@ -444,7 +446,8 @@
+ 		ret = -ENOMEM;
+ 		goto free;
+ 	}
+-	m->dmc = ioremap(0xff638000, 0x400);	/* G12A/SM1 DMC */
++	m->dmc = ioremap(core->platform->revision == VDEC_REVISION_GXLX2 ?
++			 DMC_BASE_GX : DMC_BASE_G12A, 0x400);
+ 
+ 	/* without CAPTURE buffers yet, next_run() maps the canvases */
+ 	if (v4l2_m2m_num_dst_bufs_ready(sess->m2m_ctx)) {
+diff --color -ruN A/vdec/codec_vp9.c B/vdec/codec_vp9.c
+--- a/vdec/codec_vp9.c
++++ b/vdec/codec_vp9.c
+@@ -991,8 +991,10 @@
+ 	val |= 0xff0; /* Set endianness for 2-bytes swaps (nv12) */
+ 	if (core->platform->revision >= VDEC_REVISION_G12A) {
+ 		/* linear output, 64-byte lines: bytesperline is ALIGN(w, 64) */
+-		val &= ~(3 << 14);
+-		val |= 2 << 14;
++		if (vdec_sao_linealign_64(core->platform->revision)) {
++			val &= ~(3 << 14);
++			val |= 2 << 14;
++		}
+ 	} else {
+ 		val &= ~0x3;
+ 		if (!codec_hevc_use_fbc(sess->pixfmt_cap, vp9->is_10bit))
+diff --color -ruN A/vdec/vdec_hevc.c B/vdec/vdec_hevc.c
+--- a/vdec/vdec_hevc.c
++++ b/vdec/vdec_hevc.c
+@@ -245,7 +245,7 @@
+ 	vdec_hevc_power_off(sess);
+ 
+ 	clk_disable_unprepare(core->vdec_hevc_clk);
+-	if (core->platform->revision >= VDEC_REVISION_G12A)
++	if (vdec_has_hevcf_clk(core->platform->revision))
+ 		clk_disable_unprepare(core->vdec_hevcf_clk);
+ 
+ 	return 0;
+@@ -351,7 +351,7 @@
+ 	struct amvdec_core *core = sess->core;
+ 	int ret;
+ 
+-	if (core->platform->revision >= VDEC_REVISION_G12A) {
++	if (vdec_has_hevcf_clk(core->platform->revision)) {
+ 		clk_set_rate(core->vdec_hevcf_clk, 666666666);
+ 		ret = clk_prepare_enable(core->vdec_hevcf_clk);
+ 		if (ret)
+diff --color -ruN A/vdec/vdec_platform.c B/vdec/vdec_platform.c
+--- a/vdec/vdec_platform.c
++++ b/vdec/vdec_platform.c
+@@ -106,6 +106,30 @@
+ 
+ static const struct amvdec_format vdec_formats_gxlx[] = {
+ 	{
++		.pixfmt = V4L2_PIX_FMT_HEVC,
++		.min_buffers = 4,
++		.max_buffers = 24,
++		.max_width = 3840,
++		.max_height = 2160,
++		.vdec_ops = &vdec_hevc_ops,
++		.codec_ops = &codec_hevc_g12a_ops,
++		.firmware_path = "meson/vdec/g12a_hevc_mmu.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED |
++			 V4L2_FMT_FLAG_DYN_RESOLUTION,
++	}, {
++		.pixfmt = V4L2_PIX_FMT_VP9,
++		.min_buffers = 16,
++		.max_buffers = 24,
++		.max_width = 3840,
++		.max_height = 2160,
++		.vdec_ops = &vdec_hevc_ops,
++		.codec_ops = &codec_vp9_ops,
++		.firmware_path = "meson/vdec/g12a_vp9.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED |
++			 V4L2_FMT_FLAG_DYN_RESOLUTION,
++	}, {
+ 		.pixfmt = V4L2_PIX_FMT_H264,
+ 		.min_buffers = 2,
+ 		.max_buffers = 24,
+@@ -120,24 +144,24 @@
+ 	}, {
+ 		.pixfmt = V4L2_PIX_FMT_MPEG1,
+ 		.min_buffers = 8,
+-		.max_buffers = 8,
++		.max_buffers = 16,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+ 		.vdec_ops = &vdec_1_ops,
+-		.codec_ops = &codec_mpeg12_ops,
+-		.firmware_path = "meson/vdec/gxl_mpeg12.bin",
+-		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, V4L2_PIX_FMT_YUV420M, 0 },
++		.codec_ops = &codec_mpeg12_multi_ops,
++		.firmware_path = "meson/vdec/gxl_mpeg12_multi.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED,
+ 	}, {
+ 		.pixfmt = V4L2_PIX_FMT_MPEG2,
+ 		.min_buffers = 8,
+-		.max_buffers = 8,
++		.max_buffers = 16,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+ 		.vdec_ops = &vdec_1_ops,
+-		.codec_ops = &codec_mpeg12_ops,
+-		.firmware_path = "meson/vdec/gxl_mpeg12.bin",
+-		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, V4L2_PIX_FMT_YUV420M, 0 },
++		.codec_ops = &codec_mpeg12_multi_ops,
++		.firmware_path = "meson/vdec/gxl_mpeg12_multi.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED,
+ 	},
+ };
+@@ -332,7 +356,7 @@
+ const struct vdec_platform vdec_platform_gxlx = {
+ 	.formats = vdec_formats_gxlx,
+ 	.num_formats = ARRAY_SIZE(vdec_formats_gxlx),
+-	.revision = VDEC_REVISION_GXLX,
++	.revision = VDEC_REVISION_GXLX2,
+ };
+ 
+ const struct vdec_platform vdec_platform_gxm = {
+diff --color -ruN A/vdec/vdec_platform.h B/vdec/vdec_platform.h
+--- a/vdec/vdec_platform.h
++++ b/vdec/vdec_platform.h
+@@ -18,6 +18,7 @@
+ 	VDEC_REVISION_GXM,
+ 	VDEC_REVISION_G12A,
+ 	VDEC_REVISION_G12B,
++	VDEC_REVISION_GXLX2,	/* G12A-class decoders, GXL clocking: no HEVC front clock */
+ 	VDEC_REVISION_SM1,
+ };
+ 
+@@ -35,4 +36,15 @@
+ extern const struct vdec_platform vdec_platform_g12b;
+ extern const struct vdec_platform vdec_platform_sm1;
+ 
++static inline bool vdec_has_hevcf_clk(enum vdec_revision rev)
++{
++	return rev >= VDEC_REVISION_G12A && rev != VDEC_REVISION_GXLX2;
++}
++
++/* GXLX2's linear output is right only with axi_linealign at its reset value */
++static inline bool vdec_sao_linealign_64(enum vdec_revision rev)
++{
++	return rev >= VDEC_REVISION_G12A && rev != VDEC_REVISION_GXLX2;
++}
++
+ #endif
+diff --color -ruN A/vdec/vdec.c B/vdec/vdec.c
+--- a/vdec/vdec.c
++++ b/vdec/vdec.c
+@@ -1561,7 +1561,7 @@
+ 	of_id = of_match_node(vdec_dt_match, dev->of_node);
+ 	core->platform = of_id->data;
+ 
+-	if (core->platform->revision >= VDEC_REVISION_G12A) {
++	if (vdec_has_hevcf_clk(core->platform->revision)) {
+ 		core->vdec_hevcf_clk = devm_clk_get(dev, "vdec_hevcf");
+ 		if (IS_ERR(core->vdec_hevcf_clk))
+ 			return -EPROBE_DEFER;
+-- 
+2.47.0
+
