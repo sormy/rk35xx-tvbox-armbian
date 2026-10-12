@@ -12,6 +12,9 @@ meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS
 | `0004` | the H.264 encoder (HCodec) on GXLX2                           |
 | `0005` | the HEVC encoder (WAVE420L) on GXLX2                          |
 | `0006` | MPEG-1/2 canvases mapped once every CAPTURE buffer is queued  |
+| `0007` | CAPTURE formats other than NV12M                              |
+| `0008` | MPEG-4 Part 2                                                 |
+| `0009` | MJPEG                                                         |
 
 | Package             | Module        | Device                |
 | ------------------- | ------------- | --------------------- |
@@ -43,3 +46,10 @@ reports an empty OUTPUT queue with CAPTURE off as `EPOLLERR`, and GStreamer give
 The vendor tree already carries `amvenc_avc` and `hevc_enc` nodes, which make platform devices of
 those names; the encoders adopt them, with their interrupts and, for WAVE420L, its register window.
 The factory kernel probed the WAVE420L on this chip, so GXLX2 joins its chip list.
+
+## 0008, 0009
+
+Maxime Jourdan's 5.3-era `codec_mpeg4` and `codec_mjpeg`. Their microcode latches its canvases at
+boot, and this decoder boots it before any CAPTURE buffer exists: start raises a source change, and
+resume maps the canvases and boots the microcode again. MJPEG writes three planes whatever
+`MDEC_PIC_DC_CTRL` says, so it offers YUV420M only, which `0007` lets GStreamer negotiate.

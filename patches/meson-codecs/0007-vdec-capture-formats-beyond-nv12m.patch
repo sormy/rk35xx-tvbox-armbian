@@ -1,0 +1,103 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: CAPTURE formats beyond NV12M
+
+Every codec so far produced NV12M, which hid three faults a codec with
+another CAPTURE format runs into:
+
+- S_FMT on OUTPUT kept a CAPTURE format the new codec cannot produce,
+  and G_FMT handed it to userspace; fall back to the codec's first.
+- TRY_FMT sized YUV420M's V plane at half the luma, which REQBUFS never
+  allocates; it is a quarter, as the U plane.
+- GStreamer builds each decoder element's template from the CAPTURE
+  formats enumerated before any OUTPUT format is set, so it could never
+  negotiate a format the default codec lacks; until OUTPUT is set, list
+  every CAPTURE format some codec produces.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/vdec.c |   39 ++++++++++++++++++++++++++++++++++++---
+ vdec/vdec.h |    1 +
+ 2 files changed, 37 insertions(+), 3 deletions(-)
+
+diff -ruN a/vdec/vdec.c b/vdec/vdec.c
+--- a/vdec/vdec.c
++++ b/vdec/vdec.c
+@@ -1026,7 +1026,7 @@
+ 			pfmt[1].sizeimage = output_size / 4;
+ 			pfmt[1].bytesperline = ALIGN(pixmp->width, 64) / 2;
+ 
+-			pfmt[2].sizeimage = output_size / 2;
++			pfmt[2].sizeimage = output_size / 4;
+ 			pfmt[2].bytesperline = ALIGN(pixmp->width, 64) / 2;
+ 			pixmp->num_planes = 3;
+ 		}
+@@ -1127,14 +1127,44 @@
+ 	sess->width = format.fmt.pix_mp.width;
+ 	sess->height = format.fmt.pix_mp.height;
+ 
+-	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
++	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+ 		sess->fmt_out = fmt_out;
+-	else if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
++		sess->fmt_out_set = true;
++		if (!vdec_supports_pixfmt_cap(fmt_out, sess->pixfmt_cap))
++			sess->pixfmt_cap = fmt_out->pixfmts_cap[0];
++	} else if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+ 		sess->pixfmt_cap = format.fmt.pix_mp.pixelformat;
+ 
+ 	return 0;
+ }
+ 
++/*
++ * Before the OUTPUT format is chosen, list every CAPTURE format some codec
++ * produces: GStreamer builds its element templates from this probe.
++ */
++static int vdec_enum_any_fmt_cap(const struct vdec_platform *platform,
++				 struct v4l2_fmtdesc *f)
++{
++	static const u32 pixfmts[] = {
++		V4L2_PIX_FMT_NV12M, V4L2_PIX_FMT_NV12, V4L2_PIX_FMT_YUV420M,
++	};
++	u32 i, j, n = 0;
++
++	for (i = 0; i < ARRAY_SIZE(pixfmts); i++)
++		for (j = 0; j < platform->num_formats; j++) {
++			if (!vdec_supports_pixfmt_cap(&platform->formats[j],
++						      pixfmts[i]))
++				continue;
++			if (n++ == f->index) {
++				f->pixelformat = pixfmts[i];
++				return 0;
++			}
++			break;
++		}
++
++	return -EINVAL;
++}
++
+ static int vdec_enum_fmt(struct file *file, void *fh, struct v4l2_fmtdesc *f)
+ {
+ 	struct amvdec_session *sess = file_to_amvdec_session(file);
+@@ -1151,6 +1181,9 @@
+ 		f->pixelformat = fmt_out->pixfmt;
+ 		f->flags = fmt_out->flags;
+ 	} else if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
++		if (!sess->fmt_out_set)
++			return vdec_enum_any_fmt_cap(platform, f);
++
+ 		fmt_out = sess->fmt_out;
+ 		if (f->index >= 4 || !fmt_out->pixfmts_cap[f->index])
+ 			return -EINVAL;
+diff -ruN a/vdec/vdec.h b/vdec/vdec.h
+--- a/vdec/vdec.h
++++ b/vdec/vdec.h
+@@ -345,6 +345,7 @@
+ 	struct mutex lock;
+ 
+ 	const struct amvdec_format *fmt_out;
++	bool fmt_out_set;
+ 	u32 pixfmt_cap;
+ 	u32 src_buffer_size;
+ 

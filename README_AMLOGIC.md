@@ -24,47 +24,48 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 |  ❌  | broken                                                               |
 |  ➖  | not on this board                                                    |
 
-| Hardware                                      |   H96 Max M20   |
-| --------------------------------------------- | :-------------: |
-| **Storage**                                   |                 |
-| USB stick — boot and rootfs                   |       ✅        |
-| eMMC — read and write                         |       ✅        |
-| eMMC — boot and rootfs                        |       ❓        |
-| microSD — boot and rootfs                     |       ➖        |
-| USB 2.0                                       |       ✅        |
-| USB 3.0                                       |       ➖        |
-| **Network**                                   |                 |
-| Ethernet, onboard                             |       ➖        |
-| Ethernet, USB adapter                         |       ✅        |
-| Wi-Fi 2.4 GHz — mainline mt76                 |       ✅        |
-| Wi-Fi 5 GHz — mainline mt76                   |       ✅        |
-| Wi-Fi, another access point — mt76            |       ✅        |
-| Wi-Fi 2.4 GHz — vendor, fallback              |       ✅        |
-| Wi-Fi 5 GHz — vendor, fallback                |       ✅        |
-| Bluetooth                                     |       ✅        |
-| **Display and video**                         |                 |
-| HDMI video                                    |       ✅        |
-| HDMI audio                                    |       ✅        |
-| GPU — Mali under lima                         |       ✅        |
-| Video decode — H.264, HEVC, VP9 to 4K         |       ✅        |
-| Video decode — MPEG-1/2 to 1080p              |       ✅        |
-| Video decode — MPEG-4, VC-1, MJPEG, AVS, Real | not implemented |
-| Video encode — H.264 to 1080p, HEVC to 4K     |       ✅        |
-| CMA reservation                               |       ✅        |
-| **Input and indicators**                      |                 |
-| Bundled remote over IR                        |       ➖        |
-| Bundled remote over Bluetooth                 |       ❓        |
-| Front button                                  |       ❓        |
-| Power LED                                     |       ✅        |
-| Standby LED                                   |       ➖        |
-| **Power and recovery**                        |                 |
-| CPU frequency scaling                         |       ✅        |
-| Thermal zones                                 |       ✅        |
-| Hardware watchdog                             |       ✅        |
-| Suspend, woken by the BT remote               |       ❌        |
-| Serial console                                |       ✅        |
-| eMMC backup over USB, burning mode            |       ✅        |
-| Unbrick from the mask ROM                     |       ❓        |
+| Hardware                                  |   H96 Max M20   |
+| ----------------------------------------- | :-------------: |
+| **Storage**                               |                 |
+| USB stick — boot and rootfs               |       ✅        |
+| eMMC — read and write                     |       ✅        |
+| eMMC — boot and rootfs                    |       ❓        |
+| microSD — boot and rootfs                 |       ➖        |
+| USB 2.0                                   |       ✅        |
+| USB 3.0                                   |       ➖        |
+| **Network**                               |                 |
+| Ethernet, onboard                         |       ➖        |
+| Ethernet, USB adapter                     |       ✅        |
+| Wi-Fi 2.4 GHz — mainline mt76             |       ✅        |
+| Wi-Fi 5 GHz — mainline mt76               |       ✅        |
+| Wi-Fi, another access point — mt76        |       ✅        |
+| Wi-Fi 2.4 GHz — vendor, fallback          |       ✅        |
+| Wi-Fi 5 GHz — vendor, fallback            |       ✅        |
+| Bluetooth                                 |       ✅        |
+| **Display and video**                     |                 |
+| HDMI video                                |       ✅        |
+| HDMI audio                                |       ✅        |
+| GPU — Mali under lima                     |       ✅        |
+| Video decode — H.264, HEVC, VP9 to 4K     |       ✅        |
+| Video decode — MPEG-1/2 to 1080p          |       ✅        |
+| Video decode — MPEG-4, MJPEG to 1080p     |       ✅        |
+| Video decode — VC-1, AVS, Real            | not implemented |
+| Video encode — H.264 to 1080p, HEVC to 4K |       ✅        |
+| CMA reservation                           |       ✅        |
+| **Input and indicators**                  |                 |
+| Bundled remote over IR                    |       ➖        |
+| Bundled remote over Bluetooth             |       ❓        |
+| Front button                              |       ❓        |
+| Power LED                                 |       ✅        |
+| Standby LED                               |       ➖        |
+| **Power and recovery**                    |                 |
+| CPU frequency scaling                     |       ✅        |
+| Thermal zones                             |       ✅        |
+| Hardware watchdog                         |       ✅        |
+| Suspend, woken by the BT remote           |       ❌        |
+| Serial console                            |       ✅        |
+| eMMC backup over USB, burning mode        |       ✅        |
+| Unbrick from the mask ROM                 |       ❓        |
 
 ## Build
 

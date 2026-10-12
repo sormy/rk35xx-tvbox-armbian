@@ -129,3 +129,43 @@
 - MPEG-1: GStreamer has no `v4l2mpeg1dec`, but `v4l2mpeg2dec` takes `mpegversion=1`: 60 of 60, 66.7
   and 67.6 dB. `v4l2-ctl` and ffmpeg's `mpeg1_v4l2m2m` decode nothing; ffmpeg's `h264_v4l2m2m` 3
   frames of 60.
+
+## 2026-10-12 — MPEG-4 and MJPEG
+
+- Jourdan's `codec_mpeg4` and `codec_mjpeg` (Khadas Fenix `0116`, `0117`) on GXLX2, as ported:
+  MPEG-4 2 frames of 60 at 5 dB, MJPEG 56 at 4.7 dB. Both outputs all zeros.
+- Not the canvas block mode (`VDEC_ASSIST_CANVAS_BLK32`, as MPEG-2 on G12A): same PSNR with and
+  without, and no difference once decoding worked. Not the microcode: factory `gxl_mjpeg`,
+  `g12b_mjpeg` and linux-firmware's `gxl_mjpeg` all zeros; factory `gxl_xvid` is byte for byte
+  linux-firmware's `gxl_mpeg4_5`.
+- MJPEG had 8 buffers for the microcode's 4 canvas slots: `amvdec_set_canvases()` failed on the
+  fifth and freed them all, unchecked. Fixed, still zeros.
+- The cause: this decoder starts at OUTPUT STREAMON, before any CAPTURE buffer exists, and the
+  legacy microcode latches its canvases when it boots. A source change from start, then canvases in
+  resume, still zeros; rebooting the microcode once they are mapped (`vdec_ops->resume` plus
+  `esparser_power_up()`): MJPEG luma 39-43 dB.
+- MJPEG chroma: the first 640 bytes of each NV12 chroma row were exactly the V plane. The microcode
+  writes planar U then V into one canvas and ignores `MDEC_PIC_DC_CTRL[17]`, even set after boot and
+  per frame. Amlogic's V4L2 driver converts with GE2D. YUV420M only.
+- GStreamer could not negotiate YUV420M: element templates come from the CAPTURE formats enumerated
+  before OUTPUT is set, and S_FMT on OUTPUT kept NV12M for a codec without it, so REQBUFS made two
+  planes for three. With both fixed, and the V plane sized a quarter (it was a half): MJPEG 60 of
+  60, 72.6 dB at 720p, 73.8 dB at 1080p.
+- MPEG-4: GStreamer dropped frame 1 as "too many buffers": timestamps were taken in order, and the
+  first input buffer holds only the VOL header. Matched by the stream offset the microcode reports
+  (`MP4_OFFSET_REG`): every frame on its source frame, 65-73 dB.
+- Neither codec ended: no `async_drain`. MPEG-4 with `visual_object_sequence_end_code`, MJPEG with 4
+  KiB of zeros, both ending in an empty LAST buffer (the header buffer keeps the queued count above
+  the LAST threshold): 60 of 60, MPEG-4 720p 65.3 dB, with B-frames 66.3, 1080p 59.0 (min 51.6, IDCT
+  drift within the 12-frame GOP, spread over the picture).
+- One 1080p MPEG-4 run of seven delivered 59 frames, misaligned; not reproduced since.
+- H.263: the stream reaches the decoder and `gxl_h263` raises no interrupt, with or without
+  `MP4_PIC_WH` and `MP4_SYS_RATE` as the vendor writes them; `gxl_mpeg4_5` under its name neither.
+  Amlogic feeds FLV1 to `VIDEO_DEC_FORMAT_H263`; dropped from the table.
+- ffmpeg's `mpeg4_v4l2m2m`: 3 frames of 60, as for every codec; it has no MJPEG wrapper.
+- The matrix on this module: H.264, HEVC and VP9 bit-exact at 720p, 1080p and 4K except one HEVC
+  720p run, aborted on "Unrecognized dec_status: 00000000" right after the 4K H.264 decode; ten more
+  on this module and ten on the installed one, all bit-exact. MPEG-2 66.4 and 67.5 dB.
+- H.263 is not a hardware feature: the S905X datasheet's decoder list (rev 0.2, the GXL family; no
+  S905L3 datasheet is public) has MPEG-4 ASP, VC-1, AVS, RealVideo and MJPEG, no H.263 or Sorenson.
+  Kodi's Amlogic decoder refuses H.263 ("amcodec can't handle h263").

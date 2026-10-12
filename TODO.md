@@ -10,13 +10,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       before trying fixes (PLL fraction, a re-lock until stable). The worklog has what was ruled
       out.
 
-- [ ] **H96 Max M20: decoders not implemented — MPEG-4, H.263, VC-1, MJPEG, AVS/AVS2, RealVideo.**
-      The silicon has them (the factory loads `amvdec_*` for each); neither mainline meson-vdec nor
-      `meson-sm1-codecs` has a codec for them. Into `patches/meson-codecs/`, one at a time: MJPEG
-      and MPEG-4/H.263 ported from Maxime Jourdan's meson-vdec codecs (Khadas Fenix, 5.3-era `0116`,
-      `0117`); then VC-1 on the same `vdec_1` pattern, its protocol from Amlogic's `vvc1.c` and
-      microcode from the factory container (`g12a_vc1`, `gxl_vc1`). AVS, AVS2 and RealVideo: not
-      planned.
+- [ ] **H96 Max M20: decoders not implemented — VC-1, AVS/AVS2, RealVideo.** The silicon has them
+      (the factory loads `amvdec_*` for each). VC-1 next, into `patches/meson-codecs/` on the MPEG-4
+      pattern (`vdec_1`, microcode rebooted once CAPTURE is mapped), its protocol from Amlogic's
+      `vvc1.c` and microcode from the factory container (`g12a_vc1`, `gxl_vc1`). AVS, AVS2 and
+      RealVideo: not planned.
 
 - [ ] **RK3518 boards: revisit display and GPU against the H96 Max M20.** Same Mali-450 and the same
       BOE 2256x1504 panel: the M20 runs it native at 60 Hz with glmark2 **64**, where the RK3528

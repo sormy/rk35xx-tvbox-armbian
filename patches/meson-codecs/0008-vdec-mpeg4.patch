@@ -1,0 +1,336 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: MPEG-4 Part 2 on GXLX2
+
+Maxime Jourdan's codec_mpeg4 (5.3-era meson-vdec), on the legacy MPEG-4
+microcode, gxl_mpeg4_5.bin (Amlogic's gxl_xvid). On this core:
+
+- The microcode latches its canvases when it boots, and the core boots
+  it at OUTPUT STREAMON, before any CAPTURE buffer exists: it wrote
+  nothing visible. Start raises a source change instead; resume maps
+  the canvases and boots the microcode again (amvdec_reboot_firmware).
+- Timestamps follow the stream offset the microcode reports: the first
+  input buffer holds only the VOL header, and taking them in order put
+  every picture one frame late.
+- Decoder STOP queues visual_object_sequence_end_code to push the last
+  pictures out, then ends with an empty LAST buffer, since the header
+  buffer keeps the queued count above the LAST threshold
+  (amvdec_drain_empty_last).
+
+H.263 stays out: neither this nor the H.263 microcode decodes an ITU
+H.263 stream.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/codec_mpeg4.c   |  170 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ vdec/codec_mpeg4.h   |   13 ++++
+ vdec/Makefile        |    2 -
+ vdec/vdec_helpers.c  |   28 ++++++++
+ vdec/vdec_helpers.h  |    2 +
+ vdec/vdec_platform.c |   12 ++++
+ 6 files changed, 226 insertions(+), 1 deletion(-)
+
+diff -ruN a/vdec/codec_mpeg4.c b/vdec/codec_mpeg4.c
+--- a/vdec/codec_mpeg4.c
++++ b/vdec/codec_mpeg4.c
+@@ -0,0 +1,170 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Copyright (C) 2018 Maxime Jourdan <maxi.jourdan@wanadoo.fr>
++ */
++
++#include <media/v4l2-mem2mem.h>
++#include <media/videobuf2-dma-contig.h>
++
++#include "vdec_helpers.h"
++#include "dos_regs.h"
++
++#define SIZE_WORKSPACE		SZ_1M
++/* Offset added by firmware, to substract from workspace paddr */
++#define DCAC_BUFF_START_IP	0x02b00000
++
++/* map firmware registers to known MPEG4 functions */
++#define MREG_BUFFERIN		AV_SCRATCH_8
++#define MREG_BUFFEROUT		AV_SCRATCH_9
++#define MP4_NOT_CODED_CNT	AV_SCRATCH_A
++#define MP4_OFFSET_REG		AV_SCRATCH_C
++#define MEM_OFFSET_REG		AV_SCRATCH_F
++#define MREG_FATAL_ERROR	AV_SCRATCH_L
++
++#define BUF_IDX_MASK		GENMASK(2, 0)
++#define INTERLACE_FLAG		BIT(7)
++#define TOP_FIELD_FIRST_FLAG	BIT(6)
++
++struct codec_mpeg4 {
++	/* Buffer for the MPEG4 Workspace */
++	void      *workspace_vaddr;
++	dma_addr_t workspace_paddr;
++};
++
++/* visual_object_sequence_end_code: pushes the last picture out */
++static const u8 eos_sequence[SZ_1K] = { 0x00, 0x00, 0x01, 0xB1 };
++
++static const u8 *codec_mpeg4_eos_sequence(u32 *len)
++{
++	*len = ARRAY_SIZE(eos_sequence);
++	return eos_sequence;
++}
++
++static int codec_mpeg4_can_recycle(struct amvdec_core *core)
++{
++	return !amvdec_read_dos(core, MREG_BUFFERIN);
++}
++
++static void codec_mpeg4_recycle(struct amvdec_core *core, u32 buf_idx)
++{
++	amvdec_write_dos(core, MREG_BUFFERIN, ~BIT(buf_idx));
++}
++
++static int codec_mpeg4_resume(struct amvdec_session *sess)
++{
++	int ret;
++
++	if (sess->canvas_reg_count) {
++		amvdec_restore_canvases(sess);
++		return 0;
++	}
++
++	/* Canvas regs: AV_SCRATCH_0-AV_SCRATCH_3, AV_SCRATCH_G-AV_SCRATCH_J */
++	ret = amvdec_set_canvases(sess,
++				  (u32[]){ AV_SCRATCH_0, AV_SCRATCH_G, 0 },
++				  (u32[]){ 4, 4, 0 });
++	if (ret)
++		return ret;
++
++	return amvdec_reboot_firmware(sess);
++}
++
++static int codec_mpeg4_start(struct amvdec_session *sess)
++{
++	struct amvdec_core *core = sess->core;
++	struct codec_mpeg4 *mpeg4 = sess->priv;
++
++	if (!mpeg4) {
++		mpeg4 = kzalloc(sizeof(*mpeg4), GFP_KERNEL);
++		if (!mpeg4)
++			return -ENOMEM;
++		sess->priv = mpeg4;
++	}
++
++	/* Allocate some memory for the MPEG4 decoder's state */
++	if (!mpeg4->workspace_vaddr) {
++		mpeg4->workspace_vaddr =
++			dma_alloc_coherent(core->dev, SIZE_WORKSPACE,
++					   &mpeg4->workspace_paddr, GFP_KERNEL);
++		if (!mpeg4->workspace_vaddr)
++			return -ENOMEM;
++	}
++
++	amvdec_write_dos(core, MEM_OFFSET_REG,
++			 mpeg4->workspace_paddr - DCAC_BUFF_START_IP);
++	amvdec_write_dos(core, PSCALE_CTRL, 0);
++	amvdec_write_dos(core, MP4_NOT_CODED_CNT, 0);
++	amvdec_write_dos(core, MREG_BUFFERIN, 0);
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++	amvdec_write_dos(core, MREG_FATAL_ERROR, 0);
++	amvdec_write_dos(core, MDEC_PIC_DC_THRESH, 0x404038aa);
++
++	sess->keyframe_found = 1;
++	if (sess->canvas_reg_count)
++		amvdec_restore_canvases(sess);
++	else
++		amvdec_src_change(sess, sess->width, sess->height,
++				  sess->fmt_out->min_buffers, 8);
++
++	return 0;
++}
++
++static int codec_mpeg4_stop(struct amvdec_session *sess)
++{
++	struct codec_mpeg4 *mpeg4 = sess->priv;
++	struct amvdec_core *core = sess->core;
++
++	if (mpeg4->workspace_vaddr) {
++		dma_free_coherent(core->dev, SIZE_WORKSPACE,
++				  mpeg4->workspace_vaddr,
++				  mpeg4->workspace_paddr);
++		mpeg4->workspace_vaddr = 0;
++	}
++
++	return 0;
++}
++
++static irqreturn_t codec_mpeg4_isr(struct amvdec_session *sess)
++{
++	struct amvdec_core *core = sess->core;
++	u32 reg;
++	u32 buffer_index;
++	u32 field = V4L2_FIELD_NONE;
++
++	reg = amvdec_read_dos(core, MREG_FATAL_ERROR);
++	if (reg == 1) {
++		dev_err(core->dev, "mpeg4 fatal error\n");
++		amvdec_abort(sess);
++		return IRQ_HANDLED;
++	}
++
++	reg = amvdec_read_dos(core, MREG_BUFFEROUT);
++	if (!reg)
++		goto end;
++
++	buffer_index = reg & BUF_IDX_MASK;
++	if (reg & INTERLACE_FLAG)
++		field = (reg & TOP_FIELD_FIRST_FLAG) ?
++			V4L2_FIELD_INTERLACED_TB :
++			V4L2_FIELD_INTERLACED_BT;
++
++	amvdec_dst_buf_done_idx(sess, buffer_index,
++				amvdec_read_dos(core, MP4_OFFSET_REG), field, 0);
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++
++end:
++	amvdec_write_dos(core, ASSIST_MBOX1_CLR_REG, 1);
++	return IRQ_HANDLED;
++}
++
++struct amvdec_codec_ops codec_mpeg4_ops = {
++	.start = codec_mpeg4_start,
++	.stop = codec_mpeg4_stop,
++	.isr = codec_mpeg4_isr,
++	.can_recycle = codec_mpeg4_can_recycle,
++	.recycle = codec_mpeg4_recycle,
++	.resume = codec_mpeg4_resume,
++	.async_drain = true,
++	.drain = amvdec_drain_empty_last,
++	.eos_sequence = codec_mpeg4_eos_sequence,
++};
+diff -ruN a/vdec/codec_mpeg4.h b/vdec/codec_mpeg4.h
+--- a/vdec/codec_mpeg4.h
++++ b/vdec/codec_mpeg4.h
+@@ -0,0 +1,13 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++/*
++ * Copyright (C) 2018 Maxime Jourdan <maxi.jourdan@wanadoo.fr>
++ */
++
++#ifndef __MESON_VDEC_CODEC_MPEG4_H_
++#define __MESON_VDEC_CODEC_MPEG4_H_
++
++#include "vdec.h"
++
++extern struct amvdec_codec_ops codec_mpeg4_ops;
++
++#endif
+diff -ruN a/vdec/Makefile b/vdec/Makefile
+--- a/vdec/Makefile
++++ b/vdec/Makefile
+@@ -3,7 +3,7 @@
+ 
+ meson-vdec-objs = esparser.o vdec.o vdec_helpers.o vdec_platform.o
+ meson-vdec-objs += vdec_1.o vdec_hevc.o
+-meson-vdec-objs += codec_mpeg12.o codec_mpeg12_multi.o codec_h264.o codec_h264_g12a.o
++meson-vdec-objs += codec_mpeg12.o codec_mpeg12_multi.o codec_mpeg4.o codec_h264.o codec_h264_g12a.o
+ meson-vdec-objs += codec_h264_g12a_dpb.o v4l2-h264.o
+ meson-vdec-objs += codec_hevc_common.o codec_vp9.o codec_hevc.o
+ meson-vdec-$(CONFIG_VIDEO_MESON_VDEC_KUNIT_TEST) += codec_h264_g12a_dpb_test.o
+diff -ruN a/vdec/vdec_helpers.c b/vdec/vdec_helpers.c
+--- a/vdec/vdec_helpers.c
++++ b/vdec/vdec_helpers.c
+@@ -9,6 +9,7 @@
+ #include <media/v4l2-event.h>
+ #include <media/videobuf2-dma-contig.h>
+ 
++#include "esparser.h"
+ #include "vdec_helpers.h"
+ 
+ #define NUM_CANVAS_NV12 2
+@@ -325,6 +326,22 @@
+ }
+ EXPORT_SYMBOL_GPL(amvdec_set_canvases);
+ 
++/*
++ * For firmwares that latch their canvases at boot: the core boots them
++ * before the CAPTURE buffers exist, so boot again once they are mapped.
++ */
++int amvdec_reboot_firmware(struct amvdec_session *sess)
++{
++	int ret;
++
++	ret = sess->fmt_out->vdec_ops->resume(sess, false);
++	if (ret)
++		return ret;
++
++	return esparser_power_up(sess);
++}
++EXPORT_SYMBOL_GPL(amvdec_reboot_firmware);
++
+ void amvdec_free_canvases(struct amvdec_session *sess)
+ {
+ 	unsigned int i;
+@@ -555,6 +572,17 @@
+ }
+ EXPORT_SYMBOL_GPL(amvdec_dst_buf_done_empty_last);
+ 
++/*
++ * Decoder STOP: input buffers that carried no picture (stream headers) keep
++ * the queued count above the LAST threshold; end with an empty LAST.
++ */
++void amvdec_drain_empty_last(struct amvdec_session *sess)
++{
++	if (sess->eos_drain && !v4l2_m2m_has_stopped(sess->m2m_ctx))
++		amvdec_dst_buf_done_empty_last(sess);
++}
++EXPORT_SYMBOL_GPL(amvdec_drain_empty_last);
++
+ void amvdec_dst_buf_done(struct amvdec_session *sess,
+ 			 struct vb2_v4l2_buffer *vbuf, u32 field, u32 type)
+ {
+diff -ruN a/vdec/vdec_helpers.h b/vdec/vdec_helpers.h
+--- a/vdec/vdec_helpers.h
++++ b/vdec/vdec_helpers.h
+@@ -18,6 +18,7 @@
+  */
+ int amvdec_set_canvases(struct amvdec_session *sess,
+ 			u32 reg_base[], u32 reg_num[]);
++int amvdec_reboot_firmware(struct amvdec_session *sess);
+ void amvdec_free_canvases(struct amvdec_session *sess);
+ void amvdec_restore_canvases(struct amvdec_session *sess);
+ 
+@@ -57,6 +58,7 @@
+ 				 u32 type,
+ 				 const struct amvdec_timestamp_info *timestamp);
+ bool amvdec_dst_buf_done_empty_last(struct amvdec_session *sess);
++void amvdec_drain_empty_last(struct amvdec_session *sess);
+ void amvdec_dst_buf_done_offset(struct amvdec_session *sess,
+ 				struct vb2_v4l2_buffer *vbuf,
+ 				u32 offset, u32 field, u32 type, bool allow_drop);
+diff -ruN a/vdec/vdec_platform.c b/vdec/vdec_platform.c
+--- a/vdec/vdec_platform.c
++++ b/vdec/vdec_platform.c
+@@ -10,6 +10,7 @@
+ #include "vdec_1.h"
+ #include "vdec_hevc.h"
+ #include "codec_mpeg12.h"
++#include "codec_mpeg4.h"
+ #include "codec_mpeg12_multi.h"
+ #include "codec_h264.h"
+ #include "codec_h264_g12a.h"
+@@ -163,6 +164,17 @@
+ 		.firmware_path = "meson/vdec/gxl_mpeg12_multi.bin",
+ 		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED,
++	}, {
++		.pixfmt = V4L2_PIX_FMT_MPEG4,
++		.min_buffers = 8,
++		.max_buffers = 8,
++		.max_width = 1920,
++		.max_height = 1080,
++		.vdec_ops = &vdec_1_ops,
++		.codec_ops = &codec_mpeg4_ops,
++		.firmware_path = "meson/vdec/gxl_mpeg4_5.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, V4L2_PIX_FMT_YUV420M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED,
+ 	},
+ };
+ 
