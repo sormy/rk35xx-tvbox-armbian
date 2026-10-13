@@ -38,7 +38,7 @@ rm -f "$NEW"/*_test.c
 if [ "$COMP" = vdec ]; then
   TAR="$CACHE/linux-$KVER.tar.xz"
   if [ ! -s "$TAR" ]; then
-    curl -fsSL -o "$TAR.part" "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$KVER.tar.xz"
+    curl -fsSL -o "$TAR.part" "https://cdn.kernel.org/pub/linux/kernel/v${KVER%%.*}.x/linux-$KVER.tar.xz"
     mv -f "$TAR.part" "$TAR"
   fi
   tar -xJf "$TAR" -C "$NEW" --strip-components=4 "linux-$KVER/drivers/media/v4l2-core/v4l2-h264.c"

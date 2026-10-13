@@ -23,7 +23,7 @@ CACHE="$(cd "$(dirname "$0")/../.." && pwd)/build/kernel-tarballs"
 mkdir -p "$CACHE"
 TAR="$CACHE/linux-$KVER.tar.xz"
 if [ ! -s "$TAR" ]; then
-  curl -fsSL -o "$TAR.part" "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$KVER.tar.xz"
+  curl -fsSL -o "$TAR.part" "https://cdn.kernel.org/pub/linux/kernel/v${KVER%%.*}.x/linux-$KVER.tar.xz"
   mv -f "$TAR.part" "$TAR"
 fi
 tar -xJf "$TAR" -C "$NEW.tmp" "linux-$KVER/$SUB"
