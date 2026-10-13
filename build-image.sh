@@ -431,9 +431,9 @@ EOF
 echo "== $BOARD: booting Armbian from \${devtype} \${devnum} =="
 part uuid \${devtype} \${devnum}:2 rootuuid
 setenv bootargs "root=PARTUUID=\${rootuuid} rootwait rw $SERIALCON console=tty1 consoleblank=0 loglevel=1 net.ifnames=0"
-ext4load \${devtype} \${devnum}:2 $AML_KERNEL_ADDR /boot/vmlinuz-$KVER
-ext4load \${devtype} \${devnum}:2 $AML_INITRD_ADDR /boot/uInitrd-$KVER
-ext4load \${devtype} \${devnum}:2 $AML_UBOOT_ADDR /boot/dtb-$KVER/$FDT
+ext4load \${devtype} \${devnum}:2 $AML_KERNEL_ADDR /boot/Image
+ext4load \${devtype} \${devnum}:2 $AML_INITRD_ADDR /boot/uInitrd
+ext4load \${devtype} \${devnum}:2 $AML_UBOOT_ADDR /boot/dtb/$FDT
 booti $AML_KERNEL_ADDR $AML_INITRD_ADDR $AML_UBOOT_ADDR
 EOF
   mkimage -A arm64 -T script -C none -n "$BOARD chainload" \

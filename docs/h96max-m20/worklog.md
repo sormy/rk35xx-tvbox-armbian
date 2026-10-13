@@ -1179,3 +1179,26 @@ is sold as.
   9:03, all clean, no SError in the kernel log. Two jobs took ~25 min. The crash under a 4-core
   build was the reusable CMA pool over BL31; the two-job cap is gone, and `rk35xx-update` removes
   the copy it installed.
+
+## 2026-10-12 — Linux 7.x and the DKMS packages
+
+- Armbian trixie arm64 offers `linux-*-edge-meson64` 26.8.8, 7.2.8; `current` stays 6.18.44.
+- `linux-headers-edge-meson64` alone, no image: DKMS autoinstall builds and installs the codecs,
+  HDMI and btmtksdio for 7.2.8 from the 6.18.44 trees; mt76 fails on 7.x's mac80211 (the action
+  frame union, `link_id` arguments).
+- The fetch scripts took `v6.x/` from kernel.org whatever the version; the directory now follows the
+  major. `rk35xx-update --kernel 7.2.8-edge-meson64` fetches 7.2.8's sources (all mt76 and btmtksdio
+  patches apply as they are) and builds for that kernel alone: all six install for 7.2.8 while
+  6.18.44 keeps its own. A plain `rk35xx-update` afterwards restores the 6.18.44 trees and leaves
+  the 7.2.8 modules installed.
+- `fetch-mt76-src.sh` left an empty `.new.tmp` tree after every successful fetch.
+- 7.2.8 itself not booted. `boot.scr` loaded `vmlinuz-<version>`, `uInitrd-<version>` and
+  `dtb-<version>/` by name, files the next `current` kernel upgrade deletes; `build-image.sh` now
+  writes `/boot/Image`, `/boot/uInitrd` and `/boot/dtb/`, the links Armbian keeps on the installed
+  kernel.
+- First boot of that template after a soft reboot: no network. A diagnostic `boot.scr` (each step
+  logged to `diag.txt` by `fatwrite`, then the old boot) gave `devtype=usb devnum=0`, `part uuid`
+  `00000000-02`, and all three links loaded at the files' sizes. This stick predates the disk
+  signature `build-image.sh` writes, so `root=PARTUUID=00000000-02` named nothing; Linux lists no
+  PARTUUID for it. With `sfdisk --disk-id` set, the template booted from a power cycle:
+  `root=PARTUUID=9736a7e8-02`, all units up, Wi-Fi joined.
