@@ -35,5 +35,5 @@ for p in "$PATCHES"/*.patch; do
   patch -p1 -d "$NEW" < "$p"
 done
 
-rm -rf "$DIR"; mv "$NEW" "$DIR"
+rm -rf "$DIR" "$NEW.tmp"; mv "$NEW" "$DIR"
 trap - EXIT
