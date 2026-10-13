@@ -3,7 +3,7 @@
 # Installs the payload (firmware/<board>/payload.list) into place, refreshes + rebuilds the DKMS
 # drivers, reinstalls the device tree, reloads systemd + restarts the changed services, and reboots
 # ONLY if the DTB actually changed. Run from a repo checkout on the box, or with --pull to fetch it.
-#   usage: sudo rk35xx-update [--board <id>] [--pull] [--reboot | --no-reboot]
+#   usage: sudo rk35xx-update [--board <id>] [--kernel <release>] [--pull] [--reboot | --no-reboot]
 #
 # The board is auto-detected from the identity dir; --board overrides. Every installed name derives
 # from the board's BOARD_PREFIX (see firmware/<board>/board.conf), which is rk35xx- on every board.
@@ -18,9 +18,11 @@ set -e
 BOARD=""
 PULL=0
 REBOOT=ask
+KREL="$(uname -r)"   # the kernel the DKMS drivers are fetched and built for
 while [ $# -gt 0 ]; do
   case "$1" in
     --board)      BOARD="${2:?--board needs a board id}"; shift ;;
+    --kernel)     KREL="${2:?--kernel needs a release, as uname -r prints it}"; shift ;;
     --pull)       PULL=1 ;;
     --reboot)     REBOOT=yes ;;
     --no-reboot)  REBOOT=no ;;
@@ -155,14 +157,15 @@ echo "[2/6] refreshing DKMS driver sources + rebuilding"
 # a board with no IR receiver ships neither the Makefile nor dkms.conf that the fetch needs
 if [ -f "$DKMS_IR/dkms.conf" ]; then "$FW/common/fetch-dkms-src.sh" "$DKMS_IR"; fi
 
-# rebuild so a changed source or a new kernel actually takes: remove --all, then add/build/install.
+# rebuild for $KREL only, so a changed source takes and other kernels keep their modules.
 # Version comes from the directory name, so 1.0 and 1.0.0 packages both work.
 dkms_rebuild() {
   d="$(basename "$1")"; name="${d%-*}"; ver="${d##*-}"
-  dkms remove  -m "$name" -v "$ver" --all 2>/dev/null || true
-  dkms add     -m "$name" -v "$ver" || { echo "  ($name dkms add failed; continuing)"; return 0; }
-  dkms build   -m "$name" -v "$ver" || { echo "  ($name dkms build failed; continuing)"; return 0; }
-  dkms install -m "$name" -v "$ver" || echo "  ($name dkms install failed; continuing)"
+  dkms remove  -m "$name" -v "$ver" -k "$KREL" 2>/dev/null || true
+  [ -e "/var/lib/dkms/$name/$ver/source" ] || dkms add -m "$name" -v "$ver" ||
+    { echo "  ($name dkms add failed; continuing)"; return 0; }
+  dkms build   -m "$name" -v "$ver" -k "$KREL" || { echo "  ($name dkms build failed; continuing)"; return 0; }
+  dkms install -m "$name" -v "$ver" -k "$KREL" || echo "  ($name dkms install failed; continuing)"
 }
 if [ -f "$DKMS_IR/dkms.conf" ]; then dkms_rebuild "$DKMS_IR"; fi
 
@@ -171,7 +174,7 @@ for e in ${BOARD_DKMS_FETCH:-}; do
   d="/usr/src/${e%%:*}"
   echo "  fetching ${e%%:*}"
   # the fetch swaps in place, so a failure leaves the previous tree whole — rebuild from it
-  "$FW/${e#*:}" "$d" || echo "  (fetch failed; rebuilding the staged source)"
+  "$FW/${e#*:}" "$d" "${KREL%%-*}" || echo "  (fetch failed; rebuilding the staged source)"
   dkms_rebuild "$d"
 done
 

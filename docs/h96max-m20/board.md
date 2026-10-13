@@ -263,6 +263,7 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Thermal              | ✅ `cpu-thermal` on the SCPI sensor; passive 80 °C, hot 90 °C        |
 | HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                    |
 | GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                         |
+| Kernel 7.2 (edge)    | ✅ the six DKMS packages build and install; ❓ never booted          |
 | ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client              |
 | Other decoders       | not implemented: AVS, RealVideo                                      |
 | HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |

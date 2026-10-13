@@ -69,6 +69,19 @@ sudo TMPDIR=/var/tmp/aptwork apt-get -y full-upgrade
 the 3518D `/boot` still held a complete set for the running kernel, `Image`/`uInitrd`/`dtb` symlinks
 all resolved, and the box rebooted cleanly once `dpkg --configure -a` finished.
 
+## A kernel the DKMS sources were not fetched for
+
+A DKMS package is one source tree, built for every installed kernel. The mainline-derived trees
+(mt76, btmtksdio, HDMI, the decoder's `v4l2-h264.c`) come from one kernel version, so headers of
+another series build what they can and mt76 fails. Before booting the new kernel, on the box:
+
+```sh
+sudo rk35xx-update --kernel <release>    # as uname -r will print it; builds for that kernel alone
+```
+
+Modules built for other kernels stay installed. A later plain `rk35xx-update` refetches for the
+running kernel.
+
 ## After an upgrade
 
 ```sh
