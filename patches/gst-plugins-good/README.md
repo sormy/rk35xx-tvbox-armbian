@@ -36,3 +36,17 @@ P=/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstvideo4linux2.so
 rm $P && dpkg-divert --local --rename --remove $P
 rm -rf ~/.cache/gstreamer-1.0
 ```
+
+## Alternative: rebuild the Debian package
+
+❓ Not run here. A packaged build instead of a diverted file: apt knows every file, and trixie's
+next `gst-plugins-good1.0` update replaces it, patch and all. On the box, as root, with `deb-src`
+added to the trixie entry's `Types:`:
+
+```bash
+apt-get update && apt-get install -y build-essential devscripts && apt-get build-dep -y gst-plugins-good1.0
+cd /root && apt-get source gst-plugins-good1.0 && cd gst-plugins-good1.0-1.26.2
+cp /usr/local/share/rk35xx/repo/patches/gst-plugins-good/0001-v4l2-vc1-caps.patch debian/patches/ && echo 0001-v4l2-vc1-caps.patch >> debian/patches/series
+dch --local +rk35xx "v4l2: map video/x-wmv to the VC-1 formats" && dpkg-buildpackage -b -uc -us
+apt-get install -y ../gstreamer1.0-plugins-good_*+rk35xx*_arm64.deb
+```
