@@ -1202,3 +1202,17 @@ is sold as.
   signature `build-image.sh` writes, so `root=PARTUUID=00000000-02` named nothing; Linux lists no
   PARTUUID for it. With `sfdisk --disk-id` set, the template booted from a power cycle:
   `root=PARTUUID=9736a7e8-02`, all units up, Wi-Fi joined.
+
+## 2026-10-13 — 7.2.8 booted
+
+- `linux-image-edge-meson64` and `linux-dtb-edge-meson64` install beside `current`; the postinst
+  moves `/boot/Image`, `uInitrd` and `dtb` to 7.2.8, and `rk35xx-dtb-persist` puts our tree in its
+  dtb directory. The install's DKMS autoinstall rebuilt from the 6.18.44 trees and lost mt76, so
+  `rk35xx-update --kernel 7.2.8-edge-meson64` before the reboot, as `docs/apt-upgrade.md` says.
+- A soft reboot came back in 40 s on 7.2.8. All units up; mt76 joined Wi-Fi, Bluetooth up, HDMI
+  connected, lima loaded. H.264, HEVC and VP9 bit-exact at 1080p and 4K; MPEG-2 at 720x576 and 1080p
+  complete; MPEG-4, MJPEG and VC-1 as on 6.18.44. Both encoders 60 frames at 720p. `scpi-cpufreq`
+  with the same table, `cpu-thermal`, HDMI audio plays at 48 kHz.
+- Back to 6.18.44 for daily use: `rk35xx-update --kernel 6.18.44-current-meson64`, the links back on
+  6.18.44, reboot, then the edge packages purged. The purge leaves the generated `uInitrd-<version>`
+  and our tree in `dtb-<version>/`, which no package owns.
