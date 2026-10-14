@@ -1,0 +1,60 @@
+From f7fc4f2670bffd6715d029235c5f1b6899c1c680 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Tue, 13 Oct 2026 14:23:30 -0400
+Subject: [PATCH 3/5] avcodec/v4l2_m2m_dec: add an MJPEG decoder wrapper
+
+Stateful decoders take V4L2_PIX_FMT_MJPEG like any other format; the
+wrapper was the only thing missing.
+---
+ configure                 | 2 ++
+ libavcodec/allcodecs.c    | 1 +
+ libavcodec/v4l2_m2m_dec.c | 1 +
+ 3 files changed, 4 insertions(+)
+
+diff --git a/configure b/configure
+index 374bd5c..dbf8d67 100755
+--- a/configure
++++ b/configure
+@@ -3702,6 +3702,7 @@ mpeg4_mediacodec_encoder_deps="mediacodec"
+ mpeg4_mediacodec_encoder_select="extract_extradata_bsf"
+ mpeg4_mmal_decoder_deps="mmal"
+ mpeg4_v4l2m2m_decoder_deps="v4l2_m2m mpeg4_v4l2_m2m"
++mjpeg_v4l2m2m_decoder_deps="v4l2_m2m mjpeg_v4l2_m2m"
+ mpeg4_v4l2m2m_encoder_deps="v4l2_m2m mpeg4_v4l2_m2m"
+ vc1_cuvid_decoder_deps="cuvid"
+ vc1_mmal_decoder_deps="mmal"
+@@ -7644,6 +7645,7 @@ if enabled v4l2_m2m; then
+     check_cc mpeg1_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_MPEG1;"
+     check_cc mpeg2_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_MPEG2;"
+     check_cc mpeg4_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_MPEG4;"
++    check_cc mjpeg_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_MJPEG;"
+     check_cc hevc_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_HEVC;"
+     check_cc h263_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_H263;"
+     check_cc h264_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_H264;"
+diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
+index 47eded2..61fe2a2 100644
+--- a/libavcodec/allcodecs.c
++++ b/libavcodec/allcodecs.c
+@@ -208,6 +208,7 @@ extern const FFCodec ff_mpeg2video_encoder;
+ extern const FFCodec ff_mpeg2video_decoder;
+ extern const FFCodec ff_mpeg4_encoder;
+ extern const FFCodec ff_mpeg4_decoder;
++extern const FFCodec ff_mjpeg_v4l2m2m_decoder;
+ extern const FFCodec ff_mpeg4_v4l2m2m_decoder;
+ extern const FFCodec ff_mpeg4_mmal_decoder;
+ extern const FFCodec ff_mpegvideo_decoder;
+diff --git a/libavcodec/v4l2_m2m_dec.c b/libavcodec/v4l2_m2m_dec.c
+index af12486..cb7f430 100644
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -304,6 +304,7 @@ M2MDEC(hevc,  "HEVC",  AV_CODEC_ID_HEVC,       "hevc_mp4toannexb");
+ M2MDEC(mpeg1, "MPEG1", AV_CODEC_ID_MPEG1VIDEO, NULL);
+ M2MDEC(mpeg2, "MPEG2", AV_CODEC_ID_MPEG2VIDEO, NULL);
+ M2MDEC(mpeg4, "MPEG4", AV_CODEC_ID_MPEG4,      NULL);
++M2MDEC(mjpeg, "MJPEG", AV_CODEC_ID_MJPEG,      NULL);
+ M2MDEC(h263,  "H.263", AV_CODEC_ID_H263,       NULL);
+ M2MDEC(vc1 ,  "VC1",   AV_CODEC_ID_VC1,        NULL);
+ M2MDEC(vp8,   "VP8",   AV_CODEC_ID_VP8,        NULL);
+-- 
+2.55.0
+

@@ -211,3 +211,47 @@
   bit-exact to 4K; MPEG-4, MJPEG, VC-1 unchanged.
 - VC-1 720p's picture count varies 98-101 run to run, on this module and the installed one alike;
   every picture bit-exact. GStreamer drops some around the skipped frames.
+
+## 2026-10-13 — ffmpeg's `*_v4l2m2m`
+
+- "3 frames of 60" was raw elementary streams: ffmpeg 7.1.5 sends a packet without pts as 0, every
+  frame comes back at 0, and the constant-rate output keeps 3. From Matroska or MP4, or with
+  `-fps_mode passthrough`: H.264 720p to 4K, HEVC and VP9 720p and 1080p 60 of 60 bit-exact; MPEG-2
+  1080p and 720x576 complete at 62.9-64.8 dB.
+- 4K HEVC and VP9 hang: ffmpeg asks 20 CAPTURE buffers, the decoder's own workspace then fails
+  `cma_alloc` with 6.7 MB of CMA left, and decoding stops without an error.
+  `-num_capture_buffers 8`: both 60 of 60 bit-exact.
+- MPEG-4 stops after 14-23 of 60, no error: ffmpeg holds the CAPTURE buffers, the microcode waits
+  for one, and the drain takes 50 ms without an interrupt for done; LAST goes out with 37 inputs
+  queued. Ours, `amvdec_drain_empty_last()`, shared with MJPEG and VC-1.
+- VC-1 from Matroska: nothing. ffmpeg never sends `extradata`, so the sequence header never reaches
+  the decoder. No `mjpeg_v4l2m2m` exists in ffmpeg.
+- Encoders to Matroska: "Could not write header"; SPS/PPS come as a first packet, never as
+  `extradata`.
+- Raspberry Pi's fork, `7.1.5-0+deb13u1+rpt2` from archive.raspberrypi.com run from a scratch
+  directory: raw `.264` 59 of 59, H.264 encode to Matroska works; 4K HEVC fails capture STREAMON,
+  MPEG-4 2 frames of garbage, VC-1 and HEVC encode to Matroska as stock. Not a drop-in.
+
+## 2026-10-13 — ffmpeg 9.0.2, patched: `research/ffmpeg-v4l2m2m/`
+
+- Six ffmpeg patches first: pts for unstamped packets, `extradata` for codecs without a header
+  filter, `mjpeg_v4l2m2m`, the encoders' global header, a drain that waits for a CAPTURE buffer, and
+  frames copied out of a four-buffer pool. Two in the driver: no `EPOLLERR` until LAST, and 16
+  CAPTURE buffers above 1080p.
+- The encoder header: amvenc takes no `HEADER_MODE_SEPARATE`, SPS/PPS come joined to the first frame
+  (1119 bytes), and a dequeue right after a POLLOUT wake returns `EAGAIN`.
+- MPEG-4: a 500 ms quiet window instead of 50 ms changed nothing; the drain-wait patch fixed it.
+- VC-1 with B-frames, 576p: 15 of 44 on all of the above. The trace: `STOP` with 36 inputs queued,
+  the drain entered from the ioctl, interrupts until 5 ms later, "inactive" at 200 ms, LAST with 33
+  queued, then the client's next `QBUF`. The drain blocked the only thread that returns CAPTURE
+  buffers. Run from a worker: 44 of 44 bit-exact, three runs.
+- With the worker, by ablation over VC-1, MPEG-4, MJPEG, MPEG-2, H.264, 4K HEVC: no frame count
+  moves without the `EPOLLERR` patch or without the copy-out; without both copy-out and drain wait,
+  1080p MJPEG loses 2-19 of 60. Kept the drain wait, 30 of 30 runs whole. Without the pts patch raw
+  streams and VC-1 give 3 frames; without `extradata`, VC-1 none. Without the 16-buffer cap, every
+  4K decode fails `cma_alloc`.
+- Debian's 7.1.5 on the new driver: 4K HEVC and VP9 whole; MPEG-4 40-46 of 60, VC-1 none, raw `.264`
+  2, Matroska encode "Could not write header".
+- `rk35xx-update` with `0012` and `0013`: DKMS built `meson-vdec-gxlx2`; GStreamer H.264, HEVC and
+  VP9 bit-exact 720p to 4K, MJPEG 60 of 60, VC-1 as before; ffmpeg 9 as above. MPEG-1 gives no
+  output under GStreamer, and H.263 fails, on the `0011` module alike.

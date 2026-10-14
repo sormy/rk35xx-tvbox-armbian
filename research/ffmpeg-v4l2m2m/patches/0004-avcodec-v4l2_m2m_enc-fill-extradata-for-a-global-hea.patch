@@ -1,0 +1,181 @@
+From 5345e287bf290a1424710725eed142b826418882 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Tue, 13 Oct 2026 14:23:41 -0400
+Subject: [PATCH 4/5] avcodec/v4l2_m2m_enc: fill extradata for a global header
+
+The encoder hands its parameter sets out only ahead of the first
+frame, in their own packet or joined to it, so a muxer that needs
+them at init (Matroska, MP4) could not write its header. With
+AV_CODEC_FLAG_GLOBAL_HEADER, encode a black frame at init, keep the
+leading parameter sets as extradata, drop the frame, and make the
+first real frame a key frame.
+---
+ libavcodec/v4l2_m2m.h     |   3 ++
+ libavcodec/v4l2_m2m_enc.c | 106 +++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 107 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/v4l2_m2m.h b/libavcodec/v4l2_m2m.h
+index c874a87..fc3f2d5 100644
+--- a/libavcodec/v4l2_m2m.h
++++ b/libavcodec/v4l2_m2m.h
+@@ -65,6 +65,9 @@ typedef struct V4L2m2mContext {
+     /* extradata went out ahead of the first packet */
+     int extradata_sent;
+ 
++    /* the next frame must be a key frame: init encoded one for the header */
++    int force_key;
++
+     /* Reference to a frame. Only used during encoding */
+     AVFrame *frame;
+ 
+diff --git a/libavcodec/v4l2_m2m_enc.c b/libavcodec/v4l2_m2m_enc.c
+index 93703cc..4d8286a 100644
+--- a/libavcodec/v4l2_m2m_enc.c
++++ b/libavcodec/v4l2_m2m_enc.c
+@@ -26,8 +26,11 @@
+ #include <search.h>
+ #include "encode.h"
+ #include "libavcodec/avcodec.h"
++#include "libavutil/imgutils.h"
++#include "libavutil/mem.h"
+ #include "libavutil/pixdesc.h"
+ #include "libavutil/pixfmt.h"
++#include "libavutil/time.h"
+ #include "libavutil/opt.h"
+ #include "codec_internal.h"
+ #include "profiles.h"
+@@ -35,6 +38,8 @@
+ #include "v4l2_m2m.h"
+ #include "v4l2_fmt.h"
+ 
++#define V4L2_HEADER_WAIT_MS 2000
++
+ #define MPEG_CID(x) V4L2_CID_MPEG_VIDEO_##x
+ #define MPEG_VIDEO(x) V4L2_MPEG_VIDEO_##x
+ 
+@@ -277,8 +282,10 @@ static int v4l2_send_frame(AVCodecContext *avctx, const AVFrame *frame)
+     V4L2Context *const output = &s->output;
+ 
+ #ifdef V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME
+-    if (frame && frame->pict_type == AV_PICTURE_TYPE_I)
++    if (frame && (frame->pict_type == AV_PICTURE_TYPE_I || s->force_key)) {
+         v4l2_set_ext_ctrl(s, MPEG_CID(FORCE_KEY_FRAME), 0, "force key frame", 1);
++        s->force_key = 0;
++    }
+ #endif
+ 
+     return ff_v4l2_context_enqueue_frame(output, frame);
+@@ -331,6 +338,97 @@ dequeue:
+     return ff_v4l2_context_dequeue_packet(capture, avpkt);
+ }
+ 
++/* the capture poll also wakes for a spent input buffer: retry, within a bound */
++static int v4l2_dequeue_packet_wait(V4L2Context *capture, AVPacket *pkt)
++{
++    int ret;
++
++    for (int ms = 0; ms < V4L2_HEADER_WAIT_MS; ms++) {
++        ret = ff_v4l2_context_dequeue_packet(capture, pkt);
++        if (ret != AVERROR(EAGAIN))
++            return ret;
++        av_usleep(1000);
++    }
++    return AVERROR(ETIMEDOUT);
++}
++
++/* bytes of Annex B parameter sets leading a packet */
++static int v4l2_header_size(enum AVCodecID id, const uint8_t *p, int size)
++{
++    for (int i = 0; i + 3 < size; i++) {
++        int type;
++
++        if (p[i] || p[i + 1] || p[i + 2] != 1)
++            continue;
++        type = id == AV_CODEC_ID_HEVC ? (p[i + 3] >> 1) & 0x3f : p[i + 3] & 0x1f;
++        if (id == AV_CODEC_ID_HEVC ? type < 32 || type > 34 : type != 7 && type != 8)
++            return i && !p[i - 1] ? i - 1 : i;
++    }
++    return size;
++}
++
++/*
++ * A global header: the encoder hands its parameter sets out only ahead of
++ * the first frame, so encode a black frame here, keep the parameter sets as
++ * extradata and drop the frame.
++ */
++static av_cold int v4l2_encode_header(AVCodecContext *avctx, V4L2m2mContext *s)
++{
++    AVFrame *frame = av_frame_alloc();
++    AVPacket *pkt = av_packet_alloc();
++    ptrdiff_t linesize[4];
++    int ret, size;
++
++    if (!frame || !pkt) {
++        ret = AVERROR(ENOMEM);
++        goto end;
++    }
++    frame->format = avctx->pix_fmt;
++    frame->width  = avctx->width;
++    frame->height = avctx->height;
++    ret = av_frame_get_buffer(frame, 0);
++    if (ret < 0)
++        goto end;
++    for (int i = 0; i < 4; i++)
++        linesize[i] = frame->linesize[i];
++    ret = av_image_fill_black(frame->data, linesize, frame->format,
++                              avctx->color_range, frame->width, frame->height);
++    if (ret < 0)
++        goto end;
++    frame->pts = 0;
++
++    ret = ff_v4l2_context_enqueue_frame(&s->output, frame);
++    if (!ret)
++        ret = ff_v4l2_context_set_status(&s->output, VIDIOC_STREAMON);
++    if (!ret)
++        ret = ff_v4l2_context_set_status(&s->capture, VIDIOC_STREAMON);
++    if (!ret)
++        ret = v4l2_dequeue_packet_wait(&s->capture, pkt);
++    if (ret < 0) {
++        av_log(avctx, AV_LOG_ERROR, "no header from the encoder\n");
++        goto end;
++    }
++
++    size = v4l2_header_size(avctx->codec_id, pkt->data, pkt->size);
++    avctx->extradata = av_mallocz(size + AV_INPUT_BUFFER_PADDING_SIZE);
++    if (!avctx->extradata) {
++        ret = AVERROR(ENOMEM);
++        goto end;
++    }
++    memcpy(avctx->extradata, pkt->data, size);
++    avctx->extradata_size = size;
++    /* a header in its own packet: the frame's comes next */
++    if (size == pkt->size) {
++        av_packet_unref(pkt);
++        ret = v4l2_dequeue_packet_wait(&s->capture, pkt);
++    }
++    s->force_key = 1;
++end:
++    av_packet_free(&pkt);
++    av_frame_free(&frame);
++    return ret < 0 ? ret : 0;
++}
++
+ static av_cold int v4l2_encode_init(AVCodecContext *avctx)
+ {
+     V4L2Context *capture, *output;
+@@ -378,7 +476,11 @@ static av_cold int v4l2_encode_init(AVCodecContext *avctx)
+         return AVERROR(EINVAL);
+     }
+ 
+-    return v4l2_prepare_encoder(s);
++    ret = v4l2_prepare_encoder(s);
++    if (ret || !(avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER))
++        return ret;
++
++    return v4l2_encode_header(avctx, s);
+ }
+ 
+ static av_cold int v4l2_encode_close(AVCodecContext *avctx)
+-- 
+2.55.0
+

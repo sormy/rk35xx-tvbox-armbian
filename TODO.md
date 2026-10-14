@@ -15,14 +15,16 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       trixie moves: `patches/gst-plugins-good/README.md`. Shipping it would mean a diverted system
       plugin in the payload.
 
+- [ ] **H96 Max M20: ffmpeg's `*_v4l2m2m`.** Every codec works on 9.0.2 with
+      `research/ffmpeg-v4l2m2m/`'s five patches; Debian's 7.1.5 still fails MPEG-4, VC-1, raw
+      streams and encode to Matroska. Open: send the patches to ffmpeg, or ship the build.
+
 - [ ] **RK3518 boards: revisit display and GPU against the H96 Max M20.** Same Mali-450 and the same
       BOE 2256x1504 panel: the M20 runs it native at 60 Hz with glmark2 **64**, where the RK3528
       boards score 41 at 1080p and 2048x1152 and cannot clock the native mode
       (`docs/todo/rk35xx-hdmi-modes.md`). Record each board's GPU clock and devfreq governor, then
       rerun glmark2 on the same panel.
 
-- [ ] **H96 Max M20: ffmpeg's `*_v4l2m2m` decoders.** 3 frames of 60 from H.264 on the shipped
-      decoder, where GStreamer's `v4l2h264dec` decodes all 60 bit-exact.
 - [ ] **H96 Max M20: root-cause a silent reset.**
   - Silent reset during the first HEVC decode with the patched meson-vdec, 2026-10-12: empty pstore,
     and the firmware copied just before was lost. Not reproduced since; netconsole to the host

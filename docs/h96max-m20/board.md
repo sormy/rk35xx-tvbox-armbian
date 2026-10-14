@@ -100,6 +100,12 @@ skipped frame yields no new picture, and the last two pictures of a stream stay 
 GStreamer configures a V4L2 VC-1 decoder from 1.26.6; trixie ships 1.26.2, and
 `patches/gst-plugins-good/README.md` rebuilds its plugin with the fix.
 
+ffmpeg's `*_v4l2m2m` reach every codec the driver decodes, and both encoders, with five patches to
+9.0.2 in `research/ffmpeg-v4l2m2m/`: pts for raw streams, `extradata` for MPEG-1/2, MPEG-4 and VC-1,
+an `mjpeg_v4l2m2m` decoder, encoder `extradata` for Matroska and MP4, and a drain that waits for a
+CAPTURE buffer. Debian's 7.1.5 decodes H.264, HEVC, VP9 and MPEG-2 from a container; MPEG-4, VC-1,
+raw streams and encode to Matroska fail.
+
 **Not implemented:** the silicon decodes AVS, AVS2 and RealVideo — the factory loads `amvdec_avs`,
 `amvdec_avs2`, `amvdec_real` — but no V4L2 driver for them exists on this chip.
 
@@ -264,7 +270,7 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                    |
 | GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                         |
 | Kernel 7.2 (edge)    | ✅ boots; drivers, codecs, Wi-Fi, BT, HDMI and audio as on 6.18      |
-| ffmpeg `v4l2m2m`     | ❌ 3 frames of 60; GStreamer's `v4l2*dec` is the client              |
+| ffmpeg `v4l2m2m`     | ✅ all on patched 9.0.2; stock 7.1.5 ❌ MPEG-4, VC-1, MKV encode     |
 | Other decoders       | not implemented: AVS, RealVideo                                      |
 | HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |
 | CEC                  | ❓ not grafted; this panel has no CEC to test against                |
