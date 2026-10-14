@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: at most 16 CAPTURE buffers above 1080p
+
+Above 1080p the decoder's own workspace is allocated after the CAPTURE
+buffers, and 20 UHD buffers leave the 384 MiB CMA pool without room for
+it: cma_alloc fails and the decode never starts. 16 leave room.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/vdec.c |    5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff -ruN a/vdec/vdec.c b/vdec/vdec.c
+--- a/vdec/vdec.c
++++ b/vdec/vdec.c
+@@ -33,6 +33,8 @@
+ /* 16 MiB for parsed bitstream swap exchange */
+ #define SIZE_VIFIFO SZ_16M
+ #define VDEC_INACTIVE_TIMEOUT_MS 1000
++#define VDEC_FHD_PIXELS (1920 * 1088)
++#define VDEC_MAX_BUFFERS_UHD 16
+ 
+ static u32 get_output_size(const struct amvdec_codec_ops *codec_ops,
+ 			   u32 width, u32 height)
+@@ -542,6 +544,9 @@
+ 	if (is_reqbufs)
+ 		buffers_total = max(buffers_total, fmt_out->min_buffers);
+ 	buffers_total = min(buffers_total, fmt_out->max_buffers);
++	/* past 1080p, more leaves the CMA pool short of the decoder's workspace */
++	if (sess->width * sess->height > VDEC_FHD_PIXELS)
++		buffers_total = min(buffers_total, VDEC_MAX_BUFFERS_UHD);
+ 	*num_buffers = buffers_total - q_num_bufs;
+ 
+ 	/* We need to program the complete CAPTURE buffer list

@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: drain on STOP from a worker
+
+V4L2_DEC_CMD_STOP ran the drain inside the ioctl, and the drain waits for
+the decoder to go idle. A single-threaded client cannot return CAPTURE
+buffers while blocked in that ioctl, so the decoder starved, read as
+idle, and the LAST buffer went out with frames still in the VIFIFO:
+VC-1 with B-frames under ffmpeg stopped after 15 of 44 frames.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/vdec.c |   15 +++++++++++++--
+ vdec/vdec.h |    1 +
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
+diff -ruN a/vdec/vdec.c b/vdec/vdec.c
+--- a/vdec/vdec.c
++++ b/vdec/vdec.c
+@@ -436,6 +436,15 @@
+ 	return true;
+ }
+ 
++static void vdec_m2m_drain_work(struct work_struct *work)
++{
++	struct amvdec_session *sess =
++		container_of(work, struct amvdec_session, drain_work);
++
++	if (!vdec_m2m_finish_drain(sess))
++		v4l2_m2m_try_schedule(sess->m2m_ctx);
++}
++
+ bool amvdec_m2m_begin_yield(struct amvdec_session *sess)
+ {
+ 	return atomic_cmpxchg(&sess->m2m_job_running,
+@@ -1260,8 +1269,8 @@
+ 	     (codec_ops->async_drain &&
+ 	      atomic_read(&sess->m2m_job_running) != AMVDEC_M2M_JOB_IDLE))) {
+ 		WRITE_ONCE(sess->draining, 1);
+-		if (!vdec_m2m_finish_drain(sess))
+-			v4l2_m2m_try_schedule(sess->m2m_ctx);
++		/* the drain waits on decoding, which needs this ioctl's caller */
++		schedule_work(&sess->drain_work);
+ 		return 0;
+ 	}
+ 
+@@ -1460,6 +1469,7 @@
+ 	INIT_LIST_HEAD(&sess->timestamps);
+ 	INIT_LIST_HEAD(&sess->bufs_recycle);
+ 	INIT_WORK(&sess->esparser_queue_work, esparser_queue_all_src);
++	INIT_WORK(&sess->drain_work, vdec_m2m_drain_work);
+ 	atomic_set(&sess->m2m_job_running, AMVDEC_M2M_JOB_IDLE);
+ 	mutex_init(&sess->lock);
+ 	mutex_init(&sess->bufs_recycle_lock);
+@@ -1483,6 +1493,7 @@
+ {
+ 	struct amvdec_session *sess = file_to_amvdec_session(file);
+ 
++	cancel_work_sync(&sess->drain_work);
+ 	mutex_lock(&sess->lock);
+ 	v4l2_m2m_ctx_release(sess->m2m_ctx);
+ 	mutex_unlock(&sess->lock);
+diff -ruN a/vdec/vdec.h b/vdec/vdec.h
+--- a/vdec/vdec.h
++++ b/vdec/vdec.h
+@@ -364,6 +364,7 @@
+ 	atomic_t esparser_queued_bufs;
+ 	u32 es_frames;
+ 	struct work_struct esparser_queue_work;
++	struct work_struct drain_work;
+ 	atomic_t m2m_job_running;
+ 
+ 	unsigned int streamon_cap, streamon_out;

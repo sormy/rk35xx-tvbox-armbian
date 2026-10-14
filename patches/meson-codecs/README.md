@@ -17,6 +17,8 @@ meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS
 | `0009` | MJPEG                                                         |
 | `0010` | VC-1, Advanced profile                                        |
 | `0011` | the VIFIFO level read while the VLD is reset                  |
+| `0012` | at most 16 CAPTURE buffers above 1080p, for CMA               |
+| `0013` | the drain on `STOP` runs from a worker, not the ioctl         |
 
 | Package             | Module        | Device                |
 | ------------------- | ------------- | --------------------- |
