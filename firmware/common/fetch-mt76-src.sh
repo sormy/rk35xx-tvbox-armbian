@@ -35,5 +35,11 @@ for p in "$PATCHES"/*.patch; do
   patch -p1 -d "$NEW" < "$p"
 done
 
+# build only the drivers dkms.conf enables: every other one the kernel's config turns on, off
+ON="$(grep -o 'CONFIG_[A-Za-z0-9_]*=m' "$NEW/dkms.conf" | sed 's/=m$//')"
+OFF="$(find "$NEW" -name Makefile -exec grep -oh 'obj-\$(CONFIG_[A-Za-z0-9_]*)' {} + |
+  sed 's/^obj-\$(\(.*\))$/\1/' | sort -u | grep -vxF "$ON" | sed 's/$/=/' | tr '\n' ' ')"
+sed -i.bak "s|^\(MAKE\[0\]=\".*\)\"$|\1 ${OFF% }\"|" "$NEW/dkms.conf" && rm "$NEW/dkms.conf.bak"
+
 rm -rf "$DIR" "$NEW.tmp"; mv "$NEW" "$DIR"
 trap - EXIT

@@ -175,5 +175,8 @@ Measured and reverted:
       CONFIG_MT76_CORE=m CONFIG_MT76_SDIO=m CONFIG_MT76_CONNAC_LIB=m \
       CONFIG_MT7615_COMMON=m CONFIG_MT7663S=m CONFIG_MT7663_USB_SDIO_COMMON=m
 
+That builds every other mt76 driver the kernel's config enables too. The `dkms.conf` the fetch
+writes also sets each of those `obj-$(CONFIG_*)` symbols empty, so DKMS builds the six alone.
+
 The part needs `mediatek/mt7668_patch_e2_hdr.bin`, `mediatek/WIFI_RAM_CODE_MT7668.bin`,
 `mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin` and `mediatek/EEPROM_MT7668.bin`.
