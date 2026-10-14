@@ -1,11 +1,12 @@
 # Surviving `apt upgrade`
 
-The overlay's whole premise is that kernel and userspace keep coming from Armbian. Four things
-defend that, all installed by the payload. Three are `apt`/kernel hooks, one is a package hold.
+The overlay's whole premise is that kernel and userspace keep coming from Armbian. Five things
+defend that, all installed by the payload. Four are `apt`/kernel hooks, one is a package hold.
 
 | Defends against                           | Mechanism                                         |
 | ----------------------------------------- | ------------------------------------------------- |
 | DKMS failing on a kernel+headers upgrade  | `/etc/kernel/postinst.d/00-rk35xx-kernel-prepare` |
+| DKMS sources of another kernel series     | `01-rk35xx-kernel-dkms-src`, both hook dirs       |
 | a kernel upgrade shipping only stock DTBs | `/etc/kernel/postinst.d/rk35xx-dtb-persist`       |
 | `armbian-bsp` resetting the board name    | `/etc/apt/apt.conf.d/99-rk35xx-boardname`         |
 | a u-boot package flashing ROCK 2F loaders | `apt-mark hold linux-u-boot-*`, set at first boot |
@@ -73,7 +74,16 @@ all resolved, and the box rebooted cleanly once `dpkg --configure -a` finished.
 
 A DKMS package is one source tree, built for every installed kernel. The mainline-derived trees
 (mt76, btmtksdio, HDMI, the decoder's `v4l2-h264.c`) come from one kernel version, so headers of
-another series build what they can and mt76 fails. Before booting the new kernel, on the box:
+another series build what they can and mt76 fails. Armbian moves `current` to a new series in place,
+so a plain `apt upgrade` brings one.
+
+A board whose DKMS sources follow the kernel ships `01-rk35xx-kernel-dkms-src` in both
+`/etc/kernel/postinst.d/` and `/etc/kernel/header_postinst.d/`, ahead of `dkms` in each: for a
+kernel of another series than the running one, it refetches the sources from that kernel's version
+before DKMS builds. Within a series it does nothing. It needs the network and the repo at
+`/usr/local/share/rk35xx/repo`; without them it prints the command below and leaves the trees.
+
+By hand, on the box, before booting the new kernel:
 
 ```sh
 sudo rk35xx-update --kernel <release>    # as uname -r will print it; builds for that kernel alone

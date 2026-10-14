@@ -49,6 +49,8 @@
 0644 h96max-m20/board.dtb            /usr/local/share/rk35xx/board.dtb
 0755 common/rk35xx-dtb-persist       /etc/kernel/postinst.d/rk35xx-dtb-persist
 0755 common/rk35xx-kernel-prepare    /etc/kernel/postinst.d/00-rk35xx-kernel-prepare
+0755 common/rk35xx-kernel-dkms-src   /etc/kernel/postinst.d/01-rk35xx-kernel-dkms-src
+0755 common/rk35xx-kernel-dkms-src   /etc/kernel/header_postinst.d/01-rk35xx-kernel-dkms-src
 
 # in-place updater, so `rk35xx-update --pull` and rk35xx-deploy work on the box
 0755 ../rk35xx-update                /usr/local/sbin/rk35xx-update

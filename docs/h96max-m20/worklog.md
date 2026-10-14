@@ -1216,3 +1216,19 @@ is sold as.
 - Back to 6.18.44 for daily use: `rk35xx-update --kernel 6.18.44-current-meson64`, the links back on
   6.18.44, reboot, then the edge packages purged. The purge leaves the generated `uInitrd-<version>`
   and our tree in `dtb-<version>/`, which no package owns.
+
+## 2026-10-13 — DKMS follows the kernel, mt76 builds what it installs
+
+- Armbian moves `current` to a new series under the same package name: 25.11.2 is 6.12.58, 26.2.1
+  6.18.10. A plain `apt upgrade` brings the next series.
+- The mt76 package built every mt76 driver the kernel's config enables, 48 linked objects, to
+  install six. The `dkms.conf` the fetch writes now sets the other 22 `obj-$(CONFIG_*)` symbols
+  empty: 154 s instead of 516 s for `dkms build`, 12 links, and Wi-Fi from a reboot on the result.
+- `01-rk35xx-kernel-dkms-src`, apt with `linux-image`, `linux-dtb` and `linux-headers-edge-meson64`
+  and nothing else: the headers configure first and run `header_postinst.d/dkms`, which built from
+  the 6.18.44 trees and failed mt76 while only `postinst.d` carried the hook. In both directories:
+  the hook fetches 7.2.8's sources at the headers' turn, autoinstall builds all six, no error. The
+  image's turn fetches again, from the cached tarball.
+- `build-image.sh` stages `linux-headers-<flavour>` of the base's own kernel; `board.conf` named
+  `current`. Against `armbian-lepotato-trixie.img`'s apt state: `linux-headers-current-meson64` for
+  6.18.44.
