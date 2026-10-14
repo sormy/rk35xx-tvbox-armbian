@@ -13,12 +13,14 @@ meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS
 | `0005` | the HEVC encoder (WAVE420L) on GXLX2                          |
 | `0006` | MPEG-1/2 canvases mapped once every CAPTURE buffer is queued  |
 | `0007` | CAPTURE formats other than NV12M                              |
-| `0008` | MPEG-4 Part 2                                                 |
-| `0009` | MJPEG                                                         |
-| `0010` | VC-1, Advanced profile                                        |
-| `0011` | the VIFIFO level read while the VLD is reset                  |
-| `0012` | at most 16 CAPTURE buffers above 1080p, for CMA               |
-| `0013` | the drain on `STOP` runs from a worker, not the ioctl         |
+| `0008` | helpers to reboot a microcode and end a drain with LAST       |
+| `0009` | MPEG-4 Part 2                                                 |
+| `0010` | MJPEG                                                         |
+| `0011` | `wrap_input`: a codec frames its input before the parser      |
+| `0012` | VC-1, Advanced profile                                        |
+| `0013` | the VIFIFO level read while the VLD is reset                  |
+| `0014` | at most 16 CAPTURE buffers above 1080p, for CMA               |
+| `0015` | the drain on `STOP` runs from a worker, not the ioctl         |
 
 | Package             | Module        | Device                |
 | ------------------- | ------------- | --------------------- |
@@ -51,7 +53,7 @@ The vendor tree already carries `amvenc_avc` and `hevc_enc` nodes, which make pl
 those names; the encoders adopt them, with their interrupts and, for WAVE420L, its register window.
 The factory kernel probed the WAVE420L on this chip, so GXLX2 joins its chip list.
 
-## 0008, 0009
+## 0008-0010
 
 Maxime Jourdan's 5.3-era `codec_mpeg4` and `codec_mjpeg`. Their microcode latches its canvases at
 boot, and this decoder boots it before any CAPTURE buffer exists: start raises a source change, and

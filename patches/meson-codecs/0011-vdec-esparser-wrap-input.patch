@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Mon, 12 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: esparser: let a codec frame its input
+
+A new codec hook, wrap_input, lets a codec frame an input buffer in
+place before the parser takes it, and return its new size. A codec that
+cannot fit the framing returns 0, and the buffer is dropped with an
+error.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/esparser.c |   11 +++++++++++
+ vdec/vdec.h     |    2 ++
+ 2 files changed, 13 insertions(+)
+
+diff -ruN a/vdec/esparser.c b/vdec/esparser.c
+--- a/vdec/esparser.c
++++ b/vdec/esparser.c
+@@ -385,6 +385,17 @@
+ 		}
+ 	}
+ 
++	if (codec_ops->wrap_input) {
++		payload_size = codec_ops->wrap_input(sess, vb, payload_size);
++		if (!payload_size) {
++			dev_warn_ratelimited(core->dev,
++					     "esparser: no room to frame the input, packet dropped\n");
++			amvdec_remove_ts(sess, vb->timestamp);
++			v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
++			return 0;
++		}
++	}
++
+ 	/*
+ 	 * The HEVC-core stream fetch reads ahead of the data. When a picture
+ 	 * is decoded before the next packet arrives (frame-based HEVC always,
+diff -ruN a/vdec/vdec.h b/vdec/vdec.h
+--- a/vdec/vdec.h
++++ b/vdec/vdec.h
+@@ -224,6 +224,8 @@
+ 	void (*drain)(struct amvdec_session *sess);
+ 	int (*resume)(struct amvdec_session *sess);
+ 	const u8 * (*eos_sequence)(u32 *len);
++	u32 (*wrap_input)(struct amvdec_session *sess, struct vb2_buffer *vb,
++			  u32 size);
+ 	void (*eos_queued)(struct amvdec_session *sess);
+ 	irqreturn_t (*isr)(struct amvdec_session *sess);
+ 	irqreturn_t (*threaded_isr)(struct amvdec_session *sess);

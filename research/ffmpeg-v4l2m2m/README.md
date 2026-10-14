@@ -1,7 +1,7 @@
 # ffmpeg 9 with V4L2 mem2mem on the H96 Max M20
 
 ffmpeg 9.0.2 with five patches drives every hardware decoder and both encoders on the S905L3 the way
-GStreamer does. Needs `meson-vdec-gxlx2` with `patches/meson-codecs/` `0012` and `0013`. Not
+GStreamer does. Needs `meson-vdec-gxlx2` with `patches/meson-codecs/` `0014` and `0015`. Not
 shipped: a static build into `/opt/ffmpeg-9`, beside Debian's ffmpeg.
 
 ## Build
@@ -56,7 +56,7 @@ marks skipped, as GStreamer does.
 
 | Tried                                   | Why dropped                           |
 | --------------------------------------- | ------------------------------------- |
-| driver: no `EPOLLERR` until LAST        | no frame count changed once `0013` in |
+| driver: no `EPOLLERR` until LAST        | no frame count changed once `0015` in |
 | ffmpeg: copy frames out of a short pool | `0005` alone keeps MJPEG whole        |
 | Raspberry Pi's fork, `7.1.5+rpt2`       | 4K HEVC, MPEG-4, VC-1 fail; no MJPEG  |
-| `-num_capture_buffers 8` for 4K         | the driver caps it: `0012`            |
+| `-num_capture_buffers 8` for 4K         | the driver caps it: `0014`            |

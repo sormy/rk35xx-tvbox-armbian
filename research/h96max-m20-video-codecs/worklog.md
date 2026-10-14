@@ -255,3 +255,6 @@
 - `rk35xx-update` with `0012` and `0013`: DKMS built `meson-vdec-gxlx2`; GStreamer H.264, HEVC and
   VP9 bit-exact 720p to 4K, MJPEG 60 of 60, VC-1 as before; ffmpeg 9 as above. MPEG-1 gives no
   output under GStreamer, and H.263 fails, on the `0011` module alike.
+- Split for review: the two helpers out of MPEG-4, `wrap_input` out of VC-1, each its own patch;
+  `0012` and `0013` above are now `0014` and `0015`. The staged `meson-vdec-gxlx2` source is
+  byte-identical, and the series builds at each new patch.

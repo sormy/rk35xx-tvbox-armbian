@@ -8,9 +8,9 @@ after Amlogic's vvc1.c, booted and drained as MPEG-4.
 
 GStreamer hands over a container's VC-1: codec_data first, one byte and
 then the sequence and entry-point headers, followed by frames without
-start codes. A new codec hook, wrap_input, frames the input in place as
-Amlogic's players do: it drops the codec_data's first byte and prefixes
-each frame with a frame start code.
+start codes. wrap_input frames the input as Amlogic's players do: it
+drops the codec_data's first byte and prefixes each frame with a frame
+start code.
 
 The microcode emits no picture for a skipped frame, and pictures before
 the first I picture are recycled unseen.
@@ -19,11 +19,9 @@ Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 ---
  vdec/codec_vc1.c     |  201 ++++++++++++++++++++++++++++++++++++++++++++++++++
  vdec/codec_vc1.h     |   10 ++
- vdec/esparser.c      |   11 +++
  vdec/Makefile        |    2 
  vdec/vdec_platform.c |   12 +++
- vdec/vdec.h          |    2 
- 6 files changed, 237 insertions(+), 1 deletion(-)
+ 4 files changed, 224 insertions(+), 1 deletion(-)
 
 diff -ruN a/vdec/codec_vc1.c b/vdec/codec_vc1.c
 --- a/vdec/codec_vc1.c
@@ -244,27 +242,6 @@ diff -ruN a/vdec/codec_vc1.h b/vdec/codec_vc1.h
 +extern struct amvdec_codec_ops codec_vc1_ops;
 +
 +#endif
-diff -ruN a/vdec/esparser.c b/vdec/esparser.c
---- a/vdec/esparser.c
-+++ b/vdec/esparser.c
-@@ -385,6 +385,17 @@
- 		}
- 	}
- 
-+	if (codec_ops->wrap_input) {
-+		payload_size = codec_ops->wrap_input(sess, vb, payload_size);
-+		if (!payload_size) {
-+			dev_warn_ratelimited(core->dev,
-+					     "esparser: no room to frame the input, packet dropped\n");
-+			amvdec_remove_ts(sess, vb->timestamp);
-+			v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
-+			return 0;
-+		}
-+	}
-+
- 	/*
- 	 * The HEVC-core stream fetch reads ahead of the data. When a picture
- 	 * is decoded before the next packet arrives (frame-based HEVC always,
 diff -ruN a/vdec/Makefile b/vdec/Makefile
 --- a/vdec/Makefile
 +++ b/vdec/Makefile
@@ -306,15 +283,3 @@ diff -ruN a/vdec/vdec_platform.c b/vdec/vdec_platform.c
  	},
  };
  
-diff -ruN a/vdec/vdec.h b/vdec/vdec.h
---- a/vdec/vdec.h
-+++ b/vdec/vdec.h
-@@ -224,6 +224,8 @@
- 	void (*drain)(struct amvdec_session *sess);
- 	int (*resume)(struct amvdec_session *sess);
- 	const u8 * (*eos_sequence)(u32 *len);
-+	u32 (*wrap_input)(struct amvdec_session *sess, struct vb2_buffer *vb,
-+			  u32 size);
- 	void (*eos_queued)(struct amvdec_session *sess);
- 	irqreturn_t (*isr)(struct amvdec_session *sess);
- 	irqreturn_t (*threaded_isr)(struct amvdec_session *sess);
