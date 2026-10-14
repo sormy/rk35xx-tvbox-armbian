@@ -353,7 +353,8 @@ if [ -n "${BOARD_APT_DEBS:-}" ]; then
   # cached across builds: a rebuild re-verifies the SHA256s instead of re-downloading 76 MB
   DEBS="$REPO/build/apt-debs/$BOARD"
   python3 "$REPO/scripts/fetch-apt-debs.py" --sources "$APTTMP/sources" --status "$APTTMP/status" \
-    --out "$DEBS" --index-cache "$REPO/build/apt-indices" --kernel "${KVER%%-*}" $BOARD_APT_DEBS
+    --out "$DEBS" --index-cache "$REPO/build/apt-indices" --kernel "${KVER%%-*}" $BOARD_APT_DEBS \
+    "linux-headers-${KVER#*-}"   # the base's own kernel, whatever branch it is
   rm -rf "$APTTMP"
   e2mkdir "$FS:/var/cache/apt" 2>/dev/null || true
   e2mkdir "$FS:/var/cache/apt/archives" 2>/dev/null || true
