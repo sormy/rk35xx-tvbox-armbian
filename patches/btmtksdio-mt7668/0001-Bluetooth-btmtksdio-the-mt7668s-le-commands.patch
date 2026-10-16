@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Thu, 15 Oct 2026 20:00:00 -0400
+Subject: [PATCH] Bluetooth: btmtksdio: the MT7668's LE commands
+
+The MT7668's supported-command bitmap is wrong both ways. It claims LE
+Set Default PHY, which the firmware rejects as unknown; the command is an
+HCI_INIT step, so the failure aborts hci_init_sync() and btmgmt lists no
+index. And it leaves octets 25-28 empty, the Core 4.2 LE commands the
+firmware runs, so the core masks LE Advertising Report and LE Connection
+Complete: an LE scan reports nothing and no LE device can connect.
+
+Skip reading the bitmap and supply those four octets. BR/EDR keeps the
+behaviour it had with no bitmap; LE scans report and LE HID pairs.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ drivers/bluetooth/btmtksdio.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/bluetooth/btmtksdio.c b/drivers/bluetooth/btmtksdio.c
+index d2583bc..fdd5447 100644
+--- a/drivers/bluetooth/btmtksdio.c
++++ b/drivers/bluetooth/btmtksdio.c
+@@ -1078,6 +1078,10 @@ static int btmtksdio_reset_setting(struct hci_dev *hdev)
+ 	return btmtksdio_mtk_reg_write(hdev, MT7921_BTSYS_RST, val, ~0);
+ }
+ 
++/* Octets 25-28 of the supported-command bitmap: the Core 4.2 LE commands */
++#define MT7668_LE_COMMANDS_OCTET 25
++static const u8 mt7668_le_commands[] = { 0xf7, 0xff, 0xff, 0x7f };
++
+ static int btmtksdio_setup(struct hci_dev *hdev)
+ {
+ 	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
+@@ -1159,6 +1163,16 @@ static int btmtksdio_setup(struct hci_dev *hdev)
+ 		err = mt76xx_setup(hdev, bdev->data->fwname);
+ 		if (err < 0)
+ 			return err;
++		/* The MT7668's supported-command bitmap claims LE Set Default
++		 * PHY, which its firmware rejects, aborting hci_init4, and omits
++		 * the core LE commands it runs, which masks LE advertising
++		 * reports and connections. Use a bitmap of those LE commands.
++		 */
++		if (bdev->data->chipid == 0x7668) {
++			hci_set_quirk(hdev, HCI_QUIRK_BROKEN_LOCAL_COMMANDS);
++			memcpy(&hdev->commands[MT7668_LE_COMMANDS_OCTET],
++			       mt7668_le_commands, sizeof(mt7668_le_commands));
++		}
+ 		break;
+ 	default:
+ 		return -ENODEV;

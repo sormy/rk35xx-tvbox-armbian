@@ -264,7 +264,8 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast     |
 | Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`          |
 | Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                          |
-| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: setup quirk, patch-race wait          |
+| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: LE command bitmap, patch-race wait    |
+| BLE remote           | ✅ pairs, keys report; ❓ keymap, air-mouse                          |
 | cpufreq              | ✅ `scpi-cpufreq`, 100 MHz-1.752 GHz, the factory's table            |
 | Thermal              | ✅ `cpu-thermal` on the SCPI sensor; passive 80 °C, hot 90 °C        |
 | HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                    |

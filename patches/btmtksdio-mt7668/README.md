@@ -6,7 +6,7 @@ and MT7921 behave as before.
 
 | Patch  | Fixes                                                                   |
 | ------ | ----------------------------------------------------------------------- |
-| `0001` | `hci0` closes again during setup                                        |
+| `0001` | `hci0` closes during setup, and LE scans hear nothing                   |
 | `0002` | a Wi-Fi firmware core dump logged per packet holds the shared sdio host |
 | `0003` | `hci0` stays down when the Wi-Fi driver loads the shared patch first    |
 
@@ -24,7 +24,19 @@ the command in its supported-command bitmap and its firmware rejects it, and the
 management layer. With the patch:
 
     btmgmt info -> Index list with 1 item, powered ssp br/edr le secure-conn
-    btmgmt find -> dev_found E8:FB:1C:66:E9:84 type BR/EDR rssi -79
+
+The same bitmap leaves octets 25-28 empty, the Core 4.2 LE commands the firmware runs. The core
+builds the LE event mask from them, so with no bitmap read it masks LE Advertising Report and LE
+Connection Complete: the controller scans, and the host is told of nothing.
+
+    LE Set Event Mask -> Mask: 0x0000000000000650
+    btmgmt find -l    -> no dev_found
+
+The patch skips reading the bitmap and supplies those four octets; the rest stay empty, as BR/EDR
+was tested with. With it:
+
+    LE Set Event Mask -> Mask: 0x000000000000065f
+    btmgmt find -l    -> 60 dev_found in 15 s
 
 ## 0002
 

@@ -1232,3 +1232,15 @@ is sold as.
 - `build-image.sh` stages `linux-headers-<flavour>` of the base's own kernel; `board.conf` named
   `current`. Against `armbian-lepotato-trixie.img`'s apt state: `linux-headers-current-meson64` for
   6.18.44.
+
+## 2026-10-15 — LE heard nothing
+
+- The BLE remote never showed in a scan. `btmgmt find -l` found no device in 15 s; `btmon` showed LE
+  Set Scan Enable succeed and no advertising report follow.
+- `btmtksdio-mt7668` `0001` skipped reading the supported-command bitmap, so the core took every LE
+  command as absent and set the LE event mask to `0x650`: no LE Advertising Report, no LE Connection
+  Complete. The firmware's own bitmap, read with `hciconfig hci0 commands`, has octets 25-28 empty
+  as well, so reading it would not have helped.
+- `0001` now fills octets 25-28 with the Core 4.2 LE commands and still skips the read: mask
+  `0x65f`, 60 devices in an LE scan, the remote paired as `Bluetooth remote Keyboard` and
+  `Bluetooth remote Mouse`, `2b54:1600`.
