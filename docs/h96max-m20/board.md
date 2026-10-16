@@ -17,7 +17,7 @@ Nothing is installed to eMMC. Known gaps are at the bottom.
 | RAM         | 2 GB LPDDR3, rank0+1 @ 600 MHz                                      |
 | eMMC        | SanDisk `DF4016`, 30777344 sectors = 15.76 GB                       |
 | Wi-Fi / BT  | MediaTek MT7668 on SDIO, func1 Wi-Fi and func2 Bluetooth            |
-| Ethernet    | ➖ no connector fitted; the SoC MAC block binds anyway              |
+| Ethernet    | ➖ no connector fitted; the tree disables the SoC MAC block         |
 | USB         | 2.0 only; USB-C is OTG, USB-A host-only                             |
 | Front panel | one blue LED on `GPIODV_24`, active low; one button; no IR receiver |
 | Serial      | 115200 on three pads centre-back: HDMI <- TX GND [RX]               |
@@ -29,7 +29,7 @@ Nothing is installed to eMMC. Known gaps are at the bottom.
 
 | Interface | Address             | Where it comes from                             |
 | --------- | ------------------- | ----------------------------------------------- |
-| eth0      | `62:b4:4d:3b:72:e6` | the unifykey `mac` slot — stored, readable      |
+| unifykey  | `62:b4:4d:3b:72:e6` | the `mac` slot, the factory's `eth0`; unused    |
 | wlan0     | `d0:aa:5f:32:eb:f2` | the chip's own eFUSE, read through the firmware |
 | bdaddr    | `D0:AA:5F:32:EB:F3` | the chip's own, one above its eFUSE             |
 
