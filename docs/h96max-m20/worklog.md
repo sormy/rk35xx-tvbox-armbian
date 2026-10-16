@@ -1244,3 +1244,12 @@ is sold as.
 - `0001` now fills octets 25-28 with the Core 4.2 LE commands and still skips the read: mask
   `0x65f`, 60 devices in an LE scan, the remote paired as `Bluetooth remote Keyboard` and
   `Bluetooth remote Mouse`, `2b54:1600`.
+
+## 2026-10-14 — the silent reset, closed
+
+- The one silent reset, the first HEVC decode on 2026-10-12, left an empty pstore and was never
+  reproduced. Its profile matches the 4-job build's SError: a reset under memory load while the
+  reusable `linux,secmon` pool overlaid BL31. The pool's removal and the reset entered the repo in
+  one commit, so whether the box ran the fix at the time is unknown.
+- None since: three 4-job DKMS builds, a 26-minute 4-job ffmpeg build, the codec matrices to 4K, ten
+  warm reboots and kernel 7.2.8. Closed as the secmon pool; reopened if it recurs.

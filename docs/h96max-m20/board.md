@@ -282,6 +282,7 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Install to eMMC      | ❓ the single-boot image verifies offline; never flashed             |
 | `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`         |
 | Panic under a build  | ✅ three 4-job DKMS builds clean since the secmon fix                |
+| Silent reset         | ✅ none since the secmon fix; once before it, during HEVC bring-up   |
 | Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot      |
 | mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                 |
 | Fresh image          | ❓ built with both DKMS sources staged; never booted                 |

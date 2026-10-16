@@ -25,11 +25,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       (`docs/todo/rk35xx-hdmi-modes.md`). Record each board's GPU clock and devfreq governor, then
       rerun glmark2 on the same panel.
 
-- [ ] **H96 Max M20: root-cause a silent reset.**
-  - Silent reset during the first HEVC decode with the patched meson-vdec, 2026-10-12: empty pstore,
-    and the firmware copied just before was lost. Not reproduced since; netconsole to the host
-    (`modprobe netconsole netconsole=@/eth0,6667@<host>/<host-mac>`) catches the next one.
-
 - [ ] **Rename the installed prefix `rk35xx-` to `tvb-`.** Design: `docs/todo/tvb-namespace.md`.
 
 - [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`
