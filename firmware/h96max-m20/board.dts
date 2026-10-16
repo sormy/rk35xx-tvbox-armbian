@@ -1982,11 +1982,11 @@
 			phandle = <0x43>;
 		};
 
-		/* 4K VP9 decode peaks at 254 MiB; the rest is the display and one encoder */
+		/* 4K at 60 fps, decoded and copied into render buffers, outgrows 384 MiB */
 		linux,cma {
 			compatible = "shared-dma-pool";
 			reusable;
-			size = <0x18000000>;
+			size = <0x30000000>;
 			alignment = <0x400000>;
 			linux,cma-default;
 		};

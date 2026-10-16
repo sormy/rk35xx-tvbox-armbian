@@ -227,7 +227,7 @@ Mainline's nodes, grafted beside the vendor's, which bind to nothing:
 | Node                   | Change                                                             |
 | ---------------------- | ------------------------------------------------------------------ |
 | `pwrc`                 | the VPU domain's twelve resets, `vpu`/`vapb` clocks and rates      |
-| `reserved-memory`      | vendor pools disabled; one 384 MiB `linux,cma`                     |
+| `reserved-memory`      | vendor pools disabled; one 768 MiB `linux,cma`                     |
 | `canvas`, `vpu`        | mainline's, `power-domains = <&pwrc 0>`                            |
 | `hdmi-tx@da800000`     | `gxlx2` + `gxl` fallback, resets without `reset-names`             |
 | `hdmitx_ddc`           | function `hdmi_ddc` → `hdmi_i2c`                                   |

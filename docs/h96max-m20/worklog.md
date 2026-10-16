@@ -1357,3 +1357,9 @@ is sold as.
   `freq_list` lines; a backup sits beside it. `/etc/systemd/network/25-wlan0.network` gives wlan0
   DHCP at route metric 600, under eth0's 100. A forced disconnect rejoined on 2412 MHz; from a
   reboot the box came back over Wi-Fi in 35 s at `192.168.1.239`.
+
+## 2026-10-16 — 768 MiB of CMA
+
+- `cma=768M`, added on the box for 4K at 60 fps, becomes the tree's pool size: `linux,cma` from 384
+  to 768 MiB, `BOARD_CMA` still empty. The box's `boot.scr` keeps its `cma=768M`, now the same size
+  as the tree's.
