@@ -19,6 +19,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       `research/ffmpeg-v4l2m2m/`'s five patches; Debian's 7.1.5 still fails MPEG-4, VC-1, raw
       streams and encode to Matroska. Open: send the patches to ffmpeg, or ship the build.
 
+- [ ] **H96 Max M20: the decoder leaves CAPTURE buffers active on STREAMOFF.** Four `WARN`s, buffers
+      0-13, all from Fuseamp's `fuseamp-flips` and `fuseamp-quality`; ffmpeg stopped early on H.264,
+      HEVC 8- and 10-bit, VP9 to 4K does not reproduce it. Next: that client's ioctl sequence around
+      the stop.
+
 - [ ] **H96 Max M20: 4K at 60 fps, through a downscaled decoder copy.** The video plane cannot read
       3840x2160 NV12 at 60 Hz. The HEVC core can write a half or quarter size copy beside the
       full-size references (Amlogic's `double_write_mode`), which `codec_hevc` already does at 1:1
@@ -86,9 +91,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       keeps the card powered only in runtime suspend. The other route is the combo chip's host-wake
       GPIO 100, which needs the chip-side pin for the low-power command. Until one works, the M20's
       keys ignore suspend and poweroff.
-- [ ] **Clean the live M20:** drop `mt7668_patch_e1_hdr.bin`, `TxPwrLimit_MT76x8.dat` and
-      `BT_RAM_CODE_MT7668_1_1_hdr.bin` from `/lib/firmware/mediatek`, which nothing reads, and the
-      development `rtnl-watchdog` units and `/root` scratch.
 
 ## Bigger todos
 

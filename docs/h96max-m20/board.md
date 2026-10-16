@@ -74,6 +74,28 @@ on a USB 2.0 host that is also serving the rootfs — 196 Mbit/s is the bus, not
 **The box cannot hold full speed.** Under four-core load the 80 °C passive trip holds it at 1.0-1.2
 GHz within a minute; bursts reach 1.752 GHz. Amlogic's tree throttled from 85 °C.
 
+### Kernel log
+
+Every warning and error a running box logs, known here, at loglevel `warn` and above:
+
+| Line                                          | Cause                                 |
+| --------------------------------------------- | ------------------------------------- |
+| `arch_timer`, `kvm`, `GIC` IRQ lines          | the factory's timer and GIC nodes     |
+| `KASLR`, `cacheinfo`, `arm_pmu` affinity      | nothing for them in the tree          |
+| `supply … not found`, `no regulator (mali)`   | fixed rails the tree leaves out       |
+| `can't get clk-gate pinctrl`, three hosts     | an optional MMC pin state             |
+| `unaligned sg offset`                         | one mt76 transfer, sent without DMA   |
+| `meson-dw-hdmi` fails to bind                 | built-in GXL driver; `-gxlx2` binds   |
+| `loading out-of-tree module taints kernel`    | the DKMS drivers                      |
+| `Skipping dt linux,cma-default for "cma="`    | a `cma=` on the command line          |
+| `Read Local Supported Commands not supported` | `btmtksdio-mt7668` `0001`             |
+| `HevcEnc`, `vpu_init`, `vpu_probe` …          | the HEVC encoder's probe, at `err`    |
+| `Missing L0 reference POC`                    | HEVC entered mid-stream, after a seek |
+| `invalid device node of gpio INTC`            | a GPIO request on the AO bank         |
+
+❌ `stop_streaming operation is leaving buffer N in active state`, a `WARN` with a trace, is a
+decoder bug, not a tolerated line.
+
 ## Video codecs
 
 Three DKMS packages, `meson-vdec-gxlx2`, `amvenc-avc-gxlx2` and `amvenc-hevc-gxlx2`; GStreamer's

@@ -1322,3 +1322,16 @@ is sold as.
 - Display, from the owner: a TV at 1080p and 4K, a PC monitor, and HDMI hotplug all work.
 - The BLE air-mouse is the 3518D handset's, where it works; not tried here.
 - The front button is closed as no Linux input: what it drives at power-on is left unread.
+
+## 2026-10-16 — validation audit
+
+- Uptime 4 h 49 min: no failed units, 15.5 s to `graphical.target`, the watchdog held by systemd at
+  80 s, 1951 MB, every DKMS package installed.
+- dmesg at warning and above, line by line, is in `board.md`. One is a bug: four
+  `stop_streaming operation is leaving buffer N in active state` traces, from `fuseamp-flips` and
+  `fuseamp-quality`. ffmpeg decodes of H.264, HEVC 8- and 10-bit and VP9 to 4K, stopped after 5 or
+  60 frames, add none.
+- `Bluetooth: hci0: Opcode 0x041a failed: -22` once, during the pairing scans; nothing broke.
+- The live box cleaned: `mt7668_patch_e1_hdr.bin`, `TxPwrLimit_MT76x8.dat` and
+  `BT_RAM_CODE_MT7668_1_1_hdr.bin` removed from `/lib/firmware/mediatek`, none loaded or packaged;
+  the development `rtnl-watchdog` timer, service and script removed; `/root` from 5.6 to 4.2 GB.
