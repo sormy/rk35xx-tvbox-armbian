@@ -24,6 +24,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       HEVC 8- and 10-bit, VP9 to 4K does not reproduce it. Next: that client's ioctl sequence around
       the stop.
 
+- [ ] **H96 Max M20: Wi-Fi on a fresh image.** The box has no Ethernet, and Armbian's netplan gives
+      `wl*` no DHCP. Check whether the first-boot wizard's Wi-Fi setup gets an address; if not, ship
+      a `wlan0` network file in the payload.
+
 - [ ] **H96 Max M20: 4K at 60 fps, through a downscaled decoder copy.** The video plane cannot read
       3840x2160 NV12 at 60 Hz. The HEVC core can write a half or quarter size copy beside the
       full-size references (Amlogic's `double_write_mode`), which `codec_hevc` already does at 1:1

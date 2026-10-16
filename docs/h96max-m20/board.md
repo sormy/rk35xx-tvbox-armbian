@@ -248,9 +248,15 @@ after the load (channel 1 at 40 MHz, -36 dBm, 2026-10-16). The vendor driver mea
 down on 2.4 GHz, 144 and 139 on 5 GHz (2026-09-20), and returned to baseline on the first
 measurement after the load stopped.
 
-**A stock `wpa_supplicant` conf may pin the band.** The one here carries `scan_freq=2437` and a 2.4
-GHz-only `freq_list`, which makes wpa_supplicant reject every 5 GHz BSS with
-`skip - frequency not allowed`. A configuration limit, not the part's.
+**A `wpa_supplicant` conf may pin the channel.** One with `scan_freq` or `freq_list` scans only
+those channels, and misses the access point once it moves: `skip - frequency not allowed`. A
+configuration limit, not the part's.
+
+**wlan0 needs its own network file.** Armbian's netplan gives DHCP to `e*`, `lan*` and `wan*` only,
+so wlan0 associates and gets no address. On the box, as root:
+
+    printf '[Match]\nName=wlan0\n\n[Network]\nDHCP=yes\n\n[DHCP]\nRouteMetric=600\n' > /etc/systemd/network/25-wlan0.network
+    networkctl reload
 
 `hci0` is `D0:AA:5F:32:EB:F3`, this unit's own, identical across three reboots.
 

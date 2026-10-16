@@ -1350,3 +1350,10 @@ is sold as.
 - The stick's FAT `boot.scr` carries `cma=768M`, edited 2026-10-14 with `boot.scr.before-cma` beside
   it: CMA is 768 MiB here, against the 384 MiB pool `board.conf` ships. The 4K CMA failure of
   2026-10-13 was measured at 384 MiB.
+
+## 2026-10-16 — Wi-Fi joins on its own
+
+- The box's `wpa_supplicant-wlan0.conf`, hand-written on 2026-09-18, lost its two `scan_freq` and
+  `freq_list` lines; a backup sits beside it. `/etc/systemd/network/25-wlan0.network` gives wlan0
+  DHCP at route metric 600, under eth0's 100. A forced disconnect rejoined on 2412 MHz; from a
+  reboot the box came back over Wi-Fi in 35 s at `192.168.1.239`.
