@@ -136,6 +136,15 @@ with the mainline board, so only a sweep of every compatible found them:
 Two further live nodes carried vendor spellings at addresses mainline does not use — `pwm@8640`
 (`status = "okay"`) and `i2c@8d20` — and take the same replacements as their siblings above.
 
+One more has no unit address, so neither sweep matched it; a sweep of enabled nodes no driver bound
+found it:
+
+| Node            | Stock                  | Patched                        | Why                             |
+| --------------- | ---------------------- | ------------------------------ | ------------------------------- |
+| `meson_clk_msr` | `amlogic,gxlx-measure` | `amlogic,meson-gx-clk-measure` | the SoC's own clock measurement |
+
+Mainline maps its four registers as one window from `0x8758`; the vendor listed two from `0x875c`.
+
 What is left has no mainline counterpart at all: about 85 vendor compatibles covering the Android
 multimedia stack, `ion`, `secmon`, `unifykey`, the DVB and codec nodes, and the Android partition
 descriptions. Those are the remainder of the port, not mis-spellings, and they are left alone.

@@ -1335,3 +1335,18 @@ is sold as.
 - The live box cleaned: `mt7668_patch_e1_hdr.bin`, `TxPwrLimit_MT76x8.dat` and
   `BT_RAM_CODE_MT7668_1_1_hdr.bin` removed from `/lib/firmware/mediatek`, none loaded or packaged;
   the development `rtnl-watchdog` timer, service and script removed; `/root` from 5.6 to 4.2 GB.
+
+## 2026-10-16 — clock measurement, and a reboot's findings
+
+- `meson_clk_msr` given mainline's compatible and one window from `0x8758`; back from a soft reboot
+  in 40 s. `measure_summary` reads `hdmi_tx_pixel` 235.699 MHz, `hdmi_todig` 235.695,
+  `vid_pll_div_out` 471.375, `vpu` 666.625, `clk81` 166.664.
+- The 4-hour log audited earlier held 9 lines at warning and above: the four traces had pushed the
+  boot lines out of the ring buffer. A fresh boot logs 35, all now in `board.md`. Among them the
+  HEVC encoder's probe, eight lines at `err` including `vpu_probe fuck, clock_a: 0 …`; it does reach
+  the log, though its source marks it `LOG_DEBUG`.
+- Wi-Fi did not rejoin: `wpa_supplicant` scans 2437 MHz only, and the access point has moved
+  to 2412. `wpa_cli scan freq=2412` joined it; the configuration is unchanged.
+- The stick's FAT `boot.scr` carries `cma=768M`, edited 2026-10-14 with `boot.scr.before-cma` beside
+  it: CMA is 768 MiB here, against the 384 MiB pool `board.conf` ships. The 4K CMA failure of
+  2026-10-13 was measured at 384 MiB.

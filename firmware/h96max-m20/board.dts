@@ -1149,8 +1149,10 @@
 			};
 
 			meson_clk_msr {
-				compatible = "amlogic,gxlx-measure";
-				reg = <0x875c 0x04 0x8764 0x04>;
+				/* the vendor spelling binds no mainline driver; mainline's maps the four
+				   registers from 0x8758 as one window */
+				compatible = "amlogic,meson-gx-clk-measure";
+				reg = <0x8758 0x10>;
 			};
 
 			uart_A: serial@84c0 {
