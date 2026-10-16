@@ -19,6 +19,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       `research/ffmpeg-v4l2m2m/`'s five patches; Debian's 7.1.5 still fails MPEG-4, VC-1, raw
       streams and encode to Matroska. Open: send the patches to ffmpeg, or ship the build.
 
+- [ ] **H96 Max M20: find the front button.** No free GPIO or ADC channel moves when it is pressed,
+      though the factory trees name `GPIOAO_2` and U-Boot's environment SARADC channel 0. Next:
+      `gpio input GPIOAO_2` and `saradc getval` at the U-Boot prompt with it held.
+
 - [ ] **RK3518 boards: revisit display and GPU against the H96 Max M20.** Same Mali-450 and the same
       BOE 2256x1504 panel: the M20 runs it native at 60 Hz with glmark2 **64**, where the RK3528
       boards score 41 at 1080p and 2048x1152 and cannot clock the native mode

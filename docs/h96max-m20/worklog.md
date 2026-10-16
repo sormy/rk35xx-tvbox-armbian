@@ -1284,3 +1284,19 @@ is sold as.
   `/dev/input/bt-remote` and `bt-remote-mouse`.
 - Installed by hand: all nine overrides reach the device, and the remapped buttons report the new
   keycodes on the handset.
+
+## 2026-10-16 — the button, not found
+
+- No input device for the front button. The factory tree's `gpio_keypad` names `GPIOAO_2`, active
+  low; polled with `gpioget` while pressed, it stayed high. `gpiomon` cannot take edges on that pin.
+- The factory U-Boot's `upgrade_sadckey` checks SARADC channel 0 below `0x50`. Every channel of
+  `iio:device0`, polled for 3 minutes with the button pressed and held several times: none dropped.
+  Channels 0, 2, 3, 4, 5 and 7 wander over hundreds of counts, as unconnected inputs do; 1 and 6
+  hold steady, 9 reads 0.
+- All six variants of the factory multi-DTB name the same `gpio_keypad` pin, and the factory kernel
+  registered `gpio_keypad` as an input; U-Boot itself is encrypted, `bl33.enc`, with no tree to
+  read.
+- Every pin no driver claims, 78 lines bar the console's `GPIOAO_0` and `GPIOAO_1`, read with
+  `gpioget --as-is` for 3 minutes with the button pressed: no line changed.
+- Held through a power cycle it keeps the USB burning gadget up, as recorded on 2026-09-14, so it is
+  wired to something. Next: `gpio input` and `saradc getval` at the U-Boot prompt with it held.

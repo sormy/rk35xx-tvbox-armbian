@@ -276,7 +276,7 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |
 | CEC                  | ❓ not grafted; this panel has no CEC to test against                |
 | SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |
-| Button               | ❓ the ADC registers; the key mapping is untested                    |
+| Button               | ❓ no input: no free GPIO or ADC channel moves when pressed          |
 | Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
 | Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing |
 | Install to eMMC      | ❓ the single-boot image verifies offline; never flashed             |
