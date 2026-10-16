@@ -1308,3 +1308,17 @@ is sold as.
   glitches. Measured in the Fuseamp work: a frame dumped from the scanout buffer is whole, so the
   display's video plane, reading 3840x2160 NV12 at every 60 Hz refresh, about 750 MB/s, is what
   breaks. Half the data reads clean.
+
+## 2026-10-16 — mt76 under load
+
+- wlan0 given a DHCP lease from a networkd file in `/run` at route metric 2048, so eth0 kept the
+  default route; `iperf3 --bind-dev wlan0` to plex, 10 s each.
+- 2.4 GHz, channel 1 at 40 MHz, -36 dBm: idle 127 up and 118 down; under `stress-ng --cpu 4`, load
+  1.8, 128 and 113; 131 up once the load stopped. The SoC read 66 °C.
+- 5 GHz not run: the box was associated on 2.4 GHz and stayed there.
+
+## 2026-10-16 — the owner's checks
+
+- Display, from the owner: a TV at 1080p and 4K, a PC monitor, and HDMI hotplug all work.
+- The BLE air-mouse is the 3518D handset's, where it works; not tried here.
+- The front button is closed as no Linux input: what it drives at power-on is left unread.

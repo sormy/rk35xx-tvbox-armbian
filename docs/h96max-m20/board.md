@@ -221,8 +221,10 @@ full rate.
 
 mt76 reconnects without a reload in 105-352 ms, 40 of 40. Joins from a reload complete in 3-4 s.
 
-Under `stress-ng --cpu 4` the vendor driver measured 88 up and 90 down on 2.4 GHz, 144 and 139 on 5
-GHz (2026-09-20), and returned to baseline on the first measurement after the load stopped.
+Under `stress-ng --cpu 4` mt76 held 2.4 GHz at 128 up and 113 down against 127 and 118 idle, 131 up
+after the load (channel 1 at 40 MHz, -36 dBm, 2026-10-16). The vendor driver measured 88 up and 90
+down on 2.4 GHz, 144 and 139 on 5 GHz (2026-09-20), and returned to baseline on the first
+measurement after the load stopped.
 
 **A stock `wpa_supplicant` conf may pin the band.** The one here carries `scan_freq=2437` and a 2.4
 GHz-only `freq_list`, which makes wpa_supplicant reject every 5 GHz BSS with
@@ -269,10 +271,10 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`          |
 | Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                          |
 | Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: LE command bitmap, patch-race wait    |
-| BLE remote           | ✅ pairs; keys as printed; ❓ air-mouse                              |
+| BLE remote           | ✅ pairs; keys as printed; 🟡 air-mouse, as on the 3518D             |
 | cpufreq              | ✅ `scpi-cpufreq`, 100 MHz-1.752 GHz, the factory's table            |
 | Thermal              | ✅ `cpu-thermal` on the SCPI sensor; passive 80 °C, hot 90 °C        |
-| HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: console and KMS                    |
+| HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: KMS; TV, PC monitor, hotplug       |
 | GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                         |
 | Kernel 7.2 (edge)    | ✅ boots; drivers, codecs, Wi-Fi, BT, HDMI and audio as on 6.18      |
 | ffmpeg `v4l2m2m`     | ✅ all on patched 9.0.2; stock 7.1.5 ❌ MPEG-4, VC-1, MKV encode     |
@@ -280,7 +282,7 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |
 | CEC                  | ❓ not grafted; this panel has no CEC to test against                |
 | SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |
-| Button               | ❓ no input: no free GPIO or ADC channel moves when pressed          |
+| Reset button         | ➖ no Linux input: no free GPIO or ADC channel moves when pressed    |
 | Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
 | Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing |
 | Install to eMMC      | ❓ the single-boot image verifies offline; never flashed             |
