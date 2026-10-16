@@ -106,6 +106,10 @@ an `mjpeg_v4l2m2m` decoder, encoder `extradata` for Matroska and MP4, and a drai
 CAPTURE buffer. Debian's 7.1.5 decodes H.264, HEVC, VP9 and MPEG-2 from a container; MPEG-4, VC-1,
 raw streams and encode to Matroska fail.
 
+**On screen, 4K plays at 30 fps and glitches at 60.** The display's video plane cannot read whole
+3840x2160 NV12 pictures 60 times a second, about 750 MB/s; 1080p60 and 4K30 play clean. The decode
+itself keeps up at every size.
+
 **Not implemented:** the silicon decodes AVS, AVS2 and RealVideo — the factory loads `amvdec_avs`,
 `amvdec_avs2`, `amvdec_real` — but no V4L2 driver for them exists on this chip.
 

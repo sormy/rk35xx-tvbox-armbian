@@ -1301,3 +1301,10 @@ is sold as.
 - Held through a power cycle it keeps the USB burning gadget up, as recorded on 2026-09-14, so it is
   wired to something. Next: `gpio input` and `saradc getval` at the U-Boot prompt with it held.
 - No IR receiver on the board, from the hardware itself; `dtb.md` had called one present.
+
+## 2026-10-16 — 4K on the screen
+
+- Watched on the BOE panel: hardware decode plays every size; 4K at 30 fps is clean, 4K at 60 fps
+  glitches. Measured in the Fuseamp work: a frame dumped from the scanout buffer is whole, so the
+  display's video plane, reading 3840x2160 NV12 at every 60 Hz refresh, about 750 MB/s, is what
+  breaks. Half the data reads clean.

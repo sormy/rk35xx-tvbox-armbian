@@ -19,6 +19,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       `research/ffmpeg-v4l2m2m/`'s five patches; Debian's 7.1.5 still fails MPEG-4, VC-1, raw
       streams and encode to Matroska. Open: send the patches to ffmpeg, or ship the build.
 
+- [ ] **H96 Max M20: 4K at 60 fps, through a downscaled decoder copy.** The video plane cannot read
+      3840x2160 NV12 at 60 Hz. The HEVC core can write a half or quarter size copy beside the
+      full-size references (Amlogic's `double_write_mode`), which `codec_hevc` already does at 1:1
+      for 10-bit: add the ratio as a decoder control, report the scaled CAPTURE size.
+
 - [ ] **H96 Max M20: find the front button.** No free GPIO or ADC channel moves when it is pressed,
       though the factory trees name `GPIOAO_2` and U-Boot's environment SARADC channel 0. Next:
       `gpio input GPIOAO_2` and `saradc getval` at the U-Boot prompt with it held.
