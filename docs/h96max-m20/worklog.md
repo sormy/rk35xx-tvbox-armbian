@@ -1233,18 +1233,6 @@ is sold as.
   `current`. Against `armbian-lepotato-trixie.img`'s apt state: `linux-headers-current-meson64` for
   6.18.44.
 
-## 2026-10-15 — LE heard nothing
-
-- The BLE remote never showed in a scan. `btmgmt find -l` found no device in 15 s; `btmon` showed LE
-  Set Scan Enable succeed and no advertising report follow.
-- `btmtksdio-mt7668` `0001` skipped reading the supported-command bitmap, so the core took every LE
-  command as absent and set the LE event mask to `0x650`: no LE Advertising Report, no LE Connection
-  Complete. The firmware's own bitmap, read with `hciconfig hci0 commands`, has octets 25-28 empty
-  as well, so reading it would not have helped.
-- `0001` now fills octets 25-28 with the Core 4.2 LE commands and still skips the read: mask
-  `0x65f`, 60 devices in an LE scan, the remote paired as `Bluetooth remote Keyboard` and
-  `Bluetooth remote Mouse`, `2b54:1600`.
-
 ## 2026-10-14 — the silent reset, closed
 
 - The one silent reset, the first HEVC decode on 2026-10-12, left an empty pstore and was never
@@ -1273,3 +1261,26 @@ is sold as.
   heal.
 - Driven from a Mac at 2256x1504, the panel never blinks: the weak side is the box's output at this
   mode, not the panel's receiver.
+
+## 2026-10-15 — LE heard nothing
+
+- The BLE remote never showed in a scan. `btmgmt find -l` found no device in 15 s; `btmon` showed LE
+  Set Scan Enable succeed and no advertising report follow.
+- `btmtksdio-mt7668` `0001` skipped reading the supported-command bitmap, so the core took every LE
+  command as absent and set the LE event mask to `0x650`: no LE Advertising Report, no LE Connection
+  Complete. The firmware's own bitmap, read with `hciconfig hci0 commands`, has octets 25-28 empty
+  as well, so reading it would not have helped.
+- `0001` now fills octets 25-28 with the Core 4.2 LE commands and still skips the read: mask
+  `0x65f`, 60 devices in an LE scan, the remote paired as `Bluetooth remote Keyboard` and
+  `Bluetooth remote Mouse`, `2b54:1600`.
+
+## 2026-10-15 — the BLE remote keymap
+
+- The bundled remote pairs as `2b54:1600` and sends the 3518D handset's scancodes: cog `c008f`,
+  hamburger `c0011`, OK `c0041`, backspace `c0040`, YouTube `c0056`, Netflix `c003b`, Prime Video
+  `c003d`, voice `c0221` plus a stray `700aa`.
+- `rk35xx-bt-remote.hwdb` moves to `firmware/common/` and both payloads list it; the R69 and H96 Max
+  still do not, their handsets uncaptured. `rk35xx-input-names.rules` names it
+  `/dev/input/bt-remote` and `bt-remote-mouse`.
+- Installed by hand: all nine overrides reach the device, and the remapped buttons report the new
+  keycodes on the handset.

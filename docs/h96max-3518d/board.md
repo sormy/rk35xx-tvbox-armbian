@@ -1,7 +1,7 @@
 # H96 Max 3518D — board details
 
-A stick-form RK3518 box. Sibling to `docs/h96max-h313/`, which is the same SoC and the same radio on a
-different PCB (`3518_ZX_V01` there, `3518_DG_ZX_V01` here).
+A stick-form RK3518 box. Sibling to `docs/h96max-h313/`, which is the same SoC and the same radio on
+a different PCB (`3518_ZX_V01` there, `3518_DG_ZX_V01` here).
 
 **Runs Armbian since 2026-09-06**, reachable over SSH. Every number below was measured on this unit
 **with the heatsink fitted**. Known gaps are listed below; `docs/todo/` holds the open questions.
@@ -107,7 +107,8 @@ fill-rate bound (565 Mpix/s measured, near-identical at every resolution). Same 
 workload. Compare the offscreen Mpix/s figure instead.
 
 **No latch on either band** — no sag under 4-core load, immediate recovery after. The sibling's 6
-Mbit/s TX latch (`docs/h96max-h313/wifi-tx-latch.md`) does not reproduce; retest after a driver bump.
+Mbit/s TX latch (`docs/h96max-h313/wifi-tx-latch.md`) does not reproduce; retest after a driver
+bump.
 
 **It roams bands** — check `iw dev wlan0 link` before trusting a throughput figure.
 
@@ -233,7 +234,7 @@ handset sends (`c…` consumer page, `7…` keyboard page). The remote must be p
 | Mouse button            | ➖                              | not a key — toggles air-mouse mode                      |
 
 Six usages arrive with no kernel mapping: the hamburger, the four app shortcuts, and a second usage
-the voice key sends alongside `KEY_SEARCH`. `firmware/h96max-3518d/bt-remote.hwdb` renames those,
+the voice key sends alongside `KEY_SEARCH`. `firmware/common/rk35xx-bt-remote.hwdb` renames those,
 plus three the kernel maps to the wrong key — backspace, the cog and the centre button — nine
 overrides in all. It keys on the handset model, not the board, so any box this remote is paired to
 gets the same map. ✅ verified on the handset 2026-09-07: all nine properties reach the device and

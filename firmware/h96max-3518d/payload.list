@@ -56,7 +56,7 @@
 # stable names for the integrated inputs, and clear the Android-style BT rfkill soft block
 0644 common/rk35xx-input-names.rules                    /etc/udev/rules.d/60-rk35xx-input-names.rules
 0644 common/rk35xx-rfkill-bt.rules                      /etc/udev/rules.d/60-rk35xx-rfkill-bt.rules
-0644 h96max-3518d/bt-remote.hwdb                        /etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb
+0644 common/rk35xx-bt-remote.hwdb                       /etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb
 
 # in-place updater, so `rk35xx-update --pull` works on the box without a checkout
 0755 ../rk35xx-update                                   /usr/local/sbin/rk35xx-update

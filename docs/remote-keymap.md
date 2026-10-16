@@ -70,7 +70,7 @@ The handset's HID descriptor is not ours, so the remap goes in `udev`'s keyboard
 the **model**, which is what the modalias carries:
 
 ```
-# firmware/h96max-3518d/bt-remote.hwdb — the whole shipped file
+# firmware/common/rk35xx-bt-remote.hwdb — the whole shipped file
 evdev:input:b0005v2B54p1600*
  KEYBOARD_KEY_700aa=reserved
  KEYBOARD_KEY_c0011=menu
@@ -117,10 +117,10 @@ These are **model** fields — the Bluetooth address appears nowhere in a modali
 covers every unit of that model, and a board without that handset never matches.
 
 That makes it tempting to ship family-wide. Don't. The entry matches on the model id but **remaps by
-scancode**, and a shared id is not a shared button layout — OEMs reuse ids. Ship the file from the
-board directory of the board whose handset you actually captured, and add a board only after
-capturing its remote too. `0x2B54` is not even in the USB vendor table, so an unrelated remote could
-in principle carry it.
+scancode**, and a shared id is not a shared button layout — OEMs reuse ids. List the file only in
+the payload of a board whose handset you actually captured, and add a board only after capturing its
+remote too. `0x2B54` is not even in the USB vendor table, so an unrelated remote could in principle
+carry it.
 
 `=reserved` deletes an event rather than renaming it — the fix for a button that sends a second,
 useless usage alongside a good one.

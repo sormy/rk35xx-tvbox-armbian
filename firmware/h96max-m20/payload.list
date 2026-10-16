@@ -35,6 +35,10 @@
 # keys neither suspend nor power off a box nothing can wake
 0644 h96max-m20/rk35xx-powerkey.conf  /etc/systemd/logind.conf.d/zz-rk35xx-powerkey.conf
 
+# stable names for the inputs, and the bundled BLE remote's keymap
+0644 common/rk35xx-input-names.rules  /etc/udev/rules.d/60-rk35xx-input-names.rules
+0644 common/rk35xx-bt-remote.hwdb     /etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb
+
 # hardware watchdog: systemd pings it, the SoC resets the box if it stops
 0644 common/rk35xx-watchdog.conf     /etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf
 

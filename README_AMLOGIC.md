@@ -55,7 +55,7 @@ drivers, boot shim. Nothing is forked, so `apt upgrade` keeps updating kernel an
 | CMA reservation                           |       ✅        |
 | **Input and indicators**                  |                 |
 | Bundled remote over IR                    |       ➖        |
-| Bundled remote over Bluetooth             |       ❓        |
+| Bundled remote over Bluetooth             |       ✅        |
 | Front button                              |       ❓        |
 | Power LED                                 |       ✅        |
 | Standby LED                               |       ➖        |
