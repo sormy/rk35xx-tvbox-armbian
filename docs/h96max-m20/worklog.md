@@ -1253,3 +1253,23 @@ is sold as.
   one commit, so whether the box ran the fix at the time is unknown.
 - None since: three 4-job DKMS builds, a 26-minute 4-job ffmpeg build, the codec matrices to 4K, ten
   warm reboots and kernel 7.2.8. Closed as the secmon pool; reopened if it recurs.
+
+## 2026-10-14 — the panel blink is not a clock mismatch
+
+- The device tree sets no display pixel clock. Its clocks run at mainline's GXL rates: VPU 666.67
+  MHz from `fclk_div3`, VAPB 250 MHz, HDMI `isfr` 24 MHz from the crystal.
+- The factory kernel, 4.9.113 from the eMMC backup's `boot`, programs GXLX2's HDMI PLL the GXL way,
+  with mainline's constants: `CNTL3 0x860f30c4`, `CNTL4 0x0c8e0000`, `CNTL5 0x001fa729`,
+  `CNTL6 0x01a31500`. No G12A PLL values appear in its routine. Its table ships fractional DCOs near
+  this one.
+- Live at 2256x1504: `CNTL 0xc00002c4` (locked, m 196), `CNTL2 0x800cb1aa` (fraction 426/1024), DCO
+  4713.98 MHz, /2 to 2.357 GHz TMDS.
+- Differences from the factory: it resets the PLL up to ten times until the lock bit sets, where
+  mainline resets once; it has an `sspll` spread-spectrum switch; and its table has no entry for
+  this DCO, since its HDMI driver drives listed modes only. The lock bit is set on blinking boots
+  too, so the retry would not have fired.
+- Reported from the screen: some blinking starts when the panel is switched on and stops by itself
+  later. A receiver still adapting to the signal fits that; a PLL that locked marginal does not
+  heal.
+- Driven from a Mac at 2256x1504, the panel never blinks: the weak side is the box's output at this
+  mode, not the panel's receiver.
