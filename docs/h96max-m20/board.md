@@ -89,7 +89,6 @@ Every warning and error a running box logs, known here, at loglevel `warn` and a
 | `loading out-of-tree module taints kernel`    | the DKMS drivers                      |
 | `Skipping dt linux,cma-default for "cma="`    | a `cma=` on the command line          |
 | `Read Local Supported Commands not supported` | `btmtksdio-mt7668` `0001`             |
-| `HevcEnc`, `vpu_init`, `vpu_probe` …          | the HEVC encoder's probe, at `err`    |
 | `Missing L0 reference POC`                    | HEVC entered mid-stream, after a seek |
 | `invalid device node of gpio INTC`            | a GPIO request on the AO bank         |
 

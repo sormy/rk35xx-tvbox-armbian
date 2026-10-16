@@ -1363,3 +1363,12 @@ is sold as.
 - `cma=768M`, added on the box for 4K at 60 fps, becomes the tree's pool size: `linux,cma` from 384
   to 768 MiB, `BOARD_CMA` still empty. The box's `boot.scr` keeps its `cma=768M`, now the same size
   as the tree's.
+
+## 2026-10-16 — the HEVC encoder, quiet
+
+- Its nine probe lines, `vpu_probe fuck …` among them, are all `LOG_DEBUG`, printed because the
+  module's `print_level` defaulted to `LOG_DEBUG` through a bare `printk`. `meson-codecs` `0016`
+  defaults it to `LOG_ERROR`. Rebuilt through DKMS and reloaded: no line at warning or above from
+  the probe; a 1280x720 HEVC encode gives 60 of 60 frames.
+- The boot before ended with no shutdown logged, pstore empty and the watchdog boot status 0; the
+  next came up with the cable out and joined Wi-Fi alone, `192.168.1.239`.

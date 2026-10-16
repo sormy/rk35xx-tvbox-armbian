@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Fri, 16 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: venc-hevc: log errors only by default
+
+The encoder printed its debug level by default: nine probe lines on
+every boot, through a bare printk that lands at warning level. Default
+to errors; the print_level parameter still turns the rest on.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ venc-hevc/vpu.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff -ruN a/venc-hevc/vpu.c b/venc-hevc/vpu.c
+--- a/venc-hevc/vpu.c
++++ b/venc-hevc/vpu.c
+@@ -86,7 +86,7 @@
+ 			printk(x); \
+ 	} while (0)
+ 
+-static s32 print_level = LOG_DEBUG;
++static s32 print_level = LOG_ERROR;
+ static s32 clock_level = 4;
+ 
+ static s32 wave_clocka;
