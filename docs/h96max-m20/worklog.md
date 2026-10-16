@@ -1300,3 +1300,4 @@ is sold as.
   `gpioget --as-is` for 3 minutes with the button pressed: no line changed.
 - Held through a power cycle it keeps the USB burning gadget up, as recorded on 2026-09-14, so it is
   wired to something. Next: `gpio input` and `saradc getval` at the U-Boot prompt with it held.
+- No IR receiver on the board, from the hardware itself; `dtb.md` had called one present.

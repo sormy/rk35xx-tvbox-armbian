@@ -38,13 +38,14 @@ the MT7668 running SDR50 at 50 MHz.
 | Missing          | Factory node                      |
 | ---------------- | --------------------------------- |
 | LEDs             | `gpioleds`, `sysled`              |
-| IR key table     | `gpio_keypad`, `key_0`–`key_18`   |
+| Button           | `gpio_keypad`                     |
+| IR key map       | `key_0`–`key_18`                  |
 | Wi-Fi / BT power | `wifi`, `bt-dev`, `wifi_pwm_conf` |
 | Thermal sensor   | `aml-sensor@0`                    |
 
-Nothing lights without an LED node. The IR receiver is present, so only the key map is board data.
-`mmc@70000` already carries an `mmc-pwrseq`, so the Wi-Fi gap may be smaller than it looks. ❓ The
-sensor is read through SCPI, from the SCP firmware.
+Nothing lights without an LED node. No IR receiver is fitted, so the IR map has nothing to read, and
+the `gpio_keypad` pin does not follow the button. `mmc@70000` already carries an `mmc-pwrseq`, so
+the Wi-Fi gap may be smaller than it looks. The sensor is read through SCPI, from the SCP firmware.
 
 The vendor key store — `unifykey`, `efusekey`, `securitykey`, `defendkey` — has no mainline analogue
 and needs none: seventeen of the nineteen slots on this box are empty.
