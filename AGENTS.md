@@ -164,6 +164,9 @@ cannot be backed, say so rather than rounding up.
 **A title. A paragraph only where it earns its place** — something a reader cannot get from the
 diff. The diff is the record; reasoning belongs in the comment, the doc, or the todo it came from.
 
+**Sweep the staged diff before committing**: every hunk belongs to the commit's one change, and no
+name, path or claim it touches is left stale elsewhere in the repo.
+
 ## Code
 
 Less code is better. Communicate through names, not comments: comment a non-obvious _why_ only,
