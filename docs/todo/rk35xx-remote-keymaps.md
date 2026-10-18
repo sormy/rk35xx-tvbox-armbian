@@ -36,7 +36,7 @@ captures their scancodes.
 - **Does the IR table in each `board.dts` need a patch?** The `ir_keyN` scancode-to-keycode pairs
   are ours. Decide the correct keycode per printed button once, then make every board's table agree
   with it and with the BLE map.
-- **Does the BLE `hwdb` need more overrides?** `firmware/common/rk35xx-bt-remote.hwdb` fixes nine
+- **Does the BLE `hwdb` need more overrides?** `firmware/common/bt-remote.hwdb` fixes nine
   usages today, ✅ verified on the handset. The remaining gap is the four app shortcuts; everything
   else on that remote now matches its printed button.
 - **Converge the app shortcuts on `KEY_PROG1`…`KEY_PROG4`.** Settled on BLE, 2026-09-07: `c0056`

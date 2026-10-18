@@ -70,7 +70,7 @@ The handset's HID descriptor is not ours, so the remap goes in `udev`'s keyboard
 the **model**, which is what the modalias carries:
 
 ```
-# firmware/common/rk35xx-bt-remote.hwdb — the whole shipped file
+# firmware/common/bt-remote.hwdb — the whole shipped file
 evdev:input:b0005v2B54p1600*
  KEYBOARD_KEY_700aa=reserved
  KEYBOARD_KEY_c0011=menu

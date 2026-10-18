@@ -234,7 +234,7 @@ handset sends (`c…` consumer page, `7…` keyboard page). The remote must be p
 | Mouse button            | ➖                              | not a key — toggles air-mouse mode                      |
 
 Six usages arrive with no kernel mapping: the hamburger, the four app shortcuts, and a second usage
-the voice key sends alongside `KEY_SEARCH`. `firmware/common/rk35xx-bt-remote.hwdb` renames those,
+the voice key sends alongside `KEY_SEARCH`. `firmware/common/bt-remote.hwdb` renames those,
 plus three the kernel maps to the wrong key — backspace, the cog and the centre button — nine
 overrides in all. It keys on the handset model, not the board, so any box this remote is paired to
 gets the same map. ✅ verified on the handset 2026-09-07: all nine properties reach the device and

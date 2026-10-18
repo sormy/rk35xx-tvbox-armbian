@@ -3,8 +3,8 @@
 # DKMS *sources* are fetched by board.conf's board_stage_dkms, built by rk35xx-firstboot.
 
 # family first boot (enabled via a multi-user.target drop-in at image build)
-0755 common/rk35xx-firstboot         /usr/local/sbin/rk35xx-firstboot
-0644 common/rk35xx-firstboot.service /etc/systemd/system/rk35xx-firstboot.service
+0755 common/firstboot                /usr/local/sbin/rk35xx-firstboot
+0644 common/firstboot.service        /etc/systemd/system/rk35xx-firstboot.service
 
 # mt76's firmware for the MT7668, the factory image's own files. Bluetooth's mt7668pr2h.bin comes
 # from firmware-mediatek.
@@ -30,31 +30,31 @@
 
 
 # armbian-install refuses: it would wipe the vendor bootloader and the keys
-0644 h96max-m20/rk35xx-platform-install /usr/lib/u-boot/platform_install.sh
+0644 h96max-m20/platform-install        /usr/lib/u-boot/platform_install.sh
 
 # keys neither suspend nor power off a box nothing can wake
-0644 h96max-m20/rk35xx-powerkey.conf  /etc/systemd/logind.conf.d/zz-rk35xx-powerkey.conf
+0644 h96max-m20/powerkey.conf         /etc/systemd/logind.conf.d/zz-rk35xx-powerkey.conf
 
 # stable names for the inputs, and the bundled BLE remote's keymap
-0644 common/rk35xx-input-names.rules  /etc/udev/rules.d/60-rk35xx-input-names.rules
-0644 common/rk35xx-bt-remote.hwdb     /etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb
+0644 common/input-names.rules         /etc/udev/rules.d/60-rk35xx-input-names.rules
+0644 common/bt-remote.hwdb            /etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb
 
 # hardware watchdog: systemd pings it, the SoC resets the box if it stops
-0644 common/rk35xx-watchdog.conf     /etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf
+0644 common/watchdog.conf            /etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf
 
 # login-banner board name (reads /usr/local/share/rk35xx/board-name)
-0755 common/rk35xx-boardname         /usr/local/sbin/rk35xx-boardname
-0644 common/rk35xx-boardname.apt     /etc/apt/apt.conf.d/99-rk35xx-boardname
+0755 common/boardname                /usr/local/sbin/rk35xx-boardname
+0644 common/boardname.apt            /etc/apt/apt.conf.d/99-rk35xx-boardname
 0644 h96max-m20/board-name           /usr/local/share/rk35xx/board-name
 # board key (= firmware/<board>/), so rk35xx-update knows which payload to install
 0644 h96max-m20/board-id             /usr/local/share/rk35xx/board-id
 
 # DTB master copy + kernel postinst.d hooks
 0644 h96max-m20/board.dtb            /usr/local/share/rk35xx/board.dtb
-0755 common/rk35xx-dtb-persist       /etc/kernel/postinst.d/rk35xx-dtb-persist
-0755 common/rk35xx-kernel-prepare    /etc/kernel/postinst.d/00-rk35xx-kernel-prepare
-0755 common/rk35xx-kernel-dkms-src   /etc/kernel/postinst.d/01-rk35xx-kernel-dkms-src
-0755 common/rk35xx-kernel-dkms-src   /etc/kernel/header_postinst.d/01-rk35xx-kernel-dkms-src
+0755 common/dtb-persist              /etc/kernel/postinst.d/rk35xx-dtb-persist
+0755 common/kernel-prepare           /etc/kernel/postinst.d/00-rk35xx-kernel-prepare
+0755 common/kernel-dkms-src          /etc/kernel/postinst.d/01-rk35xx-kernel-dkms-src
+0755 common/kernel-dkms-src          /etc/kernel/header_postinst.d/01-rk35xx-kernel-dkms-src
 
 # in-place updater, so `rk35xx-update --pull` and rk35xx-deploy work on the box
 0755 ../rk35xx-update                /usr/local/sbin/rk35xx-update

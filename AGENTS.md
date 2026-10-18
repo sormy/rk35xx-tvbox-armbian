@@ -21,12 +21,12 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `src/<tool>/`       | host tools we write ourselves                                                                      |
 | `scripts/`          | host-side helpers, never installed on a box                                                        |
 
-**Repo filenames mirror the names installed on disk**, and every board installs under the `rk35xx-`
-prefix — `BOARD_PREFIX` in `board.conf` drives every installed path. A board directory holds
-`board.conf`, `board-id`, `board-name`, the tree, the loader, `payload.list`, and whatever firmware
-is unique to it. **Shared mechanism lives in `firmware/common/`** — a board never keeps its own copy
-of a family script. What it may keep is mechanism no other board can use: a `rk35xx-firstboot-board`
-hook, or a unit for hardware only it has (the R69's `rk35xx-bt`).
+**Repo files carry no prefix**: each board's `payload.list` names where a file installs, under that
+board's prefix. A board directory holds `board.conf`, `board-id`, `board-name`, the tree, the
+loader, `payload.list`, and whatever firmware is unique to it. **Shared mechanism lives in
+`firmware/common/`** — a board never keeps its own copy of a family script. What it may keep is
+mechanism no other board can use: a `firstboot-board` hook, or a unit for hardware only it has (the
+R69's `bt`).
 
 **Tools we build, and must:** `dtc` (`./build-dtc.sh` — vanilla cannot round-trip a vendor blob with
 `&label`s) · `e2tools` (`./build-e2tools.sh` — the stock one corrupts an image on delete) ·
