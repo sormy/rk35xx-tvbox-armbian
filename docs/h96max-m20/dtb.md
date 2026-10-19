@@ -263,6 +263,14 @@ index.
 hands it the physical address from the EDID. The vendor's `aocec` node stays: no mainline driver
 binds `amlogic, amlogic-aocec`.
 
+## DDC
+
+dw-hdmi's own I2C master reads the EDID and refuses DDC/CI with `EOPNOTSUPP`. `i2c-hdmi-ddc` is an
+`i2c-gpio` bus on the DDC pins, GPIOH_1 and GPIOH_2, open-drain at 5 µs; `hdmi-tx` reads the EDID
+through it by `ddc-i2c-bus` and keeps only `hdmitx_hpd` of its pins. `hdmitx_ddc_gpio` muxes the two
+pins to `gpio_periphs`: U-Boot leaves them on `hdmi_i2c`, and with no `gpio-ranges` requesting the
+lines does not switch them.
+
 ## Left vendor-only
 
 The SoC's CVBS encoder, `t9015` analogue codec and S/PDIF stay as the factory wrote them: this box

@@ -313,6 +313,7 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |
 | CEC                  | ✅ `meson-ao-cec`: `/dev/cec0`, physical address from the EDID       |
 | CEC messages         | ❓ this panel has no CEC to answer                                   |
+| DDC/CI               | ✅ `ddcutil -b 0`: volume and brightness read, brightness set        |
 | SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |
 | Reset button         | ➖ no Linux input: no free GPIO or ADC channel moves when pressed    |
 | Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |

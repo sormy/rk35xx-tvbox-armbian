@@ -1396,3 +1396,15 @@ is sold as.
 - Hardware with a mainline driver but nothing to drive here: CVBS (`cvbsout`, `vdac`), the `t9015`
   analogue codec and S/PDIF — the box fits none of those jacks — and `aml_vrtc`, an alarm register
   with no suspend wake to serve. `ge2d` and the deinterlacer have no mainline driver for GXL.
+
+## 2026-10-19 — DDC/CI
+
+- `ddcutil -b 0` on dw-hdmi's own master, `DesignWare HDMI`: `EOPNOTSUPP`, every VCP read retried
+  out.
+- `i2c-gpio` on GPIOH_1/2 with `ddc-i2c-bus` on `hdmi-tx`, `hdmi_i2c` dropped from its pins: the bus
+  bound, but the EDID read 0 bytes and the console fell to 1024x768. `mux6` still `0xe000003f`, bits
+  29-30 the `hdmi_scl`/`hdmi_sda` mux U-Boot set; with no `gpio-ranges` requesting the lines does
+  not switch it. Cleared by hand: EDID 256 bytes, 2256x1504, `getvcp 62` reads volume 50.
+- `hdmitx_ddc_gpio`, the two pins on `gpio_periphs`, as the bus node's default state. After a
+  reboot: `mux6` `0x8000003f`, EDID 256 bytes, 2256x1504, volume 50, brightness 100 read and 90 set
+  and back; CEC keeps physical address 1.0.0.0.

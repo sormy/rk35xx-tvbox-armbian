@@ -867,6 +867,14 @@
 			};
 		};
 
+		/* the DDC pins as GPIOs, for i2c-hdmi-ddc; U-Boot leaves them on hdmi_i2c */
+		hdmitx_ddc_gpio: hdmitx-ddc-gpio {
+			mux {
+				groups = "GPIOH_1", "GPIOH_2";
+				function = "gpio_periphs";
+			};
+		};
+
 		a_i2c_master: a_i2c {
 			phandle = <0x98>;
 
@@ -2313,6 +2321,18 @@
 		};
 	};
 
+	/* the HDMI DDC lines as a full I2C bus: dw-hdmi's own master reads the EDID but refuses DDC/CI */
+	hdmi_ddc: i2c-hdmi-ddc {
+		compatible = "i2c-gpio";
+		sda-gpios = <&gpio 0x11 0x06>;
+		scl-gpios = <&gpio 0x12 0x06>;
+		i2c-gpio,delay-us = <0x05>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&hdmitx_ddc_gpio>;
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+	};
+
 	/* GXLX2 maps the controller directly, as G12A does, where GXL went through an
 	   address/data port at 0xc883a000. Mainline has no driver for it yet: the gxlx2 half is
 	   the DKMS meson-dw-hdmi-gxlx2's, the GXL fallback is what built-in meson-drm matches.
@@ -2329,7 +2349,8 @@
 		assigned-clocks = <&clkc 0xcb &clkc 0xcd>;
 		assigned-clock-parents = <&xtal 0x00>;
 		assigned-clock-rates = <0x00 0x16e3600>;
-		pinctrl-0 = <&hdmitx_hpd &hdmitx_ddc>;
+		pinctrl-0 = <&hdmitx_hpd>;
+		ddc-i2c-bus = <&hdmi_ddc>;
 		pinctrl-names = "default";
 		#sound-dai-cells = <0x00>;
 		sound-name-prefix = "HDMITX";

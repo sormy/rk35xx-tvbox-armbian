@@ -273,7 +273,7 @@
  		#address-cells = <0x01>;
  		#size-cells = <0x01>;
  		ranges;
-@@ -769,11 +860,12 @@
+@@ -769,11 +860,20 @@
  		hdmitx_ddc: hdmitx_ddc {
  			phandle = <0x6e>;
  
@@ -285,9 +285,17 @@
  			};
  		};
  
++		/* the DDC pins as GPIOs, for i2c-hdmi-ddc; U-Boot leaves them on hdmi_i2c */
++		hdmitx_ddc_gpio: hdmitx-ddc-gpio {
++			mux {
++				groups = "GPIOH_1", "GPIOH_2";
++				function = "gpio_periphs";
++			};
++		};
++
  		a_i2c_master: a_i2c {
  			phandle = <0x98>;
-@@ -1049,18 +1141,31 @@
+@@ -1049,18 +1149,31 @@
  			ranges = <0x00 0xc1100000 0x100000>;
  			phandle = <0xb0>;
  
@@ -324,7 +332,7 @@
  				fifosize = <0x80>;
  				pinctrl-names = "default";
  				pinctrl-0 = <&a_uart_pins>;
-@@ -1068,7 +1173,7 @@
+@@ -1068,7 +1181,7 @@
  			};
  
  			uart_B: serial@84dc {
@@ -333,7 +341,7 @@
  				reg = <0x84dc 0x18>;
  				interrupts = <0x00 0x4b 0x01>;
  				status = "disabled";
-@@ -1081,7 +1186,7 @@
+@@ -1081,7 +1194,7 @@
  			};
  
  			uart_C: serial@8700 {
@@ -342,7 +350,7 @@
  				reg = <0x8700 0x18>;
  				interrupts = <0x00 0x5d 0x01>;
  				status = "disabled";
-@@ -1094,7 +1199,7 @@
+@@ -1094,7 +1207,7 @@
  			};
  
  			pwm_ab: pwm@8550 {
@@ -351,7 +359,7 @@
  				reg = <0x8550 0x1c>;
  				#pwm-cells = <0x03>;
  				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1106,7 +1211,7 @@
+@@ -1106,7 +1219,7 @@
  			};
  
  			pwm_cd: pwm@8640 {
@@ -360,7 +368,7 @@
  				reg = <0x8640 0x1c>;
  				#pwm-cells = <0x03>;
  				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1116,17 +1221,24 @@
+@@ -1116,17 +1229,24 @@
  			};
  
  			pwm_ef: pwm@86c0 {
@@ -388,7 +396,7 @@
  				status = "disabled";
  				reg = <0x8500 0x20>;
  				interrupts = <0x00 0x15 0x01 0x00 0x2f 0x01>;
-@@ -1138,7 +1250,7 @@
+@@ -1138,7 +1258,7 @@
  			};
  
  			i2c1: i2c@87c0 {
@@ -397,7 +405,7 @@
  				status = "disabled";
  				reg = <0x87c0 0x20>;
  				interrupts = <0x00 0xd6 0x01 0x00 0x30 0x01>;
-@@ -1150,7 +1262,7 @@
+@@ -1150,7 +1270,7 @@
  			};
  
  			i2c2: i2c@87e0 {
@@ -406,7 +414,7 @@
  				status = "disabled";
  				reg = <0x87e0 0x20>;
  				interrupts = <0x00 0xd7 0x01 0x00 0x31 0x01>;
-@@ -1162,7 +1274,7 @@
+@@ -1162,7 +1282,7 @@
  			};
  
  			i2c3: i2c@8d20 {
@@ -415,7 +423,7 @@
  				status = "disabled";
  				reg = <0x8d20 0x20>;
  				interrupts = <0x00 0x27 0x01 0x00 0x32 0x01>;
-@@ -1182,17 +1294,48 @@
+@@ -1182,17 +1302,48 @@
  			ranges = <0x00 0xc8100000 0x100000>;
  			phandle = <0xba>;
  
@@ -467,7 +475,7 @@
  				xtal_tick_en = <0x01>;
  				fifosize = <0x40>;
  				pinctrl-names = "default";
-@@ -1201,7 +1344,9 @@
+@@ -1201,7 +1352,9 @@
  			};
  
  			uart_AO_B: serial@4e0 {
@@ -478,7 +486,7 @@
  				reg = <0x4e0 0x18>;
  				interrupts = <0x00 0xc5 0x01>;
  				status = "disable";
-@@ -1214,7 +1359,8 @@
+@@ -1214,7 +1367,8 @@
  			};
  
  			pwm_aoab: pwm@550 {
@@ -488,7 +496,7 @@
  				reg = <0x550 0x1c>;
  				#pwm-cells = <0x03>;
  				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1247,13 +1393,46 @@
+@@ -1247,13 +1401,46 @@
  			ranges = <0x00 0xc883c000 0x2000>;
  			phandle = <0xbf>;
  
@@ -541,7 +549,7 @@
  		};
  	};
  
-@@ -1281,10 +1460,13 @@
+@@ -1281,10 +1468,13 @@
  		compatible = "amlogic,meson-gxl-saradc";
  		status = "okay";
  		#io-channel-cells = <0x01>;
@@ -558,7 +566,7 @@
  		phandle = <0xc2>;
  	};
  
-@@ -1719,11 +1901,14 @@
+@@ -1719,11 +1909,14 @@
  			record-size = <0x8000>;
  			console-size = <0x8000>;
  			ftrace-size = <0x40000>;
@@ -573,7 +581,7 @@
  			size = <0x400000>;
  			alignment = <0x400000>;
  			alloc-ranges = <0x10000000 0x400000>;
-@@ -1737,73 +1922,90 @@
+@@ -1737,73 +1930,90 @@
  			no-map;
  			phandle = <0xc6>;
  		};
@@ -664,7 +672,7 @@
  	sysled {
  		compatible = "amlogic, sysled";
  		dev_name = "sysled";
-@@ -1816,15 +2018,15 @@
+@@ -1816,15 +2026,15 @@
  		compatible = "gpio-leds";
  		status = "okay";
  
@@ -691,7 +699,7 @@
 +		/* NOT FITTED - the factory's sys_green, GPIOZ_14: driven either way, it lights
 +		   nothing on this unit. */
  	};
-@@ -2083,10 +2285,147 @@
+@@ -2083,10 +2293,160 @@
  		clocks = <&clkc 0xc4 &clkc 0x59 &clkc 0x09 &clkc 0xb6 &clkc 0xba &clkc 0xbb>;
  		clock-names = "vapb_clk", "vpu_intr_gate", "gp_pll", "vpu_clk0", "vpu_clk1", "vpu_clk";
  		clk_level = <0x07>;
@@ -723,6 +731,18 @@
 +		};
 +	};
 +
++	/* the HDMI DDC lines as a full I2C bus: dw-hdmi's own master reads the EDID but refuses DDC/CI */
++	hdmi_ddc: i2c-hdmi-ddc {
++		compatible = "i2c-gpio";
++		sda-gpios = <&gpio 0x11 0x06>;
++		scl-gpios = <&gpio 0x12 0x06>;
++		i2c-gpio,delay-us = <0x05>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&hdmitx_ddc_gpio>;
++		#address-cells = <0x01>;
++		#size-cells = <0x00>;
++	};
++
 +	/* GXLX2 maps the controller directly, as G12A does, where GXL went through an
 +	   address/data port at 0xc883a000. Mainline has no driver for it yet: the gxlx2 half is
 +	   the DKMS meson-dw-hdmi-gxlx2's, the GXL fallback is what built-in meson-drm matches.
@@ -739,7 +759,8 @@
 +		assigned-clocks = <&clkc 0xcb &clkc 0xcd>;
 +		assigned-clock-parents = <&xtal 0x00>;
 +		assigned-clock-rates = <0x00 0x16e3600>;
-+		pinctrl-0 = <&hdmitx_hpd &hdmitx_ddc>;
++		pinctrl-0 = <&hdmitx_hpd>;
++		ddc-i2c-bus = <&hdmi_ddc>;
 +		pinctrl-names = "default";
 +		#sound-dai-cells = <0x00>;
 +		sound-name-prefix = "HDMITX";
@@ -839,7 +860,7 @@
  		dev_name = "amlogic-rdma";
  		status = "ok";
  		interrupts = <0x00 0x59 0x01>;
-@@ -2109,6 +2448,38 @@
+@@ -2109,6 +2469,38 @@
  		gpio_reset = <0x14 0x63 0x00>;
  	};
  
@@ -878,7 +899,7 @@
  	wifi {
  		compatible = "amlogic, aml_wifi";
  		dev_name = "aml_wifi";
-@@ -2140,18 +2511,27 @@
+@@ -2140,18 +2532,27 @@
  
  	sd_emmc_c: emmc@d0074000 {
  		status = "okay";
@@ -912,7 +933,7 @@
  		non-removable;
  		disable-wp;
  		phandle = <0xc8>;
-@@ -2171,20 +2551,19 @@
+@@ -2171,20 +2572,19 @@
  
  	sd_emmc_b: sd@d0072000 {
  		status = "okay";
@@ -943,7 +964,7 @@
  		clock-names = "core", "clkin0", "clkin1";
  		bus-width = <0x04>;
  		cap-sd-highspeed;
-@@ -2208,22 +2587,34 @@
+@@ -2208,22 +2608,34 @@
  
  	sd_emmc_a: sdio@d0070000 {
  		status = "okay";
@@ -984,7 +1005,7 @@
  		sdio {
  			pinname = "sdio";
  			ocr_avail = <0x200080>;
-@@ -2311,7 +2702,12 @@
+@@ -2311,7 +2723,12 @@
  	};
  
  	ethmac: ethernet@0xc9410000 {
@@ -998,7 +1019,7 @@
  		reg = <0xc9410000 0x10000 0xc8834540 0x08 0xc8834558 0x0c 0xc1104408 0x04>;
  		interrupts = <0x00 0x08 0x01>;
  		pinctrl-names = "external_eth_pins";
-@@ -2329,30 +2725,72 @@
+@@ -2329,30 +2746,72 @@
  		phandle = <0xcb>;
  	};
  
@@ -1088,7 +1109,7 @@
  	dwc2_a {
  		compatible = "amlogic, dwc2";
  		device_name = "dwc2_a";
-@@ -2769,67 +3207,42 @@
+@@ -2769,67 +3228,42 @@
  
  	thermal-zones {
  
