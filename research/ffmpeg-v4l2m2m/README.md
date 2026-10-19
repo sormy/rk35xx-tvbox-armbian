@@ -2,7 +2,8 @@
 
 ffmpeg 9.0.2 with `0001`-`0005` drives every hardware decoder and both encoders on the S905L3 the
 way GStreamer does, with `patches/meson-codecs/` `0014` and `0015`; `0009` asks for a scaled
-CAPTURE, with `0017`. Not shipped: a static build into `/opt/ffmpeg-9`, beside Debian's ffmpeg.
+CAPTURE, with `0017`; `0010` and `0011` carry a decode across a resolution change. Not shipped: a
+static build into `/opt/ffmpeg-9`, beside Debian's ffmpeg.
 
 ## Build
 
@@ -25,11 +26,20 @@ sh research/ffmpeg-v4l2m2m/build.sh
 | `0007` | a bounded wait for a picture                                       |
 | `0008` | `ftp`: the URL's path decoded                                      |
 | `0009` | `-capture_max_height`: a COMPOSE request for a scaled CAPTURE      |
+| `0010` | a reinit no longer waits for the user to free its frames           |
+| `0011` | the frames before a resolution change are dequeued, not dropped    |
 
 `0006` makes `v4l2_m2m` depend on libdrm, so the build enables it.
 
 `0009` sizes the request from the visible picture the decoder reports as `CROP`, with
 `V4L2_SEL_FLAG_LE`, before the CAPTURE buffers and again after a source change.
+
+`0010`: the reinit waited from inside `avcodec_send_packet()` for frames its caller still held, so
+ffmpeg, ffprobe and any player hung at the first resolution change. A held buffer now keeps its
+mapping past `REQBUFS(0)` and is unmapped when freed.
+
+`0011`: the driver queues the event, then an empty buffer flagged `LAST`; ffmpeg handled the event
+first and dropped the ready frame, or returned the empty buffer as one and ended at the `EPIPE`.
 
 `0001`: ffmpeg sends a packet without pts as 0, and the constant-rate output keeps 3 frames of 60.
 
@@ -57,9 +67,11 @@ Debian's software decode.
 | H.264 enc.  | MKV, MP4, raw      | ✅ 60 of 60, 45.8-52.8 dB PSNR |
 | HEVC enc.   | MKV, MP4, raw      | ✅ 60 of 60, 44.9-51.1 dB PSNR |
 | Raw streams | `.264` `.m2v` etc. | ✅ as from a container         |
+| Size change | raw HEVC           | ✅ bit-exact, 60 of 60         |
 
-Inexact decodes differ from the software decoder by IDCT rounding. VC-1 misses the frames the stream
-marks skipped, as GStreamer does.
+Size change: 3840x2160, then 3840x1600, ✅ measured 2026-10-18. Inexact decodes differ from the
+software decoder by IDCT rounding. VC-1 misses the frames the stream marks skipped, as GStreamer
+does.
 
 ## Not needed
 

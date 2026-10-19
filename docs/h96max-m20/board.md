@@ -124,9 +124,9 @@ GStreamer configures a V4L2 VC-1 decoder from 1.26.6; trixie ships 1.26.2, and
 ffmpeg's `*_v4l2m2m` reach every codec the driver decodes, and both encoders, with five patches to
 9.0.2 in `research/ffmpeg-v4l2m2m/`: pts for raw streams, `extradata` for MPEG-1/2, MPEG-4 and VC-1,
 an `mjpeg_v4l2m2m` decoder, encoder `extradata` for Matroska and MP4, and a drain that waits for a
-CAPTURE buffer. Another, `0009`, makes its decoders ask for a scaled CAPTURE: `-capture_max_height`.
-Debian's 7.1.5 decodes H.264, HEVC, VP9 and MPEG-2 from a container; MPEG-4, VC-1, raw streams and
-encode to Matroska fail.
+CAPTURE buffer. Another, `0009`, makes its decoders ask for a scaled CAPTURE: `-capture_max_height`;
+`0010` and `0011` carry a decode across a resolution change. Debian's 7.1.5 decodes H.264, HEVC, VP9
+and MPEG-2 from a container; MPEG-4, VC-1, raw streams and encode to Matroska fail.
 
 **On screen, 4K plays at 30 fps and glitches at 60.** The display's video plane cannot read whole
 3840x2160 NV12 pictures 60 times a second, about 750 MB/s; 1080p60 and 4K30 play clean. A client can

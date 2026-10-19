@@ -1,0 +1,109 @@
+From 85e5818f5f78cd89d95027aa9bcc56ba9e244554 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 18 Oct 2026 19:45:37 -0400
+Subject: [PATCH] avcodec/v4l2_context: dequeue the frames decoded before a
+ resolution change
+
+A stateful decoder signals a resolution change with an event, then ends the
+frames of the old resolution with a buffer flagged LAST, often empty. The
+event was handled as soon as it was polled, and a frame ready alongside it
+was dropped; the LAST buffer, when it came first, was returned as a frame,
+and the EPIPE after it ended the stream.
+
+The event now waits for the ready frames to be dequeued, and an empty LAST
+buffer or EPIPE outside a drain hands over to it.
+---
+ libavcodec/v4l2_context.c | 52 ++++++++++++++++++++++-----------------
+ 1 file changed, 30 insertions(+), 22 deletions(-)
+
+diff --git a/libavcodec/v4l2_context.c b/libavcodec/v4l2_context.c
+index a5023f8..aeaaa0f 100644
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -229,6 +229,16 @@ static int v4l2_handle_event(V4L2Context *ctx)
+     return 1;
+ }
+ 
++/* returns nonzero unless the event left the queue as it was */
++static int v4l2_handle_event_or_abort(V4L2Context *ctx)
++{
++    int ret = v4l2_handle_event(ctx);
++
++    if (ret < 0)
++        ctx->done = 1;
++    return ret;
++}
++
+ static int v4l2_stop_decode(V4L2Context *ctx)
+ {
+     struct v4l2_decoder_cmd cmd = {
+@@ -346,21 +356,10 @@ start:
+         return NULL;
+     }
+ 
+-    /* 1. handle resolution changes */
+-    if (pfd.revents & POLLPRI) {
+-        ret = v4l2_handle_event(ctx);
+-        if (ret < 0) {
+-            /* if re-init failed, abort */
+-            ctx->done = 1;
+-            return NULL;
+-        }
+-        if (ret) {
+-            /* if re-init was successful drop the buffer (if there was one)
+-             * since we had to reconfigure capture (unmap all buffers)
+-             */
+-            return NULL;
+-        }
+-    }
++    /* 1. handle resolution changes, once the frames decoded before them are out */
++    if (pfd.revents & POLLPRI && !(pfd.revents & (POLLIN | POLLRDNORM)) &&
++        v4l2_handle_event_or_abort(ctx))
++        return NULL;
+ 
+     /* 2. dequeue the buffer */
+     if (pfd.revents & (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM)) {
+@@ -389,6 +388,10 @@ dequeue:
+ 
+         ret = ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_DQBUF, &buf);
+         if (ret) {
++            /* past a LAST buffer that ended the old resolution */
++            if (errno == EPIPE && !ctx_to_m2mctx(ctx)->draining &&
++                v4l2_handle_event_or_abort(ctx))
++                return NULL;
+             if (errno != EAGAIN) {
+                 ctx->done = 1;
+                 if (errno != EPIPE)
+@@ -398,17 +401,22 @@ dequeue:
+             return NULL;
+         }
+ 
+-        if (ctx_to_m2mctx(ctx)->draining && !V4L2_TYPE_IS_OUTPUT(ctx->type)) {
++        if (!V4L2_TYPE_IS_OUTPUT(ctx->type)) {
+             int bytesused = V4L2_TYPE_IS_MULTIPLANAR(buf.type) ?
+                             buf.m.planes[0].bytesused : buf.bytesused;
+-            if (bytesused == 0) {
+-                ctx->done = 1;
++            if (ctx_to_m2mctx(ctx)->draining) {
++                if (bytesused == 0) {
++                    ctx->done = 1;
++                    return NULL;
++                }
++                if (buf.flags & V4L2_BUF_FLAG_LAST)
++                    ctx->done = 1;
++            } else if (buf.flags & V4L2_BUF_FLAG_LAST && bytesused == 0) {
++                /* an empty buffer ends the old resolution */
++                ctx->buffers[buf.index].status = V4L2BUF_AVAILABLE;
++                v4l2_handle_event_or_abort(ctx);
+                 return NULL;
+             }
+-#ifdef V4L2_BUF_FLAG_LAST
+-            if (buf.flags & V4L2_BUF_FLAG_LAST)
+-                ctx->done = 1;
+-#endif
+         }
+ 
+         avbuf = &ctx->buffers[buf.index];
+-- 
+2.55.0
+

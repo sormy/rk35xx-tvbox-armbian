@@ -1,0 +1,270 @@
+From cc1ca2b7e54b9b6231bf664908f36bf4564402b3 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 18 Oct 2026 19:31:44 -0400
+Subject: [PATCH] avcodec/v4l2_m2m: keep the frames a user holds across a
+ reinit
+
+A reinit waited for the user to release every capture frame, from inside
+avcodec_send_packet() or avcodec_receive_frame(). A user that holds a frame
+across that call, as ffmpeg, ffprobe and any player do, deadlocked at the first
+resolution change.
+
+The reinit now releases the capture queue at once. A buffer the user still
+holds keeps its mapping and a reference to its buffer array, and is unmapped
+when the user frees it; REQBUFS(0) leaves its memory to the mapping.
+---
+ libavcodec/v4l2_buffers.c | 43 ++++++++++++++++++++++++++++-----------
+ libavcodec/v4l2_buffers.h |  8 ++++++++
+ libavcodec/v4l2_context.c | 43 ++++++++++-----------------------------
+ libavcodec/v4l2_m2m.c     | 13 +-----------
+ libavcodec/v4l2_m2m.h     |  4 ----
+ 5 files changed, 51 insertions(+), 60 deletions(-)
+
+diff --git a/libavcodec/v4l2_buffers.c b/libavcodec/v4l2_buffers.c
+index 97ccbe9..5ade828 100644
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -314,21 +314,41 @@ static void v4l2_free_buffer(void *opaque, uint8_t *unused)
+     V4L2m2mContext *s = buf_to_m2mctx(avbuf);
+ 
+     if (atomic_fetch_sub(&avbuf->context_refcount, 1) == 1) {
+-        atomic_fetch_sub_explicit(&s->refcount, 1, memory_order_acq_rel);
++        const V4L2Buffer *retired = avbuf->retired;
+ 
+-        if (s->reinit) {
+-            if (!atomic_load(&s->refcount))
+-                sem_post(&s->refsync);
+-        } else {
+-            if (s->draining && V4L2_TYPE_IS_OUTPUT(avbuf->context->type)) {
+-                /* no need to queue more buffers to the driver */
+-                avbuf->status = V4L2BUF_AVAILABLE;
+-            }
+-            else if (avbuf->context->streamon)
+-                ff_v4l2_buffer_enqueue(avbuf);
++        if (retired)
++            ff_v4l2_buffer_unmap(avbuf);
++        else if (s->draining && V4L2_TYPE_IS_OUTPUT(avbuf->context->type)) {
++            /* no need to queue more buffers to the driver */
++            avbuf->status = V4L2BUF_AVAILABLE;
+         }
++        else if (avbuf->context->streamon)
++            ff_v4l2_buffer_enqueue(avbuf);
+ 
+         av_refstruct_unref(&avbuf->context_ref);
++        /* last, as it may free avbuf itself */
++        av_refstruct_unref(&retired);
++    }
++}
++
++void ff_v4l2_buffer_unmap(V4L2Buffer *avbuf)
++{
++    V4L2Context *ctx = avbuf->context;
++
++    for (int i = 0; i < avbuf->num_planes; i++) {
++        struct V4L2Plane_info *p = &avbuf->plane_info[i];
++        int fd = avbuf->drm_frame.objects[i].fd;
++
++        /* output buffers are not EXPORTED */
++        if (!V4L2_TYPE_IS_OUTPUT(ctx->type) && buf_to_m2mctx(avbuf)->output_drm &&
++            fd >= 0 && close(fd) < 0)
++            av_log(logger(avbuf), AV_LOG_ERROR, "%s close drm fd "
++                   "[buffer=%2d, plane=%d, fd=%2d] - %s \n",
++                   ctx->name, avbuf->buf.index, i, fd, av_err2str(AVERROR(errno)));
++
++        if (p->mm_addr && p->length && munmap(p->mm_addr, p->length) < 0)
++            av_log(logger(avbuf), AV_LOG_ERROR, "%s unmap plane (%s))\n",
++                   ctx->name, av_err2str(AVERROR(errno)));
+     }
+ }
+ 
+@@ -377,7 +397,6 @@ static int v4l2_buf_increase_ref(V4L2Buffer *in)
+     }
+ 
+     in->status = V4L2BUF_RET_USER;
+-    atomic_fetch_add_explicit(&s->refcount, 1, memory_order_relaxed);
+ 
+     return 0;
+ }
+diff --git a/libavcodec/v4l2_buffers.h b/libavcodec/v4l2_buffers.h
+index b83f221..c3c240c 100644
+--- a/libavcodec/v4l2_buffers.h
++++ b/libavcodec/v4l2_buffers.h
+@@ -70,8 +70,16 @@ typedef struct V4L2Buffer {
+     int flags;
+     enum V4L2Buffer_status status;
+ 
++    /* RefStruct reference to the buffer array a reinit replaced while a user held this buffer */
++    const struct V4L2Buffer *retired;
++
+ } V4L2Buffer;
+ 
++/**
++ * Closes the exported DRM objects of a V4L2Buffer and unmaps its planes
++ */
++void ff_v4l2_buffer_unmap(V4L2Buffer *avbuf);
++
+ /**
+  * Extracts the data from a V4L2Buffer to an AVFrame
+  *
+diff --git a/libavcodec/v4l2_context.c b/libavcodec/v4l2_context.c
+index 59cd085..a5023f8 100644
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -28,6 +28,7 @@
+ #include <fcntl.h>
+ #include <poll.h>
+ #include "libavutil/mem.h"
++#include "libavutil/refstruct.h"
+ #include "libavutil/time.h"
+ #include "libavcodec/avcodec.h"
+ #include "decode.h"
+@@ -213,8 +214,6 @@ static int v4l2_handle_event(V4L2Context *ctx)
+         return 0;
+     }
+ 
+-    s->reinit = 1;
+-
+     if (s->avctx)
+         ret = ff_set_dimensions(s->avctx, s->capture.width, s->capture.height);
+     if (ret < 0)
+@@ -451,36 +450,16 @@ static int v4l2_release_buffers(V4L2Context* ctx)
+         .type = ctx->type,
+         .count = 0, /* 0 -> unmap all buffers from the driver */
+     };
+-    int ret, i, j;
++    int ret;
+ 
+-    for (i = 0; i < ctx->num_buffers; i++) {
++    /* a buffer a user holds is unmapped when freed; REQBUFS(0) orphans its memory */
++    for (int i = 0; i < ctx->num_buffers; i++) {
+         V4L2Buffer *buffer = &ctx->buffers[i];
+ 
+-        for (j = 0; j < buffer->num_planes; j++) {
+-            struct V4L2Plane_info *p = &buffer->plane_info[j];
+-
+-            if (V4L2_TYPE_IS_OUTPUT(ctx->type)) {
+-                /* output buffers are not EXPORTED */
+-                goto unmap;
+-            }
+-
+-            if (ctx_to_m2mctx(ctx)->output_drm) {
+-                /* use the DRM frame to close */
+-                if (buffer->drm_frame.objects[j].fd >= 0) {
+-                    if (close(buffer->drm_frame.objects[j].fd) < 0) {
+-                        av_log(logger(ctx), AV_LOG_ERROR, "%s close drm fd "
+-                            "[buffer=%2d, plane=%d, fd=%2d] - %s \n",
+-                            ctx->name, i, j, buffer->drm_frame.objects[j].fd,
+-                            av_err2str(AVERROR(errno)));
+-                    }
+-                }
+-            }
+-unmap:
+-            if (p->mm_addr && p->length)
+-                if (munmap(p->mm_addr, p->length) < 0)
+-                    av_log(logger(ctx), AV_LOG_ERROR, "%s unmap plane (%s))\n",
+-                        ctx->name, av_err2str(AVERROR(errno)));
+-        }
++        if (atomic_load(&buffer->context_refcount))
++            buffer->retired = av_refstruct_ref_c(ctx->buffers);
++        else
++            ff_v4l2_buffer_unmap(buffer);
+     }
+ 
+     ret = ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_REQBUFS, &req);
+@@ -751,7 +730,7 @@ void ff_v4l2_context_release(V4L2Context* ctx)
+     if (ret)
+         av_log(logger(ctx), AV_LOG_WARNING, "V4L2 failed to unmap the %s buffers\n", ctx->name);
+ 
+-    av_freep(&ctx->buffers);
++    av_refstruct_unref(&ctx->buffers);
+ }
+ 
+ int ff_v4l2_context_init(V4L2Context* ctx)
+@@ -780,7 +759,7 @@ int ff_v4l2_context_init(V4L2Context* ctx)
+     }
+ 
+     ctx->num_buffers = req.count;
+-    ctx->buffers = av_mallocz(ctx->num_buffers * sizeof(V4L2Buffer));
++    ctx->buffers = av_refstruct_allocz(ctx->num_buffers * sizeof(V4L2Buffer));
+     if (!ctx->buffers) {
+         av_log(logger(ctx), AV_LOG_ERROR, "%s malloc enomem\n", ctx->name);
+         return AVERROR(ENOMEM);
+@@ -808,7 +787,7 @@ int ff_v4l2_context_init(V4L2Context* ctx)
+ error:
+     v4l2_release_buffers(ctx);
+ 
+-    av_freep(&ctx->buffers);
++    av_refstruct_unref(&ctx->buffers);
+ 
+     return ret;
+ }
+diff --git a/libavcodec/v4l2_m2m.c b/libavcodec/v4l2_m2m.c
+index 1d4691d..57f4e7e 100644
+--- a/libavcodec/v4l2_m2m.c
++++ b/libavcodec/v4l2_m2m.c
+@@ -71,8 +71,6 @@ static int v4l2_prepare_contexts(V4L2m2mContext *s, int probe)
+     s->capture.done = s->output.done = 0;
+     s->capture.name = "capture";
+     s->output.name = "output";
+-    atomic_init(&s->refcount, 0);
+-    sem_init(&s->refsync, 0, 0);
+ 
+     memset(&cap, 0, sizeof(cap));
+     ret = ioctl(s->fd, VIDIOC_QUERYCAP, &cap);
+@@ -253,14 +251,7 @@ int ff_v4l2_m2m_codec_reinit(V4L2m2mContext *s)
+     if (ret)
+         av_log(log_ctx, AV_LOG_ERROR, "capture VIDIOC_STREAMOFF\n");
+ 
+-    /* 2. unmap the capture buffers (v4l2 and ffmpeg):
+-     *    we must wait for all references to be released before being allowed
+-     *    to queue new buffers.
+-     */
+-    av_log(log_ctx, AV_LOG_DEBUG, "waiting for user to release AVBufferRefs\n");
+-    if (atomic_load(&s->refcount))
+-        while(sem_wait(&s->refsync) == -1 && errno == EINTR);
+-
++    /* 2. unmap the capture buffers; those a user holds go when the user frees them */
+     ff_v4l2_context_release(&s->capture);
+ 
+     if (s->capture_max_height)
+@@ -282,7 +273,6 @@ int ff_v4l2_m2m_codec_reinit(V4L2m2mContext *s)
+ 
+     /* 5. complete reinit */
+     s->draining = 0;
+-    s->reinit = 0;
+ 
+     return 0;
+ }
+@@ -292,7 +282,6 @@ static void v4l2_m2m_destroy_context(AVRefStructOpaque unused, void *context)
+     V4L2m2mContext *s = context;
+ 
+     ff_v4l2_context_release(&s->capture);
+-    sem_destroy(&s->refsync);
+ 
+     if (s->fd >= 0)
+         close(s->fd);
+diff --git a/libavcodec/v4l2_m2m.h b/libavcodec/v4l2_m2m.h
+index 3f73eff..bf04733 100644
+--- a/libavcodec/v4l2_m2m.h
++++ b/libavcodec/v4l2_m2m.h
+@@ -24,7 +24,6 @@
+ #ifndef AVCODEC_V4L2_M2M_H
+ #define AVCODEC_V4L2_M2M_H
+ 
+-#include <semaphore.h>
+ #include <unistd.h>
+ #include <dirent.h>
+ #include <linux/videodev2.h>
+@@ -51,9 +50,6 @@ typedef struct V4L2m2mContext {
+ 
+     /* dynamic stream reconfig */
+     AVCodecContext *avctx;
+-    sem_t refsync;
+-    atomic_uint refcount;
+-    int reinit;
+ 
+     /* decoder: ask for a CAPTURE picture no taller than this, 0 for full size */
+     int capture_max_height;
+-- 
+2.55.0
+

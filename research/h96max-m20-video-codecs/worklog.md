@@ -290,3 +290,18 @@
 - On the installed `0017` + `0018`, `-capture_max_height 1080`, 30 frames each: coded 2176 to
   1920x1080 at 42.3 dB, DCI 4K to 2048x1080 at 44.1 dB, 3840x1600 to 1920x800 at 42.2 dB, 4K HEVC
   43.7, HDR10 48.7, VP9 44.0; H.264 and 1080p left at full size, bit-exact.
+
+## 2026-10-18 — ffmpeg across a resolution change, `0010` and `0011`
+
+- A raw stream switching from 3840x2160 to 3840x1600 stops at 26 of 60 frames in ffmpeg's reinit,
+  `refsync`, with the request or without. GStreamer decodes all 60; ffprobe, which keeps only its
+  last frame, hangs as well.
+- The reinit waits for every CAPTURE frame the user holds, from inside `avcodec_send_packet()`,
+  whose eager decode meets the event while the caller still holds its last frame. `0010`: held
+  buffers keep their mapping and are unmapped when freed; `REQBUFS(0)` orphans their memory.
+- Then 59 of 60: the event and the frame before it were polled together, and the event won. Waiting
+  for the frame gave 31 old-size frames and an end: the driver's empty `LAST` buffer came back as a
+  frame, then `EPIPE` read as end of stream. `0011`: an empty `LAST` or `EPIPE` outside a drain
+  hands over to the event.
+- With both: 60 of 60, bit-exact with GStreamer and Debian's decode at native size; 1920x1080 then
+  1920x800 with `-capture_max_height 1080`. Every other clip decodes as before the two patches.
