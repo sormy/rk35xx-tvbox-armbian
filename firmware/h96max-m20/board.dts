@@ -559,7 +559,9 @@
 
 			mux {
 				groups = "ao_cec";
-				function = "ao_cec";
+				/* mainline names the function cec_ao */
+				function = "cec_ao";
+				bias-disable;
 			};
 		};
 
@@ -1311,6 +1313,18 @@
 
 			cpu_version {
 				reg = <0x220 0x04>;
+			};
+
+			/* mainline's AO-CEC; the vendor's aocec node binds nothing */
+			cec_AO: cec@100 {
+				compatible = "amlogic,meson-gx-ao-cec";
+				reg = <0x100 0x14>;
+				interrupts = <0x00 0xc7 0x01>;
+				clocks = <&clkc_AO 0x06>;
+				clock-names = "core";
+				pinctrl-names = "default";
+				pinctrl-0 = <&hdmitx_aocec>;
+				hdmi-phandle = <&hdmi_tx>;
 			};
 
 			uart_AO: serial@4c0 {

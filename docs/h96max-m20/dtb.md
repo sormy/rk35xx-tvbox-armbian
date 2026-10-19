@@ -100,11 +100,12 @@ Mainline's driver table has no `gxlx` entry, so neither controller bound, no pin
 `sd`, `sdio` and `emmc` all sat in deferred probe naming a supplier that never appeared — which is
 what kept Wi-Fi off, the MT7668 being an SDIO part.
 
-Nothing else had to change. The stock groups are already written the way mainline reads them —
-`mux { groups; function; }` — and every name they use (`emmc_ds`, `sdio_d0`–`d3`, `sdio_clk`,
-`sdio_cmd`, `sdcard_*`, functions `emmc`/`sdio`/`sdcard`) is in mainline's GXL pin data verbatim.
-The bank registers match too; only `gpio-ranges` is absent, which costs GPIO-by-pin lookups and so
-the LEDs, not pin muxing.
+The stock groups are already written the way mainline reads them — `mux { groups; function; }` — and
+the names storage uses (`emmc_ds`, `sdio_d0`–`d3`, `sdio_clk`, `sdio_cmd`, `sdcard_*`, functions
+`emmc`/`sdio`/`sdcard`) are in mainline's GXL pin data verbatim. One function is not: `hdmitx_aocec`
+asks for `ao_cec`, which mainline names `cec_ao`; the patch renames it, with mainline's
+`bias-disable`. The bank registers match too; only `gpio-ranges` is absent, which costs GPIO-by-pin
+lookups and so the LEDs, not pin muxing.
 
 ## Every remaining vendor compatible, corrected
 
@@ -255,9 +256,15 @@ meson-dw-hdmi first, and its GXL port writes into the direct window stop the boo
 `reset-names` its first reset lookup fails before it maps anything. The DKMS driver takes resets by
 index.
 
+## CEC
+
+`cec@100` is mainline's AO-CEC on the AO bus, as `meson-gx.dtsi` and `meson-gxl.dtsi` write it: SPI
+199, `clkc_AO`'s CEC 32 kHz clock, the `hdmitx_aocec` pins, and `hdmi-phandle` to `hdmi_tx`, which
+hands it the physical address from the EDID. The vendor's `aocec` node stays: no mainline driver
+binds `amlogic, amlogic-aocec`.
+
 ## Still to convert
 
 | Block | State                                |
 | ----- | ------------------------------------ |
 | audio | analogue (`t9015` codec) not grafted |
-| CEC   | `cec@100` not grafted                |

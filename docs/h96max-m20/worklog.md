@@ -1377,3 +1377,13 @@ is sold as.
 
 - With another HDMI cable the BOE panel no longer blinks at 2256x1504, 60 Hz: the cable, not the
   box.
+
+## 2026-10-19 — CEC
+
+- No `/dev/cec*`: mainline's `ao-cec.ko` is built, but the tree has only the vendor's
+  `amlogic, amlogic-aocec` node, and its pin group asks for `ao_cec` where mainline's GXL pinctrl
+  lists `cec_ao` (debugfs `pinmux-functions`).
+- Grafted `cec@100` from `meson-gx.dtsi` + `meson-gxl.dtsi` and renamed the function. After a
+  reboot: `ao_cec` loads, `/dev/cec0`, GPIOAO_8 held by `c8100100.cec` as `cec_ao`;
+  `cec-ctl --playback` takes physical address 1.0.0.0 and logical address 4. A topology scan finds
+  nothing else: the panel has no CEC. Kernel errors as the boot before.

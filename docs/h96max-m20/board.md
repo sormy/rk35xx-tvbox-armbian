@@ -310,7 +310,8 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | ffmpeg `v4l2m2m`     | ✅ all on patched 9.0.2; stock 7.1.5 ❌ MPEG-4, VC-1, MKV encode     |
 | Other decoders       | not implemented: AVS, RealVideo                                      |
 | HDMI audio           | ✅ 2-channel LPCM at 44.1, 48 and 96 kHz                             |
-| CEC                  | ❓ not grafted; this panel has no CEC to test against                |
+| CEC                  | ✅ `meson-ao-cec`: `/dev/cec0`, physical address from the EDID       |
+| CEC messages         | ❓ this panel has no CEC to answer                                   |
 | SD slot              | ➖ not fitted; the SD host registers with nothing behind it          |
 | Reset button         | ➖ no Linux input: no free GPIO or ADC channel moves when pressed    |
 | Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
