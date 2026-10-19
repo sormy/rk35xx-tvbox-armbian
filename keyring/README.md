@@ -27,7 +27,7 @@ gpg --show-keys --with-fingerprint keyring/tvb-archive-keyring.gpg   # host: fin
 
 ```sh
 sudo curl -fsSLo /usr/share/keyrings/tvb-archive-keyring.gpg \
-  https://raw.githubusercontent.com/<gh-repo>/main/keyring/tvb-archive-keyring.gpg   # box
+  https://raw.githubusercontent.com/sormy/tvbian/main/keyring/tvb-archive-keyring.gpg   # box
 ```
 
 ## Rotate

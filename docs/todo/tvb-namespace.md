@@ -7,12 +7,12 @@ and the updater prunes by it.
 
 ## What `rk35xx` means today
 
-| Meaning       | Where                                                      | Action            |
-| ------------- | ---------------------------------------------------------- | ----------------- |
-| our namespace | every installed name, the repo files mirroring them        | `tvb-`            |
-| the SoC       | `BOARD_FAMILY=rk35xx`, `docs/todo/rk35xx-*.md`, the kernel | kept              |
-| repo, tools   | `rk35xx-update`, `rk35xx-deploy`, `rk35xx-tvbox-armbian`   | `tvb-*`, `tvbian` |
-| history       | `worklog*.md`, `research/`                                 | untouched         |
+| Meaning       | Where                                                      | Action    |
+| ------------- | ---------------------------------------------------------- | --------- |
+| our namespace | every installed name, the repo files mirroring them        | `tvb-`    |
+| the SoC       | `BOARD_FAMILY=rk35xx`, `docs/todo/rk35xx-*.md`, the kernel | kept      |
+| repo, tools   | `rk35xx-update`, `rk35xx-deploy`                           | `tvb-*`   |
+| history       | `worklog*.md`, `research/`                                 | untouched |
 
 Namespace includes the paths (`/usr/local/share/rk35xx/`), the numbered drop-ins
 (`99-rk35xx-vpu.rules`), the IR DKMS package (`rockchip-pwm-remotectl-rk35xx`) and the updater's
@@ -80,8 +80,7 @@ installed beside `rk35xx-*` and the old units still running.
    - all four images match their pre-rename builds, names mapped `rk35xx-` to `tvb-`;
    - one box survives one update, one reboot, and one kernel reinstall with the DTB intact;
    - `systemctl --failed` is empty and the VPU nodes keep their permissions.
-3. **Repo rename** on GitHub, then `REPO_URL`.
-4. **Less code, later:** drop the `r69-` migration block and the `share/r69` special case. The repo
+3. **Less code, later:** drop the `r69-` migration block and the `share/r69` special case. The repo
    is public, so the `rk35xx-` step stays.
 
 ## Decide

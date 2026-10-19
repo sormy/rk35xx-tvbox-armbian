@@ -1,10 +1,10 @@
-# Armbian for RK35xx TV boxes
+# TVBian — Debian-based Linux for TV boxes
 
-Debian on a **$35 RK3518 Android TV box** — silent, fanless, cables and a remote in the box.
+Debian on a **$15–35 Android TV box** — silent, fanless, cables and a remote in the box.
 
-A stock Armbian image already runs the RK3528-family kernel, so everything board-specific — factory
-bootloader, device tree, DKMS drivers, boot fixups — is sideloaded into it. Nothing is forked, so
-`apt upgrade` keeps updating the kernel and userspace.
+Each image is a stock Armbian image for a board of the same SoC family, named as the base image
+below. Everything board-specific — factory bootloader, device tree, drivers, boot fixups — is
+sideloaded into it. Nothing is forked, so `apt upgrade` keeps updating the kernel and userspace.
 
 ## Boxes
 

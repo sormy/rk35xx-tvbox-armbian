@@ -310,7 +310,7 @@ sudo dd if=firmware/r69/uboot.itb of=$EMMC seek=16384 conv=notrunc; sync
 ```
 
 > **Images built before August 2026 soft-brick on `armbian-install`**
-> ([#6](https://github.com/sormy/rk35xx-tvbox-armbian/issues/6)) — stock `armbian-install` writes
-> the generic ROCK 2F loaders, which lack this box's DDR tuning. Current images override
-> `write_uboot_platform` so every bootloader write uses the R69 pair. On an older image, run
-> `rk35xx-update` **before** migrating.
+> ([#6](https://github.com/sormy/tvbian/issues/6)) — stock `armbian-install` writes the generic ROCK
+> 2F loaders, which lack this box's DDR tuning. Current images override `write_uboot_platform` so
+> every bootloader write uses the R69 pair. On an older image, run `rk35xx-update` **before**
+> migrating.

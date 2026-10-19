@@ -201,4 +201,4 @@ Sixty seconds after the load stopped the PHY was still parked at 6.0 — a latch
 last row is why CPU load alone is not the trigger: the same normal-priority four-core load, repeated
 in the same session, did not latch.
 
-Tools, installer and full write-up: `rk35xx-tvbox-armbian/research/seekwave-tx-latch-bug/`.
+Tools, installer and full write-up: `research/seekwave-tx-latch-bug/`.

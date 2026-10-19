@@ -224,7 +224,7 @@ The apt repo is flat — `Packages.xz`, `Release`, `InRelease` beside the `.deb`
 `apt-ftparchive` and signed with `gpg`:
 
 ```sh
-deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] https://github.com/<gh-repo>/releases/download/apt ./
+deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] https://github.com/sormy/tvbian/releases/download/apt ./
 ```
 
 ✅ apt's `https` method follows the `releases/download` redirect, measured 2026-10-18 in a
