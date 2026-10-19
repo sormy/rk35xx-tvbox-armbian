@@ -1372,3 +1372,8 @@ is sold as.
   the probe; a 1280x720 HEVC encode gives 60 of 60 frames.
 - The boot before ended with no shutdown logged, pstore empty and the watchdog boot status 0; the
   next came up with the cable out and joined Wi-Fi alone, `192.168.1.239`.
+
+## 2026-10-18 — the panel blink was the cable
+
+- With another HDMI cable the BOE panel no longer blinks at 2256x1504, 60 Hz: the cable, not the
+  box.

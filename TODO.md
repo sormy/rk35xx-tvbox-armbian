@@ -4,12 +4,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 ## Open
 
-- [ ] **H96 Max M20: the BOE 2256x1504 panel blinks on about one boot in three.** Same registers on
-      blinking and steady boots; the transmitter sees no event; a blank/unblank re-lock stops it.
-      The PLL is programmed as the factory's; from a Mac the panel never blinks, so the box's output
-      is the weak side. Parked; candidates: the HDMI PHY drive at this pixel clock, then a pixel
-      clock the PLL makes without a fraction. The worklog has what was ruled out.
-
 - [ ] **H96 Max M20: VC-1 needs GStreamer 1.26.6.** 1.26.2, trixie's, maps no caps to
       `V4L2_PIX_FMT_VC1_ANNEX_G`: `v4l2vc1dec` registers and fails "Invalid caps". By hand until
       trixie moves: `patches/gst-plugins-good/README.md`. Shipping it would mean a diverted system
