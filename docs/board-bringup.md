@@ -92,6 +92,8 @@ only these grafts, each with a functional consumer:
 | board `compatible` prepend                          | only if a driver keys firmware lookup off it                      |
 | SoC `compatible` append                             | only if userspace can't name the SoC without it — the codec check |
 | `model` → the box's own name                        | identifies the board; the factory string names the reference EVB  |
+| CEC → mainline's node, `hdmi-phandle` to HDMI TX    | `/dev/cec0`; the factory node may be a vendor binding             |
+| DDC → `i2c-gpio` on its pins, HDMI `ddc-i2c-bus`    | DDC/CI, where the HDMI controller's own master reads EDID only    |
 
 **The watchdog graft carries a hazard.** Once something opens `/dev/watchdog` it cannot be disarmed
 short of a reset, and it keeps counting across a soft reboot. Check the board's watchdog clock
@@ -103,6 +105,10 @@ core clearing the LED at shutdown and applying `LED_CORE_SUSPENDRESUME`, which w
 anyway: it turns the blue LED **off** at poweroff, but nothing in DT turns the red one **on**
 (`default-on` fires at probe, `panic-indicator` at panic). So the policy lives entirely in the hooks
 and the tree just keeps the kernel's hands off.
+
+**The DDC bus needs its pins muxed to GPIO.** The bootloader leaves them on the HDMI controller, and
+GPIO lines without `gpio-ranges` never ask pinctrl to switch: give the `i2c-gpio` node a pinctrl
+state with the SoC's GPIO function, or the EDID reads empty and the panel drops to a fallback mode.
 
 **Leave everything else factory.** If nothing consumes it, don't graft it. Most
 `status = "disabled"` nodes are unwired on that PCB (i2c, spi, spare uarts/pwms, audio codecs):

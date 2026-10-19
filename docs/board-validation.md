@@ -119,9 +119,16 @@ payload and an upstreamed board skips it.
 - [ ] If a resolution is broken, check `esmart_lb_mode` on the VOP node before anything else — the
       factory value `03` is `VOP3_ESMART_2K_2K_2K_2K_MODE` (every window 2K) and must be `02`
       (`VOP3_ESMART_4K_2K_2K_MODE`) for the primary plane to reach 4K
+- [ ] **4K60 video on screen**, not only a 4K desktop: the video plane can fail to read 3840x2160
+      NV12 at 60 Hz while the decoder keeps up
 - [ ] A PC monitor too — the pixel-clock quirk bites there, not on TVs
+- [ ] A picture that blinks or drops: swap the HDMI cable before suspecting the tree
 - [ ] HDMI audio (`aplay -D hdmi:…`), and it is the default sink
-- [ ] CEC: `cec-ctl` finds the adapter, the TV remote reaches the box, `cec-client` sees traffic
+- [ ] HDMI audio beyond stereo: multichannel LPCM, and AC3/DTS passed through to a receiver
+- [ ] HDR: an HDR10 video switches the TV to HDR — the infoframe and 10-bit output, not the decode
+- [ ] CEC: `cec-ctl` finds the adapter with a physical address from the EDID; the TV remote reaches
+      the box, and `cec-ctl -S` lists the TV
+- [ ] DDC/CI: `ddcutil -b <bus> getvcp 10` reads a PC monitor's brightness, and `setvcp 10` moves it
 - [ ] HDMI hotplug re-detects, with no blank screen afterwards
 - [ ] AV jack: composite video **and** analog audio
 - [ ] GPU renders, fps recorded — **this one needs no screen**, see below
