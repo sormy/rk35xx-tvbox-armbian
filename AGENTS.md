@@ -20,6 +20,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `patches/<tool>/`   | fixes to host tools we build ourselves, formatted to send upstream                                 |
 | `src/<tool>/`       | host tools we write ourselves                                                                      |
 | `scripts/`          | host-side helpers, never installed on a box                                                        |
+| `keyring/`          | the `apt` repo's public signing key                                                                |
 
 **Repo files carry no prefix**: each board's `payload.list` names where a file installs, under that
 board's prefix. A board directory holds `board.conf`, `board-id`, `board-name`, the tree, the
@@ -80,6 +81,7 @@ another, so nothing rots when one is rewritten.
 | `patches/meson-codecs/README.md`      | the video decoder and encoders on the GXLX2, shipped as DKMS          |
 | `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand    |
 | `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds                |
+| `keyring/README.md`                   | the archive signing key: fingerprint, secret, rotation                |
 
 # Standing rules
 

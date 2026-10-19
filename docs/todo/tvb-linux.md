@@ -191,7 +191,7 @@ Everything is published from this repo; no server of ours.
 | apt repo    | release `apt`, rolling, a pre-release: `.deb`s plus index          |
 | images      | release `YYYY-MM-DD`: eight `tvb-<board>-<track>.img.xz`, all kept |
 | checksums   | `SHA256SUMS`, signed, in the same release                          |
-| signing key | Actions secret; public half in `tvb-archive-keyring`               |
+| signing key | public: `keyring/tvb-archive-keyring.gpg`; CI signs from a secret  |
 
 Nothing is pruned, so any past release can be flashed to test against, or to bisect a regression.
 Each release's notes list its pins and the diff from the one before: the kernel commits, the Armbian
@@ -202,6 +202,19 @@ reflash, and removing the newer kernel makes the older one the default entry.
 `apt` gains up to 12 kernel debs a month, about 150 a year. ❓ whether GitHub caps assets per
 release; if it does, `apt` moves to one release per year.
 
+The public key needs no release of its own: it is committed, packaged as `tvb-archive-keyring`,
+preinstalled in every image, and published in `apt` like any package. A box not flashed from our
+image fetches the committed file once, then adds the `deb` line.
+
+`keyring/` holds the key's whole lifecycle, ✅ generated 2026-10-19, fingerprint in its README:
+
+| File                      | Holds                                        |
+| ------------------------- | -------------------------------------------- |
+| `tvb-archive-keyring.gpg` | the public key, committed                    |
+| `README.md`               | fingerprint, loading the CI secret, rotation |
+
+`.gitignore` keeps any private key file in `keyring/` out of git.
+
 The key does not expire: a box that misses a renewed keyring before expiry fails `apt update` with
 `EXPKEYSIG` and cannot fetch the fix. A rotation ships both public keys in `tvb-archive-keyring`,
 signs `InRelease` with both for a release cycle, then drops the old one. A compromised key means a
@@ -211,7 +224,7 @@ The apt repo is flat — `Packages.xz`, `Release`, `InRelease` beside the `.deb`
 `apt-ftparchive` and signed with `gpg`:
 
 ```sh
-deb [signed-by=/usr/share/keyrings/tvb.gpg] https://github.com/<gh-repo>/releases/download/apt ./
+deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] https://github.com/<gh-repo>/releases/download/apt ./
 ```
 
 ✅ apt's `https` method follows the `releases/download` redirect, measured 2026-10-18 in a
