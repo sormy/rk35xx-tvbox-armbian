@@ -22,6 +22,7 @@ meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS
 | `0014` | at most 16 CAPTURE buffers above 1080p, for CMA               |
 | `0015` | the drain on `STOP` runs from a worker, not the ioctl         |
 | `0016` | the HEVC encoder logs errors only, unless `print_level` asks  |
+| `0018` | HEVC coded up to 4096x2304 on GXLX2                           |
 
 | Package             | Module        | Device                |
 | ------------------- | ------------- | --------------------- |

@@ -258,3 +258,8 @@
 - Split for review: the two helpers out of MPEG-4, `wrap_input` out of VC-1, each its own patch;
   `0012` and `0013` above are now `0014` and `0015`. The staged `meson-vdec-gxlx2` source is
   byte-identical, and the series builds at each new patch.
+
+## 2026-10-18 — HEVC coded sizes, `0018`
+
+- A 4K stream coded at 3840x2176 aborted the session on every driver: GXLX2's HEVC entry held coded
+  sizes to 3840x2160. `0018`, 4096x2304: that clip and DCI 4K decode bit-exact.

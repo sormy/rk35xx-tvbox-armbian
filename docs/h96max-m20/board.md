@@ -129,7 +129,8 @@ raw streams and encode to Matroska fail.
 
 **On screen, 4K plays at 30 fps and glitches at 60.** The display's video plane cannot read whole
 3840x2160 NV12 pictures 60 times a second, about 750 MB/s; 1080p60 and 4K30 play clean. The decode
-itself keeps up at every size.
+itself keeps up at every size. HEVC takes coded sizes up to 4096x2304, `0018`: DCI 4K and 4K coded
+at 2176 lines.
 
 **Not implemented:** the silicon decodes AVS, AVS2 and RealVideo — the factory loads `amvdec_avs`,
 `amvdec_avs2`, `amvdec_real` — but no V4L2 driver for them exists on this chip.

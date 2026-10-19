@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 18 Oct 2026 07:00:00 -0400
+Subject: [PATCH] media: meson: vdec: HEVC up to 4096x2304 on GXLX2
+
+The SPS check holds the coded size to the format's limit, and GXLX2 had
+3840x2160: a 4K stream coded at 3840x2176 for its conformance window, as
+encoders often write, and DCI 4K at 4096x2160 were refused with the
+session aborted. Both decode bit-exact on the core at 4096x2304, the size
+Amlogic's own HEVC decoder takes.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ vdec/vdec_platform.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff -ruN a/vdec/vdec_platform.c b/vdec/vdec_platform.c
+--- a/vdec/vdec_platform.c
++++ b/vdec/vdec_platform.c
+@@ -112,8 +112,8 @@
+ 		.pixfmt = V4L2_PIX_FMT_HEVC,
+ 		.min_buffers = 4,
+ 		.max_buffers = 24,
+-		.max_width = 3840,
+-		.max_height = 2160,
++		.max_width = 4096,
++		.max_height = 2304,
+ 		.vdec_ops = &vdec_hevc_ops,
+ 		.codec_ops = &codec_hevc_g12a_ops,
+ 		.firmware_path = "meson/vdec/g12a_hevc_mmu.bin",
