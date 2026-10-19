@@ -305,3 +305,19 @@
   hands over to the event.
 - With both: 60 of 60, bit-exact with GStreamer and Debian's decode at native size; 1920x1080 then
   1920x800 with `-capture_max_height 1080`. Every other clip decodes as before the two patches.
+
+## 2026-10-18 — the H.264 encoder's canvases, `0019`
+
+- `amvenc_avc` fails to probe with `ENODEV` on this boot, on the old build as on the new: a trace of
+  `meson_canvas_alloc` shows its third canvas out of sequence.
+- Not a leak from the tests: the journal shows `amvenc_avc` loaded on the two boots before, and
+  never on this one, with the same tree and CMA. The canvases it wants as one run had a held one in
+  the middle; with `meson_vdec` and `amvenc_hevc` unloaded it still failed, so the holder lives all
+  boot.
+- `0019`: hold every canvas until a run of twelve is found, free the rest. Built on the box and
+  `insmod`ed: canvases 6..17, `meson-venc-h264` back; ffmpeg encodes 60 of 60 at 45.8 dB, HEVC 44.9
+  dB.
+- A first PSNR of 25 dB for every encoder, `libx264` too, was the comparison: `setpts=N` on a 1/1000
+  and a 1/30 timebase paired the wrong frames. `settb=1/30` first.
+- GStreamer's `v4l2h264enc` dies with `SIGSEGV` in `gst_memory_unmap`, from `videotestsrc` as from
+  `rawvideoparse`; `v4l2h265enc` encodes 60 of 60. No GStreamer H.264 encode was run before.

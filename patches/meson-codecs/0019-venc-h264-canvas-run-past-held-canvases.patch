@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Sun, 18 Oct 2026 20:10:00 -0400
+Subject: [PATCH] media: meson: venc-h264: find a canvas run past held canvases
+
+The encoder takes twelve consecutive canvases at load, from an allocator
+that hands out the first free one. A canvas another driver held in the
+middle failed the module with ENODEV, depending on boot order. Hold
+every canvas until a run is found, then free the rest.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+ venc-h264/compat.c |   39 +++++++++++++++++++++++----------------
+ 1 file changed, 23 insertions(+), 16 deletions(-)
+
+diff -ruN a/venc-h264/compat.c b/venc-h264/compat.c
+--- a/venc-h264/compat.c
++++ b/venc-h264/compat.c
+@@ -5,6 +5,7 @@
+  * the "amvenc_avc" platform device (no DT node exists), and backs codec_mm
+  * with CMA.
+  */
++#include <linux/bitmap.h>
+ #include <linux/delay.h>
+ #include <linux/firmware.h>
+ #include <linux/irq.h>
+@@ -21,6 +22,7 @@
+ MODULE_IMPORT_NS("DMA_BUF");
+ 
+ #define VENC_NUM_CANVAS		12	/* encoder.c uses enc_canvas_offset + 0..11 */
++#define VENC_CANVAS_IDS		256	/* a canvas index is a u8 */
+ #define HCODEC_MBOX2_SPI	45	/* "mailbox_2" in the vendor DT */
+ 
+ struct venc_hw venc_hw;
+@@ -114,10 +116,12 @@
+ 
+ static int venc_alloc_canvases(struct device_node *vdec_np)
+ {
++	DECLARE_BITMAP(held, VENC_CANVAS_IDS);
+ 	struct platform_device *canvas_pdev;
+ 	struct device_node *cnp;
+-	u8 idx, prev = 0;
+-	int i, ret;
++	unsigned int i, base = 0, len = 0;
++	u8 idx;
++	int ret;
+ 
+ 	cnp = of_parse_phandle(vdec_np, "amlogic,canvas", 0);
+ 	if (!cnp)
+@@ -132,24 +136,28 @@
+ 		return -EPROBE_DEFER;
+ 
+ 	/*
+-	 * ponytail: encoder.c addresses canvases as base + n and packs them into
+-	 * HW registers, so insist on a consecutive run from the first-free
+-	 * allocator rather than remapping every use.
++	 * encoder.c addresses canvases as base + n; the allocator hands out the
++	 * first free one, so hold every canvas until a run is found.
+ 	 */
+-	for (i = 0; i < VENC_NUM_CANVAS; i++) {
++	bitmap_zero(held, VENC_CANVAS_IDS);
++	do {
+ 		ret = meson_canvas_alloc(venc_hw.canvas, &idx);
+-		if (ret || (i && idx != prev + 1)) {
+-			if (!ret)
+-				meson_canvas_free(venc_hw.canvas, idx);
+-			while (i--)
+-				meson_canvas_free(venc_hw.canvas, venc_hw.canvas_base + i);
+-			return ret ?: -EBUSY;
++		if (ret)
++			break;
++		__set_bit(idx, held);
++		if (idx != base + len) {
++			base = idx;
++			len = 0;
+ 		}
+-		if (!i)
+-			venc_hw.canvas_base = idx;
+-		prev = idx;
++	} while (++len < VENC_NUM_CANVAS);
++
++	if (!ret) {
++		bitmap_clear(held, base, len);
++		venc_hw.canvas_base = base;
+ 	}
+-	return 0;
++	for_each_set_bit(i, held, VENC_CANVAS_IDS)
++		meson_canvas_free(venc_hw.canvas, i);
++	return ret;
+ }
+ 
+ static void venc_put_pdev(void)

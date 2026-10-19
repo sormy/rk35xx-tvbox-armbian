@@ -24,6 +24,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       HEVC 8- and 10-bit, VP9 to 4K does not reproduce it. Next: that client's ioctl sequence around
       the stop.
 
+- [ ] **H96 Max M20: GStreamer's `v4l2h264enc` crashes.** `videotestsrc ! v4l2h264enc` dies with
+      `SIGSEGV` in `gst_memory_unmap`, in the plugin's input pool; `v4l2h265enc` and ffmpeg's
+      `h264_v4l2m2m` encode.
+
 - [ ] **H96 Max M20: Wi-Fi on a fresh image.** The box has no Ethernet, and Armbian's netplan gives
       `wl*` no DHCP. Check whether the first-boot wizard's Wi-Fi setup gets an address; if not, ship
       a `wlan0` network file in the payload.

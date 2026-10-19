@@ -24,6 +24,7 @@ meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS
 | `0016` | the HEVC encoder logs errors only, unless `print_level` asks      |
 | `0017` | HEVC and VP9 CAPTURE scaled by 2 or 4, per stream through COMPOSE |
 | `0018` | HEVC coded up to 4096x2304 on GXLX2                               |
+| `0019` | the H.264 encoder finds its canvas run past held canvases         |
 
 | Package             | Module        | Device                |
 | ------------------- | ------------- | --------------------- |
@@ -55,6 +56,9 @@ reports an empty OUTPUT queue with CAPTURE off as `EPOLLERR`, and GStreamer give
 The vendor tree already carries `amvenc_avc` and `hevc_enc` nodes, which make platform devices of
 those names; the encoders adopt them, with their interrupts and, for WAVE420L, its register window.
 The factory kernel probed the WAVE420L on this chip, so GXLX2 joins its chip list.
+
+The H.264 encoder addresses twelve canvases as one run; `0019` takes the first run free, so a canvas
+another driver holds no longer fails its load with `ENODEV`.
 
 ## 0008-0010
 
