@@ -28,15 +28,27 @@ those units, not a property of the platform: a unit carrying `BT_MAC` would be i
 Whatever replaces `mac-pin` should consume the contract, not the two ids these boards happen to
 populate.
 
-## Why not the kernel
+## The kernel, once we build it
 
-Reading vendor storage in-kernel and handing the address to the driver is the tidy answer, and it is
-the one we cannot ship. It means patching `rockchip_setup_macaddr()` or each vendor SDIO driver's
-own `CONFIG_PLATFORM_*` path, which is invasive, has to be rebased on every kernel bump, and has to
-go through Armbian to reach users. `patches/linux-rockchip/README.md` covers why an overlay box
-cannot carry kernel patches of its own.
+Rejected while the kernel came from Armbian: an overlay box cannot ship kernel patches. Under
+`docs/todo/tvb-linux.md` it can, so each driver reads its own address at probe and `mac-pin` goes.
 
-## The candidates worth trying
+| Interface      | Source, then fallback             | Patch                                    |
+| -------------- | --------------------------------- | ---------------------------------------- |
+| Ethernet       | vendor storage `LAN_MAC`          | `net-dwmac-rk-prefer-vendor-storage-mac` |
+| AIC8800 Wi-Fi  | `WIFI_MAC`, then the SoC's OTP id | `wireless-aic8800-stable-mac`            |
+| Seekwave Wi-Fi | `WIFI_MAC`, then the SoC's OTP id | not written                              |
+| MT7668 Wi-Fi   | the chip's firmware               | none needed                              |
+| Bluetooth      | `BT_MAC`, then the SoC's OTP id   | per driver, not written                  |
+
+One layer: the kernel, because the first two patches exist in `patches/linux-rockchip/`. U-Boot
+setting `local-mac-address` is the alternative below, never an addition. The four vendor-storage ids
+are the contract, so a unit carrying `BT_MAC` is honoured though none dumped here does.
+
+A derived address changes once on migration: the drivers' OTP-id rule is not `mac-pin`'s `sha256` of
+cpuid and interface. DHCP reservations and Bluetooth pairings follow it.
+
+## The alternatives
 
 **A systemd `.link` file, generated once.** `net_setup_link` applies it as the device appears, which
 is earlier than any unit can run and has no wait at all. The catch, already recorded in `AGENTS.md`:

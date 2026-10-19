@@ -7,12 +7,12 @@ and the updater prunes by it.
 
 ## What `rk35xx` means today
 
-| Meaning       | Where                                                      | Action                   |
-| ------------- | ---------------------------------------------------------- | ------------------------ |
-| our namespace | every installed name, the repo files mirroring them        | `tvb-`                   |
-| the SoC       | `BOARD_FAMILY=rk35xx`, `docs/todo/rk35xx-*.md`, the kernel | kept                     |
-| repo, tools   | `rk35xx-update`, `rk35xx-deploy`, `rk35xx-tvbox-armbian`   | `tvb-*`, `tvbox-armbian` |
-| history       | `worklog*.md`, `research/`                                 | untouched                |
+| Meaning       | Where                                                      | Action            |
+| ------------- | ---------------------------------------------------------- | ----------------- |
+| our namespace | every installed name, the repo files mirroring them        | `tvb-`            |
+| the SoC       | `BOARD_FAMILY=rk35xx`, `docs/todo/rk35xx-*.md`, the kernel | kept              |
+| repo, tools   | `rk35xx-update`, `rk35xx-deploy`, `rk35xx-tvbox-armbian`   | `tvb-*`, `tvbian` |
+| history       | `worklog*.md`, `research/`                                 | untouched         |
 
 Namespace includes the paths (`/usr/local/share/rk35xx/`), the numbered drop-ins
 (`99-rk35xx-vpu.rules`), the IR DKMS package (`rockchip-pwm-remotectl-rk35xx`) and the updater's
@@ -89,4 +89,3 @@ installed beside `rk35xx-*` and the old units still running.
 - Rockchip-only pieces — the IR driver, vendor storage, the VPU rules: `tvb-` like the rest (one
   mechanical rule, what a board installs is already chosen by its lists), or a Rockchip name
   (`rockchip-pwm-remotectl-rk35xx` unchanged, no DKMS migration)?
-- The repo name: `tvbox-armbian`.

@@ -103,17 +103,20 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 ## Bigger todos
 
-| File                                    | Open question                              |
-| --------------------------------------- | ------------------------------------------ |
-| `docs/todo/apt-packaging.md`            | the payload as local `.deb`s               |
-| `docs/todo/media-stick.md`              | the universal media stick                  |
-| `docs/todo/recipes.md`                  | a board composed from recipes              |
-| `docs/todo/h96max-issues.md`            | H96 Max open items                         |
-| `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                           |
-| `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 unclockable modes, slow EDID probes |
-| `docs/todo/rk35xx-mac-pinning.md`       | MAC pinning below userspace                |
-| `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it              |
-| `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport |
-| `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset      |
-| `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                          |
-| `docs/todo/tvb-namespace.md`            | the `tvb-` rename and its migration        |
+| File                                    | Open question                                 |
+| --------------------------------------- | --------------------------------------------- |
+| `docs/todo/apt-packaging.md`            | the payload as local `.deb`s                  |
+| `docs/todo/media-stick.md`              | the universal media stick                     |
+| `docs/todo/recipes.md`                  | a board composed from recipes                 |
+| `docs/todo/h96max-issues.md`            | H96 Max open items                            |
+| `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                              |
+| `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 unclockable modes, slow EDID probes    |
+| `docs/todo/rk35xx-mac-pinning.md`       | MAC pinning below userspace                   |
+| `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it                 |
+| `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport    |
+| `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset         |
+| `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                             |
+| `docs/todo/tvb-namespace.md`            | the `tvb-` rename and its migration           |
+| `docs/todo/tvb-linux.md`                | TVBian: our kernel and images on plain Debian |
+| `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login       |
+| `docs/todo/tvb-linux-build.md`          | TVBian's monthly build, hosts, caches         |
