@@ -263,3 +263,30 @@
 
 - A 4K stream coded at 3840x2176 aborted the session on every driver: GXLX2's HEVC entry held coded
   sizes to 3840x2160. `0018`, 4096x2304: that clip and DCI 4K decode bit-exact.
+
+## 2026-10-18 — scaled CAPTURE, `0017`
+
+- Amlogic's `vh265.c` (4.9 tree, cross-checked with the 3.14 one): `double_write_mode` 4 is 1/2 each
+  way, 2 is 1/4; `HEVC_SAO_CTRL5[23:16]` takes `0x33` or `0xff`; the scaled write is never a
+  reference, so references must be compressed, at 8-bit too. `vvp9.c` uses the same scaler.
+- First as a global `capture_max_width`. Reviewed: a module switch where V4L2 expects a per-stream
+  request, a 4096-wide picture quartered to 1024 under a 1920 limit, odd sizes rounded up. Now
+  `S_SELECTION` `COMPOSE` on CAPTURE per stream, with `capture_max_height` as the default for a
+  client that never asks, sizes rounded down, and the full size stored for the compressed buffers.
+- VP9 zeroed the scale field on every frame and cleared the 8-bit memory saving bit its compressed
+  buffers are sized for; both now follow the session.
+- FFmpeg never asks: research `0006` adds `-capture_max_height`. FFmpeg sets CAPTURE from the
+  container's size at init, so a request only in the source change's reinit never ran; it is made
+  before the CAPTURE buffers, in `v4l2_try_start`, as well.
+- Requested at 1080, and the same from `capture_max_height=1080`, 30 frames each against Debian's
+  decode with a bilinear scale: 4K HEVC 8-bit at 43.7 dB, 10-bit HDR10 48.7 dB, 4K VP9 44.0 dB.
+  1080p with the request stays bit-exact; with neither, 4K HEVC and VP9 decode bit-exact.
+- 240 frames of the 60 fps HDR10 clip: 4.17 s at full size, 3.23 s requested at 1080.
+- During an FFmpeg build on the box the 8-bit 4K runs failed `cma_alloc` with `-16` and most of CMA
+  free; idle, they pass.
+- `0006`, now `0009`, reworked: the request sized from `CROP`, the visible picture, with
+  `V4L2_SEL_FLAG_LE`, made whenever the option is set. The driver kept a ratio decided before the
+  headers were parsed; it keeps the rectangle now and decides at the source change.
+- On the installed `0017` + `0018`, `-capture_max_height 1080`, 30 frames each: coded 2176 to
+  1920x1080 at 42.3 dB, DCI 4K to 2048x1080 at 44.1 dB, 3840x1600 to 1920x800 at 42.2 dB, 4K HEVC
+  43.7, HDR10 48.7, VP9 44.0; H.264 and 1080p left at full size, bit-exact.

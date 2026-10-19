@@ -1,8 +1,8 @@
 # ffmpeg 9 with V4L2 mem2mem on the H96 Max M20
 
 ffmpeg 9.0.2 with `0001`-`0005` drives every hardware decoder and both encoders on the S905L3 the
-way GStreamer does, with `patches/meson-codecs/` `0014` and `0015`. Not shipped: a static build into
-`/opt/ffmpeg-9`, beside Debian's ffmpeg.
+way GStreamer does, with `patches/meson-codecs/` `0014` and `0015`; `0009` asks for a scaled
+CAPTURE, with `0017`. Not shipped: a static build into `/opt/ffmpeg-9`, beside Debian's ffmpeg.
 
 ## Build
 
@@ -24,8 +24,12 @@ sh research/ffmpeg-v4l2m2m/build.sh
 | `0006` | DRM PRIME frames and a DRM hardware context, from LibreELEC        |
 | `0007` | a bounded wait for a picture                                       |
 | `0008` | `ftp`: the URL's path decoded                                      |
+| `0009` | `-capture_max_height`: a COMPOSE request for a scaled CAPTURE      |
 
 `0006` makes `v4l2_m2m` depend on libdrm, so the build enables it.
+
+`0009` sizes the request from the visible picture the decoder reports as `CROP`, with
+`V4L2_SEL_FLAG_LE`, before the CAPTURE buffers and again after a source change.
 
 `0001`: ffmpeg sends a packet without pts as 0, and the constant-rate output keeps 3 frames of 60.
 

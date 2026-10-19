@@ -31,10 +31,9 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 - [ ] **RK35xx boards: size CMA for 4K at 60 fps.** The M20 needed 768 MiB, not 384, to decode 4K at
       60 fps and copy it into render buffers. Measure each board's CMA peak on that load.
 
-- [ ] **H96 Max M20: 4K at 60 fps, through a downscaled decoder copy.** The video plane cannot read
-      3840x2160 NV12 at 60 Hz. The HEVC core can write a half or quarter size copy beside the
-      full-size references (Amlogic's `double_write_mode`), which `codec_hevc` already does at 1:1
-      for 10-bit: add the ratio as a decoder control, report the scaled CAPTURE size.
+- [ ] **H96 Max M20: 4K at 60 fps on screen, through a COMPOSE selection.** `meson-codecs` `0017`
+      decodes HEVC and VP9 to a half-size CAPTURE when asked; not yet watched at 60 Hz. Then:
+      whether the payload sets `capture_max_height`, and whether H.264's core can scale.
 
 - [ ] **RK3518 boards: revisit display and GPU against the H96 Max M20.** Same Mali-450 and the same
       BOE 2256x1504 panel: the M20 runs it native at 60 Hz with glmark2 **64**, where the RK3528

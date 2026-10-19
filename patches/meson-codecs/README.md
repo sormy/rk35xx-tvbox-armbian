@@ -4,25 +4,26 @@ Patches over `meson-sm1-codecs` at `eb7a444`: its out-of-tree decoder (the mainl
 meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS packages;
 `firmware/common/fetch-meson-codecs-src.sh <dir>` stages the one the directory names.
 
-| Patch  | Holds                                                         |
-| ------ | ------------------------------------------------------------- |
-| `0001` | the decoder runs GXLX2 as G12A-class, minus two G12A settings |
-| `0002` | no `EPOLLERR` before CAPTURE streams                          |
-| `0003` | `v4l2-h264` built into the decoder                            |
-| `0004` | the H.264 encoder (HCodec) on GXLX2                           |
-| `0005` | the HEVC encoder (WAVE420L) on GXLX2                          |
-| `0006` | MPEG-1/2 canvases mapped once every CAPTURE buffer is queued  |
-| `0007` | CAPTURE formats other than NV12M                              |
-| `0008` | helpers to reboot a microcode and end a drain with LAST       |
-| `0009` | MPEG-4 Part 2                                                 |
-| `0010` | MJPEG                                                         |
-| `0011` | `wrap_input`: a codec frames its input before the parser      |
-| `0012` | VC-1, Advanced profile                                        |
-| `0013` | the VIFIFO level read while the VLD is reset                  |
-| `0014` | at most 16 CAPTURE buffers above 1080p, for CMA               |
-| `0015` | the drain on `STOP` runs from a worker, not the ioctl         |
-| `0016` | the HEVC encoder logs errors only, unless `print_level` asks  |
-| `0018` | HEVC coded up to 4096x2304 on GXLX2                           |
+| Patch  | Holds                                                             |
+| ------ | ----------------------------------------------------------------- |
+| `0001` | the decoder runs GXLX2 as G12A-class, minus two G12A settings     |
+| `0002` | no `EPOLLERR` before CAPTURE streams                              |
+| `0003` | `v4l2-h264` built into the decoder                                |
+| `0004` | the H.264 encoder (HCodec) on GXLX2                               |
+| `0005` | the HEVC encoder (WAVE420L) on GXLX2                              |
+| `0006` | MPEG-1/2 canvases mapped once every CAPTURE buffer is queued      |
+| `0007` | CAPTURE formats other than NV12M                                  |
+| `0008` | helpers to reboot a microcode and end a drain with LAST           |
+| `0009` | MPEG-4 Part 2                                                     |
+| `0010` | MJPEG                                                             |
+| `0011` | `wrap_input`: a codec frames its input before the parser          |
+| `0012` | VC-1, Advanced profile                                            |
+| `0013` | the VIFIFO level read while the VLD is reset                      |
+| `0014` | at most 16 CAPTURE buffers above 1080p, for CMA                   |
+| `0015` | the drain on `STOP` runs from a worker, not the ioctl             |
+| `0016` | the HEVC encoder logs errors only, unless `print_level` asks      |
+| `0017` | HEVC and VP9 CAPTURE scaled by 2 or 4, per stream through COMPOSE |
+| `0018` | HEVC coded up to 4096x2304 on GXLX2                               |
 
 | Package             | Module        | Device                |
 | ------------------- | ------------- | --------------------- |
@@ -61,3 +62,20 @@ Maxime Jourdan's 5.3-era `codec_mpeg4` and `codec_mjpeg`. Their microcode latche
 boot, and this decoder boots it before any CAPTURE buffer exists: start raises a source change, and
 resume maps the canvases and boots the microcode again. MJPEG writes three planes whatever
 `MDEC_PIC_DC_CTRL` says, so it offers YUV420M only, which `0007` lets GStreamer negotiate.
+
+## 0017
+
+The HEVC core's second write, the uncompressed one CAPTURE gets, can be scaled by 2 or 4 each way
+while the references stay full size, compressed. A client asks per stream, the stateful decoder's
+way: `VIDIOC_S_SELECTION` with `V4L2_SEL_TGT_COMPOSE` on CAPTURE after the source change, before
+CAPTURE buffers exist. The driver keeps the rectangle and takes the smallest ratio whose picture
+fits it, worked out again from the stream's own visible size once its headers are parsed; `G_FMT`
+reports the scaled size, and `G_SELECTION` the visible picture as `CROP` and `COMPOSE_BOUNDS`.
+
+A client that never asks gets `capture_max_height`, 0 by default: the smallest ratio that fits that
+height. Sizes round down. HEVC and VP9 only: the other codecs run on cores without the scaler, at
+1080p or less here. On the box, as root:
+
+    echo 1080 > /sys/module/meson_vdec/parameters/capture_max_height
+
+`research/ffmpeg-v4l2m2m/` `0009` makes FFmpeg ask: its decoders' `-capture_max_height`.

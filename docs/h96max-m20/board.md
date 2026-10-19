@@ -124,13 +124,15 @@ GStreamer configures a V4L2 VC-1 decoder from 1.26.6; trixie ships 1.26.2, and
 ffmpeg's `*_v4l2m2m` reach every codec the driver decodes, and both encoders, with five patches to
 9.0.2 in `research/ffmpeg-v4l2m2m/`: pts for raw streams, `extradata` for MPEG-1/2, MPEG-4 and VC-1,
 an `mjpeg_v4l2m2m` decoder, encoder `extradata` for Matroska and MP4, and a drain that waits for a
-CAPTURE buffer. Debian's 7.1.5 decodes H.264, HEVC, VP9 and MPEG-2 from a container; MPEG-4, VC-1,
-raw streams and encode to Matroska fail.
+CAPTURE buffer. Another, `0009`, makes its decoders ask for a scaled CAPTURE: `-capture_max_height`.
+Debian's 7.1.5 decodes H.264, HEVC, VP9 and MPEG-2 from a container; MPEG-4, VC-1, raw streams and
+encode to Matroska fail.
 
 **On screen, 4K plays at 30 fps and glitches at 60.** The display's video plane cannot read whole
-3840x2160 NV12 pictures 60 times a second, about 750 MB/s; 1080p60 and 4K30 play clean. The decode
-itself keeps up at every size. HEVC takes coded sizes up to 4096x2304, `0018`: DCI 4K and 4K coded
-at 2176 lines.
+3840x2160 NV12 pictures 60 times a second, about 750 MB/s; 1080p60 and 4K30 play clean. A client can
+ask for a half-size CAPTURE per stream, `meson-codecs` `0017`, and 4K HEVC at 60 fps then decodes at
+74 fps against 58. HEVC takes coded sizes up to 4096x2304, `0018`: DCI 4K and 4K coded at 2176
+lines.
 
 **Not implemented:** the silicon decodes AVS, AVS2 and RealVideo — the factory loads `amvdec_avs`,
 `amvdec_avs2`, `amvdec_real` — but no V4L2 driver for them exists on this chip.
