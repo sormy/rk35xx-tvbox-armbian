@@ -8,6 +8,17 @@ monthly build, the build hosts, the caches.
 A GitHub Actions workflow on the 1st, plus a manual trigger, runs the same container a laptop runs.
 It repins first, then builds, then publishes a release tagged by the run's date, `2026-10-01`.
 
+### Triggers
+
+| Signal                                     | Runs                      | Publishes         |
+| ------------------------------------------ | ------------------------- | ----------------- |
+| `schedule`, the 1st, off the hour          | repin, build, publish     | yes               |
+| `workflow_dispatch`, or `gh workflow run`  | the same                  | yes               |
+| a push to `kernel/`, `patches/`, the build | build at the current pins | no: early warning |
+
+No external cron: the workflow's own `schedule` is the clock, and upstream sends no signal, so the
+repin is the poll. A dropped or urgent month is one `workflow_dispatch`.
+
 ### Repin
 
 Each pin moves to the newest released commit upstream:
@@ -74,6 +85,33 @@ without `ccache`. A release then depends on nothing but the pins and the day's D
 
 ❓ download throttling: GitHub documents no limit for `releases/download`, but tightened
 unauthenticated limits on other endpoints in 2025. apt fetches anonymously.
+
+## Two release paths
+
+The monthly build and a release from a Mac run the same container and the same steps. They differ in
+where the signing key comes from and in who decides to publish.
+
+| Step  | Monthly, in CI           | Manual, from a Mac                        |
+| ----- | ------------------------ | ----------------------------------------- |
+| build | `./build.sh debs images` | the same                                  |
+| sign  | the Actions secret       | a key file, given by path                 |
+| test  | ❓ the validation gate   | `./build.sh serve`, then a box on the LAN |
+| ship  | `./build.sh publish`     | `./build.sh publish`, after the test      |
+
+The manual test, in order:
+
+```sh
+./build.sh debs images --key <private-key-file>     # host
+./build.sh serve                                    # host: the signed repo and images, port 8000
+echo 'deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] http://<mac>.local:8000 ./' \
+  | sudo tee /etc/apt/sources.list.d/tvb-test.list && sudo apt update && sudo apt upgrade   # box
+./build.sh publish                                  # host, once the box passes
+```
+
+`publish` uploads the files the box was tested on, never a rebuild. It refuses a dirty tree or an
+unpushed commit, so every release, either path, names its commit. A tag CI already holds that day
+becomes `YYYY-MM-DD.2`; nothing is overwritten. One key signs both paths, so a box cannot tell them
+apart.
 
 ## Build hosts
 
