@@ -1,7 +1,7 @@
 From a49d5417cfcb1343eff8ff001cc56062628e805a Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Tue, 13 Oct 2026 14:22:59 -0400
-Subject: [PATCH 2/5] avcodec/v4l2_m2m_dec: send the extradata of codecs
+Subject: [PATCH] avcodec/v4l2_m2m_dec: send the extradata of codecs
  without a header filter
 
 H.264 and HEVC reach the driver with their parameter sets through

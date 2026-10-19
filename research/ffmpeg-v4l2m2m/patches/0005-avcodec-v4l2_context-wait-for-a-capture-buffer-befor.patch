@@ -1,7 +1,7 @@
 From a9f52e73e82f96183e911ae66b3abe9fd41d6385 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Tue, 13 Oct 2026 14:49:21 -0400
-Subject: [PATCH 5/5] avcodec/v4l2_context: wait for a capture buffer before
+Subject: [PATCH] avcodec/v4l2_context: wait for a capture buffer before
  ending a drain
 
 Draining with every capture buffer out in userspace was taken as the

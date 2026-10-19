@@ -1,7 +1,7 @@
 From 5345e287bf290a1424710725eed142b826418882 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Tue, 13 Oct 2026 14:23:41 -0400
-Subject: [PATCH 4/5] avcodec/v4l2_m2m_enc: fill extradata for a global header
+Subject: [PATCH] avcodec/v4l2_m2m_enc: fill extradata for a global header
 
 The encoder hands its parameter sets out only ahead of the first
 frame, in their own packet or joined to it, so a muxer that needs

@@ -1,0 +1,31 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] avformat/ftp: decode the path of the URL
+
+The path of an ftp URL is percent-encoded (RFC 1738), as its user and
+password are, which ftp already decodes: a file named "a b#1.mkv" is
+ftp://host/a%20b%231.mkv, and was asked of the server as "a%20b%231.mkv".
+---
+--- a/libavformat/ftp.c
++++ b/libavformat/ftp.c
+@@ -697,7 +697,7 @@
+ {
+     char proto[10], path[MAX_URL_SIZE], credentials[MAX_URL_SIZE], hostname[MAX_URL_SIZE];
+     const char *tok_user = NULL, *tok_pass = NULL;
+-    char *newpath = NULL;
++    char *newpath = NULL, *decoded_path;
+     int err;
+     FTPContext *s = h->priv_data;
+ 
+@@ -750,7 +750,11 @@
+     if ((err = ftp_current_dir(s)) < 0)
+         return err;
+ 
+-    newpath = av_append_path_component(s->path, path);
++    decoded_path = ff_urldecode(path, 0);
++    if (!decoded_path)
++        return AVERROR(ENOMEM);
++    newpath = av_append_path_component(s->path, decoded_path);
++    av_free(decoded_path);
+     if (!newpath)
+         return AVERROR(ENOMEM);
+     av_free(s->path);

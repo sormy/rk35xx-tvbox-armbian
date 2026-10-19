@@ -1,7 +1,7 @@
 From f7fc4f2670bffd6715d029235c5f1b6899c1c680 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
 Date: Tue, 13 Oct 2026 14:23:30 -0400
-Subject: [PATCH 3/5] avcodec/v4l2_m2m_dec: add an MJPEG decoder wrapper
+Subject: [PATCH] avcodec/v4l2_m2m_dec: add an MJPEG decoder wrapper
 
 Stateful decoders take V4L2_PIX_FMT_MJPEG like any other format; the
 wrapper was the only thing missing.

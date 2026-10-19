@@ -10,7 +10,7 @@ mkdir -p "$WORK" && cd "$WORK"
 rm -rf ffmpeg-$VER && tar -xJf ffmpeg-$VER.tar.xz && cd ffmpeg-$VER
 for p in "$HERE"/patches/*.patch; do patch -p1 < "$p"; done
 ./configure --prefix=/opt/ffmpeg-9 --disable-shared --enable-static --disable-doc \
-  --disable-everything --enable-ffmpeg --enable-ffprobe --enable-v4l2-m2m \
+  --disable-everything --enable-ffmpeg --enable-ffprobe --enable-v4l2-m2m --enable-libdrm \
   --enable-decoder=h264,hevc,vp9,mpeg1video,mpeg2video,mpeg4,mjpeg,vc1,wmv3,rawvideo \
   --enable-decoder=h264_v4l2m2m,hevc_v4l2m2m,vp9_v4l2m2m,mpeg1_v4l2m2m,mpeg2_v4l2m2m,mpeg4_v4l2m2m,mjpeg_v4l2m2m,vc1_v4l2m2m \
   --enable-encoder=h264_v4l2m2m,hevc_v4l2m2m,rawvideo,wrapped_avframe \

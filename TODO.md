@@ -16,8 +16,8 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       plugin in the payload.
 
 - [ ] **H96 Max M20: ffmpeg's `*_v4l2m2m`.** Every codec works on 9.0.2 with
-      `research/ffmpeg-v4l2m2m/`'s five patches; Debian's 7.1.5 still fails MPEG-4, VC-1, raw
-      streams and encode to Matroska. Open: send the patches to ffmpeg, or ship the build.
+      `research/ffmpeg-v4l2m2m/`'s patches; Debian's 7.1.5 still fails MPEG-4, VC-1, raw streams and
+      encode to Matroska. Open: send the patches to ffmpeg, or ship the build.
 
 - [ ] **H96 Max M20: the decoder leaves CAPTURE buffers active on STREAMOFF.** Four `WARN`s, buffers
       0-13, all from Fuseamp's `fuseamp-flips` and `fuseamp-quality`; ffmpeg stopped early on H.264,
