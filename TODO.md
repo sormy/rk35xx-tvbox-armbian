@@ -24,6 +24,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       HEVC 8- and 10-bit, VP9 to 4K does not reproduce it. Next: that client's ioctl sequence around
       the stop.
 
+- [ ] **H96 Max M20: Wi-Fi stays on 2.4 GHz.** Not mt76: both bands join, and `0013` reloads the
+      firmware for a switch between the access point's two BSSIDs. The box's network pins `bssid=`
+      to the 2.4 GHz radio, and with no `bgscan` nothing re-picks once joined. Next: the SSID alone
+      plus `bgscan`, then time a band switch, which `0013` costs about 6 s.
+
 - [ ] **H96 Max M20: GStreamer's `v4l2h264enc` crashes.** `videotestsrc ! v4l2h264enc` dies with
       `SIGSEGV` in `gst_memory_unmap`, in the plugin's input pool; `v4l2h265enc` and ffmpeg's
       `h264_v4l2m2m` encode.
