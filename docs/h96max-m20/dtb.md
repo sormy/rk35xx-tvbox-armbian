@@ -263,8 +263,7 @@ index.
 hands it the physical address from the EDID. The vendor's `aocec` node stays: no mainline driver
 binds `amlogic, amlogic-aocec`.
 
-## Still to convert
+## Left vendor-only
 
-| Block | State                                |
-| ----- | ------------------------------------ |
-| audio | analogue (`t9015` codec) not grafted |
+The SoC's CVBS encoder, `t9015` analogue codec and S/PDIF stay as the factory wrote them: this box
+fits no AV or S/PDIF jack, so nothing would consume a graft.

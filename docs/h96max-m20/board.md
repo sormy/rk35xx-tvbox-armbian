@@ -21,6 +21,7 @@ Nothing is installed to eMMC. Known gaps are at the bottom.
 | USB         | 2.0 only; USB-C is OTG, USB-A host-only                             |
 | Front panel | one blue LED on `GPIODV_24`, active low; one button; no IR receiver |
 | Serial      | 115200 on three pads centre-back: HDMI <- TX GND [RX]               |
+| AV, S/PDIF  | ➖ not fitted: HDMI is the only video and audio out                 |
 | PCB marking | `905_DG_ZX01_V01`, date code `2025/09/03`                           |
 
 <img src="board2.jpeg" width="640">

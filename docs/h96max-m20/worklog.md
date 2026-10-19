@@ -1387,3 +1387,12 @@ is sold as.
   reboot: `ao_cec` loads, `/dev/cec0`, GPIOAO_8 held by `c8100100.cec` as `cec_ao`;
   `cec-ctl --playback` takes physical address 1.0.0.0 and logical address 4. A topology scan finds
   nothing else: the panel has no CEC. Kernel errors as the boot before.
+
+## 2026-10-19 — vendor nodes left unbound
+
+- 77 enabled nodes with a `compatible` bind no driver on 6.18. Most are the vendor 4.9 software
+  stack (`vout`, `amvideom`, `ppmgr`, `codec_mm`, `ion_dev`…), whose work meson-drm, meson-vdec, AIU
+  and SCPI do, or plumbing that needs no driver of its own.
+- Hardware with a mainline driver but nothing to drive here: CVBS (`cvbsout`, `vdac`), the `t9015`
+  analogue codec and S/PDIF — the box fits none of those jacks — and `aml_vrtc`, an alarm register
+  with no suspend wake to serve. `ge2d` and the deinterlacer have no mainline driver for GXL.
