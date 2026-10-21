@@ -1761,3 +1761,11 @@ on the H96 Max, and this box was offline for the change.
   radio is an AIC8800. Now `r69,rk3518-tvbox`, the `board-id`; nothing we ship reads the first
   entry, and rkmpp reads only the last, `rockchip,rk3528a`, unchanged.
 - The rootfs relabelled `tvbian`, the UUID unchanged, so `tvb-install` takes the eMMC as a source.
+
+### 2026-10-21 — the AIC8800's firmware in its own package
+
+The six files moved from `tvb-r69` to `tvb-firmware-aic8800`, at the same paths: the vendor driver
+opens `/lib/firmware/aic8800/SDIO/aic8800D80/` itself (`rwnx_load_firmware :firmware path = …`), not
+through the kernel's search, so neither `updates/` nor `firmware_class.path` reaches it. One
+`dpkg -i --force-overwrite` warned once per file; `dpkg -S` then names the chip package. The tree in
+use before, `r69-xr821`, kept as `/root/board.dtb.known-good`.

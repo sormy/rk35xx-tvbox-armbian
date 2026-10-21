@@ -115,7 +115,7 @@ through Debian:
 | ----------------- | ------------------------------ | ------ | ----------------------- |
 | Seekwave SWT6621S | no                             | 2      | `tvb-firmware-swt6621s` |
 | MT7668 code       | no, not in `firmware-mediatek` | M20    | `tvb-firmware-mt7668`   |
-| AIC8800D80        | no                             | R69    | `tvb-r69`               |
+| AIC8800D80        | no                             | R69    | `tvb-firmware-aic8800`  |
 | meson vdec, venc  | 2 of 11 identical, 3 differ    | M20    | `tvb-firmware-amlogic`  |
 
 Checked by comparing our files with trixie's `non-free-firmware` packages. The two identical meson

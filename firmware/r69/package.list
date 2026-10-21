@@ -1,14 +1,6 @@
 # tvb-r69's files (mode src dest, src under firmware/; link target dest for a symlink).
 # package/board.sh adds the tree, the loader and the u-boot-menu drop-in.
 
-# the AIC8800D80's firmware, where the driver's CONFIG_AIC_FW_PATH reads it, by the names it opens:
-# armbian/firmware's SDIO set, de63f5a
-0644 r69/aic8800/fw_patch_table.bin  /usr/lib/firmware/aic8800/SDIO/aic8800D80/fw_patch_table.bin
-0644 r69/aic8800/fw_patch.bin        /usr/lib/firmware/aic8800/SDIO/aic8800D80/fw_patch.bin
-0644 r69/aic8800/fmacfw.bin          /usr/lib/firmware/aic8800/SDIO/aic8800D80/fmacfw.bin
-0644 r69/aic8800/fw_adid.bin         /usr/lib/firmware/aic8800/SDIO/aic8800D80/fw_adid.bin
-0644 r69/aic8800/lmacfw_rf.bin       /usr/lib/firmware/aic8800/SDIO/aic8800D80/lmacfw_rf.bin
-0644 r69/aic8800/aic_userconfig.txt  /usr/lib/firmware/aic8800/SDIO/aic8800D80/aic_userconfig.txt
 0644 r69/aic8800-modules.conf        /usr/lib/modules-load.d/tvb-aic8800.conf
 
 # LEDs: red while off or asleep, blue while on (the tree's retain-state properties keep them)
