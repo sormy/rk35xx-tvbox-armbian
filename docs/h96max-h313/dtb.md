@@ -13,8 +13,6 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 | `/` (root)          | `compatible` prepends `"h96max-zx,rk3518-tvbox"`                     | the Seekwave driver keys board-specific firmware names off it             |
 | `/` (root)          | `compatible` appends `"rockchip,rk3528a"`                            | userspace can't identify this SoC otherwise — see below                   |
 | `/` (root)          | `model` → `H96 Max H313 3518_ZX_V01`                                 | the factory string names the reference EVB, not this box                  |
-| `serial@ff9f0000`   | `status` → `okay`, `pinctrl-0 = <&uart0m0_xfer>` added               | debug-header UART → `ttyS0` console @ 1500000                             |
-| `fiq-debugger`      | `status` → `disabled`                                                | frees `ff9f0000` for `ttyS0` — probably unnecessary, see below            |
 | `pwm@ffa90030` (IR) | `remote_support_psci` `0` → `1`                                      | IR as ATF wake source (remote wake)                                       |
 | `gpu@ff700000`      | `interrupt-names`/`clocks`/`clock-names` → lima style (`bus`/`core`) | Armbian uses mainline `lima`, not the vendor Mali blob                    |
 | `vop@ff840000`      | `esmart_lb_mode` `[03]` → `[02]`                                     | 🟡 4K line buffer for Esmart0; `03` caps at 2K — no 4K display tried here |
@@ -23,11 +21,10 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 | `mmc@ffc30000` (SD) | `sd-uhs-sdr12/25/50/104` **removed**                                 | warm reboot intermittently lost the SD root                               |
 | `chosen`            | **removed**                                                          | u-boot supplies bootargs, and the factory string names `ttyFIQ0`          |
 
-> **The `fiq-debugger` graft is probably unnecessary.** Disabling it frees `ff9f0000` for a
-> conventional `ttyS0`, but stock reaches the same UART as `ttyFIQ0` and works. The debugger half
-> never initialises on this hardware either way — the vendor sets `rockchip,irq-mode-enable = <1>`,
-> so `IRQ fiq not found` is by design, and what runs is a plain tty over uart0 under another name.
-> The H96 Max 3518D runs without the graft as the trial; this board keeps it until that is proven.
+> **uart0 and `fiq-debugger` stay stock**, console `ttyFIQ0`: the debugger half never initialises
+> (the vendor sets `rockchip,irq-mode-enable = <1>`, so `IRQ fiq not found` is by design), and what
+> runs is a plain tty over uart0. Reverted 2026-10-20: a `ttyS0` graft, uart0 `okay` and
+> `fiq-debugger` `disabled`, bought nothing and gave the family two console names.
 
 Everything else is factory, unchanged. `mmc@ffc20000` (SDIO Wi-Fi) keeps its `sd-uhs-sdr104` — only
 the SD slot gave up UHS.

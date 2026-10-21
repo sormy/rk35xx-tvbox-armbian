@@ -21,7 +21,6 @@
  *   vop@ff840000       esmart_lb_mode 03 -> 02, giving Esmart0 a 4K line buffer. At 03
  *                      every Esmart window gets 2K, so a 3840-wide mode fetches half a
  *                      line and the rest is whatever the buffer held
- *   serial@ff9f0000    enabled with uart0m0_xfer, for the ttyS0 console
  *   pwm@ffa90030       remote_support_psci 0 -> 1, so the remote wakes the box
  *   watchdog@ffac0000  enabled, for systemd's RuntimeWatchdogSec
  *   sdmmc              sd-uhs-* dropped; with UHS the card intermittently fails to
@@ -31,5 +30,4 @@
  *                      work-red
  *   chosen             dropped; u-boot supplies bootargs, and the vendor string names
  *                      ttyFIQ0
- *   fiq-debugger       disabled; it owns ff9f0000 otherwise
  */

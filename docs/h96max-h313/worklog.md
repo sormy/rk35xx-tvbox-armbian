@@ -2087,3 +2087,10 @@ the legacy path and defensive.
 
 6.1.115 has no narrower route: there is no codec quirk in `hci.h`, and the one candidate,
 `HCI_QUIRK_BROKEN_LOCAL_COMMANDS`, zeroes the whole supported-commands bitmap.
+
+## 2026-10-20 — TVBian: our kernel, our packages, Armbian gone
+
+- The `ttyS0` graft reverted on this board and the R69, uart0 and `fiq-debugger` back to stock:
+  `console=ttyFIQ0` is now the family default and the 3518D's override is gone. After a reboot
+  `/proc/consoles` lists `ttyFIQ0`, `serial-getty@ttyFIQ0` runs, `Registered FIQ tty driver` with
+  the stock `-ENXIO` lines; ❓ output on the header, no serial cable on.

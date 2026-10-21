@@ -12,8 +12,6 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `/` (root)                | `compatible` prepends `"r69-xr821,rk3518-tvbox"`, appends `"rockchip,rk3528a"`; factory `rockchip,rk3518` kept        | rkmpp has no `rk3518` entry and cannot find the VPU without the alias                   |
 | `/` (root)                | `model` → `R69 XR821_V1.1`                                                                                            | the factory string names the reference EVB, not this box                                |
-| `serial@ff9f0000` (uart0) | `status` → `okay`, `pinctrl-0 = <&uart0m0_xfer>`                                                                      | debug-header UART → `ttyS0` console @ 1500000                                           |
-| `fiq-debugger`            | `status` → `disabled`                                                                                                 | 🟡 **questionable** — frees `ff9f0000` for `ttyS0`, but stock runs `ttyFIQ0` on it fine |
 | `serial@ffa00000` (uart2) | `bluetooth` child added, **commented out**                                                                            | see below: the driver it needs is not merged yet                                        |
 | `pwm@ffa90030` (IR)       | `remote_support_psci` `0` → `1`                                                                                       | IR as ATF wake source (remote wakes the box from off)                                   |
 | `gpu@ff700000`            | `interrupt-names`/`clocks`/`clock-names` → lima style (`bus`/`core`)                                                  | Armbian uses mainline `lima`, not the vendor Mali blob                                  |
@@ -22,17 +20,10 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 | `watchdog@ffac0000`       | `status` → `okay`                                                                                                     | `/dev/watchdog` for systemd's `RuntimeWatchdogSec`                                      |
 | `chosen`                  | **removed**                                                                                                           | u-boot supplies bootargs, and the factory string names `ttyFIQ0`                        |
 
-> **The `fiq-debugger` graft is optional.** Disabling it frees `ff9f0000` for a conventional
-> `ttyS0`; keeping it reaches the same UART as `ttyFIQ0`, which is what stock does.
->
-> The debugger half does not initialise either way — the vendor sets
-> `rockchip,irq-mode-enable = <1>`, so `IRQ fiq not found` and `could not install nmi irq handler`
-> are by design, not breakage; stock Android logs the same three `-ENXIO` lines. What runs is
-> `Registered FIQ tty driver`, a plain tty over uart0 in IRQ mode.
->
-> The trade is stock fidelity and two fewer hunks against the conventional `ttyS0`/`ttyS2` namespace
-> and no contention with the base's own `serial-getty@ttyFIQ0`. ❓ The H96 Max 3518D runs without
-> the graft; this board and the H96 Max keep it until that is proven.
+> **uart0 and `fiq-debugger` stay stock**, console `ttyFIQ0`: the debugger half never initialises
+> (the vendor sets `rockchip,irq-mode-enable = <1>`, so `IRQ fiq not found` is by design), and what
+> runs is a plain tty over uart0. Reverted 2026-10-20: a `ttyS0` graft, uart0 `okay` and
+> `fiq-debugger` `disabled`, bought nothing and gave the family two console names.
 
 Everything else is factory, unchanged. The label is what names the sysfs entry
 (`/sys/class/leds/power`); the node was renamed to match so the tree doesn't read as a trap.

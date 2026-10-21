@@ -31,8 +31,8 @@ here has to be measured with `evtest`, not inferred.
 
 ## What that means for the grafts
 
-`firmware/h96max-h313/board.patch` is 47 changed lines. Every hunk except two lands on a region that is
-**byte-identical** in this board's tree, so it should apply essentially verbatim:
+`firmware/h96max-h313/board.patch` is 47 changed lines. Every hunk except two lands on a region that
+is **byte-identical** in this board's tree, so it should apply essentially verbatim:
 
 | Graft                                                        | Transfers?                                                    |
 | ------------------------------------------------------------ | ------------------------------------------------------------- |
@@ -209,16 +209,10 @@ did not reply.
 
 ## Console: this board keeps the vendor's
 
-The R69 and H96 Max enable uart0 as `ttyS0` and disable `fiq-debugger`. **This board does not.** The
-graft was justified by reading `could not install nmi irq handler` as breakage, but stock Android
-logs the same three `-ENXIO` lines on this hardware and its `ttyFIQ0` console works — the vendor
-sets `rockchip,irq-mode-enable = <1>` because there is no FIQ here. Nothing is lost by leaving it:
-the debugger half never initialises either way, so `ttyFIQ0` is a plain tty over uart0.
+uart0 and `fiq-debugger` stay stock, as on the H96 Max H313 and the R69 since 2026-10-20: stock
+Android logs the same three `-ENXIO` lines on this hardware and its `ttyFIQ0` console works. The
+vendor sets `rockchip,irq-mode-enable = <1>` because there is no FIQ here, so `ttyFIQ0` is a plain
+tty over uart0. `console=ttyFIQ0` is the family default; the baud comes from the node's
+`rockchip,baudrate`, and systemd's getty-generator follows `/proc/consoles`.
 
-So the tree is stock for both nodes and `board.conf` sets
-`BOARD_SERIALCON="earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0"`; the baud comes from the
-node's `rockchip,baudrate`. systemd's getty-generator reads `/proc/consoles`, so the login prompt
-follows with no unit of ours.
-
-🟡 **Untested** — the box has not booted since. If `ttyFIQ0` does not come up, the other two boards
-show the fallback: graft uart0 to `okay`, `fiq-debugger` to `disabled`, drop `BOARD_SERIALCON`.
+🟡 this board has not booted since; the H313 runs the same nodes.

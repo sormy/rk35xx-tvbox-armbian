@@ -77,9 +77,9 @@ gpt_first_lba() {
   case "$parray" in ''|*[!0-9]*|0) echo "GPT header names no partition array in $1" >&2; return 1 ;; esac
   od -An -tu8 -j $((parray * 512 + 32)) -N 8 "$1" | tr -d ' '
 }
-# Serial console on ff9f0000, never Armbian's stock ttyS2 (= a data UART on these boards). Boards
-# that keep the vendor's fiq-debugger reach the same UART as ttyFIQ0 and set BOARD_SERIALCON.
-SERIALCON="${BOARD_SERIALCON:-earlycon=uart8250,mmio32,0xff9f0000 console=ttyS0,1500000}"
+# Serial console on ff9f0000 as the vendor's fiq-debugger names it, never Armbian's stock ttyS2
+# (= a data UART on these boards)
+SERIALCON="${BOARD_SERIALCON:-earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0}"
 # the in-kernel rockchip_pwm_remotectl lacks the shared-IRQ fix: it storms the group IRQ and drops
 # IR wake, so our patched module owns the receiver instead
 IR_BLACKLIST="${BOARD_IR_BLACKLIST-initcall_blacklist=rk_pwm_driver_init}"
