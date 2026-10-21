@@ -39,7 +39,7 @@ box runs the R69 image from SD (the eMMC's Android is untouched):
 |                                          | vendor inside), p14=`userdata`                                       |
 | `eth-phy.txt`                            | PHY id `0x00441400` — same RK630-class FEPHY as the R69; the         |
 |                                          | `RK630 PHY` DKMS driver already bound                                |
-| `cpufreq.txt`, `thermal.txt`             | OPPs 408–2016 MHz; soc-thermal ~48 °C                                |
+| `cpufreq.txt`, `thermal.txt`             | OPPs 408–2016 MHz, the rock-2f table; soc-thermal ~48 °C             |
 | `leds.txt`, `input-devices.txt`          | LED classes + input devices as exposed by the **R69 DTB** (wiring    |
 |                                          | unverified on this board)                                            |
 
