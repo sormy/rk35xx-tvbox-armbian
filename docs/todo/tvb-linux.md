@@ -275,8 +275,8 @@ no reflash. Armbian first: every box deployed today runs it.
 1. back up the eMMC, by maskrom or SD;
 2. install `tvb-archive-keyring.gpg` and the `deb` line;
 3. install `tvb-<board>`, `linux-image-tvb-<family>` and `u-boot-menu`;
-4. remove Armbian's kernel and `armbian-bsp-*`, the `rk35xx-*` overlay as
-   `docs/todo/tvb-namespace.md` migrates it, and the `linux-u-boot-*` hold once `tvb-<board>` is in;
+4. remove Armbian's kernel and `armbian-bsp-*`, the `rk35xx-*` overlay as `docs/migrate.md` retires
+   it, and the `linux-u-boot-*` hold once `tvb-<board>` is in;
 5. reboot on serial: `uname -r` ends in `-tvb-<family>`, and validation passes.
 
 Armbian and plain Debian are what it is run on. ❓ Ubuntu: our kernel debs need only `kmod` and
@@ -377,8 +377,6 @@ Two-way:
   `debian.sources`, or a one-line `.list`?
 - The keyring's name, which every source's `signed-by=` names: `tvb-archive-keyring`, or
   `tvbian-archive-keyring` after `debian-archive-keyring`?
-- The `tvb-` rename in `docs/todo/tvb-namespace.md` before phase 3, so packages ship the final
-  names?
 - BTF: dropped with debug info to fit the runner, or kept for BPF tools at the cost of disk?
 - A repin that moved a kernel: publish only after the validation script passes on one box of that
   family, or automatically?

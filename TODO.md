@@ -32,7 +32,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       a `wlan0` network file in the payload.
 
 - [ ] **RK35xx boards: size CMA for 4K at 60 fps.** The M20 needed 768 MiB, not 384, to decode 4K at
-      60 fps and copy it into render buffers. Measure each board's CMA peak on that load.
+      60 fps and copy it into render buffers. The H313's factory tree reserves 8 MiB, its video
+      engines behind an IOMMU; ours is `cma=256M`. Measure `CmaFree` during 4K decode on each board.
+- [ ] **H96 Max M20: sluggish.** Idle, zram and CMA sat unused for 8 h 26 min, 2026-10-20, which
+      says nothing about load. Play 4K and watch `vmstat 1` and `CmaFree` together.
 
 - [ ] **H96 Max M20: 4K at 60 fps on screen, through a COMPOSE selection.** `meson-codecs` `0017`
       decodes HEVC and VP9 to a half-size CAPTURE when asked; not yet watched at 60 Hz. Then:
@@ -44,7 +47,12 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       (`docs/todo/rk35xx-hdmi-modes.md`). Record each board's GPU clock and devfreq governor, then
       rerun glmark2 on the same panel.
 
-- [ ] **Rename the installed prefix `rk35xx-` to `tvb-`.** Design: `docs/todo/tvb-namespace.md`.
+- [ ] **Retire the overlay.** No box runs it since 2026-10-20: `payload.list`, `rk35xx-update`,
+      `build-image.sh`, and `firmware/common/`'s overlay-only files (`mac-pin`, `vendor-storage`,
+      the kernel hooks) go, with the docs that describe them, `docs/apt-upgrade.md` among them.
+      `docs/migrate.md` stays: the repo is public, and a box elsewhere may still run the overlay.
+- [ ] **Check the `ttyFIQ0` login on a serial header.** Every Rockchip board's console is `ttyFIQ0`,
+      seen in `/proc/consoles` with its getty running; never on a cable.
 - [ ] **Name repo folders by what they hold.** `firmware/` holds boards, not only blobs, and clashes
       with `/lib/firmware`: `firmware/<board>/` to `boards/<board>/`, `firmware/common/<chip>/` to
       `chips/<chip>/`. Patches move beside their owner: kernel topics to `kernel/patches/<topic>/`,
@@ -87,19 +95,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       relocates over.
 - [ ] **Close the known gaps** listed in `patches/mt76-mt7668/README.md` and
       `docs/h96max-m20/board.md`.
-- [ ] **Drop `rk35xx-mac-pin` wherever the drivers already give each interface its own address.**
-      The H96 Max M20 needs no pinning: mt76 reads the Wi-Fi address from the chip's eFUSE. Per
-      board, boot without the service twice and compare every interface's address; remove it, its
-      unit and its payload lines where all are stable, and close `docs/todo/rk35xx-mac-pinning.md`
-      if none is left.
-- [ ] **Keep the vendor console on the R69 and the H96 Max H313, as the 3518D does.** Why it is
-      safe: `docs/h96max-3518d/dtb.md`, "Console: this board keeps the vendor's".
-  - Drop the `board.patch` hunks that enable uart0 as `ttyS0`, disable `fiq-debugger` and remove
-    `chosen`; set `BOARD_SERIALCON` to `console=ttyFIQ0` as the 3518D's `board.conf` does.
-  - Update `upstream/r69/header.dts` and `upstream/h96max-h313/header.dts` to list only what
-    remains, each board's `dtb.md`, and `upstream/h96max-3518d/header.dts`, which contrasts itself
-    with the ZX.
-  - Verify on each box: the serial login prompt, and a boot log with no new errors.
 - [ ] **Wake the H96 Max M20 from `s2idle` on its Bluetooth remote**, its only remote. The SDIO
       interrupt carries the wake but `meson-gx-mmc` never arms it as a wake source, and `btmtksdio`
       keeps the card powered only in runtime suspend. The other route is the combo chip's host-wake
@@ -121,7 +116,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport    |
 | `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset         |
 | `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                             |
-| `docs/todo/tvb-namespace.md`            | the `tvb-` rename and its migration           |
 | `docs/todo/tvb-linux.md`                | TVBian: our kernel and images on plain Debian |
 | `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login       |
 | `docs/todo/tvb-linux-build.md`          | TVBian's weekly build, hosts, caches          |
