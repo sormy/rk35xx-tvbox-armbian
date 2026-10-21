@@ -1,8 +1,8 @@
 # Armbian's vendor-kernel patches Rockchip never took
 
-Family-wide. Opened 2026-10-20, once `kernel/rk35xx.conf` pinned `develop-6.1` at `b79032684247`
-(v6.1.172) instead of Armbian's tree. What Armbian carries on top of Rockchip, checked with
-`git apply --check` against the pin, and what of it these boxes would use.
+Family-wide. Opened 2026-10-20, once `kernel/rk35xx.conf` took `develop-6.1` instead of Armbian's
+tree. What Armbian carries on top of Rockchip, checked with `git apply --check` against
+`b79032684247`, the commit first pinned, and what of it these boxes would use.
 
 ## Where Armbian's tree stands
 
@@ -32,8 +32,9 @@ panthor, PCIe, panels) does not reach an RK3528.
 
 `rkr5.1` had it in-tree, `drivers/net/wireless/aic8800_sdio/`, where
 `patches/linux-rockchip/wireless-aic8800-stable-mac.patch` lands. `rkr7.2` dropped it for Radxa's
-`aic8800-sdio-dkms` (`radxa-pkg/aic8800`), citing a doubled firmware path. The R69 moves to TVBian
-with one of the two imported, the stable-MAC patch rebased onto it.
+`aic8800-sdio-dkms` (`radxa-pkg/aic8800`), citing a doubled firmware path. TVBian builds the
+`rkr5.1` one, `modules/aic8800.conf`, with the stable-MAC patch; it does not build on 6.12, where
+Radxa's is the source.
 
 ## Decide
 

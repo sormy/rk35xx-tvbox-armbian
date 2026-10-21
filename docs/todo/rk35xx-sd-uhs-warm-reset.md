@@ -5,8 +5,8 @@ the SD half only, and costs SDR104 on the SD slot — 148.5 MHz down to high-spe
 that back is what this TODO buys.
 
 ❌ **The Wi-Fi half is unmitigated.** The 1 s → 10 s scan-card wait that fixed it was a patch
-against the Armbian build tree in the closed `armbian/build#10440`. The overlay stages the pinned
-upstream driver unmodified: `skw_sdio_scan_card()` in
+against the Armbian build tree in the closed `armbian/build#10440`. `modules/swt6621s.conf` builds
+the pinned driver with our patches, none of them this one: `skw_sdio_scan_card()` in
 `drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c` still calls
 `wait_for_completion_timeout(&skw_sdio->scan_done, msecs_to_jiffies(1000))` at commit `b1b15016`, so
 a warm reboot can still come up without `wlan0`.
@@ -41,10 +41,8 @@ bus never came up, ACMD41/CMD5 means it did and the card refused. Nothing captur
 **The `static bool inherit` bug in `dw_mci_v2_execute_tuning()`** — a per-host decision kept in a
 function-scope static, so on a SoC with two v2-tuning controllers only the first to probe adopts its
 firmware sample phase. Real, and a fix exists as
-`patch/kernel/rk35xx-vendor-6.1/mmc-dw-mmc-rockchip-per-host-inherit.patch` in the Armbian build
-checkout — **untracked there, on branch `r69-xr821`**, so a `git clean` loses it. Never tested on
-hardware, and it cannot reach an overlay box in any case: Armbian's `patch/` and `userpatches/`
-trees only apply when you build the kernel, and we take ours from `apt`.
+`patches/linux-rockchip/mmc-dw-mmc-rockchip-per-host-inherit.patch`, not in `kernel/rk35xx.conf`:
+never tested on hardware, and neither board here can trigger it.
 
 It cannot explain the H96 Max: only `mmc@ffc30000` sets `rockchip,use-v2-tuning` there, and the SDIO
 `mmc@ffc20000` `-110`s too without it.
@@ -74,8 +72,7 @@ non-v2 path whatever the SD does. The two subjects are unrelated.
    `mmc` setup against ours.
 6. **Measure what the strip costs.** `fio` on the SD with and without the UHS properties; the ~70
    MB/s SDR104 figure quoted in `board.md` is nominal, not measured on this board.
-7. **Carry the scan-card wait in the overlay.** `fetch-seekwave-src.sh` has no patch step; the IR
-   driver next door shows the pattern (`patch -p1` after the fetch). Restores a fix already proven
+7. **Carry the scan-card wait** as a patch in `modules/swt6621s.conf`. Restores a fix already proven
    over 15 warm reboots.
 
 ## Done means

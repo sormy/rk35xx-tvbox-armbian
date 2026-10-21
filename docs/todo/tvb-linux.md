@@ -1,7 +1,7 @@
 # tvb-linux: our kernel, our image
 
-Opened 2026-10-18. Phases 1 and 2 run, since 2026-10-20: the M20 on the meson64 kernel, the H313 on
-rk35xx, both migrated in place (`docs/migrate.md`); `./build.sh` builds the kernels, the board and
+Opened 2026-10-18. Phases 1 and 2 run, since 2026-10-20: every box here migrated in place, on the
+meson64 or the rk35xx kernel (`docs/migrate.md`); `./build.sh` builds the kernels, the board and
 firmware packages, the keyring and the M20's image (`docs/build.md`). What goes into the rootfs is
 in `docs/todo/tvb-linux-rootfs.md`.
 
@@ -12,9 +12,9 @@ and nothing of Armbian's is needed.
 
 ## Contributions break little
 
-A change reaches only what depends on it. The three rk35xx boxes run on a stock vendor kernel with
-no kernel patch applied; the M20 needed kernel patches only for a Wi-Fi chip without a working
-driver. With the right base, a box is data.
+A change reaches only what depends on it. The rk35xx kernel carries four small patches over
+Rockchip's tree; the M20's carry the Wi-Fi, Bluetooth, HDMI and codec drivers mainline lacks. With
+the right base, a box is data.
 
 | Change                      | Lives in                            | Can break               |
 | --------------------------- | ----------------------------------- | ----------------------- |
@@ -88,9 +88,9 @@ Why no Armbian pin, measured 2026-10-19:
   tested pairing once the kernel moves.
 - Of those 65 patches, about 770 lines touch code a GX box runs; the rest is in-tree `vdec` that
   `meson-codecs` supersedes, and other boards' trees.
-- Armbian's `rk-6.1-rkr5.1`, which the boxes run today, is Rockchip's snapshot of 2025-01-25 at
-  6.1.115 plus 659 commits, 382 of them other boards' trees. Rockchip's `develop-6.1` is at 6.1.172,
-  and Armbian's newest branch, `rk-6.1-rkr7.2`, is built on its `77168c8d5ab8`.
+- Armbian's `rk-6.1-rkr5.1`, which the boxes ran before TVBian, is Rockchip's snapshot of 2025-01-25
+  at 6.1.115 plus 659 commits, 382 of them other boards' trees. Rockchip's `develop-6.1` is at
+  6.1.172, and Armbian's newest branch, `rk-6.1-rkr7.2`, is built on its `77168c8d5ab8`.
 
 ### Patches
 
@@ -111,9 +111,9 @@ and their PRs. That is the only copy.
   suspend and VRTC, the MMC core clocks, HDMI-audio codec selection, the GPIO IRQ fix. The aiu patch
   is rebased for 6.18.57 once, there.
 - **One that lands upstream** leaves ours on the bump that pins it in: GX socinfo's first patch is
-  already in mainline's tree, so it drops when meson's series moves past it. The five in
-  `patches/linux-rockchip/` are PRs #523–527 against `armbian/linux-rockchip`, to resubmit to
-  Rockchip's tree.
+  already in mainline's tree, so it drops when meson's series moves past it. Those in
+  `patches/linux-rockchip/` stay ours: Armbian closed their PRs unmerged, and Rockchip takes no
+  outside patches.
 
 ### Board trees
 
@@ -179,7 +179,7 @@ kernel, as Debian's `linux-image-arm64` does.
 
 One generator, `./build.sh debs`, emits every package as a plain Debian `.deb`: the kernel's through
 `make bindeb-pkg`, the rest through `dpkg-deb --build` from a `control` and a file list it writes
-from `board.conf` and `payload.list`.
+from `board.conf` and `package.list`.
 
 `<kernelrelease>` is what `uname -r` prints, `6.18.57-tvb-meson64`: `make bindeb-pkg` with
 `LOCALVERSION=-tvb-<family>` names the packages and `/lib/modules/` from it, as Debian's kernels are
@@ -264,13 +264,13 @@ family differs only in how it gets there. A factory U-Boot too old for extlinux 
 | rk35xx  | `extlinux.conf`, via `distro_bootcmd` | kernel postinst, `u-boot-menu` |
 | meson64 | FAT `boot.scr`, then the same         | image build                    |
 
-🟡 rk35xx: `docs/uboot.md` says mainline's `distro_bootcmd` boots the image; `extlinux` is not yet
-tried on our FIT. Console, `cma=` and the IR blacklist move to the extlinux `append` line.
+✅ rk35xx: our FIT's bootstd reads `extlinux.conf` ahead of `boot.scr`; the console, `cma=` and the
+IR blacklist are in `tvb-<board>`'s `u-boot-menu` drop-in.
 
 ## Migrating a running box
 
 `docs/migrate.md` moves a Debian-family system on a supported board to TVBian's packages in place,
-no reflash. Armbian first: every box deployed today runs it.
+no reflash. Armbian first: every box here ran it, and all have moved.
 
 1. back up the eMMC, by maskrom or SD;
 2. install `tvb-archive-keyring.gpg` and the `deb` line;

@@ -6,8 +6,8 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 - [ ] **H96 Max M20: VC-1 needs GStreamer 1.26.6.** 1.26.2, trixie's, maps no caps to
       `V4L2_PIX_FMT_VC1_ANNEX_G`: `v4l2vc1dec` registers and fails "Invalid caps". By hand until
-      trixie moves: `patches/gst-plugins-good/README.md`. Shipping it would mean a diverted system
-      plugin in the payload.
+      trixie moves: `patches/gst-plugins-good/README.md`. TVBian replaces no Debian package, so it
+      waits for trixie or upstream.
 
 - [ ] **H96 Max M20: ffmpeg's `*_v4l2m2m`.** Every codec works on 9.0.2 with
       `research/ffmpeg-v4l2m2m/`'s patches; Debian's 7.1.5 still fails MPEG-4, VC-1, raw streams and
@@ -27,10 +27,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       `SIGSEGV` in `gst_memory_unmap`, in the plugin's input pool; `v4l2h265enc` and ffmpeg's
       `h264_v4l2m2m` encode.
 
-- [ ] **H96 Max M20: Wi-Fi on a fresh image.** The box has no Ethernet, and Armbian's netplan gives
-      `wl*` no DHCP. Check whether the first-boot wizard's Wi-Fi setup gets an address; if not, ship
-      a `wlan0` network file in the payload.
-
 - [ ] **RK35xx boards: size CMA for 4K at 60 fps.** The M20 needed 768 MiB, not 384, to decode 4K at
       60 fps and copy it into render buffers. The H313's factory tree reserves 8 MiB, its video
       engines behind an IOMMU; ours is `cma=256M`. Measure `CmaFree` during 4K decode on each board.
@@ -48,11 +44,15 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       rerun glmark2 on the same panel.
 
 - [ ] **TVBian: write `tvb-firstlogin`.** Designed in `docs/todo/tvb-linux-rootfs.md`, "First
-      login"; not built, so a fresh image stops at root, `1234`, expired.
-- [ ] **Retire the overlay.** No box runs it since 2026-10-20: `payload.list`, `rk35xx-update`,
-      `build-image.sh`, and `firmware/common/`'s overlay-only files (`mac-pin`, `vendor-storage`,
-      the kernel hooks) go, with the docs that describe them, `docs/apt-upgrade.md` among them.
-      `docs/migrate.md` stays: the repo is public, and a box elsewhere may still run the overlay.
+      login"; not built, so a fresh image stops at root, `1234`, expired. Its Wi-Fi step is the
+      M20's only network on a fresh image.
+- [ ] **Retire the overlay, once the weekly build publishes.** No box runs it since 2026-10-20.
+      Going: `payload.list`, `rk35xx-update`, `rk35xx-deploy`, `build-image.sh`, the
+      `fetch-*-src.sh` scripts, `firmware/common/`'s overlay-only files (`mac-pin`,
+      `vendor-storage`, `firstboot`, `boardname`, `dtb-persist`, `platform-install`, the kernel
+      hooks), every `board.conf`'s `BOARD_DKMS_FETCH` and hooks, and the docs and sections
+      describing them, `docs/apt-upgrade.md` among them. `docs/migrate.md` stays: the repo is
+      public, and a box elsewhere may still run the overlay.
 - [ ] **Check the `ttyFIQ0` login on a serial header.** Every Rockchip board's console is `ttyFIQ0`,
       seen in `/proc/consoles` with its getty running; never on a cable.
 - [ ] **Name repo folders by what they hold.** `firmware/` holds boards, not only blobs, and clashes
@@ -65,12 +65,13 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       mixes the two in one string.
   - `board.conf` gets the product name and the PCB silkscreen as two settings; `board-name` derives
     from them the same way on every board.
-  - A key rename moves installed paths and the hostname: it rides the prefix rename's migration.
+  - A key rename is a package rename, `tvb-<board>`, and a hostname change.
 
-- [ ] **Install an Amlogic box to eMMC from its booted stick.** `scripts/aml-emmc-install` run on
-      the box against the eMMC's block device, with the backup on the stick; same regions, same key
-      check. `armbian-install` cannot: it zeroes 0-10 MiB, partitions from 16 MiB over `reserved`,
-      and writes the donor board's `u-boot.bin` at sector 0.
+- [ ] **Install an Amlogic box to eMMC from its booted stick.** `tvb-install` (phase 5 of
+      `docs/todo/tvb-linux.md`) on the box against the eMMC's block device, with the backup on the
+      stick; `scripts/aml-emmc-install`'s regions and key check. `armbian-install` cannot: it zeroes
+      0-10 MiB, partitions from 16 MiB over `reserved`, and writes the donor board's `u-boot.bin` at
+      sector 0.
 - [ ] **Install an Amlogic box to eMMC: single boot, as CoreELEC does.** Android goes, `cache` goes,
       `env` moves down; only the bootloader areas are lost. One image per board, written by
       `amlcmd restore`, which never writes a hole:
@@ -107,12 +108,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 | File                                    | Open question                                 |
 | --------------------------------------- | --------------------------------------------- |
-| `docs/todo/apt-packaging.md`            | the payload as local `.deb`s                  |
 | `docs/todo/media-stick.md`              | the universal media stick                     |
-| `docs/todo/recipes.md`                  | a board composed from recipes                 |
-| `docs/todo/h96max-issues.md`            | H96 Max open items                            |
 | `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                              |
 | `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 unclockable modes, slow EDID probes    |
+| `docs/todo/rk35xx-kernel-patches.md`    | Armbian's vendor patches Rockchip never took  |
 | `docs/todo/rk35xx-mac-pinning.md`       | MAC pinning below userspace                   |
 | `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it                 |
 | `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport    |

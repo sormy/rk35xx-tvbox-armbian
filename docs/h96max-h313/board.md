@@ -39,6 +39,7 @@ Not a spec — one box, one kernel. If yours lands in the same ballpark, nothing
 | Wi-Fi (5 GHz, ax) | **414 Mbit/s down / 380 Mbit/s up** to a wired peer, −34 dBm           |
 | eMMC sequential   | **91.6 MB/s read · 44.0 MB/s write** (read is the HS200 ceiling)       |
 | eMMC random 4K    | **3,016 read / 3,783 write IOPS**                                      |
+| SD, UHS stripped  | **22.8 MB/s read · 19.7 write**, 1913/393 IOPS: the 50 MHz bus         |
 | USB 3 sequential  | **389 MB/s read · 360 MB/s write** — SuperSpeed, UAS, ~18% of one core |
 | USB 3 random 4K   | **9,120 read / 8,380 write IOPS** (35.6 / 32.7 MB/s)                   |
 | GPU               | **glmark2 41** at 1080p (lima, Mali-450)                               |

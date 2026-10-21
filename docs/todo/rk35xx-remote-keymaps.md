@@ -26,7 +26,7 @@ voice are placeholders, not meanings; `KEY_PAGEUP` for a channel rocker on a TV 
 ## The shared USB id is not a shared layout
 
 All three boards' worklogs record their bundled remote as `2B54:1600`, each measured on that board,
-so `rk35xx-bt-remote.hwdb` would **match** on all three. It does not follow that it is **right** on
+so `60-tvb-bt-remote.hwdb` would **match** on all three. It does not follow that it is **right** on
 all three: the map names scancodes, it was built from the 3518D handset, and the M20's sends the
 same scancodes, and OEM remotes reuse ids across layouts. ❓ on the R69 and H96 Max until someone
 captures their scancodes.
@@ -36,9 +36,9 @@ captures their scancodes.
 - **Does the IR table in each `board.dts` need a patch?** The `ir_keyN` scancode-to-keycode pairs
   are ours. Decide the correct keycode per printed button once, then make every board's table agree
   with it and with the BLE map.
-- **Does the BLE `hwdb` need more overrides?** `firmware/common/bt-remote.hwdb` fixes nine
-  usages today, ✅ verified on the handset. The remaining gap is the four app shortcuts; everything
-  else on that remote now matches its printed button.
+- **Does the BLE `hwdb` need more overrides?** `firmware/common/bt-remote.hwdb` fixes nine usages
+  today, ✅ verified on the handset. The remaining gap is the four app shortcuts; everything else on
+  that remote now matches its printed button.
 - **Converge the app shortcuts on `KEY_PROG1`…`KEY_PROG4`.** Settled on BLE, 2026-09-07: `c0056`
   `c003b` `c003d` `c003e` are YouTube, Netflix, Prime Video, Google Play in that order. The two IR
   tables use `KEY_F*` and disagree with each other, so they are the ones to change — `KEY_PROG*` is

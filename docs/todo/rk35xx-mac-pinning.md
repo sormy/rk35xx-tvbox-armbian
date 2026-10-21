@@ -1,7 +1,7 @@
 # Pinning MAC addresses: userspace is the wrong layer
 
-On TVBian `mac-pin` is gone: the H313 runs without it, 2026-10-20, every address from its driver. It
-stays in `firmware/common/` only for overlay boxes, until the overlay goes.
+On TVBian `mac-pin` is gone: no box runs it since 2026-10-20, each address from U-Boot or its
+driver. It stays in `firmware/common/` until the overlay goes.
 
 Family-wide. Opened 2026-09-06, after `rk35xx-mac-pin` turned out to be the single largest cost in
 the H96 Max 3518D's boot — 12.6 s of a 19.7 s userspace, and 2.0 s even once fixed.
@@ -31,11 +31,10 @@ those units, not a property of the platform: a unit carrying `BT_MAC` would be i
 Whatever replaces `mac-pin` should consume the contract, not the two ids these boards happen to
 populate.
 
-## Below userspace, once we build it
+## Below userspace
 
-Rejected while the kernel came from Armbian: an overlay box cannot ship kernel patches. Under
-`docs/todo/tvb-linux.md` it can, so each address is set before the interface exists and `mac-pin`
-goes.
+An overlay box could not ship kernel patches; TVBian's kernel does, so each address is set before
+the interface exists.
 
 | Interface      | Source, then fallback             | Patch                              |
 | -------------- | --------------------------------- | ---------------------------------- |
@@ -74,8 +73,8 @@ subsequent boot free.
 2026-08) lets an eMMC partition node carry an nvmem layout; its bindings are in v7.3-rc1, the block
 provider itself is reviewed but not yet applied. On top of it, a small layout driver in the shape of
 `onie-tlv` would parse `DVKR` — newest valid copy, tag table — into `mac-address`, Wi-Fi and
-`local-bd-address` cells for each board's tree to point at. It reaches these boards only once
-Armbian ships a kernel carrying it.
+`local-bd-address` cells for each board's tree to point at. It reaches these boards once our kernel
+carries it.
 
 ## The measurement that motivated this
 

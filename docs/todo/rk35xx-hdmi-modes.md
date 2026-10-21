@@ -49,18 +49,19 @@ The warning text is misleading. `rockchip_drm_dclk_round_rate()` prints it whene
 `clk_round_rate()` returns negative, and RK3528 is not in that function's `switch`, so it takes the
 plain default. Nothing is NULL.
 
-**Workaround, per display, not baked into the image:** pin a supported mode in
-`/boot/armbianEnv.txt`.
+**Workaround, per display, not baked into the image:** pin a supported mode on the kernel command
+line, through a `u-boot-menu` drop-in:
 
-```
-extraargs=video=HDMI-A-1:1920x1080@60
+```sh
+echo 'U_BOOT_PARAMETERS="$U_BOOT_PARAMETERS video=HDMI-A-1:1920x1080@60"' | sudo tee /etc/u-boot-menu/conf.d/zz-video.conf   # box
+sudo u-boot-update   # box
 ```
 
 Verified: the commit then reads `set dclk_vop0 to 148500000, get 148500000`.
 
-**Fix, if one is ever carried:** reject in `vop2_crtc_mode_valid()` on the rounded rate rather than
-the stale output type. `round_rate` is exact-or-`-EINVAL` on this PHY, so `clock <= 0` suffices and
-needs no connector type.
+**Fix, as a patch in `kernel/rk35xx.conf`:** reject in `vop2_crtc_mode_valid()` on the rounded rate
+rather than the stale output type. `round_rate` is exact-or-`-EINVAL` on this PHY, so `clock <= 0`
+suffices and needs no connector type.
 
 ## 2. Single-byte EDID probes stall for ~1 s each
 

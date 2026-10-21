@@ -1,7 +1,8 @@
 # Restoring OP-TEE, and whether Widevine could follow
 
-Family-wide. Opened 2026-09-11 while establishing what reads `SSKR` — the answer under Armbian is
-nothing, because our FIT carries no TEE. This is the file for whether that is worth changing.
+Family-wide. Opened 2026-09-11 while establishing what reads `SSKR` — the answer is nothing, because
+our FIT carries no TEE; the kernel's OP-TEE probe fails, `api uid mismatch`, `-22`. This is the file
+for whether that is worth changing.
 
 ## What the stock image holds
 

@@ -1,6 +1,7 @@
 # tvb-linux: the rootfs
 
-Opened 2026-10-18. Planned, not started. The image build itself is in `docs/todo/tvb-linux.md`.
+Opened 2026-10-18. Built: `image/`, its `build.sh`, `packages.list` and `rootfs/`; booted on no box
+yet. The image build itself is in `docs/todo/tvb-linux.md`.
 
 Every image is minimal and every package in it is Debian's, except the few `tvb-*` ones, so
 `apt upgrade` keeps the whole box current. Armbian contributes nothing at runtime.
@@ -32,7 +33,7 @@ per-release layout, `dists/<suite>/`.
 
 ## Minimal
 
-`mmdebstrap --variant=minbase` of the suite, plus one list, `rootfs/packages.list`, shared by every
+`mmdebstrap --variant=minbase` of the suite, plus one list, `image/packages.list`, shared by every
 board. A board adds only through its `tvb-<board>` package's `Depends:`, `bluez` where it has
 Bluetooth; nothing per image.
 

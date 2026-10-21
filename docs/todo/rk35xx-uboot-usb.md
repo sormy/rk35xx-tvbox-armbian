@@ -185,7 +185,7 @@ with this work once it lands.
 ## Open questions before doing it
 
 - **SPL size.** `CONFIG_SPL_MAX_SIZE=0x40000`; adding USB to U-Boot proper should not touch SPL, but
-  confirm the FIT still fits where `build-image.sh` writes it.
+  confirm the FIT still fits its 2 MiB slot.
 - **Does `ums` reach the eMMC** on this SoC, or only an SD? Untested.
 - **Upstreamability.** rk3528 USB nodes are missing from mainline entirely. Adding them is
   SoC-level, not board-level, so unlike a board DT it benefits every rk3528 user and is worth

@@ -122,10 +122,10 @@ file is a full config. `V4L2_H264`, `V4L2_VP9` and `VIDEO_ROCKCHIP_VDEC` are abs
 
 **DKMS cannot lift that gate.** The `media_request_*` symbols are exported whatever the bool says,
 so a module would link — but the gate is an `#ifdef` inside `mc.ko` and `videobuf2-v4l2.ko`, and no
-out-of-tree module reaches another module's compilation unit. **The fix is one symbol in Armbian's
-config:** `CONFIG_VIDEO_ROCKCHIP_VDEC=m` selects the request API, `V4L2_H264` and `V4L2_VP9`
-together, and the staging driver it enables matches only `rockchip,rk3399-vdec`, so it never binds
-here.
+out-of-tree module reaches another module's compilation unit. **The fix is one symbol in
+`kernel/rk35xx.fragment`:** `CONFIG_VIDEO_ROCKCHIP_VDEC=m` selects the request API, `V4L2_H264` and
+`V4L2_VP9` together, and the staging driver it enables matches only `rockchip,rk3399-vdec`, so it
+never binds here.
 
 **The port is DKMS-shaped and the variant delta is small.** RK3528 is **VDPU382**; mainline carries
 its neighbours VDPU381 (RK3588) and VDPU383 (RK3576), not this one. In MPP the per-SoC delta is
