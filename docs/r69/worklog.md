@@ -1722,3 +1722,27 @@ at all.
 `u-boot` image changed; the three ATF blobs and the device tree are byte-identical to what the
 container produced. ❓ Neither the FIT nor `mode-maskrom` has been booted here — both were verified
 on the H96 Max, and this box was offline for the change.
+
+### 2026-10-20 — TVBian, migrated in place
+
+- No backup, by choice. The box's only network is the AIC8800, out of tree on our kernel, so the
+  first boot was meant as a one-shot back to Armbian; the unit failed on a missing
+  `/etc/u-boot-menu/conf.d/` and the menu stayed on ours. Wi-Fi came up anyway, −34 dBm HE-MCS 11.
+- DKMS built the overlay's `rockchip-pwm-remotectl-rk35xx` for 6.1.172, where it would shadow the
+  built-in driver; removed for our kernel before the boot.
+- Bluetooth through serdev: `hci0` on UART, `serial0-0` bound, no `rk35xx-bt`, no `hciattach`.
+- Without `mac-pin`, `wlan0` took the driver's `88:00:33:65:64:b6` from the SoC's OTP id and DHCP
+  moved the box from `.235` to `.231`. avahi came up as `cnc-2.local`, a conflict with its own stale
+  record; a restart took `cnc.local` back, and the next boot claimed it cleanly.
+- `tvb-r69`'s AIC8800 files sit at paths `armbian-firmware` also owns under `/lib`; they survived
+  its purge, `dpkg --verify tvb-r69` clean. `aic8800-firmware`, in no repo any more, went with it.
+- Our U-Boot with `0003` in both slots, the old pair in `backup/`: `eth0` `c4:2a:fe:10:51:77`, the
+  label address, where the old U-Boot had handed up `36:c8:c4:28:e4:08`. Boot 16.4 s (4.7 + 11.7),
+  reboot to SSH 32 s, nothing failed, `cncjs` and `cncjs-pendant` running, hostname `cnc` kept.
+- The AIC8800's efuse has MAC fields, contrary to 2026-08-13, and both are empty: in RF-test mode
+  (`aic8800_bsp testmode=1`, `fmacfw_rf.bin` linked to our `lmacfw_rf.bin`, one boot) `GET_MAC_ADDR`
+  and `GET_BT_MAC_ADDR` answered `00 00 00 00 00 00`, no timeout. The BT firmware derives
+  `0B:3B:22:AC:88:20` itself. A throwaway driver build reached them: 6.1 hands `SIOCDEVPRIVATE` only
+  to `.ndo_siocdevprivate`, which the driver lacks, and nothing sent `GET_BT_MAC_ADDR`. In normal
+  mode the request times out and crashes the command queue; a module reload leaves the SDIO card
+  unpowered (`-123`), so test mode takes a boot. Not shipped: diagnostics only.

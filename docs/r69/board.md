@@ -3,6 +3,11 @@
 Sold as the "R69". Its SoC reports `rk3528` — RK3518 is a variant in that family, which is what
 makes a stock ROCK 2F image the right base.
 
+Runs TVBian, migrated in place from Armbian: Debian trixie, kernel `6.1.172-tvb-rk35xx`, `tvb-r69`,
+NetworkManager, hostname `cnc`. ✅ Wi-Fi on the out-of-tree AIC8800, Bluetooth bound through serdev
+with no `hciattach`, Ethernet on the label MAC from our U-Boot, console `ttyFIQ0`, the VPU nodes,
+LEDs at boot; ❓ HDMI, suspend, the remote and IR wake on this kernel.
+
 <img src="image1.jpg" alt="The R69 RK3518 Android TV box" width="320">
 
 ## Identity — check yours matches before flashing
@@ -36,6 +41,7 @@ makes a stock ROCK 2F image the right base.
 | USB 2 random 4K  | **1,372 read / 1,699 write IOPS** (5.6 / 7.0 MB/s)                                                    |
 | CPU thermals     | 44 °C idle · **58 °C** after 5 min 4-core load, no throttling (95 °C trip)                            |
 | Boot to login    | **~17 s** from eMMC (~20 s from SD)                                                                   |
+| TVBian: boot     | **16.4 s** — 4.7 s kernel + 11.7 s userspace; reboot to SSH 32 s, 2026-10-20                          |
 | Wi-Fi            | **5 GHz** ch 40, Wi-Fi 6, WPA3-SAE, −51 dBm · also 2.4 GHz (HE, 143/129 PHY); goodput not benchmarked |
 | GPU              | **glmark2 score 41** at 2048x1152 — Mali-450 via lima, rendered on a TV                               |
 

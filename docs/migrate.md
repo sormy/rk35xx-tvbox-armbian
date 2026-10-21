@@ -1,7 +1,7 @@
 # Moving a box off the overlay, in place
 
 From Armbian with the overlay (`rk35xx-update`, `payload.list`) to what TVBian's image installs,
-without a reflash. ✅ from local debs on a meson-gxl box and two rk35xx boxes, 2026-10-20; ❓ from
+without a reflash. ✅ from local debs on a meson-gxl box and three rk35xx boxes, 2026-10-20; ❓ from
 the published repo, which does not exist yet.
 
 A board can move once `kernel/` has its `BOARD_KERNEL`. The way back is the backup: Armbian's kernel
@@ -27,6 +27,10 @@ Where `sshd` serves no `sftp` subsystem `scp` closes at once; `tar -cf - … | s
 the same files. With our `linux-headers` installed, DKMS builds the overlay's modules for our kernel
 too and archives ours as "Original modules": `sudo dkms remove <module>/<version> -k <release>`
 before the reboot puts ours back.
+
+Where the box's only network is an out-of-tree driver, make this boot a one-shot: a unit with
+`ConditionKernelVersion=<release>` writes `U_BOOT_DEFAULT=l1` into `/etc/u-boot-menu/conf.d/`
+(created first) and runs `u-boot-update`; it goes once the network is seen on our kernel.
 
 Before the reboot, `l0` is the `-tvb-<family>` kernel, with an `initrd`,
 `fdt /usr/lib/tvb/board.dtb` and the fstab's `root=`. After it, `uname -r` ends in `-tvb-<family>`.
@@ -107,7 +111,9 @@ sudo apt-get autoremove --purge -y                                        # box
 the overlay did not install stays, and `dkms` with it.
 
 Before `armbian-firmware` goes, every blob the box loads needs another owner: `dpkg -S` on its
-`/usr/lib/firmware/` path names Debian's package or ours. Every box's known here does.
+`/usr/lib/firmware/` path names Debian's package or ours. Every box's known here does. A board
+package can ship a path `armbian-firmware` also owns under the `/lib` alias:
+`dpkg --verify tvb-<board>` after the purge shows whether it survived.
 
 What the purge leaves goes by hand:
 
@@ -127,8 +133,9 @@ edit: Debian's comes out of `apt-get download systemd` with `dpkg-deb --fsys-tar
 Then `systemd-resolved` goes: purge it, delete `/etc/resolv.conf` and restart NetworkManager, which
 writes its own. The image's files replace Armbian's: fstab's options, and the journald, zram, getty,
 apt and sshd drop-ins under `image/rootfs/`, with `systemd-zram-generator`. The hostname becomes the
-board's `BOARD_HOSTNAME`, as the image's is: `sudo hostnamectl hostname <board>`, and the router's
-DNS learns it from the next DHCP lease.
+board's `BOARD_HOSTNAME`, as the image's is, unless the box has a name of its own:
+`sudo hostnamectl hostname <board>`, and the router's DNS learns it from the next DHCP lease. On a
+new address avahi can lose the name to its own stale record and take `<host>-2.local`: restart it.
 
 On the M20's FAT, `boot.scr` and `aml_autoscript` are the image's, and `u-boot.ext` is
 `/usr/lib/tvb/u-boot.bin`, the old one kept beside it until
