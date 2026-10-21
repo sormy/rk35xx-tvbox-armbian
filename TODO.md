@@ -47,6 +47,8 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       (`docs/todo/rk35xx-hdmi-modes.md`). Record each board's GPU clock and devfreq governor, then
       rerun glmark2 on the same panel.
 
+- [ ] **TVBian: write `tvb-firstlogin`.** Designed in `docs/todo/tvb-linux-rootfs.md`, "First
+      login"; not built, so a fresh image stops at root, `1234`, expired.
 - [ ] **Retire the overlay.** No box runs it since 2026-10-20: `payload.list`, `rk35xx-update`,
       `build-image.sh`, and `firmware/common/`'s overlay-only files (`mac-pin`, `vendor-storage`,
       the kernel hooks) go, with the docs that describe them, `docs/apt-upgrade.md` among them.
