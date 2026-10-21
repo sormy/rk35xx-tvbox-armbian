@@ -24,6 +24,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it                       |
 | `build-env/`        | the build environment: one container image every `./build.sh` step runs in                         |
 | `modules/`          | each out-of-tree driver: its pin, our patches, the step packaging it per kernel                    |
+| `uboot/`            | each U-Boot a board package ships: its pin and defconfig, and the step building it                 |
 
 **Repo files carry no prefix**: each board's `payload.list` names where a file installs, under that
 board's prefix. A board directory holds `board.conf`, `board-id`, `board-name`, the tree, the
