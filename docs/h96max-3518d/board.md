@@ -3,8 +3,13 @@
 A stick-form RK3518 box. Sibling to `docs/h96max-h313/`, which is the same SoC and the same radio on
 a different PCB (`3518_ZX_V01` there, `3518_DG_ZX_V01` here).
 
-**Runs Armbian since 2026-09-06**, reachable over SSH. Every number below was measured on this unit
-**with the heatsink fitted**. Known gaps are listed below; `docs/todo/` holds the open questions.
+Runs TVBian, migrated in place from Armbian: Debian trixie, kernel `6.1.172-tvb-rk35xx`,
+`tvb-h96max-3518d`, NetworkManager, hostname `h96max-3518d`. ✅ Wi-Fi, BT, console `ttyFIQ0`, the
+VPU nodes, LEDs at boot; ❓ HDMI, suspend and the remote on this kernel.
+
+**Ran Armbian from 2026-09-06 to 2026-10-20**, reachable over SSH. Every number below was measured
+on this unit, on Armbian unless it says TVBian, **with the heatsink fitted**. Known gaps are listed
+below; `docs/todo/` holds the open questions.
 
 ## Identity — check yours matches before flashing
 
@@ -80,6 +85,8 @@ tested and broken · ➖ not on this board. Nothing is inherited from the siblin
 | What                     | Value                                                                      |
 | ------------------------ | -------------------------------------------------------------------------- |
 | Boot                     | **13.6 s** — 4.2 s kernel + 9.4 s userspace, second boot                   |
+| TVBian: boot             | **15.0 s** — 4.6 s kernel + 10.4 s userspace, 2026-10-20                   |
+| TVBian: reboot to SSH    | **31 s**, 2026-10-20                                                       |
 | eMMC sequential          | **44.0 MB/s** read · **38.8 MB/s** write                                   |
 | eMMC random 4k           | **2917 IOPS** read (11.4 MB/s) · **3863 IOPS** write (15.1 MB/s)           |
 | USB 2 stick, seq read    | **35.1 MB/s** — at the 480 Mbps ceiling                                    |
@@ -112,8 +119,9 @@ bump.
 
 **It roams bands** — check `iw dev wlan0 link` before trusting a throughput figure.
 
-**MAC and `BD_ADDR` are stable across reboots** — `wlan0 fe:fd:fc:d8:87:b9`,
-`BD_ADDR FE:FD:FC:C4:F3:28`, both derived (vendor storage holds `lan` and `sn` only). Vendor storage
+**MAC and `BD_ADDR` are the chip's own** — `wlan0 fe:fd:fc:c4:f3:27` from the Seekwave efuse,
+`BD_ADDR FE:FD:FC:C4:F3:28` one above it; Armbian's `mac-pin` had set `wlan0` to
+`fe:fd:fc:d8:87:b9`. Vendor storage holds `lan` and `sn` only. Vendor storage
 `LAN_MAC 00:ef:01:1a:be:a0` matches the sticker.
 
 ## Caps and limits — the things that bound performance
@@ -234,11 +242,11 @@ handset sends (`c…` consumer page, `7…` keyboard page). The remote must be p
 | Mouse button            | ➖                              | not a key — toggles air-mouse mode                      |
 
 Six usages arrive with no kernel mapping: the hamburger, the four app shortcuts, and a second usage
-the voice key sends alongside `KEY_SEARCH`. `firmware/common/bt-remote.hwdb` renames those,
-plus three the kernel maps to the wrong key — backspace, the cog and the centre button — nine
-overrides in all. It keys on the handset model, not the board, so any box this remote is paired to
-gets the same map. ✅ verified on the handset 2026-09-07: all nine properties reach the device and
-the remapped buttons report the new keycodes. `docs/remote-keymap.md` has the procedure.
+the voice key sends alongside `KEY_SEARCH`. `firmware/common/bt-remote.hwdb` renames those, plus
+three the kernel maps to the wrong key — backspace, the cog and the centre button — nine overrides
+in all. It keys on the handset model, not the board, so any box this remote is paired to gets the
+same map. ✅ verified on the handset 2026-09-07: all nine properties reach the device and the
+remapped buttons report the new keycodes. `docs/remote-keymap.md` has the procedure.
 
 The app shortcuts are **YouTube · Netflix · Prime Video · Google Play**, in that order, so
 `KEY_PROG1` is YouTube. `KEY_PROG*` is what Linux defines for programmable app keys; the two IR

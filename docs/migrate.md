@@ -1,16 +1,17 @@
 # Moving a box off the overlay, in place
 
 From Armbian with the overlay (`rk35xx-update`, `payload.list`) to what TVBian's image installs,
-without a reflash. ✅ from local debs on the M20 (meson-gxl) and the H313 (rk35xx), 2026-10-20; ❓
-from the published repo, which does not exist yet.
+without a reflash. ✅ from local debs on a meson-gxl box and two rk35xx boxes, 2026-10-20; ❓ from
+the published repo, which does not exist yet.
 
 A board can move once `kernel/` has its `BOARD_KERNEL`. The way back is the backup: Armbian's kernel
 goes in step 4.
 
 ## 0. Back up
 
-A whole copy of the boot medium: the M20's stick or a Rockchip box's SD on another machine, a
-Rockchip box's eMMC by `docs/maskrom.md`.
+The stock eMMC in `backup/<board>/` is enough for a box with no data of its own: it holds what
+cannot be recreated, and the rest rebuilds. A box with data also needs a whole copy of its boot
+medium: a stick or SD on another machine, an eMMC by `docs/maskrom.md`.
 
 ## 1. Install the packages
 
@@ -21,6 +22,11 @@ sudo apt-get install -y u-boot-menu /tmp/tvb/*.deb                        # box
 cat /boot/extlinux/extlinux.conf                                          # box
 sudo systemctl reboot                                                     # box
 ```
+
+Where `sshd` serves no `sftp` subsystem `scp` closes at once; `tar -cf - … | ssh … tar -xf -` copies
+the same files. With our `linux-headers` installed, DKMS builds the overlay's modules for our kernel
+too and archives ours as "Original modules": `sudo dkms remove <module>/<version> -k <release>`
+before the reboot puts ours back.
 
 Before the reboot, `l0` is the `-tvb-<family>` kernel, with an `initrd`,
 `fdt /usr/lib/tvb/board.dtb` and the fstab's `root=`. After it, `uname -r` ends in `-tvb-<family>`.
@@ -101,7 +107,7 @@ sudo apt-get autoremove --purge -y                                        # box
 the overlay did not install stays, and `dkms` with it.
 
 Before `armbian-firmware` goes, every blob the box loads needs another owner: `dpkg -S` on its
-`/usr/lib/firmware/` path names Debian's package or ours. The M20's and the H313's all do.
+`/usr/lib/firmware/` path names Debian's package or ours. Every box's known here does.
 
 What the purge leaves goes by hand:
 
@@ -109,10 +115,14 @@ What the purge leaves goes by hand:
 | -------------------- | ------------------------------------------------------------------- |
 | `/boot`              | everything but our kernel's four files and `extlinux/`              |
 | `/etc`               | `armbian*`, `default/armbian-*`, `netplan/`, `dpkg/origins/armbian` |
-| `/etc/systemd`       | Armbian's drop-ins; the `systemd-firstboot` mask                    |
-| `/var`               | `log/armbian-*`, `lib/apt/lists/*armbian*`, the overlay's markers   |
+| `/etc/systemd`       | Armbian's drop-ins; the `systemd-firstboot` mask; `journald.conf`   |
+| `/var`               | `log/armbian-*`, `log.hdd`, `lib/apt/lists/*armbian*`, the markers  |
+| `/usr/src`           | the overlay's DKMS sources                                          |
 | `/usr/share`         | `keyrings/armbian*`                                                 |
 | `/etc/update-motd.d` | all but `10-tvbian`; `/etc/motd` emptied                            |
+
+Armbian edits `journald.conf`, a conffile Debian's package never changed, so a reinstall keeps the
+edit: Debian's comes out of `apt-get download systemd` with `dpkg-deb --fsys-tarfile`.
 
 Then `systemd-resolved` goes: purge it, delete `/etc/resolv.conf` and restart NetworkManager, which
 writes its own. The image's files replace Armbian's: fstab's options, and the journald, zram, getty,

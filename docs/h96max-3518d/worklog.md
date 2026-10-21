@@ -3121,3 +3121,28 @@ luck. It placed them correctly, which is not a property worth shipping.
 Regenerated against the tree `0002` and `0003` actually leave behind. The hunks now anchor on
 `module_param_named(firmware_dir, ...)`, apply at zero fuzz and zero offset, and produce a
 byte-identical `skw_btdriver.c` — verified by diffing the result against the fuzz-applied build.
+
+## 2026-10-20 — TVBian, migrated in place
+
+- No Armbian backup: the stock eMMC in `backup/` holds what cannot be recreated. A `gzip -1` stream
+  of the whole eMMC over Wi-Fi ran at 2.7 MB/s and was stopped.
+- `scp` closed at once: `sftp-server` is installed but `sshd_config` names no `Subsystem`. The debs
+  went over `tar | ssh`.
+- `tvb-h96max-3518d`, the 6.1.172 kernel and headers, both driver packages and
+  `tvb-firmware-swt6621s` installed. With the headers in, DKMS built the overlay's
+  `seekwave-swt6621s` for 6.1.172 too and archived ours as "Original modules"; `dkms remove … -k`
+  restored them, all three from `updates/tvb-swt6621s/`. `aic8800-usb` and `v4l2loopback`, apt's,
+  rebuilt for 6.1.172 and stay.
+- First boot through `extlinux.conf`: Wi-Fi HE-MCS 11 at 80 MHz, BT, `ttyFIQ0`, the VPU nodes,
+  `loaded board firmware SWT6621S_NV_SDIO.h96max-3518d,rk3518-tvbox.bin` (`SHARED_TDD`), nothing
+  failed. `skwbt skip_codec_reads` now comes from `tvb-firmware-swt6621s`'s `modprobe.d`.
+- Overlay retired, every firmware blob byte-identical under `updates/`. NetworkManager behind the
+  5-minute fallback: `wlan0` on the chip's `fe:fd:fc:c4:f3:27`, DHCP moved the box from `.238` to
+  `.240`, found again by name.
+- Armbian purged by exact name: the glob `docs/migrate.md` first gave, `linux-image-*-<family>`,
+  matches ours too. `base-files` back to Debian's `13.8+deb13u7`. Left by hand beyond the doc's
+  list: Armbian's edited `journald.conf`, which a `systemd` reinstall keeps; the ramlog's
+  `/var/log.hdd`; the overlay's IR DKMS source in `/usr/src`; `/var/lib/rk35xx-firstboot.done`.
+- Our U-Boot with `0003` in both slots, the old pair in `backup/`. Boot 15.0 s (4.6 + 10.4), reboot
+  to SSH 31 s, nothing failed, journal in RAM, zram swap, `power` lit and `standby` dark from the
+  tree's `default-state`. Nothing on the box names Armbian or rk35xx.
