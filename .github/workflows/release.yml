@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays, off the hour: a busy hour delays or drops a schedule
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - build.sh
+      - build-env/**
+      - kernel/**
+      - uboot/**
+      - patches/**
+      - package/**
+      - image/**
+      - release/**
+      - keyring/**
+      - firmware/**
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    env:
+      TVB_BUILD_CACHE: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+
+      - name: Install podman
+        run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
+
+      # rootful podman: mmdebstrap creates device nodes, which a rootless user namespace cannot
+      - name: Build
+        env:
+          ARCHIVE_SIGNING_KEY: ${{ secrets.ARCHIVE_SIGNING_KEY }}
+        run: |
+          key=()
+          if [ -n "$ARCHIVE_SIGNING_KEY" ]; then
+            printf '%s\n' "$ARCHIVE_SIGNING_KEY" > "$RUNNER_TEMP/signing.key"
+            key=(--key "$RUNNER_TEMP/signing.key")
+          fi
+          sudo -E env "PATH=$PATH" ./build.sh release "${key[@]}"
+          rm -f "$RUNNER_TEMP/signing.key"
+          df -h / | tail -1
+
+      - name: Publish
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./build.sh publish

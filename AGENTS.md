@@ -27,6 +27,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `uboot/`            | each U-Boot a board package ships: its pin and defconfig, and the step building it                 |
 | `package/`          | the steps building `tvb-<board>` and `tvb-archive-keyring`                                         |
 | `image/`            | the image step, its package list, and the files every image's rootfs gets                          |
+| `release/`          | the release plan, the signed `apt` repo, and the upload to GitHub                                  |
 
 **Repo files carry no prefix**: each board's `payload.list` names where a file installs, under that
 board's prefix. A board directory holds `board.conf`, `board-id`, `board-name`, the tree, the
