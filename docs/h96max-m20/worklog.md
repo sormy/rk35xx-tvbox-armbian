@@ -1488,3 +1488,16 @@ MediaTek's reference blob, byte-identical in an unrelated S905L2 port (2026-09-1
 On this box the two packages went in by one `dpkg -i --force-overwrite`, which warned once per moved
 path; `dpkg -S` then names the chip package for all four. After a reboot mt76 loaded both RAM codes,
 `wlan0` connected, `hci0` came up, nothing failed.
+
+## 2026-10-21 — the codec microcode in tvb-firmware-amlogic
+
+Compared with trixie's `firmware-misc-nonfree` 20250410-2: `gxl_h264.bin` and `gxl_mpeg4_5.bin` are
+byte-identical, so they now come from it; `g12a_hevc_mmu.bin`, `g12a_vp9.bin` and `gxl_mjpeg.bin`
+differ, the factory's GXLX2 builds of names Debian builds for G12A and GXL; the other five and
+WAVE420L's licence are not in Debian. `tvb-firmware-amlogic` ships those five directly and the three
+GXLX2 builds in `updates/meson/gxlx2/`, which no request names; this board links them into
+`/usr/lib/tvb/firmware`, so another Amlogic box keeps Debian's. With the loader's dynamic debug on:
+`Loading firmware from /usr/lib/tvb/firmware/meson/vdec/g12a_hevc_mmu.bin`, the same for
+`g12a_vp9.bin`, and `/lib/firmware/meson/vdec/gxl_h264.bin`. Through stock ffmpeg 7.1.5, H.264,
+MPEG-4, HEVC and VP9 decode 60 of 60 frames of a 720p clip and H.264 encodes 60 to a raw stream;
+MJPEG untested, stock ffmpeg has no `mjpeg_v4l2m2m`.

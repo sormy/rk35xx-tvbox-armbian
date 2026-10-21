@@ -1,0 +1,14 @@
+# tvb-firmware-amlogic's files (mode src dest, src under firmware/): the codec microcode Debian lacks,
+# and per SoC the builds of files Debian has, which a board links. gxlx2/: the factory
+# video_ucode.bin's G12A-class HEVC and VP9 and its MJPEG, unlike Debian's of those names; the multi
+# MPEG-1/2 and VC-1 from it too; the encoders' from the factory h264_enc.bin, and Chips&Media's
+# WAVE420L monet.bin. Debian's firmware-misc-nonfree carries the rest.
+0644 common/amlogic/vdec/gxl_mpeg12_multi.bin  /usr/lib/firmware/updates/meson/vdec/gxl_mpeg12_multi.bin
+0644 common/amlogic/vdec/gxl_vc1.bin           /usr/lib/firmware/updates/meson/vdec/gxl_vc1.bin
+0644 common/amlogic/venc/gxl_h264_enc.bin      /usr/lib/firmware/updates/meson/venc/gxl_h264_enc.bin
+0644 common/amlogic/venc/ga_h264_enc_cabac.bin /usr/lib/firmware/updates/meson/venc/ga_h264_enc_cabac.bin
+0644 common/amlogic/venc/monet.bin             /usr/lib/firmware/updates/meson/venc/monet.bin
+0644 common/amlogic/venc/LICENSE.monet.txt     /usr/lib/firmware/updates/meson/venc/LICENSE.monet.txt
+0644 common/amlogic/gxlx2/g12a_hevc_mmu.bin    /usr/lib/firmware/updates/meson/gxlx2/g12a_hevc_mmu.bin
+0644 common/amlogic/gxlx2/g12a_vp9.bin         /usr/lib/firmware/updates/meson/gxlx2/g12a_vp9.bin
+0644 common/amlogic/gxlx2/gxl_mjpeg.bin        /usr/lib/firmware/updates/meson/gxlx2/gxl_mjpeg.bin

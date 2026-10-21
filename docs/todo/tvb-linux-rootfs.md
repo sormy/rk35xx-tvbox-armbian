@@ -116,16 +116,13 @@ through Debian:
 | Seekwave SWT6621S | no                             | 2      | `tvb-firmware-swt6621s` |
 | MT7668 code       | no, not in `firmware-mediatek` | M20    | `tvb-firmware-mt7668`   |
 | AIC8800D80        | no                             | R69    | `tvb-r69`               |
-| meson vdec, venc  | 2 of 11 identical, 3 differ    | M20    | `tvb-h96max-m20`        |
+| meson vdec, venc  | 2 of 11 identical, 3 differ    | M20    | `tvb-firmware-amlogic`  |
 
-Checked by comparing our files with trixie's `non-free-firmware` packages. The meson set ships
-whole, under `/lib/firmware/updates/meson/`: the kernel searches `updates/` first, so ours win, and
-no file collides with `firmware-misc-nonfree`'s, which would break the rule that ours only add. ❓
-where our meson blobs come from; the package's README records it before it ships. What remains ours
-starts in the board's package: a bring-up dumps the stock image's `/vendor/firmware` into
-`firmware/<board>/` and nothing else. A blob a second board turns out to share moves to a
-`tvb-firmware-<chip>` package, as Seekwave's code did; a per-board one, Seekwave's `NV_SDIO` RF file
-or the MT7668 `EEPROM`, never does.
+Checked by comparing our files with trixie's `non-free-firmware` packages. The two identical meson
+files come from `firmware-misc-nonfree`. The three that differ are GXLX2's builds of names Debian
+builds for G12A and GXL: `tvb-firmware-amlogic` ships them in `updates/meson/gxlx2/`, which no
+request names, and the M20 links them into `/usr/lib/tvb/firmware`, so they win only there. Where
+the blobs come from is in each chip package's `package.list`.
 
 ## eMMC wear
 
