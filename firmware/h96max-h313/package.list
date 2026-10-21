@@ -1,0 +1,26 @@
+# tvb-h96max-h313's files (mode src dest, src under firmware/; link target dest for a symlink).
+# package/board.sh adds the tree, the loader and the u-boot-menu drop-in.
+
+# the radio's RF settings from tvb-firmware-swt6621s, by the name the driver asks for first: the
+# tree's compatible. A stand-alone BT antenna, FDD coexistence.
+link swt6621s/SWT6621S_NV_SDIO_STANDALONE_FDD.bin /usr/lib/firmware/updates/SWT6621S_NV_SDIO.h96max-zx,rk3518-tvbox.bin
+
+# LEDs: red while off or asleep, blue while on (the tree's retain-state properties keep them)
+0755 common/led-shutdown           /usr/lib/systemd/system-shutdown/tvb-led
+0755 common/led-sleep              /usr/lib/systemd/system-sleep/tvb-led
+
+# a short press suspends, IR wakes it; no PMIC, so poweroff parks the SoC powered
+0644 common/suspend.conf           /usr/lib/systemd/sleep.conf.d/zz-tvb-suspend.conf
+0644 common/powerkey.conf          /usr/lib/systemd/logind.conf.d/zz-tvb-powerkey.conf
+
+# hardware watchdog: systemd pings it, the SoC resets the box if it stops
+0644 common/watchdog.conf          /usr/lib/systemd/system.conf.d/zz-tvb-watchdog.conf
+
+# the video engines for a normal user, stable input names, Bluetooth unblocked at registration
+0644 common/vpu.rules              /usr/lib/udev/rules.d/99-tvb-vpu.rules
+0644 common/input-names.rules      /usr/lib/udev/rules.d/60-tvb-input-names.rules
+0644 common/rfkill-bt.rules        /usr/lib/udev/rules.d/60-tvb-rfkill-bt.rules
+0644 common/rk630phy.conf          /usr/lib/modules-load.d/tvb-rk630phy.conf
+
+# the login banner
+0755 common/motd                   /etc/update-motd.d/10-tvbian

@@ -1,7 +1,9 @@
 # Seekwave SWT6621S firmware
 
-Shared by every board carrying this radio. Installed to `/lib/firmware/` by each board's
-`payload.list`, which also picks the NV variant.
+Shared by every board carrying this radio. On TVBian, `package.list` here builds
+`tvb-firmware-swt6621s` with both NV variants, and each board's package links
+`SWT6621S_NV_SDIO.<compatible>.bin`, the name the driver asks for first, to its antenna's. On an
+overlay box each board's `payload.list` installs them to `/lib/firmware/` and picks the variant.
 
 | File                                  | Origin                                                           |
 | ------------------------------------- | ---------------------------------------------------------------- |
@@ -19,9 +21,10 @@ controller init; `0005` answers those opcodes locally, enabled by
 Chip code may be upgraded; NV and RF calibration may not.
 
 The two NV variants differ in two bytes — `0x20` `BSP_CFG0` bit0 and `0x24` `BT[0]` — decoded by the
-vendor's `SWT6621S_NV_SDIO.ini` in `stock/h96max-h313/firmware/`. That is configuration, not per-unit
-identity, which is what makes them shareable. Both install as `/lib/firmware/SWT6621S_NV_SDIO.bin`,
-so these two filenames alone do not mirror their installed name.
+vendor's `SWT6621S_NV_SDIO.ini` in `stock/h96max-h313/firmware/`. That is configuration, not
+per-unit identity, which is what makes them shareable. Both install as
+`/lib/firmware/SWT6621S_NV_SDIO.bin`, so these two filenames alone do not mirror their installed
+name.
 
 For a new board, `cmp` its factory NV against both: a match is one `payload.list` line, a difference
 gets a new file named for what it sets.

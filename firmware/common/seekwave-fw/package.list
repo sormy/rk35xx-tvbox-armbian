@@ -1,0 +1,10 @@
+# tvb-firmware-swt6621s's files (mode src dest, src under firmware/). Both RF NV variants ship;
+# each board's package links SWT6621S_NV_SDIO.bin to the one its antenna wiring takes.
+0644 common/seekwave-fw/SWT6621S_DRAM_SDIO.bin        /usr/lib/firmware/updates/SWT6621S_DRAM_SDIO.bin
+0644 common/seekwave-fw/SWT6621S_IRAM_SDIO.bin        /usr/lib/firmware/updates/SWT6621S_IRAM_SDIO.bin
+0644 common/seekwave-fw/SWT6621S_SEEKWAVE_R00001.bin  /usr/lib/firmware/updates/SWT6621S_SEEKWAVE_R00001.bin
+0644 common/seekwave-fw/sv6160lite.nvbin              /usr/lib/firmware/updates/sv6160lite.nvbin
+0644 common/seekwave-fw/SWT6621S_NV_SDIO_STANDALONE_FDD.bin /usr/lib/firmware/updates/swt6621s/SWT6621S_NV_SDIO_STANDALONE_FDD.bin
+0644 common/seekwave-fw/SWT6621S_NV_SDIO_SHARED_TDD.bin     /usr/lib/firmware/updates/swt6621s/SWT6621S_NV_SDIO_SHARED_TDD.bin
+0644 common/seekwave-modules.conf                     /usr/lib/modules-load.d/tvb-seekwave.conf
+0644 common/skwbt-options.conf                        /usr/lib/modprobe.d/tvb-skwbt.conf

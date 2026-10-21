@@ -1,0 +1,33 @@
+#!/bin/sh
+# TVBian's login banner. The upgradable count refreshes in the background once apt's lists change:
+# a simulated upgrade takes seconds.
+. /etc/os-release
+cache=/run/tvb-motd-upgradable
+if [ ! -e "$cache" ] || [ /var/lib/apt/lists -nt "$cache" ]; then
+  touch "$cache"
+  (apt-get -qs upgrade 2>/dev/null | grep -c '^Inst' >"$cache.new" && mv "$cache.new" "$cache") \
+    </dev/null >/dev/null 2>&1 &
+fi
+addr() { ip -o "$1" addr show scope global | awk '{sub("/.*", "", $4); printf "%s ", $4}'; }
+read -r load _ </proc/loadavg
+read -r up _ </proc/uptime
+up=${up%.*}
+temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+
+cat <<'LOGO'
+
+ _______   _____ _
+|_   _\ \ / / _ |_)__ _ _ _
+  | |  \ V /| _ \ / _` | ' \
+  |_|   \_/ |___/_\__,_|_||_|
+
+LOGO
+printf ' TVBian for %s, running Linux %s\n\n' "$(cat /usr/lib/tvb/board-name)" "$(uname -r)"
+printf ' %-14s%s\n' "Packages:" "$PRETTY_NAME" "Updates:" "$(sed 's/$/ upgradable/' "$cache")" \
+  "IPv4:" "$(addr -4)" "IPv6:" "$(addr -6)"
+echo
+printf ' %-14s%-18s%-14s%s\n' "Load:" "$(awk -v l="$load" -v n="$(nproc)" 'BEGIN {printf "%d%%", l * 100 / n}')" \
+  "Uptime:" "$([ "$up" -lt 86400 ] || echo "$((up / 86400))d ")$((up % 86400 / 3600))h $((up % 3600 / 60))m"
+printf ' %-14s%-18s%-14s%s\n' "Memory:" "$(free -m | awk '/^Mem:/ {printf "%d%% of %.2fG", $3 * 100 / $2, $2 / 1024}')" \
+  "CPU temp:" "${temp:+$((temp / 1000)) °C}"
+printf ' %-14s%s\n\n' "Disk /:" "$(df -h / | awk 'NR == 2 {print $5 " of " $2}')"

@@ -28,18 +28,14 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 Everything else is factory, unchanged. The label is what names the sysfs entry
 (`/sys/class/leds/power`); the node was renamed to match so the tree doesn't read as a trap.
 
-## The uart2 `bluetooth` child ships commented out
+## The uart2 `bluetooth` child
 
-`firmware/r69/board.patch` adds the child as a comment, so `board.dts` and the submission carry the
-same text and the DTB is unaffected.
-
-`SERIAL_DEV_BUS=y` implies `SERIAL_DEV_CTRL_TTYPORT` by Kconfig default, so declaring the child live
-hands `ffa00000` to the serdev bus. Nothing binds it until `linux-rockchip#526` (the serdev binding
-for `hci_h4.c`) merges, and the port is gone from `/dev` meanwhile — leaving neither `hci0` nor a
-`ttyS2` for `rk35xx-bt` to run `hciattach` on.
-
-**Exit condition:** when a kernel carrying that binding ships, uncomment the child in `board.patch`,
-regenerate with `SYNC=1`, and drop `rk35xx-bt` + its unit.
+`board.patch` carries it commented out, for Armbian's kernel, which lacks the binding: declaring the
+child hands `ffa00000` to the serdev bus, and with no driver to bind it there is neither `hci0` nor
+a `ttyS2` for `rk35xx-bt`'s `hciattach`. TVBian's kernel carries the binding
+(`bluetooth-hci-h4-serdev`), so `board.tvbian.patch` declares it live and the `rk35xx-bt` unit goes.
+❓ untested: the controller answers only once `aic8800_bsp` has loaded its firmware over SDIO, which
+`bluetoothd` powering it up later should follow.
 
 ## Rebuild
 

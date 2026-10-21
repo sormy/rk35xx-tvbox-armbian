@@ -275,3 +275,17 @@ lines does not switch them.
 
 The SoC's CVBS encoder, `t9015` analogue codec and S/PDIF stay as the factory wrote them: this box
 fits no AV or S/PDIF jack, so nothing would consume a graft.
+
+## TVBian's kernel
+
+`board.tvbian.patch` applies on top of `board.patch`, for TVBian's 6.18.57 only; `package/board.sh`
+builds the tree with it. Armbian's image keeps `board.patch` alone.
+
+| Change                     | What it gives                                                   |
+| -------------------------- | --------------------------------------------------------------- |
+| `hdmi-tx` `reset-names`    | in-tree dw-hdmi takes its resets by name; the DKMS took indexes |
+| `/ao-secure@c8100140`      | `meson-gx-socinfo`: `soc0`, `GXLX2 (S905L3)`                    |
+| `/firmware/secure-monitor` | `meson_sm`: the chip serial, in `firmware:secure-monitor`       |
+
+❓ the three on Armbian's 6.18.44 kernel: a boot with them hung, with a boot script change beside
+them, and neither was isolated.

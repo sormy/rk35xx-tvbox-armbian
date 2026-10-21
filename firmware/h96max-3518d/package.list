@@ -1,0 +1,26 @@
+# tvb-h96max-3518d's files (mode src dest, src under firmware/; link target dest for a symlink).
+# package/board.sh adds the tree, the loader and the u-boot-menu drop-in.
+
+# the radio's RF settings from tvb-firmware-swt6621s, by the name the driver asks for first: the
+# tree's compatible. A shared BT antenna, TDD coexistence.
+link swt6621s/SWT6621S_NV_SDIO_SHARED_TDD.bin /usr/lib/firmware/updates/SWT6621S_NV_SDIO.h96max-3518d,rk3518-tvbox.bin
+
+# LEDs: red while off or asleep, blue while on (the tree's retain-state properties keep them)
+0755 common/led-shutdown           /usr/lib/systemd/system-shutdown/tvb-led
+0755 common/led-sleep              /usr/lib/systemd/system-sleep/tvb-led
+
+0644 common/suspend.conf           /usr/lib/systemd/sleep.conf.d/zz-tvb-suspend.conf
+0644 h96max-3518d/powerkey.conf    /usr/lib/systemd/logind.conf.d/zz-tvb-powerkey.conf
+
+# hardware watchdog: systemd pings it, the SoC resets the box if it stops
+0644 common/watchdog.conf          /usr/lib/systemd/system.conf.d/zz-tvb-watchdog.conf
+
+# the video engines for a normal user, stable input names, Bluetooth unblocked at registration,
+# the bundled BLE remote's keymap
+0644 common/vpu.rules              /usr/lib/udev/rules.d/99-tvb-vpu.rules
+0644 common/input-names.rules      /usr/lib/udev/rules.d/60-tvb-input-names.rules
+0644 common/rfkill-bt.rules        /usr/lib/udev/rules.d/60-tvb-rfkill-bt.rules
+0644 common/bt-remote.hwdb         /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb
+
+# the login banner
+0755 common/motd                   /etc/update-motd.d/10-tvbian

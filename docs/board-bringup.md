@@ -138,6 +138,20 @@ table and support matrix.
 - **Anything that must exist on a running box goes in `payload.list`**: that one list is consumed by
   both `build-image.sh` and `rk35xx-update`, so it cannot drift. Only one-time image surgery (raw
   loader `dd`, `armbianEnv.txt`, hostname rebrand) belongs in the build script.
+- **On TVBian, `package.list` is `tvb-<board>`'s file list**, in `payload.list`'s format, at
+  Debian's paths (`/usr/lib/...`, never `/usr/local`); a `link <target> <dest>` line makes a
+  symlink.
+- **Firmware ships from the first place that has it:**
+  1. a Debian `firmware-*` package: named in `BOARD_DEPENDS`, nothing shipped;
+  2. else `firmware/<board>/`, in `package.list` under `/usr/lib/firmware/updates/`, which the
+     kernel searches first and no Debian package writes;
+  3. once a second board needs the same blob, `firmware/common/<chip>/`, with a `firmware.conf` and
+     a `package.list`: `tvb-firmware-<chip>`, which both boards depend on.
+
+  A chip's settings variants, the Seekwave RF NV files by antenna wiring, ship in the chip's
+  package; the board's `package.list` picks one with a `link` line. Only per-unit data, the MT7668's
+  calibration `EEPROM`, stays in the board package.
+
 - **Deleting from an image needs the patched `e2rm`** — `./build-e2tools.sh`, which `build-image.sh`
   requires. Stock `e2rm` corrupts ext4 two ways: it frees a fast symlink's target string as block
   numbers (multiply-claimed metadata block → read-only rootfs on first boot), and it unlinks a

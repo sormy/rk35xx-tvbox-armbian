@@ -1,0 +1,29 @@
+--- board.dts
++++ board.dts
+@@ -1690,8 +1690,18 @@
+ 		interrupts = <0x00 0x33 0x01>;
+ 	};
+ 
++	ao-secure@c8100140 {
++		compatible = "amlogic,meson-gx-ao-secure", "syscon";
++		reg = <0xc8100140 0x140>;
++		amlogic,has-chip-id;
++	};
++
+ 	firmware {
+ 
++		secure-monitor {
++			compatible = "amlogic,meson-gxbb-sm";
++		};
++
+ 		android {
+ 			compatible = "android,firmware";
+ 
+@@ -2343,6 +2353,7 @@
+ 		reg = <0xda800000 0x10000>;
+ 		interrupts = <0x00 0x39 0x01>;
+ 		resets = <&reset 0x13 &reset 0x4f &reset 0x42>;
++		reset-names = "hdmitx_apb", "hdmitx", "hdmitx_phy";
+ 		clocks = <&clkc 0xcd &clkc 0x3f &clkc 0x4d>;
+ 		clock-names = "isfr", "iahb", "venci";
+ 		power-domains = <&pwrc 0x00>;

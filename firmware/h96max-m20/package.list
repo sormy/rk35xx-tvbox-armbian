@@ -1,0 +1,37 @@
+# tvb-h96max-m20's files (mode src dest, src under firmware/). package/board.sh adds the tree,
+# the loader and the u-boot-menu drop-in. Firmware goes under updates/, ahead of Debian's own.
+
+# mt76's firmware for the MT7668, the factory image's own files; Bluetooth's mt7668pr2h.bin comes
+# from firmware-mediatek
+0644 h96max-m20/mt7668/mt7668_patch_e2_hdr.bin        /usr/lib/firmware/updates/mediatek/mt7668_patch_e2_hdr.bin
+0644 h96max-m20/mt7668/WIFI_RAM_CODE_MT7668.bin       /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE_MT7668.bin
+0644 h96max-m20/mt7668/WIFI_RAM_CODE2_SDIO_MT7668.bin /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin
+0644 h96max-m20/mt7668/EEPROM_MT7668.bin              /usr/lib/firmware/updates/mediatek/EEPROM_MT7668.bin
+
+# codec microcode: the decoder's G12A-class HEVC/VP9 and multi MPEG-1/2 from the factory
+# video_ucode.bin, H.264 from linux-firmware; the encoders' from the factory h264_enc.bin and
+# Chips&Media's WAVE420L monet.bin
+0644 h96max-m20/meson/vdec/gxl_h264.bin          /usr/lib/firmware/updates/meson/vdec/gxl_h264.bin
+0644 h96max-m20/meson/vdec/g12a_hevc_mmu.bin     /usr/lib/firmware/updates/meson/vdec/g12a_hevc_mmu.bin
+0644 h96max-m20/meson/vdec/g12a_vp9.bin          /usr/lib/firmware/updates/meson/vdec/g12a_vp9.bin
+0644 h96max-m20/meson/vdec/gxl_mpeg12_multi.bin  /usr/lib/firmware/updates/meson/vdec/gxl_mpeg12_multi.bin
+0644 h96max-m20/meson/vdec/gxl_mpeg4_5.bin       /usr/lib/firmware/updates/meson/vdec/gxl_mpeg4_5.bin
+0644 h96max-m20/meson/vdec/gxl_mjpeg.bin         /usr/lib/firmware/updates/meson/vdec/gxl_mjpeg.bin
+0644 h96max-m20/meson/vdec/gxl_vc1.bin           /usr/lib/firmware/updates/meson/vdec/gxl_vc1.bin
+0644 h96max-m20/meson/venc/gxl_h264_enc.bin      /usr/lib/firmware/updates/meson/venc/gxl_h264_enc.bin
+0644 h96max-m20/meson/venc/ga_h264_enc_cabac.bin /usr/lib/firmware/updates/meson/venc/ga_h264_enc_cabac.bin
+0644 h96max-m20/meson/venc/monet.bin             /usr/lib/firmware/updates/meson/venc/monet.bin
+0644 h96max-m20/meson/venc/LICENSE.monet.txt     /usr/lib/firmware/updates/meson/venc/LICENSE.monet.txt
+
+# keys neither suspend nor power off a box nothing can wake
+0644 h96max-m20/powerkey.conf    /usr/lib/systemd/logind.conf.d/zz-tvb-powerkey.conf
+
+# stable names for the inputs, and the bundled BLE remote's keymap
+0644 common/input-names.rules    /usr/lib/udev/rules.d/60-tvb-input-names.rules
+0644 common/bt-remote.hwdb       /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb
+
+# hardware watchdog: systemd pings it, the SoC resets the box if it stops
+0644 common/watchdog.conf        /usr/lib/systemd/system.conf.d/zz-tvb-watchdog.conf
+
+# the login banner
+0755 common/motd                 /etc/update-motd.d/10-tvbian
