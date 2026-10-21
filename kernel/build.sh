@@ -1,11 +1,11 @@
 #!/bin/bash
 # Build one kernel's .debs from a kernel/<family>.conf, inside the build container.
 set -euo pipefail
-# shellcheck source=/dev/null  # the conf: REPO, FOLLOW or COMMIT, CONFIG, FRAGMENT, PATCHES
+# shellcheck source=/dev/null  # the conf: REPO, FOLLOW, BRANCH or COMMIT, CONFIG, FRAGMENT, PATCHES
 . "/repo/$1"
 FAMILY=$(basename "$1" .conf)
 TREE=/work/$FAMILY/linux
-COMMIT=$(bash /repo/kernel/version.sh "$1")
+COMMIT=$(bash /repo/kernel/version.sh "$1" | cut -d" " -f1)
 echo "  building $COMMIT"
 
 # TVB_BUILD_CACHE=0: a clean-room build, no reused download, no compiler cache

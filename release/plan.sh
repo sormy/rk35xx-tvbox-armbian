@@ -43,7 +43,7 @@ plan() {
 for conf in kernel/*.conf; do
   ref=$(bash kernel/version.sh "$conf")
   plan kernel "$conf" "linux-image-tvb-$(basename "$conf" .conf)" \
-    "$(bash release/inputs.sh kernel "$conf" "$ref")" "${ref#v}"
+    "$(bash release/inputs.sh kernel "$conf" "${ref% *}")" "${ref#* }"
 done
 for c in firmware/*/board.conf; do
   b=$(basename "$(dirname "$c")")

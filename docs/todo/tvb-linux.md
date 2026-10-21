@@ -67,14 +67,15 @@ kernel of the family shares:
 | --------- | ------------------------------------------------- |
 | `REPO`    | the upstream tree                                 |
 | `FOLLOW`  | `longterm`: kernel.org's newest long-term release |
-| `COMMIT`  | a full hash, for a kernel without `FOLLOW`        |
+| `BRANCH`  | a branch's tip; `develop-*`, the newest series    |
+| `COMMIT`  | a full hash, for a kernel with neither            |
 | `CONFIG`  | the kernel's config, kept in `kernel/`            |
 | `PATCHES` | `patches/<topic>/` directories, in apply order    |
 
-| Kernel    | `REPO`                                | `COMMIT`, 2026-10-19            |
-| --------- | ------------------------------------- | ------------------------------- |
-| `rk35xx`  | `rockchip-linux/kernel` `develop-6.1` | 6.1.172, the pin rule in Decide |
-| `meson64` | kernel.org stable                     | `v6.18.57`                      |
+| Kernel    | `REPO`                                | Resolves to, 2026-10-20 |
+| --------- | ------------------------------------- | ----------------------- |
+| `rk35xx`  | `rockchip-linux/kernel` `develop-6.1` | `77168c8d5ab8`, 6.1.172 |
+| `meson64` | kernel.org stable                     | `v6.18.57`              |
 
 The build fetches the pin, `git am`s the patches, runs `make olddefconfig` on the config and
 `make bindeb-pkg`. Each config started as Armbian's for that family and branch, copied once; a bump
@@ -338,14 +339,14 @@ Each phase ships alone and reverts by reinstalling Armbian's kernel.
 
 ## Costs and risks
 
-| Risk                          | Shows as                | Answer                             |
-| ----------------------------- | ----------------------- | ---------------------------------- |
-| a patch stops applying        | CI fails, loudly        | the kernel keeps its pin; an issue |
-| a patch applies, but is wrong | the box misbehaves      | validation script, on hardware     |
-| an out-of-tree driver's API   | CI fails on a series    | human work, with the series move   |
-| untagged vendor commits       | nothing, until it bites | the vendor pin rule; gated         |
-| kernel security updates       | upstream advisories     | the weekly repin brings them       |
-| deployed boxes                | old layout              | `docs/migrate.md`, in place        |
+| Risk                          | Shows as             | Answer                             |
+| ----------------------------- | -------------------- | ---------------------------------- |
+| a patch stops applying        | CI fails, loudly     | the kernel keeps its pin; an issue |
+| a patch applies, but is wrong | the box misbehaves   | validation script, on hardware     |
+| an out-of-tree driver's API   | CI fails on a series | human work, with the series move   |
+| an untested vendor tip        | the box misbehaves   | validation script, on hardware     |
+| kernel security updates       | upstream advisories  | the weekly repin brings them       |
+| deployed boxes                | old layout           | `docs/migrate.md`, in place        |
 
 The loud rows are rarer than they look: the mt76 and btmtksdio patches applied unchanged from 6.18
 to 7.2.8 and built (M20 worklog, 2026-10-12). What failed there was DKMS building 6.18's sources
@@ -379,9 +380,6 @@ Two-way:
 - The `tvb-` rename in `docs/todo/tvb-namespace.md` before phase 3, so packages ship the final
   names?
 - BTF: dropped with debug info to fit the runner, or kept for BPF tools at the cost of disk?
-- The vendor pin rule: `develop-6.1`'s newest stable merge (`b79032684247`, `v6.1.172`, 2026-07-10),
-  or its tip gated by validation (`77168c8d5ab8`, 2026-07-29, 3,303 first-parent commits later, the
-  base of Armbian's `rkr7.2`)?
 - A repin that moved a kernel: publish only after the validation script passes on one box of that
   family, or automatically?
 

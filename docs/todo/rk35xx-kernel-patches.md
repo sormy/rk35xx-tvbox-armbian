@@ -7,10 +7,11 @@ Family-wide. Opened 2026-10-20, once `kernel/rk35xx.conf` pinned `develop-6.1` a
 ## Where Armbian's tree stands
 
 `rkr7.2` is what Armbian builds since its build commit `81e86244`; its base is `develop-6.1`'s tip,
-132 commits past our pin. Those carry `rockchip-fephy` fixes (low power while the link is down,
-`config_init` again on resume, the txamp default), a vop2 cfg-done rework, a `dwmac-rk-tool` xmit
-fix and an rkcrypto SHA512 fix. ❓ whether the RK3528's FEPHY is the v1 those fixes key on: the
-driver reads it from register `0xfc`.
+132 commits past the stable merge first pinned, and the commit `kernel/rk35xx.conf` now builds.
+Those carry `rockchip-fephy` fixes (low power while the link is down, `config_init` again on resume,
+the txamp default), a vop2 cfg-done rework, a `dwmac-rk-tool` xmit fix and an rkcrypto SHA512 fix.
+❓ whether the RK3528's FEPHY is the v1 those fixes key on: the driver reads it from register
+`0xfc`.
 
 ## Candidates, not in Rockchip's tree
 
@@ -36,6 +37,4 @@ with one of the two imported, the stable-MAC patch rebased onto it.
 
 ## Decide
 
-- The pin: stay on the stable merge, or move to `develop-6.1`'s tip, `77168c8d5ab`, which Armbian
-  ships and which carries the FEPHY fixes. The plan's vendor pin rule, settled by this.
 - Which candidates to carry, each validated on a box before it joins `kernel/rk35xx.conf`.

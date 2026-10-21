@@ -3,7 +3,8 @@
 Opened 2026-10-18. The plan this serves is `docs/todo/tvb-linux.md`: the weekly build, the build
 hosts, the caches. Built: `.github/workflows/release.yml` and `./build.sh release`, as
 `docs/build.md` gives them. Not yet: the repin commit, one job per kernel, a failed kernel keeping
-its last pin; `FOLLOW` resolves at build time, and the release notes name what it resolved to.
+its last pin; `FOLLOW` and `BRANCH` resolve at build time, and the release notes name what they
+resolved to.
 
 ## Weekly build
 
@@ -26,13 +27,13 @@ repin is the poll. A dropped or urgent week is one `workflow_dispatch`.
 
 Each pin moves to the newest released commit of its series, upstream:
 
-| Kernel   | Moves to                                        | 2026-10-19            |
-| -------- | ----------------------------------------------- | --------------------- |
-| mainline | the newest kernel.org stable tag of its series  | `v6.18.57`, `v7.0.14` |
-| vendor   | per the vendor pin rule, a decision in the plan | 6.1.172               |
+| Kernel   | Moves to                                       | 2026-10-20            |
+| -------- | ---------------------------------------------- | --------------------- |
+| mainline | the newest kernel.org stable tag of its series | `v6.18.57`, `v7.2.11` |
+| vendor   | the tip of its `develop-<series>` branch       | 6.1.172               |
 
-Rockchip tags nothing: the vendor pin is its newest stable merge, or its tip gated by validation;
-`docs/todo/tvb-linux.md` holds the choice.
+Rockchip tags nothing, so the vendor kernel builds its branch's tip; `develop-*` follows the newest
+series, which is how `rk35xx-next` meets a new one.
 
 - **Within a series only.** Moving a family to another series is a human change in `kernel/`.
 - **Per kernel.** A kernel whose new pin does not apply or build keeps last week's, publishes with

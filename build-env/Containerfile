@@ -4,7 +4,7 @@ FROM debian:${SUITE}
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       build-essential bc bison flex libssl-dev libelf-dev kmod cpio rsync python3 libdw-dev \
-      dpkg-dev debhelper fakeroot xz-utils zstd patch ca-certificates git curl ccache \
+      dpkg-dev debhelper fakeroot xz-utils zstd patch ca-certificates git curl jq ccache \
       device-tree-compiler swig python3-dev python3-setuptools python3-pyelftools \
       libgnutls28-dev uuid-dev \
       mmdebstrap apt-utils gnupg e2fsprogs mtools u-boot-tools \
