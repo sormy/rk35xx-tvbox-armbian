@@ -1,0 +1,61 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] skw: bt: build on 6.11 and later
+
+Since 6.11 struct platform_driver's remove returns void, and since 6.4
+class_create() takes no module. The Wi-Fi and platform drivers already
+switch on the kernel version for both; the Bluetooth driver did not, so
+it fails to build on 6.12. Do as skw_user_com.c and skwutil's skw_btlog.c
+do.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/drivers/swtbt4l/skw_btdriver.c
++++ b/drivers/swtbt4l/skw_btdriver.c
+@@ -1128,7 +1128,11 @@
+     return 0;
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
++static void btseekwave_remove(struct platform_device *pdev)
++#else
+ static int btseekwave_remove(struct platform_device *pdev)
++#endif
+ {
+     int state = atomic_read(&atomic_close_sync);
+ 
+@@ -1157,7 +1161,11 @@
+ 
+         if (!data)
+         {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
++            return;
++#else
+             return 0;
++#endif
+         }
+         hdev = data->hdev;
+         data->bt_is_open = 0;
+@@ -1182,7 +1190,9 @@
+ #endif
+     }
+     SKWBT_INFO("func %s end", __func__);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 11, 0)
+     return 0;
++#endif
+ }
+ 
+ static struct platform_driver  btseekwave_driver =
+--- a/drivers/swtbt4l/skw_btlog.c
++++ b/drivers/swtbt4l/skw_btlog.c
+@@ -385,7 +385,11 @@
+         memset(skwbt_log_port_info, 0, val_size);
+         skwbt_log_port_info->is_open = 0;
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
++        skwbt_log_port_info->skwbt_class = class_create("skwbtlog_port");
++#else
+         skwbt_log_port_info->skwbt_class = class_create(THIS_MODULE, "skwbtlog_port");
++#endif
+         if(IS_ERR(skwbt_log_port_info->skwbt_class))
+         {
+             //int ret =  PTR_ERR(skwbt_proc_log_info->skwbt_class);
