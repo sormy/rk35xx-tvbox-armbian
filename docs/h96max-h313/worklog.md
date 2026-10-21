@@ -2119,3 +2119,17 @@ the legacy path and defensive.
   NV variants now ship in `tvb-firmware-swt6621s`, and the board package links
   `SWT6621S_NV_SDIO.h96max-zx,rk3518-tvbox.bin` to `STANDALONE_FDD`: `loaded board firmware`. The
   other blobs still log one `Direct firmware load … failed` each before the plain name loads.
+- `kernel/rk35xx-next.conf`: `develop-6.12`'s tip `470f9dccbdc4`, 6.12.69. Per-series copies of
+  `bluetooth-hci-h4-serdev` (`asm/unaligned.h` is `linux/unaligned.h`) and
+  `net-dwmac-rk-prefer-vendor-storage-mac` (`plat_dat` is devm-managed: nothing to remove); off in
+  `rk35xx-next.fragment`, broken on 6.12 and needless here: the vendor's HDMI-input bridges, the
+  camera sensors and the `nvp6158` CCTV decoder. Seekwave `0006` for 6.11's void `remove` and 6.4's
+  `class_create`; the rkr5.1 AIC8800 does not build on 6.12's cfg80211, Radxa's is the source.
+- Booted on 6.12 once, back to 6.1 by `U_BOOT_DEFAULT`: Wi-Fi, BT, IR, CEC, the VPU nodes, nothing
+  failed. ❌ `eth0` `86:33:37:fc:84:74`, not vendor storage's; OP-TEE's `-22`, `api uid mismatch`,
+  is 6.1's too: our FIT carries no OP-TEE. cpufreq works: `failed to init cpufreq` is a deferral
+  before SCMI's clock is up, then `policy0` offers 1200/1416 MHz under `ondemand`, the factory
+  table. Not a missing OPP: the `dtbo` partition holds only a `reboot_mode` overlay, and Armbian's
+  R69 tree deletes the same seven RK3528 rates.
+- Removing the 6.12 kernel failed in the drivers' `postrm`: `depmod` on a kernel already gone. It
+  runs only while that kernel's modules remain.

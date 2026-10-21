@@ -1464,3 +1464,9 @@ is sold as.
   `0019` into `tvb-meson-venc-modules-6.18.57-tvb-meson64`; the decoder stays in-tree. After a
   reboot both load from `updates/tvb-meson-venc/`, and a 720p H.264 and HEVC encode each give a
   stream software decodes to 60 of 60 frames.
+- `kernel/meson64-next.conf` on 7.2.11, kernel.org's stable: 32 of 33 patches as they are; the
+  decoder import, which replaces the staging driver whole, regenerated against 7.2's under
+  `patches/linux-meson/7.2/`, and the 14 decoder patches apply on top. Booted once, back to 6.18 by
+  `U_BOOT_DEFAULT`: Wi-Fi −46 dBm, BT, HDMI, CEC, `GXLX2 (S905L3)`, H.264 and HEVC decode bit-exact,
+  both encoders 60 of 60 frames, nothing failed. A stray `/usr/lib/modules/6.18.44-current-meson64`
+  with the vendor MT7668 fallback's hand-built modules, 58 MB, deleted.

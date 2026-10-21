@@ -1,0 +1,12 @@
+# the vendor's HDMI-input bridges: broken on 6.12, which changed the subdev DV-timings ops they
+# still use, and no TV box has an HDMI input
+# CONFIG_VIDEO_LT6911UXC is not set
+# CONFIG_VIDEO_LT6911UXE is not set
+# CONFIG_VIDEO_LT7911D is not set
+# CONFIG_VIDEO_LT7911UXC is not set
+# CONFIG_VIDEO_LT8668SX is not set
+# CONFIG_VIDEO_TC35874X is not set
+# camera sensors and CCTV decoders: a TV box has neither, and the vendor's are broken on 6.12;
+# USB webcams need none of them
+# CONFIG_VIDEO_CAMERA_SENSOR is not set
+# CONFIG_VIDEO_NVP6158 is not set
