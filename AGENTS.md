@@ -21,6 +21,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `src/<tool>/`       | host tools we write ourselves                                                                      |
 | `scripts/`          | host-side helpers, never installed on a box                                                        |
 | `keyring/`          | the `apt` repo's public signing key                                                                |
+| `build-env/`        | the build environment: one container image every `./build.sh` step runs in                         |
 
 **Repo files carry no prefix**: each board's `payload.list` names where a file installs, under that
 board's prefix. A board directory holds `board.conf`, `board-id`, `board-name`, the tree, the
@@ -51,6 +52,7 @@ another, so nothing rots when one is rewritten.
 | `docs/mpp.md`                         | reaching the video engines; the codec test commands                   |
 | `docs/armbian-install.md`             | the factory reserved window: what survives a migration, what does not |
 | `docs/emmc-layout.md`                 | the measured eMMC map: every replicated structure and its sectors     |
+| `docs/build.md`                       | `./build.sh`: hosts, steps, outputs, and making a release             |
 | `docs/uboot.md`                       | the bootloader pair: what we build, what stays factory, why           |
 | `docs/maskrom.md`                     | the USB service modes: entry, the 32 MiB Loader trap, backup, restore |
 | `docs/apt-upgrade.md`                 | the hooks and the hold that keep the overlay alive across upgrades    |
