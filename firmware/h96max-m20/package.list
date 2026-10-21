@@ -33,6 +33,14 @@
 # hardware watchdog: systemd pings it, the SoC resets the box if it stops
 0644 common/watchdog.conf        /usr/lib/systemd/system.conf.d/zz-tvb-watchdog.conf
 0644 common/console-loglevel.conf /usr/lib/sysctl.d/50-tvb-console-loglevel.conf
+# the journal in RAM, batched to the eMMC: full, daily, at shutdown
+0644 common/journal.conf          /usr/lib/systemd/journald.conf.d/50-tvb-journal.conf
+0755 common/journal-spill         /usr/lib/tvb/journal-spill
+0644 common/tvb-journal-ram.service /usr/lib/systemd/system/tvb-journal-ram.service
+0644 common/tvb-journal-spill.service /usr/lib/systemd/system/tvb-journal-spill.service
+0644 common/tvb-journal-spill.timer /usr/lib/systemd/system/tvb-journal-spill.timer
+link ../tvb-journal-ram.service   /usr/lib/systemd/system/multi-user.target.wants/tvb-journal-ram.service
+link ../tvb-journal-spill.timer   /usr/lib/systemd/system/timers.target.wants/tvb-journal-spill.timer
 
 # the login banner
 0755 common/motd                 /etc/update-motd.d/10-tvbian

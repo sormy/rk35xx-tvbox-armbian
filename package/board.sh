@@ -55,6 +55,8 @@ cat >"$ROOT/DEBIAN/postinst" <<'SCRIPT'
 set -e
 # extlinux.conf names the tree, which the kernel's own hook cannot see before this package exists
 [ "$1" != configure ] || [ ! -x /usr/sbin/u-boot-update ] || u-boot-update
+# the units this package enables by its .wants links: a running box sees them now
+[ ! -d /run/systemd/system ] || systemctl daemon-reload
 SCRIPT
 chmod 0755 "$ROOT/DEBIAN/postinst"
 

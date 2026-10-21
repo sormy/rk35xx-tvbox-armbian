@@ -1,0 +1,7 @@
+[Unit]
+Description=Flush the RAM journal to the eMMC when full or a day old
+After=tvb-journal-ram.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/tvb/journal-spill

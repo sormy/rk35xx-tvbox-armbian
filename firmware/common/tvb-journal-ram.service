@@ -1,0 +1,10 @@
+[Unit]
+Description=Keep the journal in RAM, flushing it to the eMMC at shutdown
+After=systemd-journal-flush.service
+Requires=systemd-journal-flush.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/journalctl --relinquish-var
+ExecStop=/usr/bin/journalctl --flush

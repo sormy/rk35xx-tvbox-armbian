@@ -1,0 +1,6 @@
+[Unit]
+Description=Check the RAM journal every 15 minutes
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=15min

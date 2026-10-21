@@ -133,16 +133,18 @@ Logs and swap stay in RAM; the eMMC sees package installs and user data.
 | Writer      | Where                        | Mechanism                               |
 | ----------- | ---------------------------- | --------------------------------------- |
 | swap        | zram, half of RAM            | `systemd-zram-generator`                |
-| the journal | `/run/log/journal`, capped   | journald `Storage=volatile`             |
+| the journal | RAM, batched to the eMMC     | `tvb-journal-spill`, in `tvb-<board>`   |
 | `/tmp`      | tmpfs                        | trixie's default                        |
 | `/var/log`  | eMMC: `apt`, `dpkg` only     | minbase ships no `rsyslog`              |
 | TRIM        | weekly, no writes of its own | `fstrim.timer`, enabled by `util-linux` |
 
 zram has no backing device, unlike zswap, whose pool evicts to a swap partition on the eMMC.
 
-`Storage=volatile` loses the previous boot's journal; serial covers a boot that dies. Armbian's
-`armbian-ramlog` keeps it, by putting `/var/log` on a 50 MB zram and `rsync`ing it to disk daily and
-at shutdown — a script of ours for logs a minimal image barely writes.
+The journal batches its eMMC writes, the idea behind Armbian's `armbian-ramlog`, with journald's own
+`--flush` and `--relinquish-var` instead of a zram `/var/log` and `rsync`. It stays in `/run`, 64
+MB, and moves to `/var/log/journal`, 64 MB, at three quarters full (a 15-minute check), daily and at
+shutdown, so the previous boot's journal survives a reboot: `journalctl -b -1` reads it to
+`Journal stopped`, 2026-10-20. An unplug loses what had not moved yet.
 
 Measured per board in `board.md`, before and after: sectors written over an idle day, and the eMMC's
 own life estimate.
@@ -164,7 +166,7 @@ Debian package does it where one exists; ours only where none does.
 | unique `machine-id`       | `armbian-firstrun`          | empty in the image                   |
 | rootfs fills the medium   | `armbian-resize-filesystem` | `systemd-repart`, `x-systemd.growfs` |
 | swap in RAM               | `armbian-zram-config`       | `systemd-zram-generator`             |
-| logs in RAM               | `armbian-ramlog`            | journald `Storage=volatile`          |
+| logs in RAM               | `armbian-ramlog`            | `tvb-journal-spill`, journald flush  |
 | login names the board     | `armbian-motd`              | `update-motd.d`, in `tvb-<board>`    |
 | Wi-Fi power-save off      | NM conf, `iw` udev rule     | the same two files                   |
 | stable Wi-Fi MAC          | NM conf                     | the same file                        |

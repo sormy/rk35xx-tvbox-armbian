@@ -131,11 +131,12 @@ Armbian edits `journald.conf`, a conffile Debian's package never changed, so a r
 edit: Debian's comes out of `apt-get download systemd` with `dpkg-deb --fsys-tarfile`.
 
 Then `systemd-resolved` goes: purge it, delete `/etc/resolv.conf` and restart NetworkManager, which
-writes its own. The image's files replace Armbian's: fstab's options, and the journald, zram, getty,
-apt and sshd drop-ins under `image/rootfs/`, with `systemd-zram-generator`. The hostname becomes the
-board's `BOARD_HOSTNAME`, as the image's is, unless the box has a name of its own:
-`sudo hostnamectl hostname <board>`, and the router's DNS learns it from the next DHCP lease. On a
-new address avahi can lose the name to its own stale record and take `<host>-2.local`: restart it.
+writes its own. The image's files replace Armbian's: fstab's options, and the zram, getty, apt and
+sshd drop-ins under `image/rootfs/`, with `systemd-zram-generator`; the journal's comes with
+`tvb-<board>`. The hostname becomes the board's `BOARD_HOSTNAME`, as the image's is, unless the box
+has a name of its own: `sudo hostnamectl hostname <board>`, and the router's DNS learns it from the
+next DHCP lease. On a new address avahi can lose the name to its own stale record and take
+`<host>-2.local`: restart it.
 
 On the M20's FAT, `boot.scr` and `aml_autoscript` are the image's, and `u-boot.ext` is
 `/usr/lib/tvb/u-boot.bin`, the old one kept beside it until

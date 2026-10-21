@@ -1,0 +1,7 @@
+#!/bin/sh
+# Flush the RAM journal to the eMMC once it is three quarters of RuntimeMaxUse, or a day old
+max=$((64 * 1024 * 1024))
+stamp=/run/tvb-journal-spilled
+used=$(du -sb /run/log/journal 2>/dev/null | cut -f1)
+[ "${used:-0}" -ge $((max * 3 / 4)) ] || [ -z "$(find "$stamp" -mmin -1440 2>/dev/null)" ] || exit 0
+journalctl --flush && journalctl --relinquish-var && touch "$stamp"
