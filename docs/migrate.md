@@ -142,6 +142,17 @@ has a name of its own: `sudo hostnamectl hostname <board>`, and the router's DNS
 next DHCP lease. On a new address avahi can lose the name to its own stale record and take
 `<host>-2.local`: restart it.
 
+On rk35xx the overlay laid the disk out as the image does, so the rootfs takes the image's label,
+which `tvb-install` checks:
+
+```sh
+sudo e2label "$(findmnt -no SOURCE /)" tvbian   # box: rk35xx only
+```
+
+A meson-gxl overlay stick has Armbian's layout, its FAT at sector 2048 over the vendor bootloader's
+sectors, so it keeps its label and `tvb-install` refuses it: that box gets TVBian's layout by
+booting the image.
+
 On the M20's FAT, `boot.scr` and `aml_autoscript` are the image's, and `u-boot.ext` is
 `/usr/lib/tvb/u-boot.bin`, the old one kept beside it until
 `/proc/device-tree/chosen/u-boot,version` names the new one. On a Rockchip box the FIT goes into

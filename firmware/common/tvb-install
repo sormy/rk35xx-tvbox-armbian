@@ -1,0 +1,154 @@
+#!/bin/bash
+# Copy the running TVBian to another disk, bootable as the one it runs from. Every disk an image
+# makes holds the board's whole layout, so the copy is the disk itself: its partition table with the
+# rootfs grown to the target, the rootfs by file under a new UUID, and every sector before the
+# rootfs raw - the env last - but the ones in /usr/lib/tvb/preserve-sectors, this unit's own.
+set -euo pipefail
+
+PRESERVE_SECTORS=/usr/lib/tvb/preserve-sectors
+BAR_WIDTH=40
+EXT4_SLACK_PERCENT=10 # the target's journal and inode tables, on top of the files
+EXT4_SLACK_MIB=256
+
+usage() {
+  [ "${1:-0}" = 0 ] || exec >&2
+  cat <<EOF
+Usage: tvb-install [-y] [device]
+
+Copy the running TVBian to device: a USB disk, an SD card, or the internal eMMC,
+which is the default unless TVBian is running from it. Check the disk it shows
+before answering: names like /dev/sda and /dev/mmcblk1 can change between boots,
+and /dev/disk/by-id/ names do not.
+
+  -y  overwrite device without asking
+  -h  show this help
+EOF
+  exit "${1:-0}"
+}
+die() {
+  echo "tvb-install: $*" >&2
+  exit 1
+}
+step() { echo "==> $*"; }
+# describe /dev/sda -> "/dev/sda (USB disk, 116.1G, Lexar)"
+describe() {
+  local dev=/sys/block/${1#/dev/}/device kind
+  case "$(lsblk -dno TRAN "$1")/$(cat "$dev/type" 2>/dev/null)" in
+    usb/*) kind="USB disk" ;;
+    mmc/SD) kind="SD card" ;;
+    mmc/MMC) kind="internal eMMC" ;;
+    *) kind=disk ;;
+  esac
+  echo "$1 ($kind, $(lsblk -dno SIZE "$1" | xargs), $(lsblk -dno VENDOR,MODEL "$1" | xargs)$(cat "$dev/name" 2>/dev/null))"
+}
+used_mib() { df -B1M --output=used "$1" | tail -1 | xargs; }
+size() { numfmt --to=iec --from-unit=1048576 "$1"; } # MiB, as lsblk shows sizes
+# copy <src> <dst>: cp -a with a bar, from the target's growth against the source's use
+copy() {
+  local total base pct
+  total=$(used_mib "$1") base=$(used_mib "$2")
+  cp -a "$1/." "$2/" &
+  while kill -0 $! 2>/dev/null; do
+    pct=$((($(used_mib "$2") - base) * 100 / total))
+    [ "$pct" -le 100 ] || pct=100
+    printf '\r    [%-*s] %3d%%' "$BAR_WIDTH" "$(printf '%*s' $((pct * BAR_WIDTH / 100)) '' | tr ' ' '#')" "$pct"
+    sleep 1
+  done
+  wait $!
+  printf '\r    [%s] 100%%\n' "$(printf '%*s' "$BAR_WIDTH" '' | tr ' ' '#')"
+}
+# the kernel's name for partition $2 of disk $1, whatever this boot numbered them
+partition() {
+  local p
+  for p in "/sys/block/${1#/dev/}"/*/partition; do
+    [ "$(cat "$p" 2>/dev/null)" != "$2" ] || { echo "/dev/$(basename "$(dirname "$p")")"; return; }
+  done
+  die "no partition $2 on $1"
+}
+
+YES=
+while getopts yh opt; do
+  case $opt in
+    y) YES=1 ;;
+    h) usage ;;
+    *) usage 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+[ $# -le 1 ] || usage 2
+
+[ "$(id -u)" = 0 ] || die "run as root"
+ROOT=$(findmnt -no SOURCE /)
+[ "$(blkid -s LABEL -o value "$ROOT")" = tvbian ] || die "/ is not a TVBian rootfs"
+SRC=/dev/$(lsblk -no PKNAME "$ROOT")
+# the eMMC by its boot partitions: mmcblk numbering moves between boots
+EMMC=$(compgen -G '/dev/mmcblk*boot0' || true)
+[ "$(echo "$EMMC" | wc -w)" -le 1 ] || die "more than one eMMC: name the target device"
+EMMC=${EMMC%boot0}
+[ $# = 1 ] || [ -n "$EMMC" ] || die "no eMMC: name the target device"
+[ $# = 1 ] || [ "$SRC" != "$EMMC" ] || die "running from the eMMC: name the target device"
+DST=$(readlink -f "${1:-$EMMC}")
+[ "$(lsblk -dno TYPE "$DST" 2>/dev/null)" = disk ] || die "${1:-$EMMC} is not a disk"
+[ "$SRC" != "$DST" ] || die "$DST is the running disk"
+[ -z "$(lsblk -no MOUNTPOINTS "$DST" | xargs)" ] || die "$DST is in use: unmount it first"
+
+TABLE=$(sfdisk -d "$SRC")
+case "$(sed -n 's/^label: //p' <<<"$TABLE")" in
+  dos) RAW_FROM=1 ;;
+  gpt) RAW_FROM=34 ;; # past the primary GPT's header and entries
+  *) die "$SRC has neither an MBR nor a GPT" ;;
+esac
+NUMBER=$(cat "/sys/class/block/${ROOT#/dev/}/partition")
+START=$(cat "/sys/class/block/${ROOT#/dev/}/start")
+NEED_MIB=$(($(used_mib /) * (100 + EXT4_SLACK_PERCENT) / 100 + EXT4_SLACK_MIB))
+HAVE_MIB=$((($(blockdev --getsz "$DST") - START) / 2048))
+[ "$HAVE_MIB" -ge "$NEED_MIB" ] || die "$DST is too small: the rootfs needs $NEED_MIB MiB, it has $HAVE_MIB"
+
+FROM_TO="TVBian from $(describe "$SRC") to $(describe "$DST")"
+if [ -n "$YES" ]; then
+  echo "Installing $FROM_TO"
+else
+  echo "Install $FROM_TO?"
+  read -rp "All data on the target will be erased; back it up first if you may want it back. [y/N] " answer
+  [ "$answer" = y ] || exit 1
+fi
+
+T=$(mktemp -d)
+trap 'umount -q "$T/src" "$T/dst" 2>/dev/null || true; rm -rf "$T"' EXIT
+
+step "partition table"
+# the target's own size and fresh GUIDs; the rootfs takes the rest of the disk
+grep -v '^\(device\|last-lba\|label-id\):' <<<"$TABLE" |
+  sed "s/, *uuid=[^,]*//; \|^$ROOT |s/, *size= *[0-9]*//" | sfdisk -q --wipe never "$DST"
+udevadm settle
+
+PART=$(partition "$DST" "$NUMBER")
+read -r FIRST <"/sys/class/block/${PART#/dev/}/start"
+read -r COUNT <"/sys/class/block/${PART#/dev/}/size"
+step "rootfs: $(size "$(used_mib /)") into $(size $((COUNT / 2048))), sectors $FIRST-$((FIRST + COUNT - 1))"
+OLD=$(findmnt -no UUID /)
+NEW=$(cat /proc/sys/kernel/random/uuid)
+mkfs.ext4 -q -F -L tvbian -U "$NEW" "$PART"
+mkdir "$T/src" "$T/dst"
+mount --bind / "$T/src"
+mount "$PART" "$T/dst"
+copy "$T/src" "$T/dst"
+sed -i "s/$OLD/$NEW/" "$T/dst/etc/fstab" "$T/dst/boot/extlinux/extlinux.conf"
+umount "$T/dst"
+
+step "boot sectors, preserving this unit's own"
+RANGES=
+while read -r range note; do
+  [ -n "$range" ] && [ "${range#\#}" = "$range" ] || continue
+  RANGES="$RANGES $range"
+  printf '    %-12s %s\n' "$range" "${note#\# }"
+done <"$PRESERVE_SECTORS"
+pos=$RAW_FROM
+for skip in $RANGES "$START-"; do
+  [ "${skip%-*}" -le "$pos" ] ||
+    dd if="$SRC" of="$DST" bs=512 skip="$pos" seek="$pos" count=$((${skip%-*} - pos)) conv=notrunc,fsync status=none
+  pos=$((${skip#*-} + 1))
+done
+sync
+
+echo "Installed to $DST."

@@ -31,6 +31,11 @@ elif [ -n "${BOARD_UBOOT:-}" ]; then
   cp "$FW/$BOARD_UBOOT" "$LIB/u-boot.bin"
 fi
 [ -z "${BOARD_IDBLOADER:-}" ] || cp "$FW/$BOARD_IDBLOADER" "$LIB/idbloader.bin"
+# tvb-install, on a board that names the sectors a copy leaves as they are: the unit's own
+if [ -f "$FW/$BOARD/preserve-sectors" ]; then
+  install -D -m 0755 "$FW/common/tvb-install" "$ROOT/usr/sbin/tvb-install"
+  cp "$FW/$BOARD/preserve-sectors" "$LIB/preserve-sectors"
+fi
 
 while read -r mode src dest; do
   case "$mode" in

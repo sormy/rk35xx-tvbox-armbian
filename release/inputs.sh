@@ -22,6 +22,7 @@ files() {
       # shellcheck source=/dev/null
       . "firmware/$2/board.conf"
       echo "firmware/$2/board.conf" "firmware/$2/board.dts" "firmware/$2/board-name" package/board.sh
+      [ ! -f "firmware/$2/preserve-sectors" ] || echo "firmware/$2/preserve-sectors" firmware/common/tvb-install
       ls "firmware/$2/board.tvbian.patch" 2>/dev/null || true
       sed -E 's/#.*//' "firmware/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}'
       [ -z "${BOARD_UBOOT_BUILD:-}" ] || echo "uboot/$BOARD_UBOOT_BUILD.conf" uboot/build.sh

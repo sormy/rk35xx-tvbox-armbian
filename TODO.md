@@ -67,11 +67,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
     from them the same way on every board.
   - A key rename is a package rename, `tvb-<board>`, and a hostname change.
 
-- [ ] **Install an Amlogic box to eMMC from its booted stick.** `tvb-install` (phase 5 of
-      `docs/todo/tvb-linux.md`) on the box against the eMMC's block device, with the backup on the
-      stick; `scripts/aml-emmc-install`'s regions and key check. `armbian-install` cannot: it zeroes
-      0-10 MiB, partitions from 16 MiB over `reserved`, and writes the donor board's `u-boot.bin` at
-      sector 0.
+- [ ] **`tvb-install`, a first real install.** `firmware/common/tvb-install` has reached its prompt
+      on the H313, never past it: the H313 from its SD to the eMMC, keeping `DVKR`/`SSKR`; the M20
+      image from a stick to the eMMC, then back from the eMMC to a stick. Together they test phases
+      4 and 5.
 - [ ] **Install an Amlogic box to eMMC: single boot, as CoreELEC does.** Android goes, `cache` goes,
       `env` moves down; only the bootloader areas are lost. One image per board, written by
       `amlcmd restore`, which never writes a hole:

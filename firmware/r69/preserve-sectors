@@ -1,0 +1,2 @@
+7168-8191    # DVKR: vendor storage ×4, its MAC
+8192-16383   # SSKR: secure storage ×4, and the rest of security

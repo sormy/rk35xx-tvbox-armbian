@@ -278,15 +278,16 @@ associate either way. Vendor driver, same access point and position, `iperf3` TX
 ## Installing to eMMC
 
 ❓ Single boot, as CoreELEC installs: Android and `cache` go, the vendor bootloader stays and
-chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT and both DTB copies in
-`reserved` to this layout; `scripts/aml-emmc-install` writes it over the OTG cable.
+chain-loads the image's own U-Boot. The image step rewrites the factory MPT and both DTB copies in
+`reserved` to this layout; `tvb-install`, on the box booted from the stick, copies the stick to the
+eMMC, all but the unifykeys.
 
 | Sectors       | Holds                                           |
 | ------------- | ----------------------------------------------- |
-| 0–8191        | vendor bootloader — never written               |
+| 0–8191        | MBR; the factory bootloader, the image's copy   |
 | 8192–16383    | the image's U-Boot, read by `amlmmc` from `env` |
 | 16384–73727   | FAT: `boot.scr`, `aml_autoscript`               |
-| 73728–204799  | `reserved`: MPT, keys (never written), DTB × 2  |
+| 73728–204799  | `reserved`: MPT, keys (the unit's), DTB × 2     |
 | 237568–253951 | `env`: `bootcmd` loads the image's U-Boot       |
 | 253952–end    | the ext4 rootfs                                 |
 

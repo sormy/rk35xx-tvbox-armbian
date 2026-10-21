@@ -78,6 +78,7 @@ case "$BOARD_FAMILY" in
     # The factory U-Boot stays in the eMMC and chain-loads ours; the image keeps the eMMC's layout,
     # so it boots from a stick and writes to the eMMC unchanged.
     UEXT_SEEK=8192 UEXT_SECTORS=8192 FAT_SEEK=16384 AML_MPT_SECTORS=8 AML_DTB_OFFSET=8192
+    AML_TUNING_OFFSET=6144 AML_TUNING_BYTES=131072
     UBOOT_ADDR=0x1000000
     STOCK=/repo/stock/$BOARD
     python3 /repo/scripts/aml-layout.py "$STOCK/factory-mpt.bin" "$STOCK/factory-multidtb.bin" \
@@ -130,6 +131,11 @@ EOF
     dd if="$WORK/mpt.bin" of="$IMG" bs=512 seek="$RESERVED_SEEK" count="$AML_MPT_SECTORS" conv=notrunc status=none
     dd if="$WORK/dtb.bin" of="$IMG" bs=512 seek=$((RESERVED_SEEK + AML_DTB_OFFSET)) conv=notrunc status=none
     dd if="$WORK/root.ext4" of="$IMG" bs=1M seek=$((ROOT_SEEK / 2048)) conv=notrunc status=none
+    # the rest of the eMMC's layout, so tvb-install copies a whole disk: the factory bootloader past
+    # the MBR, and reserved's eMMC tuning pattern
+    dd if="$STOCK/bootloader.bin" of="$IMG" bs=512 skip=1 seek=1 count=$((UEXT_SEEK - 1)) conv=notrunc status=none
+    python3 -c "import sys; sys.stdout.buffer.write(b'\xaa\x55' * ($AML_TUNING_BYTES // 2))" |
+      dd of="$IMG" bs=512 seek=$((RESERVED_SEEK + AML_TUNING_OFFSET)) conv=notrunc status=none
     ;;
 esac
 

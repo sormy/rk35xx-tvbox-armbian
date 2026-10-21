@@ -287,17 +287,22 @@ Armbian and plain Debian are what it is run on. ❓ Ubuntu: our kernel debs need
 Replaces `armbian-install`, `platform-install` and `scripts/aml-emmc-install`.
 
 It ships in `tvb-<board>`, as `/usr/sbin/tvb-install`, not as a package of its own: what it writes
-is the board's, and the board package already carries it. One script per family in the repo,
-`install/<family>`, which `package/board.sh` installs by `BOARD_FAMILY`; beside it in
-`/usr/lib/tvb/`, the board's data:
+is the board's, and the board package already carries it. One script for every family,
+`firmware/common/tvb-install`: it copies the running system to another disk, USB, eMMC or SD, the
+eMMC by default, so eMMC to stick is a backup. `tvb-install [-y] [device]`; `-y` skips the question,
+and running from the eMMC needs the device.
 
-| Family    | Board data on the box                                                       |
-| --------- | --------------------------------------------------------------------------- |
-| rk35xx    | `idbloader.bin`, `u-boot.bin`: already in the package                       |
-| meson-gxl | `u-boot.bin`, `stock/<board>/factory-{mpt,multidtb,env}.bin`, `BOARD_AML_*` |
+An image, or a migrated eMMC, holds the board's whole eMMC layout, the vendor's regions included, so
+the running disk is the source, if its rootfs is labelled `tvbian`: its partition table with the
+rootfs grown, the rootfs by file under a new UUID, then every sector before it raw, but the unit's
+own. A board lists those in `firmware/<board>/preserve-sectors`, one range per line, `first-last`
+inclusive, with a `#` note the installer prints, shipped as `/usr/lib/tvb/preserve-sectors`; a board
+without it ships no `tvb-install`.
 
-The image's stamp and `tvb-install` write the same layout, so the stamp runs the same family script
-against the image file.
+| Family    | Preserved sectors: the unit's own    |
+| --------- | ------------------------------------ |
+| meson-gxl | `reserved`'s unifykeys: serial, MACs |
+| rk35xx    | `DVKR`, `SSKR`: 7168–16383           |
 
 | Must                                            | Source of the rule        |
 | ----------------------------------------------- | ------------------------- |
