@@ -17,8 +17,8 @@ payload and an upstreamed board skips it.
 - [ ] Boot time at or under the board's recorded figure, on the **second** boot
 - [ ] `dmesg` accounted for line by line — nothing repeated at any level; tolerated lines named in
       `board.md` with the reason
-- [ ] `hostname` and `BOARD_NAME` in `/etc/armbian-release` correct
-- [ ] `dkms status`: every module `installed`, and present in `lsmod`
+- [ ] `hostname` and `/usr/lib/tvb/board-name` correct
+- [ ] `dpkg -l 'tvb-*-modules'`: every out-of-tree module installed, and present in `lsmod`
 - [ ] Ten warm reboots in a row, and after each one **every device still works** — root mounts, the
       SD enumerates, `wlan0` associates, `hci0` is up, IR responds. Coming back up is not the test
 - [ ] `free -m` matches the advertised RAM; `stress-ng --vm --verify` clean
@@ -246,7 +246,7 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
 
 - `ssh` is not a throughput test — its encryption is itself CPU load. Use `iperf3` or `nc`.
 - Measure the **second** boot; the first legitimately spends a minute on resize and first-run setup.
-- First boot compiles DKMS offline — allow ~4 minutes before calling it a failure.
+- On the overlay, first boot compiles DKMS offline — allow ~4 minutes before calling it a failure.
 - Level-filtering `dmesg` hides most of it: on the R69, 914 lines against 121 for `-l err,warn`.
   Judge a line by whether it tells the reader something, not by the level it was logged at —
   demoting a chatty `dev_err` to `dev_dbg` hides it rather than fixing it.
@@ -345,14 +345,14 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
 - **Step 1 can disagree with itself.** `LAN_MAC` appears in several copies at different versions —
   one board's two stale copies hold a locally-administered address the live copy does not. The label
   settles which is real, and matched the live copy on every board here.
-- **Step 1 does not exist for a radio.** `WIFI_MAC` and `BT_MAC` are ids 2 and 4 in the schema and
-  `rk35xx-vendor-storage` reads them, but they are unpopulated on every board measured here. 🟡 the
-  label and vendor storage look like one path rather than two — no box seen here prints a Wi-Fi or
-  Bluetooth address on its label either, so there is likely nothing assigned at manufacture to write
-  into either place. So a radio is checked against a second unit or the blob, never the label.
+- **Step 1 does not exist for a radio.** `WIFI_MAC` and `BT_MAC` are ids 2 and 4 in the schema, but
+  they are unpopulated on every board measured here. 🟡 the label and vendor storage look like one
+  path rather than two — no box seen here prints a Wi-Fi or Bluetooth address on its label either,
+  so there is likely nothing assigned at manufacture to write into either place. So a radio is
+  checked against a second unit or the blob, never the label.
 - **A derived address — steps 3 and 4 — is locally administered**, bit `0x02` of the first octet.
   Neither `C4:2A:FE` nor `88:00:33` is a registered OUI, so deriving under them squats on space that
-  is not ours; `rk35xx-mac-pin` sets the bit whatever `mac-oui` says. Addresses read from vendor
+  is not ours; a derivation sets the bit whatever prefix it starts from. Addresses read from vendor
   storage are assigned and stay untouched.
 - Bluetooth has the same requirement and a worse failure — a wandering `BD_ADDR` invalidates every
   pairing on every boot, and nothing in the logs says why.

@@ -1,10 +1,11 @@
 # Mainline mt76 for the MT7668S
 
-Mainline's mt76 plus the MT7668S, built as DKMS. The part is an MT7663 sibling on SDIO - the same
-register map, connac descriptors and firmware download - whose firmware owns the MAC.
+Mainline's mt76 plus the MT7668S. The part is an MT7663 sibling on SDIO - the same register map,
+connac descriptors and firmware download - whose firmware owns the MAC.
 
-`firmware/common/fetch-mt76-src.sh <dir>` stages the tree with these applied. TVBian's kernel
-applies `0001`-`0013` in-tree; `0014` is DKMS-only.
+TVBian's kernel applies `0001`-`0013` in-tree. An overlay box builds the tree as DKMS:
+`firmware/common/fetch-mt76-src.sh <dir>` stages it with all of them applied, `0014` being
+DKMS-only.
 
 ## The patches
 
@@ -169,7 +170,7 @@ Measured and reverted:
   move by factors.
 - **Monitor mode cannot see this station's own transmissions.** Seeing them needs a second radio.
 
-## Building it
+## Building it out of tree
 
     firmware/common/fetch-mt76-src.sh /tmp/mt76
     make -C /lib/modules/$(uname -r)/build M=/tmp/mt76 modules \

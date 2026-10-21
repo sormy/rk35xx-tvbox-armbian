@@ -45,8 +45,8 @@ its timings survive.
 ## Why this must stay local
 
 The override encodes one screen's data. Ship it in an image and every other user gets a stranger's
-television. Keep it in `extraargs` on the box that needs it, and treat the file as disposable — a
-different TV, or a firmware update to the same TV, invalidates it.
+television. Keep it in a `u-boot-menu` drop-in on the box that needs it, and treat the file as
+disposable — a different TV, or a firmware update to the same TV, invalidates it.
 
 It is also a **workaround, not a fix**. It papers over a client that selects modes badly. Prefer
 using a client that honours `preferred` (`kmscube` over `glmark2-es2-drm`) and reach for this only
@@ -81,12 +81,12 @@ one-byte VICs; decrement the count and drop the byte.
 
 Leave **block 0 untouched** — the real timings and the preferred mode live there.
 
-**4. Install and select it:**
+**4. Install and select it**, on the box:
 
 ```sh
 sudo install -m 644 mytv-no-dci.bin /lib/firmware/edid/mytv-no-dci.bin
-# then in /boot/armbianEnv.txt, append to extraargs:
-#   drm_kms_helper.edid_firmware=HDMI-A-1:edid/mytv-no-dci.bin
+echo 'U_BOOT_PARAMETERS="$U_BOOT_PARAMETERS drm_kms_helper.edid_firmware=HDMI-A-1:edid/mytv-no-dci.bin"' | sudo tee /etc/u-boot-menu/conf.d/zz-edid.conf
+sudo u-boot-update
 ```
 
 The kernel warns this is deprecated in favour of `drm.edid_firmware`; both work.
@@ -100,7 +100,8 @@ sudo modetest -M rockchip -c | grep -c 4096    # should be 0
 
 ## Reversing it
 
-Remove the parameter from `extraargs`, or clear it live with no reboot:
+Remove `/etc/u-boot-menu/conf.d/zz-edid.conf` and run `sudo u-boot-update`, or clear it live with no
+reboot:
 
 ```sh
 echo "" | sudo tee /sys/module/drm_kms_helper/parameters/edid_firmware

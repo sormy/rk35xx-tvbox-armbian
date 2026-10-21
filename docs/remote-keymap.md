@@ -118,9 +118,9 @@ covers every unit of that model, and a board without that handset never matches.
 
 That makes it tempting to ship family-wide. Don't. The entry matches on the model id but **remaps by
 scancode**, and a shared id is not a shared button layout — OEMs reuse ids. List the file only in
-the payload of a board whose handset you actually captured, and add a board only after capturing its
-remote too. `0x2B54` is not even in the USB vendor table, so an unrelated remote could in principle
-carry it.
+the `package.list` of a board whose handset you actually captured, and add a board only after
+capturing its remote too. `0x2B54` is not even in the USB vendor table, so an unrelated remote could
+in principle carry it.
 
 `=reserved` deletes an event rather than renaming it — the fix for a button that sends a second,
 useless usage alongside a good one.
@@ -133,22 +133,21 @@ sudo find /var/lib/bluetooth -name info | while read f; do sudo grep -E '^(Name|
 
 ### Installing it
 
-**udev reads only the compiled `hwdb.bin`, never `hwdb.d/`.** A fresh Armbian image has no
-`/etc/udev/hwdb.bin` at all — Debian ships `/usr/lib/udev/hwdb.bin`, and
-`systemd-hwdb-update.service` has `ConditionNeedsUpdate=/etc`, which does not fire. Dropping a file
-into `hwdb.d/` therefore does nothing until something compiles it. `rk35xx-firstboot` and
-`rk35xx-update` both run `systemd-hwdb update`; by hand:
+**udev reads only the compiled `hwdb.bin`, never `hwdb.d/`.** `tvb-<board>` installs the file into
+`/usr/lib/udev/hwdb.d/`, and udev's dpkg trigger rebuilds `/usr/lib/udev/hwdb.bin` with
+`systemd-hwdb --usr update`. A plain `systemd-hwdb update` writes `/etc/udev/hwdb.bin` instead,
+which masks the `/usr/lib` one from then on — always pass `--usr`. By hand, from the host:
 
 ```sh
-ssh box 'sudo tee /etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb >/dev/null' < rk35xx-bt-remote.hwdb
-ssh box 'md5sum /etc/udev/hwdb.d/60-rk35xx-bt-remote.hwdb'   # compare with the local file
-ssh box 'sudo systemd-hwdb update --strict'
+ssh box 'sudo tee /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb >/dev/null' < firmware/common/bt-remote.hwdb
+ssh box 'md5sum /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb'   # compare with the local file
+ssh box 'sudo systemd-hwdb --usr update --strict'
 ```
 
 **Check the checksum, every time.** A dropped ssh leaves a zero-byte source file, and nothing
-complains: `systemd-hwdb update` compiles an empty file happily, and until the next rebuild the
+complains: `systemd-hwdb` compiles an empty file happily, and until the next rebuild the
 already-compiled `hwdb.bin` keeps answering queries correctly. The mapping then disappears at the
-next `systemd-hwdb update` — on someone else's box, months later.
+next rebuild — on someone else's box, months later.
 
 Verify the match resolves before touching the handset — this needs no remote:
 
@@ -162,7 +161,7 @@ sudo systemd-hwdb query "evdev:input:b0005v2B54p1600e0000-e0,1,4,k71,72,73,ramls
 alone leaves an already-connected remote on the old map. Two steps:
 
 ```sh
-sudo systemd-hwdb update                                      # recompile /etc/udev/hwdb.bin
+sudo systemd-hwdb --usr update                                # recompile /usr/lib/udev/hwdb.bin
 sudo udevadm trigger --subsystem-match=input --action=change  # re-apply to live devices
 ```
 
@@ -180,5 +179,6 @@ Two traps worth knowing: there is **no `60-keyboard.rules`** on current systemd 
 `IMPORT{builtin}="keyboard"`. And a BLE handset that has gone idle stops advertising, so
 `bluetoothctl connect` cannot raise it; only a button press can.
 
-> Every step here is run and confirmed on the H96 Max 3518D, 2026-09-07 — capture, compile, query,
-> reload onto a live device, and the remapped keycodes read back off the handset.
+> Capture, query, reload onto a live device and the remapped keycodes read back off the handset are
+> confirmed on the H96 Max 3518D, 2026-09-07; the `--usr` install and query on the H96 Max M20,
+> 2026-10-20.

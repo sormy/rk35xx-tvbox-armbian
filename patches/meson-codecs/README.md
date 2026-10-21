@@ -1,12 +1,12 @@
 # meson-codecs — the video decoder and both encoders on the GXLX2 (S905L3)
 
 Patches over `meson-sm1-codecs` at `eb7a444`: its out-of-tree decoder (the mainline staging
-meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS packages;
-`firmware/common/fetch-meson-codecs-src.sh <dir>` stages the one the directory names. On TVBian the
-decoder is in-tree: `patches/linux-meson/` `0002` puts meson-sm1-codecs's decoder under
+meson-vdec with SM1 work) and its two encoders, ported to the S905L3. On TVBian the decoder is
+in-tree: `patches/linux-meson/` `0002` puts meson-sm1-codecs's decoder under
 `drivers/staging/media/meson/vdec/`, and the `vdec` patches here apply there, all but the DKMS-only
 `0003`. The encoders, `0004`, `0005`, `0016` and `0019`, build out of tree from the same pin,
-`modules/meson-venc.conf`.
+`modules/meson-venc.conf`. An overlay box builds all three as DKMS packages:
+`firmware/common/fetch-meson-codecs-src.sh <dir>` stages the one the directory names.
 
 | Patch  | Holds                                                             |
 | ------ | ----------------------------------------------------------------- |
@@ -30,7 +30,7 @@ decoder is in-tree: `patches/linux-meson/` `0002` puts meson-sm1-codecs's decode
 | `0018` | HEVC coded up to 4096x2304 on GXLX2                               |
 | `0019` | the H.264 encoder finds its canvas run past held canvases         |
 
-| Package             | Module        | Device                |
+| Overlay package     | Module        | Device                |
 | ------------------- | ------------- | --------------------- |
 | `meson-vdec-gxlx2`  | `meson-vdec`  | `meson-video-decoder` |
 | `amvenc-avc-gxlx2`  | `amvenc_avc`  | `meson-venc-h264`     |

@@ -26,11 +26,11 @@ tree. With no arguments `build-uboot.sh` builds only the boards whose `board.con
 To enable a board: write `firmware/<board>/uboot.patch` against that box's
 `stock/<board>/uboot.dtb`, run `./build-uboot-dts.sh <board>` and `./build-uboot.sh <board>`, boot
 it once with serial attached, confirm the recovery button reaches Maskrom — then commit the graft
-and point `BOARD_UBOOT` and the `payload.list` line at `<board>/uboot.itb`.
+and point `BOARD_UBOOT` and the overlay's `payload.list` line at `<board>/uboot.itb`. `tvb-<board>`
+installs it as `/usr/lib/tvb/u-boot.bin`.
 
 `build-image.sh` fills all five BootROM idbloader slots (64, 1088, 2112, 3136, 4160) and both U-Boot
-slots. The file was called `u-boot.itb` before 2026-09-05, on disk as well as in the repo;
-`rk35xx-update` removes the old name on the first run that installs the new one.
+slots.
 
 ## Why the idbloader stays factory
 
@@ -160,7 +160,8 @@ rebuild changed nothing.
   and Armbian's `rock-2f-vendor` package is a build of it: `CONFIG_ANDROID_BOOTLOADER=y`,
   `CONFIG_ANDROID_AVB=y`, `CONFIG_CMD_BOOT_ANDROID=y`, and `SPL_FIT_GENERATOR=make_fit_atf.sh`, long
   gone from mainline. Its `bootcmd` runs `boot_android`/`bootrkp`, finds `/boot/boot.scr`, bails and
-  falls through to PXE. Mainline's `generic-rk3528` boots Armbian through `distro_bootcmd`.
+  falls through to PXE. Mainline's `generic-rk3528` boots through bootstd: Armbian's `boot.scr`,
+  TVBian's `extlinux.conf`.
 - **Switching to it would not fix the MAC.** It does carry vendor storage
   (`CONFIG_ROCKCHIP_VENDOR_PARTITION=y`, `vendor_storage_init` in the blob), but Armbian's defconfig
   has `# CONFIG_ROCKCHIP_SET_ETHADDR is not set` — the option that would turn `LAN_MAC` into
@@ -205,8 +206,8 @@ spot out of mainline's `generic-rk3528_defconfig`. Nothing is stored that upstre
 build artifact — and the build aborts if the generic defconfig stops disabling the ADC in the way
 the patch expects.
 
-Smoke-test before trusting it: the factory idbloader at sector 64 stays put, and it must reach an
-Armbian login over serial.
+Smoke-test before trusting it: the factory idbloader at sector 64 stays put, and it must reach a
+login over serial.
 
 ## What rebuilding cannot fix
 

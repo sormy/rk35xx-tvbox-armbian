@@ -196,7 +196,7 @@ half is this board. (A silent `evtest` alone would not prove it: it also looks l
 usercode matches none of the nine `ir_keyN` tables. The worklog has the full reasoning.)
 
 **The remote still works here, over BLE.** Paired, it is two HID devices (`2B54:1600`), both
-symlinked by `60-rk35xx-input-names.rules`:
+symlinked by `60-tvb-input-names.rules`:
 
 | Device                      | Symlink                      | Half          | State |
 | --------------------------- | ---------------------------- | ------------- | :---: |
@@ -257,9 +257,8 @@ The D-pad sends the consumer _Menu Up/Down/Left/Right_ usages rather than keyboa
 arrives as `KEY_UP`…`KEY_RIGHT`, so nothing needs fixing, but bind by keycode rather than by what
 the icon implies about the wire format.
 
-**The whole IR path is removed**: `pwm@ffa90030` `disabled`, no `rockchip-pwm-remotectl-rk35xx` DKMS
-module, and no `initcall_blacklist=rk_pwm_driver_init` on the kernel command line — with no node to
-bind, neither the unpatched built-in driver nor our patched one runs.
+**The whole IR path is removed**: `pwm@ffa90030` is `disabled`, so `rockchip_pwm_remotectl` has no
+node to bind.
 
 ## Quirks
 
@@ -272,8 +271,7 @@ Things that surprise you once and then cost you an hour if you forgot them.
   missing `android.hardware.bluetooth.IBluetoothHci`. Do not use "it did not work on Android" as
   evidence about this hardware.
 - **The serial console is `ttyFIQ0`, not `ttyS0`.** `serial@ff9f0000` is `disabled` in the tree and
-  the vendor fiq-debugger owns that UART instead — the only board here that does this, and the
-  reason `BOARD_SERIALCON` exists.
+  the vendor fiq-debugger owns that UART instead.
 - **`card0-TV-1` always reads `connected`.** TVE has no detect line, so that status is meaningless;
   there is no AV jack on this board at all.
 - **Either USB socket can power the box.** The included USB-C↔USB-A cable works in both directions,
@@ -284,8 +282,6 @@ Things that surprise you once and then cost you an hour if you forgot them.
   `sn` but no `bt`/`wifi`, so the driver falls back to the `fe:fd:fc` prefix.
 - **`iw` lives in `/sbin`**, which is not on a non-login SSH shell's `PATH`. Empty output from `iw`
   over `ssh` means "not found", not "no link".
-- **`dkms` is in `/usr/sbin`, same trap.** `dkms status` over `ssh` prints `command not found`,
-  which reads like "no modules registered". Use `sudo dkms status`.
 
 ## Peripherals — the board, then the tree
 
@@ -429,9 +425,9 @@ it is wired into a build.
 
 | State                | blue (`power`) | red (`standby`) | Held by                              |
 | -------------------- | :------------: | :-------------: | ------------------------------------ |
-| Running              |       on       |       off       | DT `default-state`; `-sleep post`    |
-| Suspended            |      off       |       on        | `rk35xx-led-sleep pre` + DT property |
-| Powered off / halted |      off       |       on        | `rk35xx-led-shutdown` + DT property  |
+| Running              |       on       |       off       | DT `default-state`; `tvb-led post`   |
+| Suspended            |      off       |       on        | `tvb-led pre` (sleep) + DT property  |
+| Powered off / halted |      off       |       on        | `tvb-led` (shutdown) + DT property   |
 | Early boot           |       on       |       on        | pins high until the LED driver binds |
 
 Red **does** hold through `deep` suspend. A 2026-09-06 note claiming every LED goes dark is
@@ -440,9 +436,9 @@ and `retain-state-shutdown` in the live tree (`/proc/device-tree/gpio-leds/{powe
 re-checked 2026-09-07). Correcting it matters — believing a sleeping box looked dark is what made an
 unexplained dark box look normal.
 
-> The hooks install as `rk35xx-led` in **both** `/lib/systemd/system-sleep/` and
-> `/lib/systemd/system-shutdown/`; the repo names them `rk35xx-led-sleep` and `rk35xx-led-shutdown`.
-> The directory, not the filename, picks which one runs.
+> The hooks install as `tvb-led` in **both** `/usr/lib/systemd/system-sleep/` and
+> `/usr/lib/systemd/system-shutdown/`; the repo names them `led-sleep` and `led-shutdown`. The
+> directory, not the filename, picks which one runs.
 
 > ⚠️ **Both LEDs off is not a state this software can produce.** It means the SoC stopped driving
 > the pins — a hang or an unclean reset, not suspend and not poweroff. Nothing self-recovers: a hang

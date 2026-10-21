@@ -10,12 +10,12 @@ recipe rebuilds trixie's v4l2 plugin with it and puts it in place of the package
 
 ## Install
 
-On the box, as root, with the repo deployed:
+On the box, as root, with `0001-v4l2-vc1-caps.patch` copied to `/root`:
 
 ```bash
 apt-get install -y --no-install-recommends meson ninja-build pkg-config libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgudev-1.0-dev libv4l-dev
 cd /root && curl -fsSL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.26.2.tar.xz | tar -xJ
-patch -d gst-plugins-good-1.26.2 -p1 < /usr/local/share/rk35xx/repo/patches/gst-plugins-good/0001-v4l2-vc1-caps.patch
+patch -d gst-plugins-good-1.26.2 -p1 < /root/0001-v4l2-vc1-caps.patch
 meson setup gst-plugins-good-1.26.2/build gst-plugins-good-1.26.2 -Dauto_features=disabled -Dv4l2=enabled
 ninja -C gst-plugins-good-1.26.2/build sys/v4l2/libgstvideo4linux2.so
 P=/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstvideo4linux2.so
@@ -41,12 +41,12 @@ rm -rf ~/.cache/gstreamer-1.0
 
 ❓ Not run here. A packaged build instead of a diverted file: apt knows every file, and trixie's
 next `gst-plugins-good1.0` update replaces it, patch and all. On the box, as root, with `deb-src`
-added to the trixie entry's `Types:`:
+added to the trixie entry's `Types:` and the patch in `/root`:
 
 ```bash
 apt-get update && apt-get install -y build-essential devscripts && apt-get build-dep -y gst-plugins-good1.0
 cd /root && apt-get source gst-plugins-good1.0 && cd gst-plugins-good1.0-1.26.2
-cp /usr/local/share/rk35xx/repo/patches/gst-plugins-good/0001-v4l2-vc1-caps.patch debian/patches/ && echo 0001-v4l2-vc1-caps.patch >> debian/patches/series
-dch --local +rk35xx "v4l2: map video/x-wmv to the VC-1 formats" && dpkg-buildpackage -b -uc -us
-apt-get install -y ../gstreamer1.0-plugins-good_*+rk35xx*_arm64.deb
+cp /root/0001-v4l2-vc1-caps.patch debian/patches/ && echo 0001-v4l2-vc1-caps.patch >> debian/patches/series
+dch --local +tvb "v4l2: map video/x-wmv to the VC-1 formats" && dpkg-buildpackage -b -uc -us
+apt-get install -y ../gstreamer1.0-plugins-good_*+tvb*_arm64.deb
 ```

@@ -34,15 +34,14 @@ Everything else is factory, unchanged. The label is what names the sysfs entry
 child hands `ffa00000` to the serdev bus, and with no driver to bind it there is neither `hci0` nor
 a `ttyS2` for `rk35xx-bt`'s `hciattach`. TVBian's kernel carries the binding
 (`bluetooth-hci-h4-serdev`), so `board.tvbian.patch` declares it live and the `rk35xx-bt` unit goes.
-❓ untested: the controller answers only once `aic8800_bsp` has loaded its firmware over SDIO, which
-`bluetoothd` powering it up later should follow.
+✅ `hci0` sits on `serial0-0` and `bluetoothctl show` answers.
 
 ## Rebuild
 
-`./upstream/build.sh`. It regenerates the submission set and then compares it against
-`firmware/r69/board.dts` and `.dtb`; `SYNC=1` overwrites them. The tree round-trips
-byte-identically; `tools/dtc/dtc` is what reads back the `&label` references this file is written
-with.
+`./build-board-dts.sh r69` regenerates `firmware/r69/board.dts` and `.dtb` from the factory blob and
+`board.patch`; `tvb-r69` compiles that `board.dts` with `board.tvbian.patch` on top.
+`./upstream/build.sh` regenerates the submission set and gates it against the patched tree.
+`tools/dtc/dtc` is what reads back the `&label` references this file is written with.
 
 ## What U-Boot injects at boot
 

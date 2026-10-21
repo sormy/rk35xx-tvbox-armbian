@@ -190,7 +190,7 @@ tools/rktools/rkdeveloptool rd
 ```
 
 Skip it and the box loses its label MAC and serial, and nothing else. Once it boots, confirm with
-`rk35xx-vendor-storage lan` — it must match the label.
+`ip link show eth0` — it must match the label.
 
 ## Traps
 

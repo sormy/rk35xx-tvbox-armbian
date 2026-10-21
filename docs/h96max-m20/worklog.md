@@ -1470,3 +1470,13 @@ is sold as.
   `U_BOOT_DEFAULT`: Wi-Fi −46 dBm, BT, HDMI, CEC, `GXLX2 (S905L3)`, H.264 and HEVC decode bit-exact,
   both encoders 60 of 60 frames, nothing failed. A stray `/usr/lib/modules/6.18.44-current-meson64`
   with the vendor MT7668 fallback's hand-built modules, 58 MB, deleted.
+
+## 2026-10-20 — `/etc/udev/hwdb.bin` masked the packaged keymap
+
+- Wrong turn: the migration rebuilt the hardware database with a plain `systemd-hwdb update`, as
+  `rk35xx-firstboot` did. That writes `/etc/udev/hwdb.bin`, which udev reads instead of
+  `/usr/lib/udev/hwdb.bin`, so the copy udev's dpkg trigger rebuilds (`systemd-hwdb --usr update`)
+  was never seen again and every later keymap change in a package would have gone unread.
+- Removed on all four boxes. `systemd-hwdb query` returns the BLE remote's `KEYBOARD_KEY_*` from
+  `/usr/lib` on the M20 and the 3518D. `docs/migrate.md` moves the overlay's `hwdb.bin` aside with
+  the rest and rebuilds only with `--usr`.

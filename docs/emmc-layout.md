@@ -77,8 +77,9 @@ MiB, both H96 Max boards 2304 MiB.
 
 ## What our image reproduces
 
-`build-image.sh` lays down an Armbian GPT with one `rootfs` starting at sector 32768 — exactly where
-the factory `misc` began, so nothing below it is touched by the filesystem.
+The overlay's `build-image.sh` — TVBian's image step has no Rockchip layout yet — lays down an
+Armbian GPT with one `rootfs` starting at sector 32768 — exactly where the factory `misc` began, so
+nothing below it is touched by the filesystem.
 
 With `FACTORY_DUMP=<that box's emmc-full.img>` it first restores **the whole window — sector 7168 up
 to the first partition** — then lays our bootloader on top. Copying the span wholesale rather than

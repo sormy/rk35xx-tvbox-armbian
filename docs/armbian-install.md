@@ -33,24 +33,24 @@ sudo dd if=/dev/mmcblkN bs=1 skip=$((8192*512)) count=4 | tr -d '\0'   # SSKR
 
 **Take a full eMMC backup before writing anything** — it is the only way back to stock.
 
-The box boots without either tag, and they are not worth the same. **`DVKR` is used**:
-`rk35xx-mac-pin` reads it through `rk35xx-vendor-storage` and pins the factory `LAN_MAC` onto the
-ethernet interface. Its `wifi`/`bt` entries are empty on every board here, so those stay derived.
-**`SSKR` is not** — it is reached only by Rockchip's secure-storage TA, and OP-TEE rides inside the
-vendor U-Boot FIT that ours replaces. It is kept because it shares the 7168–16383 span with `DVKR`,
-so keeping it is one `dd` and dropping it would be two.
+The box boots without either tag, and they are not worth the same. **`DVKR` is used**: our U-Boot
+(patch `0003`) reads the factory `LAN_MAC` from it and hands it to Ethernet. Its `wifi`/`bt` entries
+are empty on every board here, so those stay derived. **`SSKR` is not** — it is reached only by
+Rockchip's secure-storage TA, and OP-TEE rides inside the vendor U-Boot FIT that ours replaces. It
+is kept because it shares the 7168–16383 span with `DVKR`, so keeping it is one `dd` and dropping it
+would be two.
 
 | Path                                              | `DVKR` / `SSKR`                                |
 | ------------------------------------------------- | ---------------------------------------------- |
 | **`armbian-install`** (SD → eMMC migration)       | kept by `armbian-config`                       |
 | **full-image write** (`wl 0` in maskrom, or `dd`) | overwritten — splice them back from the backup |
 
-A box with no card slot can only take the second. Afterwards `sudo rk35xx-vendor-storage lan` must
-match the box label. Everything else in the window comes from the repo either way: the idbloader to
-all five slots, `uboot.itb` to both uboot slots, `trust` zero.
+A box with no card slot can only take the second. Afterwards `ip link show eth0` must match the box
+label. Everything else in the window comes from the repo either way: the idbloader to all five
+slots, `uboot.itb` to both uboot slots, `trust` zero.
 
 ## Nothing recreates the window
 
-Our U-Boot is mainline and carries no vendor-storage driver, so nothing writes `DVKR` back, and
-nothing protects those sectors — no block-layer filter, no write-protect group, and a plain `dd` to
-sector 7700 sticks. The backup is the only source.
+Our U-Boot only reads `DVKR`, so nothing writes it back, and nothing protects those sectors — no
+block-layer filter, no write-protect group, and a plain `dd` to sector 7700 sticks. The backup is
+the only source.

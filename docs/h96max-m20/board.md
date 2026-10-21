@@ -89,7 +89,7 @@ Every warning and error a running box logs, known here, at loglevel `warn` and a
 | `can't get clk-gate pinctrl`, three hosts     | an optional MMC pin state             |
 | `unaligned sg offset`                         | one mt76 transfer, sent without DMA   |
 | `meson-dw-hdmi` fails to bind                 | built-in GXL driver; `-gxlx2` binds   |
-| `loading out-of-tree module taints kernel`    | the DKMS drivers                      |
+| `loading out-of-tree module taints kernel`    | the `tvb-meson-venc` encoders         |
 | `Skipping dt linux,cma-default for "cma="`    | a `cma=` on the command line          |
 | `Read Local Supported Commands not supported` | `btmtksdio-mt7668` `0001`             |
 | `Missing L0 reference POC`                    | HEVC entered mid-stream, after a seek |
@@ -100,8 +100,9 @@ decoder bug, not a tolerated line.
 
 ## Video codecs
 
-Three DKMS packages, `meson-vdec-gxlx2`, `amvenc-avc-gxlx2` and `amvenc-hevc-gxlx2`; GStreamer's
-`v4l2*dec` and `v4l2*enc` drive them.
+The decoder, `meson-vdec`, is patched into TVBian's kernel; the encoders, `amvenc_avc` and
+`amvenc_hevc`, build out of tree from `modules/meson-venc.conf`. GStreamer's `v4l2*dec` and
+`v4l2*enc` drive them.
 
 | Codec     | Decode 720p     | 1080p           | 4K              | Encode 720p | 1080p | 4K  |
 | --------- | --------------- | --------------- | --------------- | ----------- | ----- | --- |
@@ -195,18 +196,18 @@ and pointing `bootcmd` at the stick, with `run storeboot` as the fallback — so
 power-on boots the stick with no serial at all**. Pull the stick and the box boots Android as
 before; the button's burning-mode path is untouched.
 
-| Step             | What runs                                              |
-| ---------------- | ------------------------------------------------------ |
-| `aml_autoscript` | chain-loads the base image's U-Boot 2024.01 with `go`  |
-| `boot.scr`       | loads kernel, initrd and our tree off ext4 at 43 MiB/s |
+| Step             | What runs                                       |
+| ---------------- | ----------------------------------------------- |
+| `aml_autoscript` | chain-loads our U-Boot, `u-boot.ext`, with `go` |
+| `boot.scr`       | hands over to the rootfs's `extlinux.conf`      |
 
 The chain-load exists because U-Boot 2015 computes a modern arm64 kernel's load address as 0 and
 aborts on the memmove — `booti` fails whatever address the kernel is loaded at.
 
 ## Wireless
 
-Mainline mt76 is the driver: `patches/mt76-mt7668/`, built as DKMS and loaded at boot, with
-`btmtksdio` beside it. MediaTek's own driver is the fallback and is not shipped;
+Mainline mt76 is the driver: `patches/mt76-mt7668/`, patched into TVBian's kernel and loaded at
+boot, with `btmtksdio` beside it. MediaTek's own driver is the fallback and is not shipped;
 `patches/mt76x8-mt7668/README.md` builds it. Only one may claim the part, so running the fallback
 means blacklisting `mt7663s` in `/etc/modprobe.d/`.
 
@@ -256,12 +257,6 @@ measurement after the load stopped.
 **A `wpa_supplicant` conf may pin the channel.** One with `scan_freq` or `freq_list` scans only
 those channels, and misses the access point once it moves: `skip - frequency not allowed`. A
 configuration limit, not the part's.
-
-**wlan0 needs its own network file.** Armbian's netplan gives DHCP to `e*`, `lan*` and `wan*` only,
-so wlan0 associates and gets no address. On the box, as root:
-
-    printf '[Match]\nName=wlan0\n\n[Network]\nDHCP=yes\n\n[DHCP]\nRouteMetric=600\n' > /etc/systemd/network/25-wlan0.network
-    networkctl reload
 
 `hci0` is `D0:AA:5F:32:EB:F3`, this unit's own, identical across three reboots.
 

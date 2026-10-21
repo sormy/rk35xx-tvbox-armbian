@@ -1,8 +1,9 @@
-# meson-dw-hdmi — mainline HDMI for the GXLX2 (S905L3), DKMS package `meson-dw-hdmi-gxlx2`
+# meson-dw-hdmi — mainline HDMI for the GXLX2 (S905L3)
 
-Mainline's `meson_dw_hdmi.c` from Linux 6.18.44, built as DKMS under its own name, because the
-kernel's is built in. `firmware/common/fetch-meson-dw-hdmi-src.sh <dir>` stages it with these
-applied. TVBian's kernel applies `0001` in-tree; `0002` is DKMS-only.
+TVBian's kernel applies `0001` in-tree. An overlay box builds mainline's `meson_dw_hdmi.c` from
+Linux 6.18.44 as DKMS package `meson-dw-hdmi-gxlx2`, under its own name because the kernel's is
+built in: `firmware/common/fetch-meson-dw-hdmi-src.sh <dir>` stages it with both applied, `0002`
+being DKMS-only.
 
 | Patch  | Holds                                                      | Upstream              |
 | ------ | ---------------------------------------------------------- | --------------------- |

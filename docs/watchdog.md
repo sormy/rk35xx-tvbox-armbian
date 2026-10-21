@@ -18,11 +18,9 @@ dw-wdt steps are `2^(16 + TOP) / clk`. ✅ The watchdog clock is **24 MHz** on t
 | 14     | 44.7 s     | what we shipped  |
 | **15** | **89.5 s** | hardware maximum |
 
-`RuntimeWatchdogSec=80` in `/etc/systemd/system.conf.d/zz-rk35xx-watchdog.conf` rounds up to the 89
+`RuntimeWatchdogSec=80` in `/usr/lib/systemd/system.conf.d/zz-tvb-watchdog.conf` rounds up to the 89
 s step; systemd pings at half the granted value. ✅ Verified on the R69: the journal reports
 `Watchdog running with a hardware timeout of 1min 29s`.
-
-A box deployed before 2026-08-21 still runs the 44 s step until `rk35xx-update` reaches it.
 
 **`RebootWatchdogUSec=10min`, systemd's default shutdown window, is unreachable here** — the driver
 clamps to 89 s, so systemd believes it has ~7× more protection than the hardware can give.

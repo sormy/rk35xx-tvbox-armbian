@@ -22,9 +22,7 @@ Chip code may be upgraded; NV and RF calibration may not.
 
 The two NV variants differ in two bytes — `0x20` `BSP_CFG0` bit0 and `0x24` `BT[0]` — decoded by the
 vendor's `SWT6621S_NV_SDIO.ini` in `stock/h96max-h313/firmware/`. That is configuration, not
-per-unit identity, which is what makes them shareable. Both install as
-`/lib/firmware/SWT6621S_NV_SDIO.bin`, so these two filenames alone do not mirror their installed
-name.
+per-unit identity, which is what makes them shareable.
 
-For a new board, `cmp` its factory NV against both: a match is one `payload.list` line, a difference
-gets a new file named for what it sets.
+For a new board, `cmp` its factory NV against both: a match is one `link` line in the board's
+`package.list`, a difference gets a new file here named for what it sets.

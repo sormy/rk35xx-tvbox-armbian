@@ -101,10 +101,9 @@ The R69 measures within noise of every number above — same silicon, so neither
 
 ## Names on disk
 
-Every installed path is `rk35xx-`, the same as every other board: scripts under `/usr/local/sbin/`,
-identity under `/usr/local/share/rk35xx/` (`board-id` = `h96max-h313`), and two systemd drop-ins
-named to sort last — `logind.conf.d/zz-rk35xx-powerkey.conf` and
-`system.conf.d/zz-rk35xx-watchdog.conf`.
+Every installed path is `tvb-`, the same as every other board, and ships in `tvb-h96max-h313`: the
+tree, loader and helpers under `/usr/lib/tvb/`, and systemd drop-ins under `/usr/lib/systemd/` named
+to sort last — `logind.conf.d/zz-tvb-powerkey.conf` and `system.conf.d/zz-tvb-watchdog.conf`.
 
 ## LEDs
 
@@ -195,8 +194,8 @@ show a garbled image with a dotted band and an odd refresh rate: the vendor cloc
 only standard HDMI rates. Pin a standard mode:
 
 ```sh
-# append to extraargs in /boot/armbianEnv.txt, then reboot
-video=HDMI-A-1:1920x1080@60
+echo 'U_BOOT_PARAMETERS="$U_BOOT_PARAMETERS video=HDMI-A-1:1920x1080@60"' | sudo tee /etc/u-boot-menu/conf.d/zz-video.conf   # box
+sudo u-boot-update   # box
 ```
 
 This is deliberately **not** baked into the image: it would cap 4K TVs at 1080p.
@@ -233,9 +232,9 @@ rather than fixed.
 enough to cover the mmc core's 400k/300k/200k/minimum retry ladder — did fix it: **15 consecutive
 warm reboots** (2026-08-15, 5 + 10 runs), every one a fresh `boot_id`, `wlan0` up, zero
 `wait scan card time out`. But that patch was against the Armbian build tree in the now-closed
-`armbian/build#10440`. The overlay stages the pinned upstream driver unmodified, and commit
-`b1b15016` still waits `msecs_to_jiffies(1000)` in `skw_sdio_scan_card()`. Carrying it here is the
-open item in `todo/rk35xx-sd-uhs-warm-reset.md`.
+`armbian/build#10440`. `modules/swt6621s.conf` builds pinned commit `b1b15016` without it, which
+still waits `msecs_to_jiffies(1000)` in `skw_sdio_scan_card()`. Carrying it here is the open item in
+`todo/rk35xx-sd-uhs-warm-reset.md`.
 
 **What the failure actually looked like**, from `verbosity=7` captured via ramoops — note the eMMC
 is never affected, and both `dwmmc` controllers stumble while only the SD fails to recover:

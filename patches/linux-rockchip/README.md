@@ -1,10 +1,9 @@
 # linux-rockchip — kernel patches
 
 Board-independent fixes for Rockchip's vendor kernel. TVBian's `kernel/rk35xx.conf` applies them to
-`rockchip-linux/kernel` `develop-6.1`; an overlay box, whose kernel comes from Armbian's `apt`,
-cannot. At the branch tip Rockchip has fixed part of two, so those carry only the rest.
-`wireless-aic8800-stable-mac` applies to the out-of-tree AIC8800 build, `modules/aic8800.conf`, not
-to the kernel.
+`rockchip-linux/kernel` `develop-6.1`. At the branch tip Rockchip has fixed part of two, so those
+carry only the rest. `wireless-aic8800-stable-mac` applies to the out-of-tree AIC8800 build,
+`modules/aic8800.conf`, not to the kernel.
 
 | Patch                                    | Fixes                                                                       |
 | ---------------------------------------- | --------------------------------------------------------------------------- |

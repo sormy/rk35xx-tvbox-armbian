@@ -1,9 +1,9 @@
 # H96 Max 3518D — device tree
 
 **Grafts booted and running since 2026-09-06.** `firmware/h96max-3518d/board.patch` is the source;
-`upstream/build.sh` compiles it to `firmware/h96max-3518d/board.dtb` and its gate reports
-`VERIFIED: native tree is content-identical to the patched tree`. The box boots from it and is
-reachable over SSH, so the grafts below are ✅ unless marked otherwise.
+`./build-board-dts.sh` compiles it to `firmware/h96max-3518d/board.dtb`, and `upstream/build.sh`'s
+gate reports `VERIFIED: native tree is content-identical to the patched tree`. The box boots from it
+and is reachable over SSH, so the grafts below are ✅ unless marked otherwise.
 
 Factory tree: `stock/h96max-3518d/board.dtb`, carved from the `boot` partition (not from
 `/proc/device-tree` — U-Boot edits that one). 4640 lines, round-trips through the patched `dtc`.
@@ -51,10 +51,8 @@ is **byte-identical** in this board's tree, so it should apply essentially verba
 Both were the other way round until 2026-09-06, when the receiver was shown to be absent: the
 bundled remote drives the H96 Max box over IR, and this board answers none of it.
 
-Disabling the node is what makes the rest removable. The kernel builds `rockchip_pwm_remotectl` in
-without the shared-IRQ fix, which is why other boards pass `initcall_blacklist=rk_pwm_driver_init`
-and ship a patched DKMS module to own the receiver instead. With no node to bind, neither driver
-runs, so this board carries neither — see `board.conf`'s `BOARD_IR_BLACKLIST=""`.
+With no node to bind, `rockchip_pwm_remotectl` does not run, so this board needs no IR workaround —
+see `board.conf`'s `BOARD_IR_BLACKLIST=""`.
 
 ### Reading the patch: `NOT FITTED` marks a correction, not a change
 

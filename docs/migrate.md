@@ -50,6 +50,7 @@ only where `/usr/lib/firmware/updates/` holds a byte-identical copy.
 | `/lib/firmware/<chip>/…`                          | the same file under `updates/` |
 | `/etc/systemd/{logind,system}.conf.d/zz-rk35xx-*` | `/usr/lib/systemd/*.conf.d`    |
 | `/etc/udev/{rules,hwdb}.d/*rk35xx*`               | `/usr/lib/udev/{rules,hwdb}.d` |
+| `/etc/udev/hwdb.bin`                              | `/usr/lib/udev/hwdb.bin`       |
 | `/etc/kernel/*postinst.d/*rk35xx*`                | the package's DTB              |
 | `/usr/local/sbin/rk35xx-*`, `rk35xx-*.service`    | the package's units, or none   |
 | `/usr/local/share/rk35xx/`                        | nothing                        |
@@ -58,6 +59,9 @@ only where `/usr/lib/firmware/updates/` holds a byte-identical copy.
 ```sh
 find /etc /usr/local /usr/lib/systemd /usr/lib/udev -name '*rk35xx*'   # box: before and after
 ```
+
+The overlay compiled its keymap into `/etc/udev/hwdb.bin`, which udev prefers over the `/usr/lib`
+one that udev's dpkg trigger keeps current; rebuild only with `systemd-hwdb --usr update`.
 
 On rk35xx `mac-pin` and `vendor-storage` go too: U-Boot reads Ethernet's address from vendor
 storage, and the Seekwave driver its chip's efuse, so the Wi-Fi address changes once, back to the

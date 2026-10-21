@@ -55,10 +55,10 @@ rather than cosmetic. **Measured on the R69**: VP9 decodes at 635 / 325 / 85 fps
 
 ## Rebuild
 
-`BOARD=h96max-h313 ./upstream/build.sh`. It regenerates the submission set, then compares it against
-`firmware/h96max-h313/board.dtb` — the copy overlay mode ships and installs — and syncs only under
-`SYNC=1`. The two are currently identical, unlike the R69's. The tree round-trips byte-identically;
-`tools/dtc/dtc` is what reads back the `&label` references this file is written with.
+`./build-board-dts.sh h96max-h313` regenerates `firmware/h96max-h313/board.dts` and `.dtb` from the
+factory blob and `board.patch`; `tvb-h96max-h313` compiles that `board.dts`.
+`BOARD=h96max-h313 ./upstream/build.sh` regenerates the submission set and gates it against the
+patched tree. `tools/dtc/dtc` is what reads back the `&label` references this file is written with.
 
 ## Tried and reverted
 

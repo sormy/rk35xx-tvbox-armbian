@@ -1,8 +1,8 @@
 # seekwave-swt6621s — driver patches
 
-Fixes for the Wi-Fi/BT driver shared by the H96 Max and H96 Max 3518D, applied to the pinned source
-by `firmware/common/fetch-seekwave-src.sh` at image build and by `rk35xx-update` on a live box.
-Applied in filename order.
+Fixes for the Wi-Fi/BT driver shared by the H96 Max and H96 Max 3518D, applied in filename order to
+the pinned source: by `modules/swt6621s.conf` for TVBian's module packages, and by
+`firmware/common/fetch-seekwave-src.sh` for the overlay.
 
 - `0002` — uplink latching at 6 Mbit/s until re-association.
   [PR #1](https://github.com/retro98boy/seekwave-swt6621s/pull/1)
@@ -13,6 +13,8 @@ Applied in filename order.
   `0x100e` locally with Unknown HCI Command so they never reach the chip. Off by default; both
   boards enable it with `skwbt.skip_codec_reads=1` from `firmware/common/skwbt-options.conf`, since
   both run the factory chip code. Not submitted upstream.
+- `0006` — the Bluetooth driver fails to build on 6.11 and later: `platform_driver.remove` returns
+  void, and `class_create()` takes no module. Not submitted upstream.
 
 Every patch here applies to pinned commit `b1b15016`.
 `./firmware/common/fetch-seekwave-src.sh <dir>` fetches and patches into `<dir>`, which is how to

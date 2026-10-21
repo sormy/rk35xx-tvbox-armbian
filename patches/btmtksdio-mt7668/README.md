@@ -1,8 +1,8 @@
 # btmtksdio-mt7668 — mainline Bluetooth for the MT7668S
 
-Three patches to mainline's `btmtksdio`, built as DKMS against the running kernel. They apply in
-order to the `btmtksdio.c` in Linux 6.18.44. All three apply to chip id `0x7668` alone; the MT7663
-and MT7921 behave as before. TVBian's kernel applies all three in-tree.
+Three patches to mainline's `btmtksdio`, applied in order. TVBian's kernel carries all three
+in-tree; an overlay box builds them as DKMS against the `btmtksdio.c` in Linux 6.18.44. All three
+apply to chip id `0x7668` alone; the MT7663 and MT7921 behave as before.
 
 | Patch  | Fixes                                                                   |
 | ------ | ----------------------------------------------------------------------- |
@@ -60,7 +60,7 @@ own ram code for about 0.9 s after, and Bluetooth enabled in that window stops a
 it: mt76 releases it before the ram code, and the running firmware no longer answers it. Found
 patched, Bluetooth waits 2 s before enabling.
 
-## Build
+## Build for the overlay
 
     firmware/common/fetch-btmtksdio-src.sh <dir>
 

@@ -5,7 +5,7 @@ own ABI, not V4L2. Debian doesn't package it, so build it — that also yields t
 `mpi_enc_test` used below.
 
 ```sh
-sudo apt install -y cmake build-essential git      # a bare Armbian has gcc, but no g++
+sudo apt install -y cmake build-essential git      # a bare TVBian image has no compiler
 git clone --depth 1 https://github.com/rockchip-linux/mpp ~/mpp
 cmake -S ~/mpp -B ~/mpp-build -DCMAKE_BUILD_TYPE=Release && nice make -C ~/mpp-build -j4
 export PATH="$HOME/mpp-build/test:$PATH"

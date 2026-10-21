@@ -114,15 +114,14 @@ AVS2** are claimed by the capability word but stay 🟡 — no encoder exists to
 > `cap_4k = 0`, yet 4K and 8K HEVC both encode and `ffprobe` confirms the real frame size.
 
 **Device nodes ✅.** `/dev/mpp_service`, `/dev/rga` and every `/dev/dma_heap/*` ship root-only
-`0600`. `99-rk35xx-vpu.rules` hands them to group `video` — `udevadm test` confirms that rule sets
+`0600`. `99-tvb-vpu.rules` hands them to group `video` — `udevadm test` confirms that rule sets
 `GROUP 44`, `MODE 0660` — which is what lets a normal user's player reach the VPU.
 
 ## Names on disk
 
-Every installed path is `rk35xx-`, the same as every other board: scripts under `/usr/local/sbin/`,
-identity under `/usr/local/share/rk35xx/`, and two systemd drop-ins named to sort last —
-`logind.conf.d/zz-rk35xx-powerkey.conf` and `system.conf.d/zz-rk35xx-watchdog.conf`. The R69 carried
-an `r69-` prefix until 2026-08-18; `rk35xx-update` removes those on the next run.
+Every installed path is `tvb-`, the same as every other board, and ships in `tvb-r69`: the tree,
+loader and helpers under `/usr/lib/tvb/`, and systemd drop-ins under `/usr/lib/systemd/` named to
+sort last — `logind.conf.d/zz-tvb-powerkey.conf` and `system.conf.d/zz-tvb-watchdog.conf`.
 
 ## Front LED
 
@@ -143,7 +142,8 @@ the BootROM's **maskrom trigger**.
 
 The receiver is input device **`ffa90030.pwm`**, reachable at the stable path
 **`/dev/input/ir-remote`**; scancodes come from `rockchip,usercode = <0xfb05>` in
-`firmware/r69/board.dts`. DKMS rebuilds the driver on kernel updates.
+`firmware/r69/board.dts`. The kernel builds the driver in, with the shared-IRQ fix from
+`kernel/rk35xx.conf`.
 
 > **Baseline, not a spec** — this is the mapping of _our_ unit, and these boxes vary between
 > production runs. The H96 Max's remote answers to a different usercode (`0xfb04`) with different
@@ -197,13 +197,7 @@ applying it; `docs/remote-keymap.md` has the procedure.
 
 ## Bluetooth
 
-`minimal` base images ship no `bluez`, and first boot never downloads anything. Install it once,
-then re-run the board hook, which configures and starts BT:
-
-```sh
-sudo apt install bluez
-sudo /usr/local/sbin/rk35xx-firstboot-board
-```
+`tvb-r69` depends on `bluez`. The controller binds through serdev, so no unit of ours starts it.
 
 **The radio starts soft-blocked without a udev rule.** Rockchip's `rfkill-bt` hardcodes `BT_BLOCKED`
 true — the Android model. Nothing else here does it: Wi-Fi on the same chip comes up unblocked, no
@@ -223,10 +217,11 @@ and hides the problem), `rfkill block bluetooth`, reboot. Both times `bt_default
 ## Ethernet PHY
 
 The integrated RK630 PHY needs OTP calibration — bound to Generic PHY instead, some units drop to 10
-Mb/s. The vendor kernel ships `rk630phy`; `/etc/modules-load.d/rk35xx.conf` loads it at boot.
+Mb/s. The vendor kernel ships `rk630phy`; `/usr/lib/modules-load.d/tvb-rk630phy.conf` loads it at
+boot.
 
 ```sh
-readlink /sys/class/net/end0/phydev/driver   # want "RK630 PHY", not "Generic PHY"
+readlink /sys/class/net/eth0/phydev/driver   # want "RK630 PHY", not "Generic PHY"
 ```
 
 ## Watchdog
@@ -305,14 +300,13 @@ EMMC=/dev/$(ls -d /sys/block/mmcblk*boot0 | head -1 | sed 's|.*/||;s|boot0||')
 echo $EMMC    # sanity-check: ~16 GB, NOT your SD
 
 for i in 0 1 2 3 4; do   # the BootROM scans five slots 1024 sectors apart
-  sudo dd if=firmware/r69/factory_idbloader.bin of=$EMMC bs=512 \
+  sudo dd if=/usr/lib/tvb/idbloader.bin of=$EMMC bs=512 \
     seek=$((64 + i * 1024)) count=1024 conv=notrunc
 done
-sudo dd if=firmware/r69/uboot.itb of=$EMMC seek=16384 conv=notrunc; sync
+for s in 16384 20480; do sudo dd if=/usr/lib/tvb/u-boot.bin of=$EMMC bs=512 seek=$s conv=fsync; done
 ```
 
-> **Images built before August 2026 soft-brick on `armbian-install`**
+> **Overlay images built before August 2026 soft-brick on `armbian-install`**
 > ([#6](https://github.com/sormy/tvbian/issues/6)) — stock `armbian-install` writes the generic ROCK
-> 2F loaders, which lack this box's DDR tuning. Current images override `write_uboot_platform` so
-> every bootloader write uses the R69 pair. On an older image, run `rk35xx-update` **before**
-> migrating.
+> 2F loaders, which lack this box's DDR tuning. On such an image, run `rk35xx-update` **before**
+> installing to eMMC. TVBian ships no `armbian-install`; `/usr/lib/tvb/` holds the R69 pair.
