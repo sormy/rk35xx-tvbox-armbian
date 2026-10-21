@@ -141,14 +141,22 @@ the board to the README's Boxes table and support matrix.
   symlink.
 - **Firmware ships from the first place that has it:**
   1. a Debian `firmware-*` package: named in `BOARD_DEPENDS`, nothing shipped;
-  2. else `firmware/<board>/`, in `package.list` under `/usr/lib/firmware/updates/`, which the
-     kernel searches first and no Debian package writes;
-  3. once a second board needs the same blob, `firmware/common/<chip>/`, with a `firmware.conf` and
-     a `package.list`: `tvb-firmware-<chip>`, which both boards depend on.
+  2. else `firmware/common/<chip>/`, with a `firmware.conf` and a `package.list`:
+     `tvb-firmware-<chip>`, which the board depends on, from its first board on.
 
   A chip's settings variants, the Seekwave RF NV files by antenna wiring, ship in the chip's
-  package; the board's `package.list` picks one with a `link` line. Only per-unit data, the MT7668's
-  calibration `EEPROM`, stays in the board package.
+  package; the board's `package.list` picks one with a `link` line. A board ships a blob only when
+  two boards' factory images hold different bytes for it. The kernel takes the first match:
+
+  | Searched | Directory                             | Owner                             |
+  | -------- | ------------------------------------- | --------------------------------- |
+  | 1st      | `/usr/lib/tvb/firmware`               | `tvb-<board>`: overrides, `link`s |
+  | 2nd      | `/usr/lib/firmware/updates/<kernel>/` | the box's admin, by hand          |
+  | 3rd      | `/usr/lib/firmware/updates/`          | `tvb-firmware-<chip>`             |
+  | 4th      | `/usr/lib/firmware/`                  | Debian's `firmware-*`             |
+
+  The first is `firmware_class.path` on every board's command line. No path has two owners. Only
+  per-unit data, the MT7668's calibration `EEPROM`, stays in the board package.
 
 - **Deleting from an image needs the patched `e2rm`** — `./build-e2tools.sh`, which `build-image.sh`
   requires. Stock `e2rm` corrupts ext4 two ways: it frees a fast symlink's target string as block

@@ -48,6 +48,8 @@ done <"$FW/$BOARD/package.list"
 mkdir -p "$ROOT/usr/share/u-boot-menu/conf.d"
 # ro: systemd-fsck-root checks the rootfs; net.ifnames=0: eth0 and wlan0, as on Armbian
 cmdline="rootwait ro ${BOARD_SERIALCON:-} console=tty1 consoleblank=0 net.ifnames=0 ${BOARD_IR_BLACKLIST:-}"
+# the board's firmware ahead of every package's
+cmdline="$cmdline firmware_class.path=/usr/lib/tvb/firmware"
 [ -z "${BOARD_CMA:-}" ] || cmdline="$cmdline cma=$BOARD_CMA"
 cat >"$ROOT/usr/share/u-boot-menu/conf.d/tvb.conf" <<CONF
 U_BOOT_FDT=/usr/lib/tvb/board.dtb
