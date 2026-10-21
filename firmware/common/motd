@@ -1,6 +1,7 @@
 #!/bin/sh
-# TVBian's login banner. The upgradable count refreshes in the background once apt's lists change:
-# a simulated upgrade takes seconds.
+# TVBian's login banner, coloured as Armbian's. The upgradable count and the public address refresh
+# in the background, so a login never waits: a simulated upgrade takes seconds, the address a round
+# trip.
 . /etc/os-release
 cache=/run/tvb-motd-upgradable
 if [ ! -e "$cache" ] || [ /var/lib/apt/lists -nt "$cache" ]; then
@@ -8,12 +9,55 @@ if [ ! -e "$cache" ] || [ /var/lib/apt/lists -nt "$cache" ]; then
   (apt-get -qs upgrade 2>/dev/null | grep -c '^Inst' >"$cache.new" && mv "$cache.new" "$cache") \
     </dev/null >/dev/null 2>&1 &
 fi
-addr() { ip -o "$1" addr show scope global | awk '{sub("/.*", "", $4); printf "%s ", $4}'; }
+wan=/run/tvb-motd-wan
+if command -v curl >/dev/null && { [ ! -e "$wan" ] || [ -n "$(find "$wan" -mmin +60)" ]; }; then
+  touch "$wan"
+  (curl -4fsS --max-time 5 https://ipv4.whatismyip.akamai.com/ >"$wan.new" && mv "$wan.new" "$wan") \
+    </dev/null >/dev/null 2>&1 &
+fi
+# the release apt follows, by its suite: stable, testing, unstable
+suite=$(sed -n 's/^Suite: //p' /var/lib/apt/lists/*_dists_"${VERSION_CODENAME}"_InRelease 2>/dev/null | head -1)
+
+e=$(printf '\033') n="$e[0m" g="$e[0;92m" y="$e[0;93m" r="$e[0;91m" m="$e[0;95m" c="$e[0;96m" p="$e[0;35m"
+# addr <family> <LAN colour>: interface addresses, LAN by range; the public IPv4 is on none, so the
+# cache adds it
+addr() {
+  ip -o "$1" addr show scope global | awk '{sub("/.*", "", $4); print $4}' | while read -r a; do
+    case $a in
+      10.* | 192.168.* | 172.1[6-9].* | 172.2[0-9].* | 172.3[01].* | f[cd]*) printf '%s(LAN)%s %s%s%s  ' "$y" "$n" "$2" "$a" "$n" ;;
+      *) printf '%s(WAN)%s %s%s%s  ' "$y" "$n" "$m" "$a" "$n" ;;
+    esac
+  done
+}
+# cell <value> <red above> <rest> <width>: the value green, red past its limit, padded by what shows
+cell() {
+  [ "${1%%[!0-9]*}" -gt "$2" ] && t=$r || t=$g
+  if [ "$4" -gt 0 ]; then
+    printf "%s%s%s%-$(($4 - ${#1}))s" "$t" "$1" "$n" "$3"
+  else
+    printf '%s%s%s%s' "$t" "$1" "$n" "$3"
+  fi
+}
+
+kernel=${g}enabled$n
+apt-mark showhold 2>/dev/null | grep -q '^linux-image' && kernel=${r}disabled$n
+[ "$suite" = stable ] && suite=$g$suite$n || suite=$y${suite:-$VERSION_ID}$n
+count=$(cat "$cache")
+# as Armbian: the line only once there is something to upgrade
+updates=
+if [ "${count:-0}" -gt 0 ]; then
+  updates="Kernel upgrade $kernel and $e[1;92m$count$n package$([ "$count" -gt 1 ] && echo s) available for upgrade"
+fi
 read -r load _ </proc/loadavg
 read -r up _ </proc/uptime
 up=${up%.*}
 temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+load=$(awk -v l="$load" -v n="$(nproc)" 'BEGIN {printf "%d%%", l * 100 / n}')
+uptime="$([ "$up" -lt 86400 ] || echo "$((up / 86400))d ")$((up % 86400 / 3600))h $((up % 3600 / 60))m"
+mem=$(free -m | awk '/^Mem:/ {printf "%d%%", $3 * 100 / $2}')
+memtotal=$(free -m | awk '/^Mem:/ {printf "of %.2fG", $2 / 1024}')
 
+printf '%s' "$p"
 cat <<'LOGO'
 
  _______   _____ _
@@ -22,12 +66,22 @@ cat <<'LOGO'
   |_|   \_/ |___/_\__,_|_||_|
 
 LOGO
-printf ' TVBian for %s, running Linux %s\n\n' "$(cat /usr/lib/tvb/board-name)" "$(uname -r)"
-printf ' %-14s%s\n' "Packages:" "$PRETTY_NAME" "Updates:" "$(sed 's/$/ upgradable/' "$cache")" \
-  "IPv4:" "$(addr -4)" "IPv6:" "$(addr -6)"
+printf '%s' "$n"
+# board-name is the product, then the PCB's silkscreen when it has one: the last word, with an underscore
+board=$(cat /usr/lib/tvb/board-name)
+case ${board##* } in
+  *_*) board="$e[1m${board% *}$n $e[0;90m${board##* }$n" ;;
+  *) board="$e[1m$board$n" ;;
+esac
+printf ' TVBian for %s, running Linux %s%s%s\n\n' "$board" "$g" "$(uname -r)" "$n"
+printf ' %-14s%s\n' "Base:" "${NAME%% *} $suite ($VERSION_CODENAME)"
+[ -z "$updates" ] || printf ' %-14s%s\n' "Updates:" "$updates"
 echo
-printf ' %-14s%-18s%-14s%s\n' "Load:" "$(awk -v l="$load" -v n="$(nproc)" 'BEGIN {printf "%d%%", l * 100 / n}')" \
-  "Uptime:" "$([ "$up" -lt 86400 ] || echo "$((up / 86400))d ")$((up % 86400 / 3600))h $((up % 3600 / 60))m"
-printf ' %-14s%-18s%-14s%s\n' "Memory:" "$(free -m | awk '/^Mem:/ {printf "%d%% of %.2fG", $3 * 100 / $2, $2 / 1024}')" \
-  "CPU temp:" "${temp:+$((temp / 1000)) °C}"
-printf ' %-14s%s\n\n' "Disk /:" "$(df -h / | awk 'NR == 2 {print $5 " of " $2}')"
+printf ' %-14s%s\n' "IPv4:" "$(addr -4 "$g")$([ -s "$wan" ] && printf '%s(WAN)%s %s%s%s' "$y" "$n" "$m" "$(cat "$wan")" "$n")" \
+  "IPv6:" "$(addr -6 "$c")"
+echo
+printf ' %-14s%s%-14s%s%s%s\n' "Load:" "$(cell "$load" 80 "" 18)" "Uptime:" "$g" "$uptime" "$n"
+printf ' %-14s%s%-14s%s\n' "Memory:" "$(cell "$mem" 70 " $memtotal" 18)" \
+  "CPU temp:" "${temp:+$(cell "$((temp / 1000)) °C" 60 "" 0)}"
+printf ' %-14s%s\n' "Disk /:" "$(df -h / | awk 'NR == 2 {print $5, "of " $2}' | { read -r u t; cell "$u" 90 " $t" 0; })"
+echo
