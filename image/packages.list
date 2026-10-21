@@ -1,0 +1,9 @@
+# Every image's packages beyond Debian's minbase; a board adds its own through tvb-<board>'s Depends.
+# boot
+systemd-sysv udev kmod initramfs-tools zstd u-boot-menu e2fsprogs cloud-initramfs-growroot
+# network: wpasupplicant and wireless-regdb are only network-manager's Recommends
+network-manager wpasupplicant wireless-regdb iw iproute2 systemd-timesyncd
+# naming, access, apt
+avahi-daemon openssh-server sudo apt ca-certificates
+# swap in RAM; users and locales
+systemd-zram-generator adduser locales

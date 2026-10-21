@@ -6,8 +6,9 @@ BOARD=$1
 FW=/repo/firmware
 # shellcheck source=/dev/null
 . "$FW/$BOARD/board.conf"
+: "${BOARD_FAMILY:?firmware/$BOARD/board.conf names no BOARD_FAMILY}"
 # Rockchip's defaults: the vendor's ttyFIQ0 console, and CMA for a 4K frame (the tree has 8 MiB)
-if [ "${BOARD_FAMILY:-rk35xx}" = rk35xx ]; then
+if [ "$BOARD_FAMILY" = rk35xx ]; then
   : "${BOARD_SERIALCON:=earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0}" "${BOARD_CMA:=256M}"
 fi
 VERSION=${TVB_BUILD_REVISION:-0~local}

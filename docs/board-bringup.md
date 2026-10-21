@@ -129,11 +129,11 @@ needing no board routing are candidates.
 
 ## Board data
 
-Copy the closest `firmware/<board>/` and edit: `board.conf` (`BOARD_HOSTNAME`, `BOARD_PREFIX`,
-`BOARD_WANTS`, the two hooks), `payload.list`, `board-id`, `board-name` (the login banner — carry
-the PCB silkscreen, since these boxes vary between production runs), plus the DTB and idbloader.
-Create `docs/<board>/`, starting `worklog.md` on day one, and add the board to the README's Boxes
-table and support matrix.
+Copy the closest `firmware/<board>/` and edit: `board.conf` (`BOARD_FAMILY`, required,
+`BOARD_HOSTNAME`, `BOARD_PREFIX`, `BOARD_WANTS`, the two hooks), `payload.list`, `board-id`,
+`board-name` (the login banner — carry the PCB silkscreen, since these boxes vary between production
+runs), plus the DTB and idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add
+the board to the README's Boxes table and support matrix.
 
 - **Anything that must exist on a running box goes in `payload.list`**: that one list is consumed by
   both `build-image.sh` and `rk35xx-update`, so it cannot drift. Only one-time image surgery (raw

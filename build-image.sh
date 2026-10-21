@@ -36,7 +36,7 @@ fi
 
 # rk35xx: the factory loader pair is overlaid on the base image's raw sectors.
 # meson-gxl: the loaders stay in the eMMC, and the image follows the eMMC's layout.
-BOARD_FAMILY="${BOARD_FAMILY:-rk35xx}"
+: "${BOARD_FAMILY:?board.conf names no BOARD_FAMILY}"
 DTB="$FW/$BOARD_DTB"
 PAYLOAD="$FW/$BOARD_PAYLOAD"
 FDT="${BOARD_FDT:-rockchip/board.dtb}"
