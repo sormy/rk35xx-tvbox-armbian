@@ -1,0 +1,28 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Date: Tue, 20 Oct 2026 03:33:04 +0000
+Subject: [PATCH] soc: amlogic: meson-gx-socinfo: add GXLX2 and S905L3 IDs
+
+The S905L3 reports major ID 0x2a, which the table skips between G12B and
+SM1, so the SoC registers as "Unknown (Unknown)". Add the family, and the
+S905L3 as its only known part, matching any package as the S905L does.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/drivers/soc/amlogic/meson-gx-socinfo.c
++++ b/drivers/soc/amlogic/meson-gx-socinfo.c
+@@ -39,6 +39,7 @@
+ 	{ "TXHD", 0x27 },
+ 	{ "G12A", 0x28 },
+ 	{ "G12B", 0x29 },
++	{ "GXLX2", 0x2a },
+ 	{ "SM1", 0x2b },
+ 	{ "A1", 0x2c },
+ 	{ "T7", 0x36 },
+@@ -77,6 +78,7 @@
+ 	{ "S905X2", 0x28, 0x40, 0xf0 },
+ 	{ "A311D", 0x29, 0x10, 0xf0 },
+ 	{ "S922X", 0x29, 0x40, 0xf0 },
++	{ "S905L3", 0x2a, 0, 0x0 },
+ 	{ "S905D3", 0x2b, 0x4, 0xf5 },
+ 	{ "S905X3", 0x2b, 0x5, 0xf5 },
+ 	{ "S905X3", 0x2b, 0x10, 0x3f },

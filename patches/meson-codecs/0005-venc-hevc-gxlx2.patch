@@ -193,7 +193,7 @@ diff --color -ruN E/venc-hevc/venc_v4l2.c F/venc-hevc/venc_v4l2.c
  	dst = v4l2_m2m_dst_buf_remove(m2m);
  	last = v4l2_m2m_is_last_draining_src_buf(m2m, src);
  	src->sequence = ctx->out_seq++;
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 18, 50)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 19, 0)
 +	v4l2_m2m_buf_copy_metadata(src, dst, false);
 +#else
  	v4l2_m2m_buf_copy_metadata(src, dst);

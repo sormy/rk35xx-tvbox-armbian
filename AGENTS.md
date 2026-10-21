@@ -21,6 +21,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `src/<tool>/`       | host tools we write ourselves                                                                      |
 | `scripts/`          | host-side helpers, never installed on a box                                                        |
 | `keyring/`          | the `apt` repo's public signing key                                                                |
+| `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it                       |
 | `build-env/`        | the build environment: one container image every `./build.sh` step runs in                         |
 
 **Repo files carry no prefix**: each board's `payload.list` names where a file installs, under that
@@ -74,13 +75,14 @@ another, so nothing rots when one is rewritten.
 | `patches/u-boot/README.md`            | the two fixes U-Boot's pylibfdt build needs off Linux                 |
 | `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader    |
 | `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete  |
-| `patches/linux-rockchip/README.md`    | the kernel fixes and their PRs; why an overlay box cannot apply them  |
+| `patches/linux-rockchip/README.md`    | the vendor kernel's patches, their PRs, what Rockchip fixed since     |
+| `patches/linux-meson/README.md`       | mainline kernel patches for Amlogic boards, on their way upstream     |
 | `patches/seekwave-swt6621s/README.md` | the H96 Max Wi-Fi driver patches and their PRs                        |
 | `patches/mt76-mt7668/README.md`       | mainline mt76 for the MT7668S: what it does, its gaps, its firmware   |
 | `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, shipped as DKMS                   |
 | `patches/mt76x8-mt7668/README.md`     | the vendor MT7668 driver on 6.18: the fallback, not shipped           |
 | `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), shipped as DKMS                 |
-| `patches/meson-codecs/README.md`      | the video decoder and encoders on the GXLX2, shipped as DKMS          |
+| `patches/meson-codecs/README.md`      | the video decoder and encoders on the GXLX2: DKMS, or in-tree         |
 | `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand    |
 | `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds                |
 | `keyring/README.md`                   | the archive signing key: fingerprint, secret, rotation                |

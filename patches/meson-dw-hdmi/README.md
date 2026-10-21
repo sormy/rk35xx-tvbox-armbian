@@ -2,7 +2,7 @@
 
 Mainline's `meson_dw_hdmi.c` from Linux 6.18.44, built as DKMS under its own name, because the
 kernel's is built in. `firmware/common/fetch-meson-dw-hdmi-src.sh <dir>` stages it with these
-applied.
+applied. TVBian's kernel applies `0001` in-tree; `0002` is DKMS-only.
 
 | Patch  | Holds                                                      | Upstream              |
 | ------ | ---------------------------------------------------------- | --------------------- |

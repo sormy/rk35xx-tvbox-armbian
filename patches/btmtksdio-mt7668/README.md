@@ -2,7 +2,7 @@
 
 Three patches to mainline's `btmtksdio`, built as DKMS against the running kernel. They apply in
 order to the `btmtksdio.c` in Linux 6.18.44. All three apply to chip id `0x7668` alone; the MT7663
-and MT7921 behave as before.
+and MT7921 behave as before. TVBian's kernel applies all three in-tree.
 
 | Patch  | Fixes                                                                   |
 | ------ | ----------------------------------------------------------------------- |

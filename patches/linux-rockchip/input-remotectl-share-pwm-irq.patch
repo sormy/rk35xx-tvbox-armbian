@@ -1,58 +1,28 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+patching file drivers/input/remotectl/rockchip_pwm_remotectl.c
+Hunk #1 succeeded at 515 (offset 2 lines).
+From 13fcb31cdb72d7cb69510255d3859ba4b0a5cf74 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
-Date: Fri, 15 Aug 2026 00:00:00 +0000
-Subject: [PATCH] input: rockchip_pwm_remotectl: fix IRQ selection and sharing on PWM v1
+Date: Tue, 20 Oct 2026 13:45:58 +0000
+Subject: [PATCH] input: remotectl: make the pwrmatch IRQ a shared wake source
 
-Two problems on PWM v1 (RK3528), both fatal to the IR receiver.
-
-The driver takes platform_get_irq(pdev, 1) and only falls back to index 0 when
-that fails. On v4 index 1 is a capture IRQ dedicated to channel 3, but on v1
-index 1 is the pwrmatch IRQ and capture lives on the group IRQ at index 0. The
-lookup succeeds there, so the fallback never runs: the receiver listens on the
-wrong line and the kernel disables the one its interrupts land on.
-
-  irq 28: nobody cared (try booting with the "irqpoll" option)
-
-Select by pwm_version rather than by probe failure.
-
-That alone is not enough. On v1 the group IRQ is shared with the other channels
-of the same controller, and pwm-rockchip claims it as
-IRQF_NO_SUSPEND | IRQF_SHARED whenever main_version < 4, so a non-shared request
-from this driver is refused. Request both of this driver's IRQs with
-IRQF_SHARED; both handlers already read PWM_REG_INTSTS and return IRQ_NONE for
-interrupts that are not theirs, so sharing is safe.
-
-Before the index fix both requests also landed on the same line and the second
-was refused, which silently disabled wake-from-off where remote_support_psci is
-set:
-
-  genirq: Flags mismatch irq 57. 00004004 (rk_pwm_pwr_irq) vs. 00004004 (rk_pwm_irq)
-  remotectl-pwm ffa90030.pwm: cannot claim PWR_IRQ!!!
-
-On an RK3528 box the capture handler now shares the group IRQ with the three
-pwm-rockchip channels, and pwrmatch keeps a line of its own:
-
-  28: GICv2  85 Level  rk_pwm_irq, rk_pwm_irq, rk_pwm_irq, rk_pwm_irq
-  57: GICv2  86 Level  rk_pwm_pwr_irq
-
-Moving capture to index 0 also moves what probe arms for wake, since
-enable_irq_wake() is applied to the selected capture IRQ. On v1 the power key
-arrives on the pwrmatch IRQ - remotectl_suspend() masks the capture channel and
-leaves PWM_PWR_INT_ENABLE set - and IRQF_NO_SUSPEND keeps that line delivered
-without making it a wake source. Mark pwr_irq as a wake source too.
-
-Verified end to end on an RK3528 TV box: the receiver enumerates as event2 with
-the driver bound, every button on the bundled remote produces key events under
-evtest, the power key cold-boots the box from off, and dmesg is clean - no
-"nobody cared" and no flags mismatch.
+On PWM v1 (RK3528) the power key arrives on the pwrmatch IRQ:
+remotectl_suspend() masks the capture channel and leaves
+PWM_PWR_INT_ENABLE set. Probe arms only the capture IRQ for wake, and
+IRQF_NO_SUSPEND keeps the pwrmatch line delivered without making it a
+wake source, so the remote cannot wake the box. Mark it a wake source,
+and request it IRQF_SHARED like the capture IRQ, so it coexists with the
+pwm-rockchip channels of the same controller.
 
 Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 ---
+ drivers/input/remotectl/rockchip_pwm_remotectl.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
 diff --git a/drivers/input/remotectl/rockchip_pwm_remotectl.c b/drivers/input/remotectl/rockchip_pwm_remotectl.c
-index 6ddcb46dd..f496ed670 100644
+index 6958768..9eea958 100644
 --- a/drivers/input/remotectl/rockchip_pwm_remotectl.c
 +++ b/drivers/input/remotectl/rockchip_pwm_remotectl.c
-@@ -513,11 +513,19 @@ static int rockchip_pwm_set_pwrmatch(struct platform_device *pdev)
+@@ -515,11 +515,19 @@ static int rockchip_pwm_set_pwrmatch(struct platform_device *pdev)
  		goto end;
  	}
  	ret = devm_request_irq(&pdev->dev, pwr_irq, rockchip_pwm_pwrirq,
@@ -73,29 +43,6 @@ index 6ddcb46dd..f496ed670 100644
  	val = readl_relaxed(ddata->base + PWM_REG_INT_EN(pwm_id));
  	val = (val & 0xFFFFFF7F) | PWM_PWR_INT_ENABLE;
  	writel_relaxed(val, ddata->base + PWM_REG_INT_EN(pwm_id));
-@@ -938,10 +946,13 @@ static int rk_pwm_probe(struct platform_device *pdev)
- 	 * with the other channels in the same PWM controller. Prefer the
- 	 * dedicated one so we don't collide with the pwm-rockchip driver
- 	 * bound to another channel (which claims the group IRQ without
--	 * IRQF_SHARED on v4). Fall back to index 0 for older PWM v1-v3.
-+	 * IRQF_SHARED on v4). On v1 index 1 is the pwrmatch IRQ instead and
-+	 * capture lives on the group IRQ, so select by version, not by probe
-+	 * failure - the index 1 lookup succeeds there and returns the wrong line.
- 	 */
--	irq = platform_get_irq(pdev, 1);
--	if (irq < 0)
-+	if (ddata->pwm_data->pwm_version >= 4)
-+		irq = platform_get_irq(pdev, 1);
-+	else
- 		irq = platform_get_irq(pdev, 0);
- 	if (irq < 0) {
- 		dev_err(&pdev->dev, "cannot find IRQ\n");
-@@ -988,7 +999,7 @@ static int rk_pwm_probe(struct platform_device *pdev)
- 	cpumask_set_cpu(cpu_id, &cpumask);
- 	irq_set_affinity_hint(irq, &cpumask);
- 	ret = devm_request_irq(&pdev->dev, irq, ddata->pwm_data->funcs.irq_handler,
--			       IRQF_NO_SUSPEND, "rk_pwm_irq", ddata);
-+			       IRQF_NO_SUSPEND | IRQF_SHARED, "rk_pwm_irq", ddata);
- 	if (ret) {
- 		dev_err(&pdev->dev, "cannot claim IRQ %d\n", irq);
- 		goto error_irq;
+-- 
+2.47.3
+

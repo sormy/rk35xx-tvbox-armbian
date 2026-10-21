@@ -1,12 +1,12 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 7459cdc4766043174ce2b982f6bbe7c0911279c6 Mon Sep 17 00:00:00 2001
 From: Artem Butusov <art.sormy@gmail.com>
-Date: Fri, 14 Aug 2026 00:00:00 +0000
+Date: Tue, 20 Oct 2026 13:47:06 +0000
 Subject: [PATCH] net: stmmac: don't put an absent MDIO reset GPIO
 
-devm_gpiod_get_optional() returns NULL when the property is absent, and both
-call sites only test IS_ERR() before calling devm_gpiod_put(). With no
-"snps,reset" in the device tree that puts NULL, devres_release() finds nothing
-to release, and WARN_ON fires on every probe:
+devm_gpiod_get_optional() returns NULL when the property is absent, and
+stmmac_mdio_reset() only tests IS_ERR() before calling devm_gpiod_put().
+With no "snps,reset" in the device tree that puts NULL, devres_release()
+finds nothing to release, and WARN_ON fires on every probe:
 
   WARNING: CPU: 1 PID: 1 at drivers/gpio/gpiolib-devres.c:327 devm_gpiod_put+0x34/0x44
   Call trace:
@@ -14,26 +14,20 @@ to release, and WARN_ON fires on every probe:
    stmmac_mdio_reset+0x110/0x150
    __mdiobus_register+0x228/0x298
 
-Boards whose PHY needs no reset line hit this every boot — the RK3528 TV boxes
-use an integrated FEPHY and never set the property.
+Boards whose PHY needs no reset line hit this every boot: the RK3528 TV
+boxes use an integrated FEPHY and never set the property.
+stmmac_mdio_idle() already checks for NULL.
 
 Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 ---
+ drivers/net/ethernet/stmicro/stmmac/stmmac_mdio.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
 diff --git a/drivers/net/ethernet/stmicro/stmmac/stmmac_mdio.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_mdio.c
-index 3f7f1522c..41ebeb06f 100644
+index 85ccc23..30a74c7 100644
 --- a/drivers/net/ethernet/stmicro/stmmac/stmmac_mdio.c
 +++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_mdio.c
-@@ -359,7 +359,8 @@ int stmmac_mdio_idle(struct mii_bus *bus)
- 		if (IS_ERR(reset_gpio))
- 			return PTR_ERR(reset_gpio);
- 
--		devm_gpiod_put(priv->device, reset_gpio);
-+		if (reset_gpio)
-+			devm_gpiod_put(priv->device, reset_gpio);
- 	}
- #endif
- #endif
-@@ -405,7 +406,8 @@ int stmmac_mdio_reset(struct mii_bus *bus)
+@@ -405,7 +405,8 @@ int stmmac_mdio_reset(struct mii_bus *bus)
  			msleep(DIV_ROUND_UP(delays[2], 1000));
  
  		/* put reset gpio resource for next time */
@@ -43,3 +37,6 @@ index 3f7f1522c..41ebeb06f 100644
  	}
  #endif
  
+-- 
+2.47.3
+

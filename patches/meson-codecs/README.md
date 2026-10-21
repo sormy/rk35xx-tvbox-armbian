@@ -2,13 +2,17 @@
 
 Patches over `meson-sm1-codecs` at `eb7a444`: its out-of-tree decoder (the mainline staging
 meson-vdec with SM1 work) and its two encoders, ported to the S905L3. Three DKMS packages;
-`firmware/common/fetch-meson-codecs-src.sh <dir>` stages the one the directory names.
+`firmware/common/fetch-meson-codecs-src.sh <dir>` stages the one the directory names. On TVBian the
+decoder is in-tree: `patches/linux-meson/` `0002` puts meson-sm1-codecs's decoder under
+`drivers/staging/media/meson/vdec/`, and the `vdec` patches here apply there, all but the DKMS-only
+`0003`. The encoders, `0004`, `0005`, `0016` and `0019`, build out of tree from the same pin,
+`modules/meson-venc.conf`.
 
 | Patch  | Holds                                                             |
 | ------ | ----------------------------------------------------------------- |
 | `0001` | the decoder runs GXLX2 as G12A-class, minus two G12A settings     |
 | `0002` | no `EPOLLERR` before CAPTURE streams                              |
-| `0003` | `v4l2-h264` built into the decoder                                |
+| `0003` | `v4l2-h264` built into the decoder, for DKMS                      |
 | `0004` | the H.264 encoder (HCodec) on GXLX2                               |
 | `0005` | the HEVC encoder (WAVE420L) on GXLX2                              |
 | `0006` | MPEG-1/2 canvases mapped once every CAPTURE buffer is queued      |
@@ -55,7 +59,8 @@ reports an empty OUTPUT queue with CAPTURE off as `EPOLLERR`, and GStreamer give
 
 The vendor tree already carries `amvenc_avc` and `hevc_enc` nodes, which make platform devices of
 those names; the encoders adopt them, with their interrupts and, for WAVE420L, its register window.
-The factory kernel probed the WAVE420L on this chip, so GXLX2 joins its chip list.
+The factory kernel probed the WAVE420L on this chip, so GXLX2 joins its chip list. Below 6.19,
+`v4l2_m2m_buf_copy_metadata` still takes its `copy_frame_flags` argument.
 
 The H.264 encoder addresses twelve canvases as one run; `0019` takes the first run free, so a canvas
 another driver holds no longer fails its load with `ENODEV`.

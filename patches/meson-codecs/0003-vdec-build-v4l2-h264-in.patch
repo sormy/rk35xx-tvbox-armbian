@@ -9,21 +9,19 @@ v4l2-h264.c from the matching kernel source.
 
 Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 ---
- vdec/Makefile |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ vdec/Makefile |    1 +
+ 1 file changed, 1 insertion(+)
 
 diff --color -ruN C/vdec/Makefile D/vdec/Makefile
 --- a/vdec/Makefile
 +++ b/vdec/Makefile
-@@ -4,7 +4,7 @@
- meson-vdec-objs = esparser.o vdec.o vdec_helpers.o vdec_platform.o
- meson-vdec-objs += vdec_1.o vdec_hevc.o
- meson-vdec-objs += codec_mpeg12.o codec_mpeg12_multi.o codec_h264.o codec_h264_g12a.o
--meson-vdec-objs += codec_h264_g12a_dpb.o
-+meson-vdec-objs += codec_h264_g12a_dpb.o v4l2-h264.o
+@@ -7,5 +7,6 @@
+ meson-vdec-objs += codec_h264_g12a_dpb.o
  meson-vdec-objs += codec_hevc_common.o codec_vp9.o codec_hevc.o
  meson-vdec-$(CONFIG_VIDEO_MESON_VDEC_KUNIT_TEST) += codec_h264_g12a_dpb_test.o
++meson-vdec-objs += v4l2-h264.o
  
+ obj-$(CONFIG_VIDEO_MESON_VDEC) += meson-vdec.o
 -- 
 2.47.0
 

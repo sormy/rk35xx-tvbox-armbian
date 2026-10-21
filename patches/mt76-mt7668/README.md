@@ -3,7 +3,8 @@
 Mainline's mt76 plus the MT7668S, built as DKMS. The part is an MT7663 sibling on SDIO - the same
 register map, connac descriptors and firmware download - whose firmware owns the MAC.
 
-`firmware/common/fetch-mt76-src.sh <dir>` stages the tree with these applied.
+`firmware/common/fetch-mt76-src.sh <dir>` stages the tree with these applied. TVBian's kernel
+applies `0001`-`0013` in-tree; `0014` is DKMS-only.
 
 ## The patches
 

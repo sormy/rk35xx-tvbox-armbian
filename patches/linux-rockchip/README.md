@@ -1,14 +1,15 @@
 # linux-rockchip — kernel patches
 
-Board-independent fixes for `armbian/linux-rockchip`, the vendor kernel these images run. They are
-**not applied by this repo**: Armbian's `patch/kernel/<family>/` and `userpatches/kernel/<family>/`
-only run when you build the kernel, and an overlay box takes its kernel from `apt`. They live here
-so the work survives, and because the bugs they describe are visible on both boards.
+Board-independent fixes for Rockchip's vendor kernel. TVBian's `kernel/rk35xx.conf` applies them to
+`rockchip-linux/kernel` `develop-6.1`; an overlay box, whose kernel comes from Armbian's `apt`,
+cannot. The PRs were sent to `armbian/linux-rockchip`, its January 2025 snapshot; at the pin,
+Rockchip has fixed part of two, so those carry only the rest. `wireless-aic8800-stable-mac` applies
+to the out-of-tree AIC8800 build, `modules/aic8800.conf`, not to the kernel.
 
 | Patch                                    | PR            | Fixes                                                                       |
 | ---------------------------------------- | ------------- | --------------------------------------------------------------------------- |
-| `input-remotectl-share-pwm-irq`          | [#523][523]   | IRQ selection and sharing on PWM v1 — the IR receiver                       |
-| `net-stmmac-skip-absent-mdio-reset-gpio` | [#524][524]   | a WARN + ~416 lines of trace at every boot, on both boards                  |
+| `input-remotectl-share-pwm-irq`          | [#523][523]   | the IR power key as a wake source; Rockchip fixed the IRQ choice            |
+| `net-stmmac-skip-absent-mdio-reset-gpio` | [#524][524]   | a WARN + ~416 lines of trace at every boot; Rockchip fixed one call site    |
 | `net-dwmac-rk-prefer-vendor-storage-mac` | [#525][525]   | `end0` coming up on a derived address instead of the label one              |
 | `bluetooth-hci-h4-serdev`                | [#526][526]   | serdev binding for `hci_h4`, so BT needs no `hciattach` unit                |
 | `wireless-aic8800-stable-mac`            | [#527][527]   | the AIC8800 inventing a fresh MAC each boot                                 |

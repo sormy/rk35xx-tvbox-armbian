@@ -1,0 +1,12 @@
+CONFIG_LOCALVERSION="-tvb-rk35xx"
+# CONFIG_LOCALVERSION_AUTO is not set
+# no DWARF and so no BTF: a debug-info tree outgrows a CI runner's disk
+CONFIG_DEBUG_INFO_NONE=y
+# CONFIG_DEBUG_INFO_DWARF5 is not set
+# CONFIG_DEBUG_INFO_BTF is not set
+# warnings stay warnings: vendor code, in-tree and built against it, is not warning-clean
+# CONFIG_WERROR is not set
+# no TV box has a touchscreen, and this one is broken at the pin: it still calls set_fs()
+# CONFIG_TOUCHSCREEN_FTS is not set
+# the vendor's phone sensor stack: nothing a TV box carries, and its ak8975 clashes with IIO's
+# CONFIG_SENSOR_DEVICE is not set

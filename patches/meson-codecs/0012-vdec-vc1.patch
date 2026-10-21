@@ -251,7 +251,7 @@ diff -ruN a/vdec/Makefile b/vdec/Makefile
  meson-vdec-objs += vdec_1.o vdec_hevc.o
 -meson-vdec-objs += codec_mpeg12.o codec_mpeg12_multi.o codec_mpeg4.o codec_mjpeg.o codec_h264.o codec_h264_g12a.o
 +meson-vdec-objs += codec_mpeg12.o codec_mpeg12_multi.o codec_mpeg4.o codec_mjpeg.o codec_vc1.o codec_h264.o codec_h264_g12a.o
- meson-vdec-objs += codec_h264_g12a_dpb.o v4l2-h264.o
+ meson-vdec-objs += codec_h264_g12a_dpb.o
  meson-vdec-objs += codec_hevc_common.o codec_vp9.o codec_hevc.o
  meson-vdec-$(CONFIG_VIDEO_MESON_VDEC_KUNIT_TEST) += codec_h264_g12a_dpb_test.o
 diff -ruN a/vdec/vdec_platform.c b/vdec/vdec_platform.c

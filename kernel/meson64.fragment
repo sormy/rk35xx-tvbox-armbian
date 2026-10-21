@@ -1,0 +1,9 @@
+CONFIG_LOCALVERSION="-tvb-meson64"
+# CONFIG_LOCALVERSION_AUTO is not set
+# no DWARF and so no BTF: a debug-info tree outgrows a CI runner's disk
+CONFIG_DEBUG_INFO_NONE=y
+# CONFIG_DEBUG_INFO_DWARF5 is not set
+# CONFIG_DEBUG_INFO_BTF is not set
+CONFIG_VIDEO_MESON_VDEC=m
+# a built-in KUnit suite runs on every load of the decoder
+# CONFIG_VIDEO_MESON_VDEC_KUNIT_TEST is not set
