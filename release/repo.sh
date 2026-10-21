@@ -1,7 +1,7 @@
 #!/bin/bash
 # Assemble the flat apt repo, inside the build container: the published index, plus this run's new
 # debs, signed with /out/signing.key when there is one.
-#   repo.sh -> /out/repo: the new debs, Packages, Packages.xz, Release, InRelease, Release.gpg
+#   repo.sh -> /out/repo: the new debs, Packages, Packages.xz, Contents, Release, InRelease, Release.gpg
 #              /out/images/SHA256SUMS, signed the same way
 set -euo pipefail
 REL=/out/release
@@ -30,6 +30,14 @@ cd "$REPO"
   apt-ftparchive packages .
 } | cat -s >Packages
 xz -k Packages
+# every path's package: the published ones this run did not rebuild, and the new debs'
+rebuilt=$(find . -name '*.deb' -exec dpkg-deb -f {} Package \;)
+{
+  [ ! -s "$REL/Contents.published" ] ||
+    awk -v r="$rebuilt" 'BEGIN { n = split(r, a, "\n"); for (i = 1; i <= n; i++) skip[a[i]] }
+      { p = $NF; sub(/.*\//, "", p); if (!(p in skip)) print }' "$REL/Contents.published"
+  apt-ftparchive contents .
+} | sort -u >Contents
 apt-ftparchive -o APT::FTPArchive::Release::Origin=TVBian -o APT::FTPArchive::Release::Label=TVBian \
   release . >Release
 

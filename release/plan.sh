@@ -9,6 +9,7 @@ REL=/out/release
 mkdir -p "$REL" /out/debs
 rm -f "$REL/plan"
 curl -fsSL "$APT/Packages" -o "$REL/Packages.published" 2>/dev/null || : >"$REL/Packages.published"
+curl -fsSL "$APT/Contents" -o "$REL/Contents.published" 2>/dev/null || : >"$REL/Contents.published"
 
 field() {  # field <package> <name> [inputs]: that field of the package's stanza, by inputs if given
   awk -v RS= -v p="$1" -v f="$2" -v i="${3:-}" '

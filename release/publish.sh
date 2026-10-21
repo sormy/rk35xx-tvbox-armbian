@@ -17,7 +17,7 @@ gh release view apt >/dev/null 2>&1 ||
 # the debs before the index that names them
 debs=$(find "$OUT/repo" -name '*.deb')
 [ -z "$debs" ] || gh release upload apt $debs
-gh release upload apt --clobber "$OUT/repo/Packages" "$OUT/repo/Packages.xz" \
+gh release upload apt --clobber "$OUT/repo/Packages" "$OUT/repo/Packages.xz" "$OUT/repo/Contents" \
   "$OUT/repo/Release" "$OUT/repo/InRelease" "$OUT/repo/Release.gpg"
 
 images=$(find "$OUT/images" -name '*.img.xz' 2>/dev/null)

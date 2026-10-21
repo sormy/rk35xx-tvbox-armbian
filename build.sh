@@ -147,6 +147,7 @@ case "$1" in
           keyring) TVB_BUILD_REVISION=$version run bash package/keyring.sh ;;
         esac
       done <"$OUT/release/plan"
+      run bash release/guard.sh
       for b in $(boards); do run bash image/build.sh "$b"; done
     fi
     run bash release/repo.sh ;;

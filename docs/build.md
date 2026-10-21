@@ -44,6 +44,10 @@ The plan looks up each group's `X-Tvb-Inputs`, from `release/inputs.sh`, in the 
 `Packages`: a match is fetched, anything else builds at the next revision, `6.18.57-1` then `-2`, or
 `1` then `2`. Plan and notes land in `build/out/release/`.
 
+A path that moves between packages needs `Replaces` and `Breaks` on its new owner, versioned below
+the old owner's first release without it; `release/guard.sh` fails the release otherwise, against
+the published `Contents`. A path renamed within one package needs neither.
+
 Testing the served repo from a box, 🟡 run from a trixie container only:
 
 ```sh
