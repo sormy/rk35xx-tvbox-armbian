@@ -10,7 +10,7 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 
 | Node                      | Change                                                                                                                | Why                                                                                     |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `/` (root)                | `compatible` prepends `"r69-xr821,rk3518-tvbox"`, appends `"rockchip,rk3528a"`; factory `rockchip,rk3518` kept        | rkmpp has no `rk3518` entry and cannot find the VPU without the alias                   |
+| `/` (root)                | `compatible` prepends `"r69,rk3518-tvbox"`, appends `"rockchip,rk3528a"`; factory `rockchip,rk3518` kept              | rkmpp has no `rk3518` entry and cannot find the VPU without the alias                   |
 | `/` (root)                | `model` → `R69 XR821_V1.1`                                                                                            | the factory string names the reference EVB, not this box                                |
 | `serial@ffa00000` (uart2) | `bluetooth` child added, **commented out**                                                                            | see below: the driver it needs is not merged yet                                        |
 | `pwm@ffa90030` (IR)       | `remote_support_psci` `0` → `1`                                                                                       | IR as ATF wake source (remote wakes the box from off)                                   |

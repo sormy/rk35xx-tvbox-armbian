@@ -7,7 +7,7 @@
 -	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518";
 +	/* board name first; rk3528a last, because rkmpp has no rk3518 entry and cannot
 +	 * otherwise find the VPU */
-+	compatible = "r69-xr821,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
++	compatible = "r69,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
  	interrupt-parent = <&gic>;
  	#address-cells = <0x02>;
  	#size-cells = <0x02>;

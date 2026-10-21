@@ -3,7 +3,7 @@
 
 # the radio's RF settings from tvb-firmware-swt6621s, by the name the driver asks for first: the
 # tree's compatible. A stand-alone BT antenna, FDD coexistence.
-link /usr/lib/firmware/updates/swt6621s/SWT6621S_NV_SDIO_STANDALONE_FDD.bin /usr/lib/tvb/firmware/SWT6621S_NV_SDIO.h96max-zx,rk3518-tvbox.bin
+link /usr/lib/firmware/updates/swt6621s/SWT6621S_NV_SDIO_STANDALONE_FDD.bin /usr/lib/tvb/firmware/SWT6621S_NV_SDIO.h96max-h313,rk3518-tvbox.bin
 
 # LEDs: red while off or asleep, blue while on (the tree's retain-state properties keep them)
 0755 common/led-shutdown           /usr/lib/systemd/system-shutdown/tvb-led

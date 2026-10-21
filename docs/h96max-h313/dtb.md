@@ -10,7 +10,7 @@ consumer needs otherwise; `compatible` and `model` are the two that do.
 
 | Node                | Change                                                               | Why                                                                       |
 | ------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `/` (root)          | `compatible` prepends `"h96max-zx,rk3518-tvbox"`                     | the Seekwave driver keys board-specific firmware names off it             |
+| `/` (root)          | `compatible` prepends `"h96max-h313,rk3518-tvbox"`                   | the Seekwave driver keys board-specific firmware names off it             |
 | `/` (root)          | `compatible` appends `"rockchip,rk3528a"`                            | userspace can't identify this SoC otherwise — see below                   |
 | `/` (root)          | `model` → `H96 Max H313 3518_ZX_V01`                                 | the factory string names the reference EVB, not this box                  |
 | `pwm@ffa90030` (IR) | `remote_support_psci` `0` → `1`                                      | IR as ATF wake source (remote wake)                                       |

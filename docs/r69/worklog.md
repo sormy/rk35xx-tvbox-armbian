@@ -1754,3 +1754,10 @@ on the H96 Max, and this box was offline for the change.
   through `0xFC70` when the controller's own has the I/G bit set: `8A:00:33:65:64:B7`, on
   `develop-6.1`'s tip, after the H313 booted that tip first, nothing failed. DHCP moved the box to
   `.241`; avahi took `cnc-2.local` again, a restart reclaimed `cnc.local`.
+
+### 2026-10-21 — the board id in the tree
+
+- The root compatible was `r69-xr821,rk3518-tvbox`, as in the closed XR821 submission; this unit's
+  radio is an AIC8800. Now `r69,rk3518-tvbox`, the `board-id`; nothing we ship reads the first
+  entry, and rkmpp reads only the last, `rockchip,rk3528a`, unchanged.
+- The rootfs relabelled `tvbian`, the UUID unchanged, so `tvb-install` takes the eMMC as a source.

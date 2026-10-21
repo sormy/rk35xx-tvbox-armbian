@@ -151,7 +151,7 @@ them before the fix.
 The H96 Max uses:
 
 ```
-compatible = "h96max-zx,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
+compatible = "h96max-h313,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
 ```
 
 Both ends of that chain do work, and both matter here:

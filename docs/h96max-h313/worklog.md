@@ -2144,3 +2144,14 @@ the legacy path and defensive.
   address, cause not found; the slots then read back as neither saved build. Rewritten from a clean
   build and checked from the host: `local-mac-address` and `eth0` `00:ef:00:4a:43:a6` on two boots,
   three more on a build that encodes the reader's failing step into `ethaddr`, nothing failed.
+
+## 2026-10-21 — the board id in the tree, and the board's firmware directory
+
+- `firmware_class.path=/usr/lib/tvb/firmware` on the command line; the NV link moved there from
+  `updates/`. After a reboot the driver loaded it from there and `wlan0` connected.
+- The root compatible was `h96max-zx,rk3518-tvbox`, not the `board-id`. Now
+  `h96max-h313,rk3518-tvbox`; the NV link follows, since the Seekwave driver builds its board
+  firmware names from it. After a reboot: `board_id from DT compatible: h96max-h313,rk3518-tvbox`,
+  `SWT6621S_NV_SDIO.h96max-h313,rk3518-tvbox.bin` loaded, `wlan0` connected, nothing failed.
+- The rootfs, an SD card, relabelled `tvbian`, so `tvb-install` takes it as a source; it reached its
+  prompt with the eMMC as target, and wrote nothing on `n`.
