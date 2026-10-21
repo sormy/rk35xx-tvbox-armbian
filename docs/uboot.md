@@ -165,6 +165,9 @@ rebuild changed nothing.
   (`CONFIG_ROCKCHIP_VENDOR_PARTITION=y`, `vendor_storage_init` in the blob), but Armbian's defconfig
   has `# CONFIG_ROCKCHIP_SET_ETHADDR is not set` — the option that would turn `LAN_MAC` into
   `ethaddr`. Reading the store and using it for the MAC are two separate switches.
+- **The MAC comes from vendor storage.** `patches/u-boot/0003` reads `LAN_MAC` from `mmc0`'s `DVKR`,
+  newest intact copy, into `ethaddr` and `eth1addr`; the `cpuid`-derived address is the fallback.
+  The kernel gets it as `local-mac-address` and needs no patch of its own.
 - **No OP-TEE.** The FIT carries ATF + U-Boot only. BL31 prints one benign
   `No OPTEE provided … opteed_fast`. Re-add with `TEE=` and `rk3528_bl32_v1.06.bin` if ever needed.
 - **`ROCKCHIP_TPL=` never reaches the artifact.** Binman assembles TPL+SPL+FIT as one image; only

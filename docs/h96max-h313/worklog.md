@@ -2133,3 +2133,14 @@ the legacy path and defensive.
   R69 tree deletes the same seven RK3528 rates.
 - Removing the 6.12 kernel failed in the drivers' `postrm`: `depmod` on a kernel already gone. It
   runs only while that kernel's modules remain.
+- The 6.12 `eth0` address: 6.12 dropped `sdmmc_vendor_storage`, so `is_rk_vendor_ready()` never
+  turns true, the `dwmac-rk` patch's 2 s wait expires and U-Boot's `local-mac-address`,
+  `86:33:37:fc:84:74` from the `cpuid` hash, stays. 6.12's RAM backend needs a reserved region only
+  Rockchip's U-Boot fills. Fixed a layer down instead: `patches/u-boot/0003` reads `LAN_MAC` from
+  `mmc0`'s newest intact `DVKR` copy into `ethaddr`. On the three backups it picks
+  `00:ef:00:4a:43:a6`, the R69's `c4:2a:fe:10:51:77` past a stale copy 0, and the 3518D's
+  `00:ef:01:1a:be:a0`. The `dwmac-rk` patch is dropped from both kernels.
+- Both U-Boot slots written, the old pair kept in `backup/`. The first boot still carried the hash
+  address, cause not found; the slots then read back as neither saved build. Rewritten from a clean
+  build and checked from the host: `local-mac-address` and `eth0` `00:ef:00:4a:43:a6` on two boots,
+  three more on a build that encodes the reader's failing step into `ethaddr`, nothing failed.

@@ -1,0 +1,125 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] rockchip: take the MAC address from vendor storage
+
+A Rockchip board assigned a MAC address in the factory keeps it in the
+vendor storage on its eMMC, as LAN_MAC: four copies at sector 7168, the
+newest intact one current. Set ethaddr and eth1addr from it, and fall
+back to the address derived from the cpuid when there is none.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/arch/arm/mach-rockchip/board.c b/arch/arm/mach-rockchip/board.c
+index 2e6bb38b..4f3f29cc 100644
+--- a/arch/arm/mach-rockchip/board.c
++++ b/arch/arm/mach-rockchip/board.c
+@@ -19,9 +19,11 @@
+ #include <hash.h>
+ #include <init.h>
+ #include <log.h>
++#include <memalign.h>
+ #include <mmc.h>
+ #include <dm/uclass-internal.h>
+ #include <misc.h>
++#include <net.h>
+ #include <part.h>
+ #include <ram.h>
+ #include <syscon.h>
+@@ -322,8 +324,98 @@ int fastboot_set_reboot_flag(enum fastboot_reboot_reason reason)
+ #endif
+ 
+ #ifdef CONFIG_MISC_INIT_R
++#define VENDOR_TAG		0x524b5644	/* "DVKR" */
++#define VENDOR_START		7168
++#define VENDOR_COPIES		4
++#define VENDOR_SECTORS		128
++#define VENDOR_ITEMS		126
++#define VENDOR_LAN_MAC_ID	3
++
++struct vendor_item {
++	u16 id;
++	u16 offset;
++	u16 size;
++	u16 flag;
++};
++
++struct vendor_info {
++	u32 tag;
++	u32 version;
++	u16 next_index;
++	u16 item_num;
++	u16 free_offset;
++	u16 free_size;
++	struct vendor_item item[VENDOR_ITEMS];
++	u8 data[VENDOR_SECTORS * 512 - 1024 - 8];
++	u32 hash;
++	u32 version2;
++};
++
++/* Copy up to @size bytes of @id from the newest intact copy; returns the length copied */
++static int rockchip_vendor_read(struct blk_desc *desc, u16 id, u8 *buf, u16 size)
++{
++	struct vendor_info *info;
++	lbaint_t newest = 0;
++	u32 version = 0;
++	int i, ret = -ENOENT;
++
++	info = malloc_cache_aligned(sizeof(*info));
++	if (!info)
++		return -ENOMEM;
++
++	for (i = 0; i < VENDOR_COPIES; i++) {
++		lbaint_t start = VENDOR_START + i * VENDOR_SECTORS;
++
++		if (blk_dread(desc, start, VENDOR_SECTORS, info) != VENDOR_SECTORS)
++			continue;
++		if (info->tag == VENDOR_TAG && info->version == info->version2 &&
++		    info->version > version) {
++			version = info->version;
++			newest = start;
++		}
++	}
++
++	if (version && blk_dread(desc, newest, VENDOR_SECTORS, info) == VENDOR_SECTORS) {
++		for (i = 0; i < min_t(int, info->item_num, VENDOR_ITEMS); i++) {
++			struct vendor_item *item = &info->item[i];
++
++			if (item->id != id)
++				continue;
++			size = min(size, item->size);
++			if (item->offset + size > sizeof(info->data))
++				break;
++			memcpy(buf, &info->data[item->offset], size);
++			ret = size;
++			break;
++		}
++	}
++
++	free(info);
++	return ret;
++}
++
++/* The address the factory assigned: LAN_MAC, one per GMAC, in the eMMC's vendor storage */
++static void rockchip_vendor_setup_macaddr(void)
++{
++	struct mmc *mmc = find_mmc_device(0);
++	u8 mac[2 * ARP_HLEN];
++	int len;
++
++	if (!mmc || mmc_init(mmc) || IS_SD(mmc))
++		return;
++	len = rockchip_vendor_read(mmc_get_blk_desc(mmc), VENDOR_LAN_MAC_ID, mac, sizeof(mac));
++	if (len < ARP_HLEN || !is_valid_ethaddr(mac))
++		return;
++	eth_env_set_enetaddr("ethaddr", mac);
++	if (len == sizeof(mac) && is_valid_ethaddr(&mac[ARP_HLEN]))
++		eth_env_set_enetaddr("eth1addr", &mac[ARP_HLEN]);
++}
++
+ int rockchip_setup_macaddr(void)
+ {
++	if (CONFIG_IS_ENABLED(MMC) && !env_get("ethaddr"))
++		rockchip_vendor_setup_macaddr();
++
+ #if CONFIG_IS_ENABLED(HASH) && CONFIG_IS_ENABLED(SHA256)
+ 	int ret;
+ 	const char *cpuid = env_get("cpuid#");

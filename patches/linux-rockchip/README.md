@@ -10,14 +10,12 @@ to the out-of-tree AIC8800 build, `modules/aic8800.conf`, not to the kernel.
 | ---------------------------------------- | ------------- | --------------------------------------------------------------------------- |
 | `input-remotectl-share-pwm-irq`          | [#523][523]   | the IR power key as a wake source; Rockchip fixed the IRQ choice            |
 | `net-stmmac-skip-absent-mdio-reset-gpio` | [#524][524]   | a WARN + ~416 lines of trace at every boot; Rockchip fixed one call site    |
-| `net-dwmac-rk-prefer-vendor-storage-mac` | [#525][525]   | `end0` coming up on a derived address instead of the label one              |
 | `bluetooth-hci-h4-serdev`                | [#526][526]   | serdev binding for `hci_h4`, so BT needs no `hciattach` unit                |
 | `wireless-aic8800-stable-mac`            | [#527][527]   | the AIC8800 inventing a fresh MAC each boot                                 |
 | `mmc-dw-mmc-rockchip-per-host-inherit`   | not submitted | `static bool inherit` in `dw_mci_v2_execute_tuning()` — **not needed here** |
 
 [523]: https://github.com/armbian/linux-rockchip/pull/523
 [524]: https://github.com/armbian/linux-rockchip/pull/524
-[525]: https://github.com/armbian/linux-rockchip/pull/525
 [526]: https://github.com/armbian/linux-rockchip/pull/526
 [527]: https://github.com/armbian/linux-rockchip/pull/527
 

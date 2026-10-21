@@ -3,8 +3,9 @@
 Retail name "H96 Max H313" — the H313 is branding, the silicon is RK3518.
 
 Runs TVBian, migrated in place from Armbian: Debian trixie, kernel `6.1.172-tvb-rk35xx`,
-`tvb-h96max-h313`, NetworkManager, hostname `h96max-h313`. ✅ Wi-Fi, BT, IR, CEC, the VPU nodes; ❓
-HDMI, suspend and IR wake on this kernel.
+`tvb-h96max-h313`, NetworkManager, hostname `h96max-h313`. ✅ Wi-Fi, BT, IR, CEC, the VPU nodes,
+Ethernet on the label MAC, which our U-Boot reads from vendor storage; ❓ HDMI, suspend and IR wake
+on this kernel.
 
 <img src="board.jpg" alt="H96 Max PCB, serial header bottom-right" width="360">
 

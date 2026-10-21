@@ -49,9 +49,10 @@ only where `/usr/lib/firmware/updates/` holds a byte-identical copy.
 find /etc /usr/local /usr/lib/systemd /usr/lib/udev -name '*rk35xx*'   # box: before and after
 ```
 
-On rk35xx `mac-pin` and `vendor-storage` go too: `dwmac-rk` reads vendor storage, and the Seekwave
-driver its chip's efuse, so the Wi-Fi address changes once, back to the chip's, and DHCP may move
-the box. The IR driver is in-tree; its DKMS package goes with the Seekwave one.
+On rk35xx `mac-pin` and `vendor-storage` go too: U-Boot reads Ethernet's address from vendor
+storage, and the Seekwave driver its chip's efuse, so the Wi-Fi address changes once, back to the
+chip's, and DHCP may move the box. The IR driver is in-tree; its DKMS package goes with the Seekwave
+one.
 
 ## 3. NetworkManager
 
@@ -121,7 +122,12 @@ DNS learns it from the next DHCP lease.
 
 On the M20's FAT, `boot.scr` and `aml_autoscript` are the image's, and `u-boot.ext` is
 `/usr/lib/tvb/u-boot.bin`, the old one kept beside it until
-`/proc/device-tree/chosen/u-boot,version` names the new one.
+`/proc/device-tree/chosen/u-boot,version` names the new one. On a Rockchip box the FIT goes into
+both of the eMMC's slots, the eMMC found by its `boot0`:
+
+```sh
+for s in 16384 20480; do sudo dd if=/usr/lib/tvb/u-boot.bin of=/dev/<emmc> bs=512 seek=$s conv=fsync; done   # box
+```
 
 ## 5. Sweep
 

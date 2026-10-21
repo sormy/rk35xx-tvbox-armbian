@@ -1,5 +1,8 @@
 # Pinning MAC addresses: userspace is the wrong layer
 
+On TVBian `mac-pin` is gone: the H313 runs without it, 2026-10-20, every address from its driver. It
+stays in `firmware/common/` only for overlay boxes, until the overlay goes.
+
 Family-wide. Opened 2026-09-06, after `rk35xx-mac-pin` turned out to be the single largest cost in
 the H96 Max 3518D's boot — 12.6 s of a 19.7 s userspace, and 2.0 s even once fixed.
 
@@ -28,22 +31,25 @@ those units, not a property of the platform: a unit carrying `BT_MAC` would be i
 Whatever replaces `mac-pin` should consume the contract, not the two ids these boards happen to
 populate.
 
-## The kernel, once we build it
+## Below userspace, once we build it
 
 Rejected while the kernel came from Armbian: an overlay box cannot ship kernel patches. Under
-`docs/todo/tvb-linux.md` it can, so each driver reads its own address at probe and `mac-pin` goes.
+`docs/todo/tvb-linux.md` it can, so each address is set before the interface exists and `mac-pin`
+goes.
 
-| Interface      | Source, then fallback             | Patch                                    |
-| -------------- | --------------------------------- | ---------------------------------------- |
-| Ethernet       | vendor storage `LAN_MAC`          | `net-dwmac-rk-prefer-vendor-storage-mac` |
-| AIC8800 Wi-Fi  | `WIFI_MAC`, then the SoC's OTP id | `wireless-aic8800-stable-mac`            |
-| Seekwave Wi-Fi | `WIFI_MAC`, then the SoC's OTP id | not written                              |
-| MT7668 Wi-Fi   | the chip's firmware               | none needed                              |
-| Bluetooth      | `BT_MAC`, then the SoC's OTP id   | per driver, not written                  |
+| Interface      | Source, then fallback             | Patch                              |
+| -------------- | --------------------------------- | ---------------------------------- |
+| Ethernet       | vendor storage `LAN_MAC`, `cpuid` | U-Boot `0003`: `local-mac-address` |
+| AIC8800 Wi-Fi  | `WIFI_MAC`, efuse, SoC's OTP id   | `wireless-aic8800-stable-mac`      |
+| Seekwave Wi-Fi | `WIFI_MAC`, then the chip's efuse | none needed: the driver reads both |
+| MT7668 Wi-Fi   | the chip's firmware               | none needed                        |
+| Seekwave BT    | the chip: its efuse address + 1   | none needed                        |
+| Bluetooth      | `BT_MAC`, then the SoC's OTP id   | per driver, not written            |
 
-One layer: the kernel, because the first two patches exist in `patches/linux-rockchip/`. U-Boot
-setting `local-mac-address` is the alternative below, never an addition. The four vendor-storage ids
-are the contract, so a unit carrying `BT_MAC` is honoured though none dumped here does.
+Ethernet is set in U-Boot because the kernel cannot read the store on every series: 6.12 dropped
+`sdmmc_vendor_storage`, leaving only the flash, MTD and RAM backends. The radios stay in their
+drivers, which ask their own firmware. The four vendor-storage ids are the contract, so a unit
+carrying `BT_MAC` is honoured though none dumped here does.
 
 A derived address changes once on migration: the drivers' OTP-id rule is not `mac-pin`'s `sha256` of
 cpuid and interface. DHCP reservations and Bluetooth pairings follow it.
@@ -56,20 +62,12 @@ is earlier than any unit can run and has no wait at all. The catch, already reco
 first boot rather than computed at event time. That makes first boot slightly more complex and every
 subsequent boot free.
 
-**U-Boot patches the DT before Linux ever sees it.** The most promising, and newly practical: as of
-2026-09-05 each board builds its own `uboot.itb` from its own tree, so we control this stage. U-Boot
-would read vendor storage, then set `local-mac-address` on the relevant node — the kernel then comes
-up with the right address from the very first probe, no window and no wait. This is the standard
-mechanism, not a trick.
-
 **The kernel reads it, from the tree alone.** A `mac-address` nvmem cell on the gmac node is read by
 `of_get_mac_address()` at probe, no userspace at all. Two sources:
 
 - the OTP: ❓ if the RK3528's holds a MAC rather than only the `cpuid` U-Boot derives one from;
 - vendor storage: not in mainline 6.18, where only MTD registers an nvmem provider — none on a block
-  device — and no layout parses `DVKR`'s tag table; both would be new kernel code. The vendor 6.1
-  kernel these boards run may read `LAN_MAC` in its own `dwmac-rk` instead. Boot once without
-  `rk35xx-mac-pin` and compare `end0` against vendor storage id 3 to settle it.
+  device — and no layout parses `DVKR`'s tag table; both would be new kernel code.
 
 **Upstream, later: a vendor-storage nvmem layout.** "Support for block device NVMEM providers" (v10,
 2026-08) lets an eMMC partition node carry an nvmem layout; its bindings are in v7.3-rc1, the block
@@ -77,17 +75,6 @@ provider itself is reviewed but not yet applied. On top of it, a small layout dr
 `onie-tlv` would parse `DVKR` — newest valid copy, tag table — into `mac-address`, Wi-Fi and
 `local-bd-address` cells for each board's tree to point at. It reaches these boards only once
 Armbian ships a kernel carrying it.
-
-Open questions before committing to the U-Boot route:
-
-- Does our mainline U-Boot have a vendor-storage driver? The R69 notes say it does **not**, which is
-  exactly why `rockchip_setup_macaddr()` derives from the OTP `cpuid` today. Writing one is the bulk
-  of the work.
-- Wi-Fi and Bluetooth addresses do not come from a DT property the way a MAC does — the Seekwave and
-  AIC drivers ask their own firmware. U-Boot may only be able to fix the wired address, leaving the
-  radios on the current mechanism. That would be a partial win, not a replacement.
-- A board with no ethernet gains nothing from the DT route, so the `.link` option may still be
-  needed alongside it.
 
 ## The measurement that motivated this
 
@@ -110,3 +97,11 @@ the kernel is about to create anyway.
   calling `rockchip_wifi_mac_addr()`. Vendored SDIO drivers routinely hide that behind their own
   `CONFIG_PLATFORM_*` knobs and then ask the firmware, which invents one per boot.
   `grep -c rfkill-wlan` over a boot log settles it: zero means vendor storage is not the problem.
+
+## The Seekwave chip carries its own address
+
+The H313's factory Android boot: `skw_sync_chip_info: efuse mac: fe:fd:fc:99:08:5f, valid`, the same
+as Armbian's `phy0` permanent address, and Bluetooth `FE:FD:FC:99:08:60`, one above it.
+`skw_drv_probe`'s `MAC: 00:00:00:00:00:00` is only the unset module parameter. The driver takes
+`skw_mac`, then vendor storage's `WIFI_MAC`, then the efuse, so on this chip `mac-pin` only ever
+overrode a stable factory address; without it `wlan0` comes up as the factory's.

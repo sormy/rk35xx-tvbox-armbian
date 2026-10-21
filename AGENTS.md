@@ -78,7 +78,7 @@ another, so nothing rots when one is rewritten.
 | `upstream/README.md`                  | turning the grafts into something upstreamable                        |
 | `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there      |
 | `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s       |
-| `patches/u-boot/README.md`            | the two fixes U-Boot's pylibfdt build needs off Linux                 |
+| `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage        |
 | `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader    |
 | `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete  |
 | `patches/linux-rockchip/README.md`    | the vendor kernel's patches, their PRs, what Rockchip fixed since     |
