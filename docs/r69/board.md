@@ -258,16 +258,12 @@ Still open:
   sectors 7168–16383 were written back from that image after `armbian-install` zeroed them, and
   `DVKR`/`SSKR`/`LAN_MAC` all came back. Identify the eMMC by its `boot0`/`boot1` companions, not a
   remembered number.
-- **The BT public address is malformed and cannot be pinned per unit.** `0B:3B:22:AC:88:20` — `0x0B`
-  is `0000 1011`, so the **I/G bit is set**, and no SIG member holds `0B:3B:22`. The firmware is
-  computing it per-die rather than reading an assigned one. It is at least stable across reboots,
-  unlike Wi-Fi's, and `btmgmt public-addr` returns `0x0c Not Supported` — no `set_bdaddr` for the
-  generic H4 driver, no known AIC vendor Write-BD_ADDR. A static **LE** address via
-  `btmgmt static-addr` does work. Nothing objects in practice: BR/EDR and LE both work, a scan finds
-  > 100 devices, and neither the kernel nor `bluetoothd` validates a local controller's address
-  > bits. The exposure is **collision**, only with several R69s in range. The route out, if it
-  > bites: `HCI_QUIRK_USE_BDADDR_PROPERTY` with `local-bd-address` on the serdev node
-  > (`hci_sync.c`), filled per unit by U-Boot from the SoC cpuid.
+- **Wi-Fi and BT addresses are derived, the efuse holding neither.** `wlan0` is `8a:00:33:65:64:b6`:
+  AIC's `88:00:33` prefix, which no one holds as an OUI, marked locally administered, and the SoC
+  serial's low bytes. BT is that + 1, `8A:00:33:65:64:B7`, written at setup with AIC's vendor
+  command `0xFC70` in place of the firmware's own `0B:3B:22:AC:88:20` (I/G bit set). ✅ 2026-10-20;
+  a `local-bd-address` in the tree would win, and `btmgmt public-addr` works with the controller
+  powered off.
 - **A dark window during cold boot** (cosmetic). The power cycle reads off → red, booting → dark,
   running → blue; the SoC reset clears the GPIOs and `leds-gpio` only re-drives blue when it probes
   ~10–15 s in. Filling it would mean driving an LED from U-Boot, which we do build ourselves.

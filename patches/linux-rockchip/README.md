@@ -11,6 +11,7 @@ to the kernel.
 | `input-remotectl-share-pwm-irq`          | the IR power key as a wake source; Rockchip fixed the IRQ choice            |
 | `net-stmmac-skip-absent-mdio-reset-gpio` | a WARN + ~416 lines of trace at every boot; Rockchip fixed one call site    |
 | `bluetooth-hci-h4-serdev`                | serdev binding for `hci_h4`, so BT needs no `hciattach` unit                |
+| `bluetooth-hci-h4-aic8800-bdaddr`        | the AIC8800's BT on a made-up address: Wi-Fi's + 1 instead                  |
 | `wireless-aic8800-stable-mac`            | the AIC8800 inventing a fresh MAC each boot                                 |
 | `mmc-dw-mmc-rockchip-per-host-inherit`   | `static bool inherit` in `dw_mci_v2_execute_tuning()` — **not needed here** |
 

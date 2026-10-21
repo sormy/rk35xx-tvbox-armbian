@@ -1746,3 +1746,11 @@ on the H96 Max, and this box was offline for the change.
   to `.ndo_siocdevprivate`, which the driver lacks, and nothing sent `GET_BT_MAC_ADDR`. In normal
   mode the request times out and crashes the command queue; a module reload leaves the SDIO card
   unpowered (`-123`), so test mode takes a boot. Not shipped: diagnostics only.
+- AIC's vendor command `0xFC70` (`HCI_VSC_WRITE_BD_ADDR` in its `libbt`, six bytes little-endian)
+  sets the BD address until the next power-up: `hcitool cmd 0x3f 0x070 b7 64 65 33 00 88` and an HCI
+  Reset gave `88:00:33:65:64:B7`, BT still running.
+- `88:00:33` is in no IEEE registry, under any AIC name: the derived Wi-Fi address now sets the
+  locally-administered bit, `8a:00:33:65:64:b6`. `bluetooth-hci-h4-aic8800-bdaddr` gives BT that + 1
+  through `0xFC70` when the controller's own has the I/G bit set: `8A:00:33:65:64:B7`, on
+  `develop-6.1`'s tip, after the H313 booted that tip first, nothing failed. DHCP moved the box to
+  `.241`; avahi took `cnc-2.local` again, a restart reclaimed `cnc.local`.

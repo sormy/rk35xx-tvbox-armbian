@@ -44,6 +44,7 @@ goes.
 | Seekwave Wi-Fi | `WIFI_MAC`, then the chip's efuse | none needed: the driver reads both |
 | MT7668 Wi-Fi   | the chip's firmware               | none needed                        |
 | Seekwave BT    | the chip: its efuse address + 1   | none needed                        |
+| AIC8800 BT     | the tree, efuse, then Wi-Fi + 1   | `bluetooth-hci-h4-aic8800-bdaddr`  |
 | Bluetooth      | `BT_MAC`, then the SoC's OTP id   | per driver, not written            |
 
 Ethernet is set in U-Boot because the kernel cannot read the store on every series: 6.12 dropped

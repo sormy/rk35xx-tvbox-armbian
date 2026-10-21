@@ -10,8 +10,9 @@ leases for one box.
 
 Take the address from vendor storage when the platform offers it, via
 rockchip_wifi_mac_addr(), and derive the fallback from the SoC's OTP id instead
-of random bytes, keeping the vendor OUI and varying only the tail. The chip's
-own efuse still wins when it has one.
+of random bytes, varying only the tail. Keep the vendor's 88:00:33 prefix but
+mark it locally administered: it is no registered OUI. The chip's own efuse
+still wins when it has one.
 
 The driver's existing call sites are gated on CONFIG_PLATFORM_ROCKCHIP, a build
 knob no in-tree config defines, so the vendor path never ran; key off
@@ -26,7 +27,7 @@ regenerated MAC is otherwise invisible.
 Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 ---
 diff --git a/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c b/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c
-index 29f86da75..3a6feee33 100644
+index 29f86da..7023275 100644
 --- a/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c
 +++ b/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c
 @@ -6689,8 +6689,11 @@ extern int get_wifi_custom_mac_address(char *addr_str);
@@ -50,17 +51,19 @@ index 29f86da75..3a6feee33 100644
  	struct aicbsp_feature_t feature;
  	struct mm_set_stack_start_cfm set_start_cfm;
  #ifdef CONFIG_TEMP_COMP
-@@ -6758,7 +6762,20 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
+@@ -6758,7 +6762,22 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
  	memset(fw_path, 0, 200);
  	aicbsp_get_feature(&feature, fw_path);
  
 -	get_random_bytes(&dflt_mac[4], 2);
 +	/* This fallback address is what a board with no MAC in efuse ends up using,
 +	 * and a random tail moves it on every boot. Derive it from the SoC's OTP id
-+	 * instead, keeping the vendor OUI.
++	 * instead, under the vendor's prefix marked locally administered: no one
++	 * holds 88:00:33.
 +	 */
 +#ifdef RWNX_HAVE_SOC_SERIAL
 +	if (system_serial_high || system_serial_low) {
++		dflt_mac[0] |= 0x02;
 +		dflt_mac[3] = system_serial_high >> 8;
 +		dflt_mac[4] = system_serial_high;
 +		dflt_mac[5] = system_serial_low;
@@ -72,7 +75,7 @@ index 29f86da75..3a6feee33 100644
  
  	/* create a new wiphy for use with cfg80211 */
      AICWFDBG(LOGINFO, "%s sizeof(struct rwnx_hw):%d \r\n", __func__, (int)sizeof(struct rwnx_hw));
-@@ -6995,9 +7012,24 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
+@@ -6995,9 +7014,24 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
          memcpy(init_conf.mac_addr, dflt_mac, ETH_ALEN);
      }
  #else
@@ -100,7 +103,7 @@ index 29f86da75..3a6feee33 100644
  #endif
  
  	if (mac_addr_efuse[0] | mac_addr_efuse[1] | mac_addr_efuse[2] | mac_addr_efuse[3]) {
-@@ -7010,6 +7042,7 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
+@@ -7010,6 +7044,7 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
  	AICWFDBG(LOGINFO, "get macaddr: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
  			mac_addr_efuse[0], mac_addr_efuse[1], mac_addr_efuse[2],
  			mac_addr_efuse[3], mac_addr_efuse[4], mac_addr_efuse[5]);
