@@ -45,6 +45,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       rerun glmark2 on the same panel.
 
 - [ ] **Rename the installed prefix `rk35xx-` to `tvb-`.** Design: `docs/todo/tvb-namespace.md`.
+- [ ] **Name repo folders by what they hold.** `firmware/` holds boards, not only blobs, and clashes
+      with `/lib/firmware`: `firmware/<board>/` to `boards/<board>/`, `firmware/common/<chip>/` to
+      `chips/<chip>/`. Patches move beside their owner: kernel topics to `kernel/patches/<topic>/`,
+      host tools' beside the tool. Repo paths only; no box sees them, so it waits for a quiet
+      moment.
 
 - [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`
       mixes the two in one string.
