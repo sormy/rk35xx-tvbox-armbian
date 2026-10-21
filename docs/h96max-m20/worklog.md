@@ -1480,3 +1480,11 @@ is sold as.
 - Removed on all four boxes. `systemd-hwdb query` returns the BLE remote's `KEYBOARD_KEY_*` from
   `/usr/lib` on the M20 and the 3518D. `docs/migrate.md` moves the overlay's `hwdb.bin` aside with
   the rest and rebuilds only with `--usr`.
+
+## 2026-10-21 — the MT7668's firmware in its own package
+
+The four blobs moved from `tvb-h96max-m20` to `tvb-firmware-mt7668`, the EEPROM with them: it is
+MediaTek's reference blob, byte-identical in an unrelated S905L2 port (2026-09-18), not this unit's.
+On this box the two packages went in by one `dpkg -i --force-overwrite`, which warned once per moved
+path; `dpkg -S` then names the chip package for all four. After a reboot mt76 loaded both RAM codes,
+`wlan0` connected, `hci0` came up, nothing failed.

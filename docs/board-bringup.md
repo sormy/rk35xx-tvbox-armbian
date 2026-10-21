@@ -155,8 +155,7 @@ the board to the README's Boxes table and support matrix.
   | 3rd      | `/usr/lib/firmware/updates/`          | `tvb-firmware-<chip>`             |
   | 4th      | `/usr/lib/firmware/`                  | Debian's `firmware-*`             |
 
-  The first is `firmware_class.path` on every board's command line. No path has two owners. Only
-  per-unit data, the MT7668's calibration `EEPROM`, stays in the board package.
+  The first is `firmware_class.path` on every board's command line. No path has two owners.
 
 - **Deleting from an image needs the patched `e2rm`** — `./build-e2tools.sh`, which `build-image.sh`
   requires. Stock `e2rm` corrupts ext4 two ways: it frees a fast symlink's target string as block

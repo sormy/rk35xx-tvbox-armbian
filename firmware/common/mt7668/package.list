@@ -1,0 +1,7 @@
+# tvb-firmware-mt7668's files (mode src dest, src under firmware/): mt76's firmware for the MT7668,
+# from a factory image. The EEPROM is MediaTek's reference blob, the same on every board known here;
+# Bluetooth's mt7668pr2h.bin comes from firmware-mediatek.
+0644 common/mt7668/mt7668_patch_e2_hdr.bin        /usr/lib/firmware/updates/mediatek/mt7668_patch_e2_hdr.bin
+0644 common/mt7668/WIFI_RAM_CODE_MT7668.bin       /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE_MT7668.bin
+0644 common/mt7668/WIFI_RAM_CODE2_SDIO_MT7668.bin /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin
+0644 common/mt7668/EEPROM_MT7668.bin              /usr/lib/firmware/updates/mediatek/EEPROM_MT7668.bin
