@@ -1,40 +1,41 @@
 # tvb-linux: building it
 
-Opened 2026-10-18. Planned, not started. The plan this serves is `docs/todo/tvb-linux.md`: the
-monthly build, the build hosts, the caches.
+Opened 2026-10-18. The plan this serves is `docs/todo/tvb-linux.md`: the weekly build, the build
+hosts, the caches. Built: `.github/workflows/release.yml` and `./build.sh release`, as
+`docs/build.md` gives them. Not yet: the repin commit, one job per kernel, a failed kernel keeping
+its last pin; `FOLLOW` resolves at build time, and the release notes name what it resolved to.
 
-## Monthly build
+## Weekly build
 
-A GitHub Actions workflow on the 1st, plus a manual trigger, runs the same container a laptop runs.
-It repins first, then builds, then publishes a release tagged by the run's date, `2026-10-01`.
+A GitHub Actions workflow every Monday, plus a manual trigger, runs the same container a laptop
+runs. It repins first, then builds, then publishes a release tagged by the run's date, `2026-10-01`.
 
 ### Triggers
 
-| Signal                                     | Runs                      | Publishes         |
-| ------------------------------------------ | ------------------------- | ----------------- |
-| `schedule`, the 1st, off the hour          | repin, build, publish     | yes               |
-| `workflow_dispatch`, or `gh workflow run`  | the same                  | yes               |
-| a push to `kernel/`, `patches/`, the build | build at the current pins | no: early warning |
+| Signal                                     | Runs                         | Publishes         |
+| ------------------------------------------ | ---------------------------- | ----------------- |
+| `schedule`, Mondays, off the hour          | repin, build, publish        | yes               |
+| `workflow_dispatch`, or `gh workflow run`  | the same                     | yes               |
+| a push to `kernel/`, `patches/`, the build | build at the current pins    | no: early warning |
+| the same `schedule`                        | `testing`, an image a family | never             |
 
 No external cron: the workflow's own `schedule` is the clock, and upstream sends no signal, so the
-repin is the poll. A dropped or urgent month is one `workflow_dispatch`.
+repin is the poll. A dropped or urgent week is one `workflow_dispatch`.
 
 ### Repin
 
-Each pin moves to the newest released commit upstream:
+Each pin moves to the newest released commit of its series, upstream:
 
-| Pin             | Moves to                                             | 2026-10-18            |
-| --------------- | ---------------------------------------------------- | --------------------- |
-| `ARMBIAN_BUILD` | the newest stable tag, `vYY.M.N`, never `-trunk`     | `v26.5.1`             |
-| mainline        | the newest kernel.org stable tag of the series named | `v6.18.57`, `v7.0.14` |
-| vendor          | the tip of the branch named; it carries no tags      | `372ce582b`           |
+| Kernel   | Moves to                                        | 2026-10-19            |
+| -------- | ----------------------------------------------- | --------------------- |
+| mainline | the newest kernel.org stable tag of its series  | `v6.18.57`, `v7.0.14` |
+| vendor   | per the vendor pin rule, a decision in the plan | 6.1.172               |
 
-"Named" is read from the pinned Armbian release's family config: `KERNEL_MAJOR_MINOR` for a mainline
-track, `KERNELBRANCH` for vendor.
+Rockchip tags nothing: the vendor pin is its newest stable merge, or its tip gated by validation;
+`docs/todo/tvb-linux.md` holds the choice.
 
-- **Within a series only.** A release naming another series, `rk-6.1-rkr6.1` or 7.1 for `edge`, is a
-  track move: the repin keeps the old series and opens an issue for a human.
-- **Per track.** A track whose new pin does not apply or build keeps last month's, publishes with
+- **Within a series only.** Moving a family to another series is a human change in `kernel/`.
+- **Per kernel.** A kernel whose new pin does not apply or build keeps last week's, publishes with
   it, and opens an issue naming the patch or error.
 - **Committed.** The workflow commits the moved pins to `kernel/*.conf`, so every release names the
   exact commits it was built from.
@@ -43,16 +44,16 @@ Out-of-tree driver `SHA=` pins carry no release tags upstream and move only by h
 
 ### Jobs
 
-| Job    | Count                | Does                                        |
-| ------ | -------------------- | ------------------------------------------- |
-| kernel | families × tracks: 4 | that kernel's debs, `tvb-modules` with them |
-| images | 1                    | four bases, then eight stamps               |
+| Job    | Count       | Does                                                                |
+| ------ | ----------- | ------------------------------------------------------------------- |
+| kernel | families: 2 | that kernel's debs, unless its input hash matches the published one |
+| images | 1           | four bases, then eight stamps                                       |
 
-The images job bootstraps the Debian rootfs once, builds the four bases from it, then stamps each
+The images job bootstraps the Debian rootfs once, builds the two bases from it, then stamps each
 image, compresses it, and deletes the raw image before the next, so one image's 2.2 GB is on disk at
 a time. It builds every image, then fails listing those that did not build. It publishes last: the
 debs to `apt`, the images to a new `YYYY-MM-DD` release, notes listing the pins that moved. A
-failure on `current` publishes nothing; a failed `next` publishes `current` without it.
+failure publishes nothing.
 
 No build infrastructure of ours: GitHub's hosted runners, free for a public repo. Jobs run on
 `ubuntu-24.04-arm`, native arm64 with no cross-compile and no `qemu-aarch64`. A second job on
@@ -62,7 +63,7 @@ No build infrastructure of ours: GitHub's hosted runners, free for a public repo
 | ------------ | ------------- | ------------------------------------------------------ |
 | concurrency  | 20 jobs       | six a build, the x86-64 check included; grow by family |
 | CPU, RAM     | 4, 16 GB      | ❓ kernel wall time, measured in phase 1               |
-| job time     | 6 h           | one kernel per job; ❓ all eight images in one         |
+| job time     | 6 h           | one kernel per job; ❓ all four images in one          |
 | disk         | 14 GB SSD     | **the binding limit**: see below                       |
 | between jobs | job artifacts | kernel debs into the images job, kept one day          |
 
@@ -72,12 +73,12 @@ Our fragment sets `CONFIG_DEBUG_INFO_NONE=y`, which drops BTF with it; ❓ wheth
 If not, the job first deletes the runner image's preinstalled toolchains. Self-hosted or larger
 runners are the fallback only if both fail.
 
-A rebuild of unchanged pins still changes the image: `mmdebstrap` pulls the month's Debian security
+A rebuild of unchanged pins still changes the image: `mmdebstrap` pulls the week's Debian security
 updates. The kernel changes only when a pin moves.
 
 GitHub's own limits on the schedule, from its Actions docs: a `schedule` run can be delayed under
 load, worst at the top of the hour, and under enough load dropped; and a public repo's schedules are
-disabled after 60 days with no activity. So the cron sits off the hour, and a dropped month is one
+disabled after 60 days with no activity. So the cron sits off the hour, and a dropped week is one
 manual `workflow_dispatch`. 🟡 the repin commit is a push, which GitHub counts as activity.
 
 Every CI run builds clean: no `actions/cache`, sources fetched from their pins, kernels built
@@ -88,10 +89,10 @@ unauthenticated limits on other endpoints in 2025. apt fetches anonymously.
 
 ## Two release paths
 
-The monthly build and a release from a Mac run the same container and the same steps. They differ in
+The weekly build and a release from a Mac run the same container and the same steps. They differ in
 where the signing key comes from and in who decides to publish.
 
-| Step  | Monthly, in CI           | Manual, from a Mac                        |
+| Step  | Weekly, in CI            | Manual, from a Mac                        |
 | ----- | ------------------------ | ----------------------------------------- |
 | build | `./build.sh debs images` | the same                                  |
 | sign  | the Actions secret       | a key file, given by path                 |
@@ -113,11 +114,87 @@ unpushed commit, so every release, either path, names its commit. A tag CI alrea
 becomes `YYYY-MM-DD.2`; nothing is overwritten. One key signs both paths, so a box cannot tell them
 apart.
 
+## Hosted on GitHub
+
+Everything is published from this repo; no server of ours.
+
+| What        | Where                                                             |
+| ----------- | ----------------------------------------------------------------- |
+| apt repo    | release `apt`, rolling, a pre-release: `.deb`s plus index         |
+| images      | release `YYYY-MM-DD`: eight `.img.xz`, all kept                   |
+| checksums   | `SHA256SUMS`, signed, in the same release                         |
+| signing key | public: `keyring/tvb-archive-keyring.gpg`; CI signs from a secret |
+
+An image's name carries what the release tag carries, so a downloaded file still says what it is:
+`tvbian-<YYYY-MM-DD>-<board>-<codename>.img.xz`, as `tvbian-2026-11-01-h96max-m20-trixie.img.xz`.
+
+Nothing is pruned, so any past release can be flashed to test against, or to bisect a regression.
+Each release's notes list its pins and the diff from the one before: the kernel commits, the patches
+added or dropped. The `apt` repo keeps every kernel it ever published; versioned names coexist, so
+`apt install linux-image-<kernelrelease>` goes back without a reflash, and removing the newer kernel
+makes the older one the default entry.
+
+`apt` gains up to 12 kernel debs a month, about 150 a year. ❓ whether GitHub caps assets per
+release; if it does, `apt` moves to one release per year.
+
+The public key needs no release of its own: it is committed, packaged as `tvb-archive-keyring`,
+preinstalled in every image, and published in `apt` like any package. A box not flashed from our
+image fetches the committed file once, then adds the `deb` line.
+
+`keyring/` holds the key's whole lifecycle, ✅ generated 2026-10-19, fingerprint in its README:
+
+| File                      | Holds                                        |
+| ------------------------- | -------------------------------------------- |
+| `tvb-archive-keyring.gpg` | the public key, committed                    |
+| `README.md`               | fingerprint, loading the CI secret, rotation |
+
+`.gitignore` keeps any private key file in `keyring/` out of git.
+
+The key does not expire: a box that misses a renewed keyring before expiry fails `apt update` with
+`EXPKEYSIG` and cannot fetch the fix. A rotation ships both public keys in `tvb-archive-keyring`,
+signs `InRelease` with both for a release cycle, then drops the old one. A compromised key means a
+reflash or a manual key install; nothing signed by it can be trusted.
+
+The apt repo is flat — `Packages.xz`, `Release`, `InRelease` beside the `.deb`s, written by
+`apt-ftparchive` and signed with `gpg`:
+
+```sh
+deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] https://github.com/sormy/tvbian/releases/download/apt ./
+```
+
+✅ apt's `https` method follows the `releases/download` redirect, measured 2026-10-18 in a
+`debian:trixie` container; a missing asset is a plain `404`:
+
+```sh
+/usr/lib/apt/apt-helper download-file https://github.com/cli/cli/releases/download/v2.60.0/gh_2.60.0_linux_arm64.deb /tmp/gh.deb
+```
+
+✅ a signed flat repo whose `.deb` exists only as a GitHub release asset, 2026-10-18 in a
+`debian:trixie` container: `apt-get update` verified `InRelease` through `signed-by=`, and
+`apt-get install` followed a 302 to the asset, checked its hash and installed it.
+
+🟡 the index fetched through the redirect too, by the same method as the asset.
+
+Fallback: the index and the `.deb`s on GitHub Pages, kept to the current and previous kernel.
+
+Size: GitHub caps a release asset at 2 GiB and caps neither a release's total nor its bandwidth. The
+Armbian-based images built here are 360–390 MB as `.img.xz`, so a release is about 3 GB.
+
 ## Build hosts
 
-Everything but flashing runs in one pinned, multi-arch container, under `docker` on either host or
-`podman` on Linux. Maskrom, `amlcmd` and writing the SD stay native: Docker Desktop on macOS passes
-no USB through.
+Lightweight runtimes only; no Docker Desktop.
+
+| Host                 | Runs the steps in                                   |
+| -------------------- | --------------------------------------------------- |
+| macOS, Apple silicon | Apple `container`, a lightweight VM per container   |
+| Linux, Debian trixie | the host itself, `./build.sh --native`; or `podman` |
+| other Linux          | `podman`, or `docker` where the host already has it |
+| GitHub Actions       | the runner's preinstalled `podman`                  |
+
+All run the same `build-env/Containerfile`; `./build.sh` uses the first runtime it finds, and
+`doctor` checks a native host's packages and compiler version first. The container is the release
+path: it pins the toolchain, and with it byte-identical modules on every host. Maskrom, `amlcmd` and
+writing the SD stay native: a container on macOS reaches no USB.
 
 | Step                      | arm64 host   | x86-64 host                                   |
 | ------------------------- | ------------ | --------------------------------------------- |
@@ -127,18 +204,17 @@ no USB through.
 | `.deb`s                   | `dpkg-deb`   | `dpkg-deb`; arch comes from `control`         |
 | `mmdebstrap --arch=arm64` | native       | `qemu-user-static` through `binfmt_misc`      |
 
-`binfmt_misc` belongs to the host kernel, not the container: Docker Desktop registers `aarch64`; on
-Linux, the host's `qemu-user-static` does. ❓ how much slower the rootfs step runs under emulation.
+`binfmt_misc` belongs to the host kernel, not the container: on Linux, the host's `qemu-user-static`
+registers `aarch64`. ❓ how much slower the rootfs step runs under emulation.
 
 `docs/build-host.md` is a deliverable of phase 1: per host, the installs, the commands that check
 them, and measured disk, RAM and wall time for a cold and a cached build. `./build.sh doctor` runs
 the same checks, so the doc and the script cannot disagree.
 
-| Host           | Beyond a Docker engine                                   |
+| Host           | Beyond the runtime                                       |
 | -------------- | -------------------------------------------------------- |
 | macOS arm64    | `xz`; host tools from `./build-rktools.sh`, `amltools`   |
-| macOS x86-64   | the same; Docker Desktop's `aarch64` emulation           |
-| Linux arm64    | `podman` works too; a udev rule for maskrom USB          |
+| Linux arm64    | a udev rule for maskrom USB                              |
 | Linux x86-64   | the same, plus `qemu-user-static` registered on the host |
 | GitHub Actions | nothing; the workflow is the setup                       |
 
@@ -148,14 +224,14 @@ Every cache is keyed by its inputs, so a changed input invalidates it without a 
 container volumes, never bind mounts: macOS's default APFS is case-insensitive, and the kernel has
 names that differ only by case (`xt_TCPMSS.h`, `xt_tcpmss.h`).
 
-| Cache         | Volume                   | Key                           | On a key change     |
-| ------------- | ------------------------ | ----------------------------- | ------------------- |
-| sources       | `tvb-src`                | every pin                     | another entry; kept |
-| kernel tree   | `tvb-tree-<fam>-<track>` | `COMMIT` + hash of the series | reset, `git am`     |
-| objects       | `tvb-ccache`             | `ccache`'s own                | none needed         |
-| `.deb`s       | `tvb-debs`               | package version + input hash  | rebuilt             |
-| apt downloads | `tvb-apt`                | file name, as apt keeps it    | none needed         |
-| base rootfs   | `tvb-rootfs`             | suite + package list + month  | `mmdebstrap` again  |
+| Cache         | Volume              | Key                           | On a key change     |
+| ------------- | ------------------- | ----------------------------- | ------------------- |
+| sources       | `tvb-src`           | every pin                     | another entry; kept |
+| kernel tree   | `tvb-tree-<kernel>` | `COMMIT` + hash of the series | reset, `git am`     |
+| objects       | `tvb-ccache`        | `ccache`'s own                | none needed         |
+| `.deb`s       | `tvb-debs`          | package version + input hash  | rebuilt             |
+| apt downloads | `tvb-apt`           | file name, as apt keeps it    | none needed         |
+| base rootfs   | `tvb-rootfs`        | suite + package list + month  | `mmdebstrap` again  |
 
 The tree reset is `git reset --hard $COMMIT` then `git am`: only files the old or new series touch
 change, so `make` stays incremental.

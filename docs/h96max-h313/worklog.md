@@ -2090,7 +2090,32 @@ the legacy path and defensive.
 
 ## 2026-10-20 — TVBian: our kernel, our packages, Armbian gone
 
+- `kernel/rk35xx.conf`: `rockchip-linux/kernel` `develop-6.1` at `b79032684247` (v6.1.172), this
+  box's Armbian 6.1.115 config as a defconfig. Two `linux-rockchip` patches no longer applied:
+  Rockchip had since fixed the remotectl IRQ choice and one of the two stmmac `devm_gpiod_put()`
+  sites; rebased to what remains. The Seekwave tree imported under `drivers/net/wireless/seekwave/`,
+  its `.nvbin` blobs left out (`patch` takes no git binary diffs). Three build stops, each a
+  fragment line: `WERROR` (Seekwave's `SKW_ZALLOC` trips `int-in-bool-context`), `TOUCHSCREEN_FTS`
+  (still calls `set_fs()`), `SENSOR_DEVICE` (its `ak8975.ko` clashes with IIO's).
+- One-shot boot through a hand-written `extlinux.conf`: our U-Boot's bootstd takes `extlinux` before
+  Armbian's `boot.scr`, and the `.tried` rename sent the next boot back to it. 44 s, Wi-Fi −31 dBm
+  HE-MCS 11, BT, IR, CEC, VPU nodes; `eth0` (`net.ifnames=0`, was `end0`) `00:ef:00:4a:43:a6` from
+  vendor storage by `dwmac-rk`; no stmmac WARN. HDMI `disconnected`: ❓ whether a screen was on.
+- The Seekwave chip has its own address: the factory log's `efuse mac: fe:fd:fc:99:08:5f, valid`,
+  `phy0`'s permanent address on Armbian too. `mac-pin` had overridden it with `fe:fd:fc:28:fc:8e`;
+  retired, `wlan0` came up as the factory's and DHCP moved the box from `.236` to `.217`. Bluetooth
+  `FE:FD:FC:99:08:60`, the chip's +1.
+- netplan's generator runs its own `netplan-wpa-wlan0.service`, a second supplicant on `wlan0`, so
+  masking networkd would not have been enough: its YAML moved aside instead, NetworkManager behind
+  the 5-minute fallback; same AP, same address.
+- Armbian purged as on the M20, `base-files` back to Debian's, hostname `h96max-h313`. Kept: the
+  `aic8800-usb` and `v4l2loopback` DKMS packages, installed by apt and marked manual, not the
+  overlay's; they build only once our kernel's headers are installed. Boot 19.8 s to userspace done.
 - The `ttyS0` graft reverted on this board and the R69, uart0 and `fiq-debugger` back to stock:
   `console=ttyFIQ0` is now the family default and the 3518D's override is gone. After a reboot
   `/proc/consoles` lists `ttyFIQ0`, `serial-getty@ttyFIQ0` runs, `Registered FIQ tty driver` with
   the stock `-ENXIO` lines; ❓ output on the header, no serial cable on.
+- The Seekwave driver asks for each blob by `<name>.<compatible>` first, then the plain name. The RF
+  NV variants now ship in `tvb-firmware-swt6621s`, and the board package links
+  `SWT6621S_NV_SDIO.h96max-zx,rk3518-tvbox.bin` to `STANDALONE_FDD`: `loaded board firmware`. The
+  other blobs still log one `Direct firmware load … failed` each before the plain name loads.

@@ -119,4 +119,4 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | `docs/todo/tvb-namespace.md`            | the `tvb-` rename and its migration           |
 | `docs/todo/tvb-linux.md`                | TVBian: our kernel and images on plain Debian |
 | `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login       |
-| `docs/todo/tvb-linux-build.md`          | TVBian's monthly build, hosts, caches         |
+| `docs/todo/tvb-linux-build.md`          | TVBian's weekly build, hosts, caches          |

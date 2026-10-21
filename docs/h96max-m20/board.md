@@ -4,9 +4,10 @@ Board id `h96max-m20`, provisional — the box's own strings say `S905LTS` on pl
 Measured on one unit; these numbers are per-unit and they decay. The full factory evidence sweep is
 `stock/h96max-m20/README.md`.
 
-**In bring-up.** Armbian boots from a USB stick unattended and runs from it; eMMC, USB, Ethernet
-(via a USB adapter), the power LED, HDMI, the GPU, and H.264, HEVC and VP9 decode and encode work.
-Nothing is installed to eMMC. Known gaps are at the bottom.
+**In bring-up.** Boots from a USB stick unattended and runs TVBian from it, migrated in place from
+Armbian: Debian trixie, kernel `6.18.57-tvb-meson64`, `tvb-h96max-m20`, NetworkManager. eMMC, USB,
+Ethernet (via a USB adapter), the power LED, HDMI, the GPU, and H.264, HEVC and VP9 decode and
+encode work. Nothing is installed to eMMC. Known gaps are at the bottom.
 
 ## Identity
 
@@ -43,6 +44,7 @@ Kernel 6.18.44, image of 2026-09-17. `fio --direct=1`, `iperf3` to a wired host.
 | Measure                        | Value                                            |
 | ------------------------------ | ------------------------------------------------ |
 | Boot to `graphical.target`     | 14.1-16.7 s over 10 boots, mt76 at boot ✅       |
+| TVBian: reboot to SSH          | 34-38 s over 3 boots, 2026-10-20 ✅              |
 | RAM                            | 1954 MB ✅                                       |
 | eMMC sequential read           | 43.3 MiB/s ✅                                    |
 | eMMC sequential write          | 32.7 MiB/s ✅                                    |
@@ -301,11 +303,11 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Another access point | ✅ by a firmware reload, about 1 s more; same AP rejoins as fast     |
 | Patch race           | ✅ either driver may patch first: `btmtksdio-mt7668` `0003`          |
 | Wi-Fi, vendor driver | ✅ both bands, the fallback — numbers above                          |
-| Bluetooth            | ✅ `btmtksdio-mt7668` as DKMS: LE command bitmap, patch-race wait    |
+| Bluetooth            | ✅ `btmtksdio-mt7668` in-tree: LE command bitmap, patch-race wait    |
 | BLE remote           | ✅ pairs; keys as printed; 🟡 air-mouse, as on the 3518D             |
 | cpufreq              | ✅ `scpi-cpufreq`, 100 MHz-1.752 GHz, the factory's table            |
 | Thermal              | ✅ `cpu-thermal` on the SCPI sensor; passive 80 °C, hot 90 °C        |
-| HDMI                 | ✅ `meson-dw-hdmi-gxlx2` as DKMS: KMS; TV, PC monitor, hotplug       |
+| HDMI                 | ✅ `meson-dw-hdmi` in-tree: KMS; TV, PC monitor, hotplug             |
 | GPU                  | ✅ lima, Mesa `Mali450`, devfreq 125-744 MHz                         |
 | Kernel 7.2 (edge)    | ✅ boots; drivers, codecs, Wi-Fi, BT, HDMI and audio as on 6.18      |
 | ffmpeg `v4l2m2m`     | ✅ all on patched 9.0.2; stock 7.1.5 ❌ MPEG-4, VC-1, MKV encode     |
@@ -325,5 +327,10 @@ chain-loads the image's own U-Boot. `build-image.sh` rewrites the factory MPT an
 | Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot      |
 | mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                 |
 | Fresh image          | ❓ built with both DKMS sources staged; never booted                 |
+| TVBian kernel        | ✅ 6.18.57: Wi-Fi, BT, HDMI, codecs, `soc0` `GXLX2 (S905L3)`         |
+| TVBian image         | ❓ `./build.sh image h96max-m20` builds it; never booted             |
+| Our U-Boot           | ✅ libretech-cc `v2026.10`, chain-loaded from the stick's FAT        |
+| Poweroff             | ❓ on TVBian's kernel, without Armbian's `POWER_RESET_MESON64`       |
+| First HEVC session   | ❌ aborts once in a while on `dec_status 0`; the next run decodes    |
 | DRAM from the ROM    | ❌ writes fail; the mask ROM serves SRAM only                        |
 | Unbrick via the ROM  | ❓ needs a USB-boot BL2; this board's ACS is format v3               |

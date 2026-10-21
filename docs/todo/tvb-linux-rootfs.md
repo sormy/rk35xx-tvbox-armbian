@@ -5,6 +5,31 @@ Opened 2026-10-18. Planned, not started. The image build itself is in `docs/todo
 Every image is minimal and every package in it is Debian's, except the few `tvb-*` ones, so
 `apt upgrade` keeps the whole box current. Armbian contributes nothing at runtime.
 
+## Debian release
+
+No release is written down anywhere: each build reads `Codename:` from the archive's own aliases.
+
+| Alias     | 2026-10-19     | Built for                         |
+| --------- | -------------- | --------------------------------- |
+| `stable`  | `trixie`, 13.7 | the published images              |
+| `testing` | `forky`        | one image per family, unpublished |
+
+The aliases move on Debian's release day, so the next weekly run publishes the new stable, which the
+`testing` job has been building for months. If it fails that week, the previous stable publishes and
+an issue opens, as a failed kernel repin does; the switch is committed, as a pin is. A kernel series
+and a Debian release never move in the same run; one variable at a time bisects.
+
+A box never jumps on its own: its `sources.list` names the codename. Moving it is Debian's release
+upgrade, by its owner.
+
+Images are for `stable` only; a new install starts on the newest release. An older release is an
+older image, kept like every release: `apt update` brings it current within its codename, ours
+included while its window lasts. Packages serve `oldstable` too, until Debian's regular security end
+for it, read from `distro-info-data` (`trixie`'s: 2028-08-09). The same debs serve both, and a
+weekly check installs them into a clean `oldstable` and `stable` container, so no `Depends:` outruns
+a box that has not upgraded. A package that has to differ moves the flat `apt` repo to Debian's
+per-release layout, `dists/<suite>/`.
+
 ## Minimal
 
 `mmdebstrap --variant=minbase` of the suite, plus one list, `rootfs/packages.list`, shared by every
@@ -85,26 +110,35 @@ through Debian:
 2. `armbian/firmware`, pinned to a commit, only for a blob Debian lacks;
 3. this repo, for a blob nobody publishes, or one we patched.
 
-| Blob              | Today                          | Candidate                           |
-| ----------------- | ------------------------------ | ----------------------------------- |
-| Seekwave SWT6621S | `firmware/common/seekwave-fw/` | this repo                           |
-| MT7668 Wi-Fi, BT  | `firmware/h96max-m20/mt7668/`  | ❓ `firmware-mediatek`, else ours   |
-| AIC8800D80        | Armbian's image                | ❓ Debian, else `armbian/firmware`  |
-| meson vdec, venc  | `firmware/h96max-m20/meson/`   | ❓ Debian's `firmware-*`, else ours |
+| Blob              | In Debian trixie, 2026-10-20   | Boards | Ships in                |
+| ----------------- | ------------------------------ | ------ | ----------------------- |
+| Seekwave SWT6621S | no                             | 2      | `tvb-firmware-swt6621s` |
+| MT7668 code       | no, not in `firmware-mediatek` | M20    | `tvb-h96max-m20`        |
+| AIC8800D80        | no                             | R69    | `tvb-r69`               |
+| meson vdec, venc  | 2 of 11 identical, 3 differ    | M20    | `tvb-h96max-m20`        |
 
-Phase 1 of the image build settles each ❓ with `dpkg -S` against the blob's path in a trixie
-container. What remains ours ships as `tvb-firmware`.
+Checked by comparing our files with trixie's `non-free-firmware` packages. The meson set ships
+whole, under `/lib/firmware/updates/meson/`: the kernel searches `updates/` first, so ours win, and
+no file collides with `firmware-misc-nonfree`'s, which would break the rule that ours only add. ❓
+where our meson blobs come from; the package's README records it before it ships. What remains ours
+starts in the board's package: a bring-up dumps the stock image's `/vendor/firmware` into
+`firmware/<board>/` and nothing else. A blob a second board turns out to share moves to a
+`tvb-firmware-<chip>` package, as Seekwave's code did; a per-board one, Seekwave's `NV_SDIO` RF file
+or the MT7668 `EEPROM`, never does.
 
 ## eMMC wear
 
 Logs and swap stay in RAM; the eMMC sees package installs and user data.
 
-| Writer      | Where                      | Mechanism                   |
-| ----------- | -------------------------- | --------------------------- |
-| swap        | zram, half of RAM          | `systemd-zram-generator`    |
-| the journal | `/run/log/journal`, capped | journald `Storage=volatile` |
-| `/tmp`      | tmpfs                      | trixie's default            |
-| `/var/log`  | eMMC: `apt`, `dpkg` only   | minbase ships no `rsyslog`  |
+| Writer      | Where                        | Mechanism                               |
+| ----------- | ---------------------------- | --------------------------------------- |
+| swap        | zram, half of RAM            | `systemd-zram-generator`                |
+| the journal | `/run/log/journal`, capped   | journald `Storage=volatile`             |
+| `/tmp`      | tmpfs                        | trixie's default                        |
+| `/var/log`  | eMMC: `apt`, `dpkg` only     | minbase ships no `rsyslog`              |
+| TRIM        | weekly, no writes of its own | `fstrim.timer`, enabled by `util-linux` |
+
+zram has no backing device, unlike zswap, whose pool evicts to a swap partition on the eMMC.
 
 `Storage=volatile` loses the previous boot's journal; serial covers a boot that dies. Armbian's
 `armbian-ramlog` keeps it, by putting `/var/log` on a 50 MB zram and `rsync`ing it to disk daily and
@@ -152,4 +186,3 @@ own default, so it comes along regardless.
 ## Decide
 
 - A keymap step for a USB keyboard on `tty1`: `console-setup` and one more `fzf` list, or US only?
-- Debian `trixie`, or `forky` for a newer Mesa?

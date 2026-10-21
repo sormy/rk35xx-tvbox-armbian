@@ -59,6 +59,7 @@ another, so nothing rots when one is rewritten.
 | `docs/armbian-install.md`             | the factory reserved window: what survives a migration, what does not |
 | `docs/emmc-layout.md`                 | the measured eMMC map: every replicated structure and its sectors     |
 | `docs/build.md`                       | `./build.sh`: hosts, steps, outputs, and making a release             |
+| `docs/migrate.md`                     | moving a box from the overlay to TVBian's packages, in place          |
 | `docs/uboot.md`                       | the bootloader pair: what we build, what stays factory, why           |
 | `docs/maskrom.md`                     | the USB service modes: entry, the 32 MiB Loader trap, backup, restore |
 | `docs/apt-upgrade.md`                 | the hooks and the hold that keep the overlay alive across upgrades    |

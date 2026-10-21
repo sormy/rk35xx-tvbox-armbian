@@ -1408,3 +1408,59 @@ is sold as.
 - `hdmitx_ddc_gpio`, the two pins on `gpio_periphs`, as the bus node's default state. After a
   reboot: `mux6` `0x8000003f`, EDID 256 bytes, 2256x1504, volume 50, brightness 100 read and 90 set
   and back; CEC keeps physical address 1.0.0.0.
+
+## 2026-10-20 — TVBian's kernel and packages
+
+- `./build.sh kernel kernel/meson64.conf`: kernel.org's newest longterm, 6.18.57, Armbian 26.8.1's
+  meson64 config as a defconfig, mt76, btmtksdio, `meson-dw-hdmi` `0001` and a socinfo ID applied
+  in-tree. First booted as 6.18.44 through a one-shot `extlinux.conf` in front of Armbian's
+  `boot.scr`, a unit renaming it after one boot: Wi-Fi −48 dBm, BT, CMA 768 MiB, PSCI reboot.
+- HDMI stayed dark: the tree's `hdmi-tx` has no `reset-names`, which the DKMS `0002` had hidden by
+  taking resets by index. `soc0` was absent, as it had been on Armbian: no `ao-secure` node. The
+  serial needed `/firmware/secure-monitor`. All three, as fdtput on the test tree, then
+  `board.tvbian.patch`.
+- Wrong turn: the three copied into Armbian's own tree, with `boot.scr` falling through to Armbian
+  when `extlinux.conf` is gone, hung the boot. The stick came out; a recovery `boot.scr` loaded the
+  saved original tree. Cause not isolated; the patch stays off Armbian's kernel.
+- `soc_id` read `GXLX2 (Unknown)`: package `0xc5` is named nowhere public. `S905L3` at mask `0x0`,
+  as upstream's S905L: `GXLX2 (S905L3)`.
+- The running decoder was mainline staging's, not ours: Armbian's DKMS had replaced it. The codecs
+  moved in-tree under `drivers/staging/media/meson/` (`linux-meson` `0002`, `0003`). The encoders
+  failed to build: `0004`/`0005` guessed the mem2mem API changed at 6.18.50, but 6.18.57 still takes
+  three arguments; the switch is now 6.19. `KUNIT_ALL_TESTS=m` turned the decoder's KUnit suite on,
+  built into the module; off in the fragment.
+- H.264 and VP9 decode bit-exact against software, both encoders produce streams software decodes.
+  The first HEVC session after boot aborted on `dec_status 0`, as once on DKMS; five more bit-exact.
+- `tvb-h96max-m20`, `linux-image-tvb-meson64` and Debian's `u-boot-menu` installed; the generated
+  `extlinux.conf` boots 6.18.57 with `/usr/lib/tvb/board.dtb`, `ro`, no `cma=` (the tree's pool is
+  768 MiB). The overlay retired to `/root/tvb-pkg/retired/`; two reboots, everything back, firmware
+  now from `/usr/lib/firmware/updates/`.
+- The image, `tvbian-2026-10-20-h96max-m20-trixie.img.xz`, 177 MiB, builds; not booted. It
+  chain-loads our libretech-cc `v2024.01`, the release Armbian's U-Boot is built from, with the same
+  boot targets.
+- U-Boot moved to `v2026.10`, its newest release: nothing tested `v2024.01` on the box either. Same
+  boot targets, 862312 bytes, inside the 4 MiB `u-boot.ext` slot.
+- Migrated to the image's state, `docs/migrate.md` as written from this run. NetworkManager took
+  `wlan0` from netplan's networkd behind a 5-minute fallback unit: same AP and address, boot 113 s →
+  45 s. Armbian's eight packages purged, Debian's `base-files` back (`--force-confnew` for
+  `/etc/issue`), DKMS, netplan, resolved, rsyslog and fake-hwclock gone; the five `armbian-*` units
+  replaced by `systemd-zram-generator` and a volatile journal. The power LED's trigger reads `none`
+  where `armbian-led-state` had restored `default-on`; it stays lit. Nothing on the box names
+  Armbian or rk35xx. No backup of the stick was taken first.
+- Our libretech-cc `v2026.10` on the FAT as `u-boot.ext`, Armbian's kept as `u-boot.ext.armbian`:
+  booted, `/proc/device-tree/chosen/u-boot,version` `2026.10`, nothing failed. A git checkout had
+  named it `2026.10-g<hash>`, then `2026.10+`; the build now drops `.git` before `make`.
+- Reboot to SSH 41.7 s. The extlinux menu waited 5 s (`u-boot-menu`'s default), our U-Boot 2 s
+  (`bootdelay`): now 1 s (`U_BOOT_TIMEOUT=10` in the board package) and 0 (`CONFIGS="BOOTDELAY=0"`
+  in `uboot/libretech-cc.conf`); `console-setup` gone. Three reboots after: 34.3, 38.5, 36.1 s.
+- The kernel reaches `/init` at 2.5 s and mounts the stick at 4.9 s. NetworkManager waits 3.6-3.9 s
+  for its first scan before it starts the connection. DHCP loses about 4 s: traced, the INIT-REBOOT
+  REQUEST and the first DISCOVER after association go unanswered, the DISCOVER at +4.1 s gets its
+  OFFER in 5 ms. Broadcast replies seem not to arrive in the first seconds after association; ❓
+  mt76's group key or RX filter. Before the kernel, about 15-18 s: shutdown, the factory U-Boot's
+  `bootdelay=1` and boot logo (`preboot`), two `usb start`s.
+- The encoders out of tree: vendor code over compat shims, with no road upstream short of a rewrite.
+  `modules/meson-venc.conf` builds them from the sm1-codecs pin with `0004`, `0005`, `0016` and
+  `0019` into `tvb-meson-venc-modules-6.18.57-tvb-meson64`; the decoder stays in-tree. After a
+  reboot both load from `updates/tvb-meson-venc/`, and a 720p H.264 and HEVC encode each give a
+  stream software decodes to 60 of 60 frames.
