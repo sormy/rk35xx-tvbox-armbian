@@ -16,9 +16,9 @@ ROOT=$WORK/root
 NAME=tvbian-$DATE-$BOARD-$SUITE
 rm -rf "$WORK" && mkdir -p "$WORK" /out/images
 
-newest() {  # the newest /out/debs/<package>_*.deb
+newest() {  # the last built /out/debs/<package>_*.deb: a release's revision outsorts 0~local
   local deb
-  deb=$(find /out/debs -name "$1_*.deb" | sort -V | tail -1)
+  deb=$(find /out/debs -name "$1_*.deb" -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
   [ -n "$deb" ] || { echo "✗ no $1 in build/out/debs: build it first" >&2; exit 1; }
   echo "$deb"
 }
