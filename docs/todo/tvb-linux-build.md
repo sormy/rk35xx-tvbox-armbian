@@ -20,11 +20,13 @@ The order agreed on 2026-10-22; each step lands before the next starts.
       Mac, where the volume's is twice as fast.
 - [x] **Steps CI can call one by one:** plan, one kernel at its planned version, the rest.
       `./build.sh release` still runs them all in order.
-- [ ] **The workflow split:** `plan`, then a kernel job each, then `release`; pull requests run it
-      all and publish nothing.
-- [ ] **Push, then dispatch once:** the first signed release, the `apt` URL live from then on.
-- [ ] **The M20 on the live repo:** `apt update`, then `0~local` to `1` with no conflict.
-- [ ] **The other boxes on the live repo,** the R69 last.
+- [x] **The workflow split:** `plan`, a kernel job each, then `release`; pull requests build and
+      publish nothing. ✅ kernels 30-61 min cold, 4-8 min warm; the release job 7-8 min.
+- [x] **Push, then dispatch once.** ✅ `apt` and `2026-10-22` published 2026-10-22, the `apt` URL
+      live from then on.
+- [x] **The M20 on the live repo.** ✅ `apt update`, then 7 packages from `0~local` to `1`, no
+      conflict.
+- [x] **The other boxes on the live repo,** ✅ the H313, the 3518D, then the R69.
 
 ## Weekly build
 

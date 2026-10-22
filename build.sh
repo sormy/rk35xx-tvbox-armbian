@@ -162,6 +162,7 @@ case "$1" in
       done <"$OUT/release/plan"
       run bash release/guard.sh
       for b in $(boards); do run bash image/build.sh "$b"; done
+      run bash release/notes.sh
     fi
     run bash release/repo.sh ;;
 esac

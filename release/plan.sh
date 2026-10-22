@@ -60,9 +60,3 @@ for c in firmware/common/*/firmware.conf; do
 done
 plan keyring - tvb-archive-keyring "$(bash release/inputs.sh keyring)"
 cat "$REL/plan"
-
-{
-  echo "| Group | Version | |"
-  echo "| --- | --- | --- |"
-  awk '{ printf "| %s %s | %s | %s |\n", $1, ($2 == "-" ? "" : $2), $3, $4 }' "$REL/plan"
-} >"$REL/notes.md"
