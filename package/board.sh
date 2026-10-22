@@ -16,12 +16,7 @@ ROOT=/work/package/$BOARD
 LIB=$ROOT/usr/lib/tvb
 rm -rf "$ROOT" && mkdir -p "$ROOT/DEBIAN" "$LIB"
 
-# the tree: board.dts, plus the patch that brings it to TVBian's kernel where one exists
-cp "$FW/$BOARD/board.dts" "$ROOT/board.dts"
-[ ! -f "$FW/$BOARD/board.tvbian.patch" ] ||
-  patch -s -F0 -p0 -d "$ROOT" <"$FW/$BOARD/board.tvbian.patch"
-dtc -q -@ -I dts -O dtb -o "$LIB/board.dtb" "$ROOT/board.dts"
-rm "$ROOT/board.dts"
+dtc -q -@ -I dts -O dtb -o "$LIB/board.dtb" "$FW/$BOARD/board.dts"
 cp "$FW/$BOARD/board-name" "$LIB/board-name"
 
 # loader files only: nothing in this package writes a sector

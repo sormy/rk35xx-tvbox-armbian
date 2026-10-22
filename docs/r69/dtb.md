@@ -30,17 +30,15 @@ Everything else is factory, unchanged. The label is what names the sysfs entry
 
 ## The uart2 `bluetooth` child
 
-`board.patch` carries it commented out, for Armbian's kernel, which lacks the binding: declaring the
-child hands `ffa00000` to the serdev bus, and with no driver to bind it there is neither `hci0` nor
-a `ttyS2` for `rk35xx-bt`'s `hciattach`. TVBian's kernel carries the binding
-(`bluetooth-hci-h4-serdev`), so `board.tvbian.patch` declares it live and the `rk35xx-bt` unit goes.
-✅ `hci0` sits on `serial0-0` and `bluetoothctl show` answers.
+Declaring the child hands `ffa00000` to the serdev bus, where TVBian's kernel binds it
+(`bluetooth-hci-h4-serdev`): no `hciattach` unit. A kernel without that binding gets neither `hci0`
+nor a `ttyS2`. ✅ `hci0` sits on `serial0-0` and `bluetoothctl show` answers.
 
 ## Rebuild
 
 `./build-board-dts.sh r69` regenerates `firmware/r69/board.dts` and `.dtb` from the factory blob and
-`board.patch`; `tvb-r69` compiles that `board.dts` with `board.tvbian.patch` on top. `build/bin/dtc`
-is what reads back the `&label` references this file is written with.
+`board.patch`; `tvb-r69` compiles that `board.dts`. `build/bin/dtc` is what reads back the `&label`
+references this file is written with.
 
 ## What U-Boot injects at boot
 

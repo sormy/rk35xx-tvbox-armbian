@@ -566,7 +566,26 @@
  		phandle = <0xc2>;
  	};
  
-@@ -1719,11 +1909,14 @@
+@@ -1501,6 +1691,18 @@
+ 	};
+ 
++	/* meson-gx-socinfo reads the chip ID here, so soc0 names the GXLX2 (S905L3) */
++	ao-secure@c8100140 {
++		compatible = "amlogic,meson-gx-ao-secure", "syscon";
++		reg = <0xc8100140 0x140>;
++		amlogic,has-chip-id;
++	};
++
+ 	firmware {
++
++		/* meson_sm: the chip serial, as firmware:secure-monitor */
++		secure-monitor {
++			compatible = "amlogic,meson-gxbb-sm";
++		};
+ 
+ 		android {
+ 			compatible = "android,firmware";
+@@ -1719,11 +1921,14 @@
  			record-size = <0x8000>;
  			console-size = <0x8000>;
  			ftrace-size = <0x40000>;
@@ -581,7 +600,7 @@
  			size = <0x400000>;
  			alignment = <0x400000>;
  			alloc-ranges = <0x10000000 0x400000>;
-@@ -1737,73 +1930,90 @@
+@@ -1737,73 +1942,90 @@
  			no-map;
  			phandle = <0xc6>;
  		};
@@ -672,7 +691,7 @@
  	sysled {
  		compatible = "amlogic, sysled";
  		dev_name = "sysled";
-@@ -1816,15 +2026,15 @@
+@@ -1816,15 +2038,15 @@
  		compatible = "gpio-leds";
  		status = "okay";
  
@@ -699,7 +718,7 @@
 +		/* NOT FITTED - the factory's sys_green, GPIOZ_14: driven either way, it lights
 +		   nothing on this unit. */
  	};
-@@ -2083,10 +2293,160 @@
+@@ -2083,10 +2305,162 @@
  		clocks = <&clkc 0xc4 &clkc 0x59 &clkc 0x09 &clkc 0xb6 &clkc 0xba &clkc 0xbb>;
  		clock-names = "vapb_clk", "vpu_intr_gate", "gp_pll", "vpu_clk0", "vpu_clk1", "vpu_clk";
  		clk_level = <0x07>;
@@ -753,6 +772,8 @@
 +		reg = <0xda800000 0x10000>;
 +		interrupts = <0x00 0x39 0x01>;
 +		resets = <&reset 0x13 &reset 0x4f &reset 0x42>;
++		/* in-tree dw-hdmi takes its resets by name */
++		reset-names = "hdmitx_apb", "hdmitx", "hdmitx_phy";
 +		clocks = <&clkc 0xcd &clkc 0x3f &clkc 0x4d>;
 +		clock-names = "isfr", "iahb", "venci";
 +		power-domains = <&pwrc 0x00>;
@@ -860,7 +881,7 @@
  		dev_name = "amlogic-rdma";
  		status = "ok";
  		interrupts = <0x00 0x59 0x01>;
-@@ -2109,6 +2469,38 @@
+@@ -2109,6 +2483,38 @@
  		gpio_reset = <0x14 0x63 0x00>;
  	};
  
@@ -899,7 +920,7 @@
  	wifi {
  		compatible = "amlogic, aml_wifi";
  		dev_name = "aml_wifi";
-@@ -2140,18 +2532,27 @@
+@@ -2140,18 +2546,27 @@
  
  	sd_emmc_c: emmc@d0074000 {
  		status = "okay";
@@ -933,7 +954,7 @@
  		non-removable;
  		disable-wp;
  		phandle = <0xc8>;
-@@ -2171,20 +2572,19 @@
+@@ -2171,20 +2586,19 @@
  
  	sd_emmc_b: sd@d0072000 {
  		status = "okay";
@@ -964,7 +985,7 @@
  		clock-names = "core", "clkin0", "clkin1";
  		bus-width = <0x04>;
  		cap-sd-highspeed;
-@@ -2208,22 +2608,34 @@
+@@ -2208,22 +2622,34 @@
  
  	sd_emmc_a: sdio@d0070000 {
  		status = "okay";
@@ -1005,7 +1026,7 @@
  		sdio {
  			pinname = "sdio";
  			ocr_avail = <0x200080>;
-@@ -2311,7 +2723,12 @@
+@@ -2311,7 +2737,12 @@
  	};
  
  	ethmac: ethernet@0xc9410000 {
@@ -1019,7 +1040,7 @@
  		reg = <0xc9410000 0x10000 0xc8834540 0x08 0xc8834558 0x0c 0xc1104408 0x04>;
  		interrupts = <0x00 0x08 0x01>;
  		pinctrl-names = "external_eth_pins";
-@@ -2329,30 +2746,72 @@
+@@ -2329,30 +2760,72 @@
  		phandle = <0xcb>;
  	};
  
@@ -1109,7 +1130,7 @@
  	dwc2_a {
  		compatible = "amlogic, dwc2";
  		device_name = "dwc2_a";
-@@ -2769,67 +3228,42 @@
+@@ -2769,67 +3242,42 @@
  
  	thermal-zones {
  

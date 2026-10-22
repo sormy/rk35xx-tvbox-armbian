@@ -100,8 +100,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       `esmart_lb_mode = [02]`, a 4K line buffer for Esmart0, where the factory's `[03]` corrupts the
       right third of a 4K frame; ✅ on the 3518D only. Check `3840x2160p60` full-screen with no
       fringe on the right, then that a 1080p display still comes up clean.
-- [ ] **Fold `board.tvbian.patch` into `board.patch`** on the M20 and the R69. The split served only
-      the retired overlay's Armbian kernel. A tree change, so a boot test on each box.
 - [ ] **A USB keyboard's keymap on `tty1`:** `console-setup` in the image and a README line, or US
       only.
 - [ ] **BTF:** dropped with debug info by `CONFIG_DEBUG_INFO_NONE`, or kept for BPF tools at the

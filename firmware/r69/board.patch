@@ -50,24 +50,20 @@
  		support-multi-area;
  		phandle = <0xeb>;
  
-@@ -1416,6 +1426,16 @@
+@@ -1416,6 +1423,12 @@
  		pinctrl-names = "default";
  		pinctrl-0 = <&uart2m0_xfer &uart2m0_ctsn>;
  		phandle = <0xf6>;
 +
-+		/* Commented out until armbian/linux-rockchip#526 (hci_h4 serdev) lands: declaring this
-+		 * child hands the uart to the serdev bus, which then has no driver to bind - no hci0,
-+		 * and no ttyS2 for hciattach to fall back on.
-+		 *
-+		 * bluetooth {
-+		 *	compatible = "aicsemi,aic8800-bt";
-+		 *	max-speed = <0x16e360>;
-+		 * };
-+		 */
++		/* the AIC8800's Bluetooth, bound on the serdev bus by bluetooth-hci-h4-serdev */
++		bluetooth {
++			compatible = "aicsemi,aic8800-bt";
++			max-speed = <0x16e360>;
++		};
  	};
  
  	uart3: serial@ffa08000 {
-@@ -1670,7 +1690,8 @@
+@@ -1670,7 +1683,8 @@
  		status = "okay";
  		remote_pwm_id = <0x03>;
  		handle_cpu_id = <0x01>;
@@ -77,7 +73,7 @@
  		phandle = <0x108>;
  
  		ir_key1 {
-@@ -1786,7 +1807,8 @@
+@@ -1786,7 +1800,8 @@
  		clocks = <&cru 0x73 &cru 0x72>;
  		clock-names = "tclk", "pclk";
  		interrupts = <0x00 0x1c 0x04>;
@@ -87,7 +83,7 @@
  		phandle = <0x10e>;
  	};
  
-@@ -4153,27 +4175,28 @@
+@@ -4153,27 +4168,28 @@
  	leds {
  		compatible = "gpio-leds";
  

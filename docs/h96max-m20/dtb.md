@@ -72,12 +72,15 @@ what each modern binding needs and why.
 The mainline `meson-gxlx-s905l-p271.dtb` is the **reference** for what a node should look like,
 never the base: p271 is a different board.
 
-| Hunk            | Reason                                                        |
-| --------------- | ------------------------------------------------------------- |
-| `reset@4404`    | `meson-gx-mmc` takes a reset line; the vendor tree has none   |
-| `clkc_AO`       | `meson-gx-uart` needs a `pclk` from the AO clock controller   |
-| `uart_AO`       | three named clocks where the vendor had one `clk_uart`        |
-| `sd_emmc_a/b/c` | mainline gate numbers and a reset; board properties untouched |
+| Hunk                       | Reason                                                        |
+| -------------------------- | ------------------------------------------------------------- |
+| `reset@4404`               | `meson-gx-mmc` takes a reset line; the vendor tree has none   |
+| `clkc_AO`                  | `meson-gx-uart` needs a `pclk` from the AO clock controller   |
+| `uart_AO`                  | three named clocks where the vendor had one `clk_uart`        |
+| `sd_emmc_a/b/c`            | mainline gate numbers and a reset; board properties untouched |
+| `hdmi-tx` `reset-names`    | in-tree dw-hdmi takes its resets by name, not by index        |
+| `/ao-secure@c8100140`      | `meson-gx-socinfo`: `soc0`, `GXLX2 (S905L3)`                  |
+| `/firmware/secure-monitor` | `meson_sm`: the chip serial, in `firmware:secure-monitor`     |
 
 Node names stay as the vendor wrote them — Linux binds on `compatible`, not on names, so renaming
 would be churn without a reason.
@@ -274,14 +277,3 @@ lines does not switch them.
 
 The SoC's CVBS encoder, `t9015` analogue codec and S/PDIF stay as the factory wrote them: this box
 fits no AV or S/PDIF jack, so nothing would consume a graft.
-
-## TVBian's kernel
-
-`board.tvbian.patch` applies on top of `board.patch`, for TVBian's kernel only; `package/board.sh`
-builds the tree with it.
-
-| Change                     | What it gives                                             |
-| -------------------------- | --------------------------------------------------------- |
-| `hdmi-tx` `reset-names`    | in-tree dw-hdmi takes its resets by name, not by index    |
-| `/ao-secure@c8100140`      | `meson-gx-socinfo`: `soc0`, `GXLX2 (S905L3)`              |
-| `/firmware/secure-monitor` | `meson_sm`: the chip serial, in `firmware:secure-monitor` |
