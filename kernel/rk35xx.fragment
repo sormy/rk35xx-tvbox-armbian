@@ -10,3 +10,8 @@ CONFIG_DEBUG_INFO_NONE=y
 # CONFIG_TOUCHSCREEN_FTS is not set
 # the vendor's phone sensor stack: nothing a TV box carries, and its ak8975 clashes with IIO's
 # CONFIG_SENSOR_DEVICE is not set
+# the console font fbcon prefers on a TV, as meson64's: 8x16 at 1080p is 240 columns
+CONFIG_FONTS=y
+CONFIG_FONT_8x8=y
+CONFIG_FONT_8x16=y
+CONFIG_FONT_TER16x32=y
