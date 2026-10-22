@@ -1,7 +1,8 @@
 #!/bin/bash
 # Print the X-Tvb-Inputs hash of one package group: what the plan compares with the published deb.
 #   inputs.sh kernel <kernel/*.conf> <ref> | board <board> | firmware <dir> | keyring
-# TVB_BUILD_ENV, the build image's tag, names the toolchain every group is built with.
+# Beside the files, the versions of the tools that shape the group's bytes: none for copied files,
+# so a build image changed for another step rebuilds nothing it does not touch.
 set -euo pipefail
 cd /repo
 files() {
@@ -34,5 +35,14 @@ files() {
     keyring) echo keyring/tvb-archive-keyring.gpg package/keyring.sh ;;
   esac
 }
+tools() {
+  case $1 in
+    kernel) gcc -dumpfullversion; ld --version | head -1 ;;
+    board)
+      dtc --version
+      # shellcheck source=/dev/null
+      (. "firmware/$2/board.conf"; [ -z "${BOARD_UBOOT_BUILD:-}" ] || { gcc -dumpfullversion; ld --version | head -1; }) ;;
+  esac
+}
 # shellcheck disable=SC2046  # one path per word
-{ sha256sum $(files "$@" | tr ' ' '\n' | sort -u); echo "${3:-}" "${TVB_BUILD_ENV:?}"; } | sha256sum | cut -c1-16
+{ sha256sum $(files "$@" | tr ' ' '\n' | sort -u); echo "${3:-}"; tools "$@"; } | sha256sum | cut -c1-16

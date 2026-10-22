@@ -101,7 +101,7 @@ run() {  # run a command inside the image, the repo read-only at /repo
   trap '"$RT" stop "$name" >/dev/null 2>&1; exit 130' INT TERM
   "$RT" run ${PLATFORM:+"$PLATFORM"} --rm --name "$name" --cpus "$CPUS" --memory "$MEMORY" -e TVB_BUILD_CPUS="$CPUS" -e TVB_BUILD_REVISION="${TVB_BUILD_REVISION:-0~local}" \
     -e TVB_BUILD_CACHE="${TVB_BUILD_CACHE:-1}" -e TVB_BUILD_CCACHE_SIZE="${TVB_BUILD_CCACHE_SIZE:-5G}" \
-    -e TVB_BUILD_ENV="$IMAGE" -e TVB_BUILD_SUITE="$SUITE" \
+    -e TVB_BUILD_SUITE="$SUITE" \
     -v "$WORK:/work" -v "$PWD:/repo:ro$rel" -v "$PWD/$OUT:/out${rel:+:${rel#,}}" ${ccache[@]+"${ccache[@]}"} \
     -w /repo "$IMAGE" "$@" </dev/null
 }
