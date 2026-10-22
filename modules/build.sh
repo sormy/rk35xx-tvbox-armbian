@@ -9,8 +9,9 @@ CONF=$1 TREE=$2 KREL=$3 VERSION=$4
 . "/repo/$CONF"
 NAME=$(basename "$CONF" .conf)
 CACHE=/work/cache/modules/$NAME
-SRC=/work/modules/$NAME
-ROOT=/work/package/modules-$NAME
+# per kernel, so two kernels' builds of one driver never share a tree
+SRC=/work/modules/$NAME-$KREL
+ROOT=/work/package/modules-$NAME-$KREL
 
 # blob-less: a driver can be one directory of a kernel-sized repository, and archive fetches only
 # the blobs under SUBDIRS
