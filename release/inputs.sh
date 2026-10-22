@@ -10,19 +10,22 @@ files() {
     kernel)
       # shellcheck source=/dev/null
       . "$2"
+      # shellcheck disable=SC2086  # FRAGMENT lists its files
       echo "$2" "$CONFIG" $FRAGMENT kernel/build.sh kernel/version.sh modules/build.sh
       sed -n 's/^\. //p' "$2"   # a conf it builds on
       for entry in $PATCHES; do echo "${entry#*:}"; done
       family=$(basename "$2" .conf)
       for m in modules/*.conf; do
+        # shellcheck source=/dev/null
         (. "$m"; for k in $KERNELS; do [ "$k" = "$family" ] && exit 0; done; exit 1) || continue
         echo "$m"
+        # shellcheck source=/dev/null
         (. "$m"; for entry in ${PATCHES:-}; do echo "${entry#*:}"; done)
       done ;;
     board)
       # shellcheck source=/dev/null
       . "firmware/$2/board.conf"
-      echo "firmware/$2/board.conf" "firmware/$2/board.dts" "firmware/$2/board-name" package/board.sh
+      echo "firmware/$2/board.dts" "firmware/$2/board-name" package/board.sh
       [ ! -f "firmware/$2/preserve-sectors" ] || echo "firmware/$2/preserve-sectors" firmware/common/tvb-install
       ls "firmware/$2/board.tvbian.patch" 2>/dev/null || true
       sed -E 's/#.*//' "firmware/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}'
@@ -35,6 +38,18 @@ files() {
     keyring) echo keyring/tvb-archive-keyring.gpg package/keyring.sh ;;
   esac
 }
+# settings <group> <arg>: what a conf sets, sorted, so a comment or a reordering moves nothing
+settings() {
+  case $1 in
+    board) (
+      # shellcheck source=/dev/null
+      . "firmware/$2/board.conf"
+      for v in ${!BOARD_@}; do
+        if [ "$v" = BOARD_DEPENDS ]; then echo "$v=$(tr ',' ' ' <<<"${!v}" | xargs -n1 | sort | xargs)"; else echo "$v=${!v}"; fi
+      done
+    ) ;;
+  esac
+}
 tools() {
   case $1 in
     kernel) gcc -dumpfullversion; ld --version | head -1 ;;
@@ -45,4 +60,4 @@ tools() {
   esac
 }
 # shellcheck disable=SC2046  # one path per word
-{ sha256sum $(files "$@" | tr ' ' '\n' | sort -u); echo "${3:-}"; tools "$@"; } | sha256sum | cut -c1-16
+{ sha256sum $(files "$@" | tr ' ' '\n' | sort -u); echo "${3:-}"; settings "$@"; tools "$@"; } | sha256sum | cut -c1-16

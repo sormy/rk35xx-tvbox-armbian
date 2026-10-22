@@ -3,9 +3,7 @@
 Mainline's mt76 plus the MT7668S. The part is an MT7663 sibling on SDIO - the same register map,
 connac descriptors and firmware download - whose firmware owns the MAC.
 
-TVBian's kernel applies `0001`-`0013` in-tree. An overlay box builds the tree as DKMS:
-`firmware/common/fetch-mt76-src.sh <dir>` stages it with all of them applied, `0014` being
-DKMS-only.
+TVBian's kernel applies `0001`-`0013` in-tree.
 
 ## The patches
 
@@ -24,7 +22,6 @@ DKMS-only.
 | 0011 | mt7615: the MT7668S's sdio id and profile                  | yes      |
 | 0012 | mt7615: streams and bands from the firmware's report       | yes      |
 | 0013 | mt7615: a firmware reload before joining a second BSS      | yes      |
-| 0014 | build the SDIO stack out of tree, over the in-tree modules | no       |
 
 Each patch builds on its own at `W=1`. `cover-letter.txt` introduces the set for submission.
 
@@ -170,15 +167,7 @@ Measured and reverted:
   move by factors.
 - **Monitor mode cannot see this station's own transmissions.** Seeing them needs a second radio.
 
-## Building it out of tree
-
-    firmware/common/fetch-mt76-src.sh /tmp/mt76
-    make -C /lib/modules/$(uname -r)/build M=/tmp/mt76 modules \
-      CONFIG_MT76_CORE=m CONFIG_MT76_SDIO=m CONFIG_MT76_CONNAC_LIB=m \
-      CONFIG_MT7615_COMMON=m CONFIG_MT7663S=m CONFIG_MT7663_USB_SDIO_COMMON=m
-
-That builds every other mt76 driver the kernel's config enables too. The `dkms.conf` the fetch
-writes also sets each of those `obj-$(CONFIG_*)` symbols empty, so DKMS builds the six alone.
+## Firmware
 
 The part needs `mediatek/mt7668_patch_e2_hdr.bin`, `mediatek/WIFI_RAM_CODE_MT7668.bin`,
 `mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin` and `mediatek/EEPROM_MT7668.bin`.

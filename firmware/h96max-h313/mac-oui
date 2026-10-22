@@ -1,3 +1,0 @@
-# <iface> <prefix> — fallback only; vendor storage wins when it holds an address.
-end0 02:ef:00
-wlan0 fe:fd:fc

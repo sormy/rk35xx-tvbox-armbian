@@ -27,7 +27,7 @@ version() { awk -v c="kernel/$1.conf" '$1 == "kernel" && $2 == c { sub(/-[0-9]+$
     case ${name##* } in *_*) pcb=${name##* } name=${name% *} ;; esac
     # the board's own chips, firmware and driver both; the SoC's, named after its maker, go unsaid
     soc=$(vendor "$BOARD_FAMILY")
-    extras=$(tr ',' '\n' <<<"$BOARD_DEPENDS" | sed -n 's/^ *tvb-firmware-//p' | grep -vix "$soc" |
+    extras=$(tr ' ' '\n' <<<"$BOARD_DEPENDS" | sed -n 's/^tvb-firmware-//p' | grep -vix "$soc" |
       tr '[:lower:]' '[:upper:]' | paste -sd, | sed 's/,/, /g')
     echo "| $name | $pcb | $(vendor "$BOARD_FAMILY") ($BOARD_KERNEL) | Debian ${TVB_BUILD_SUITE:?} | $(version "$BOARD_KERNEL"), $(origin "$BOARD_KERNEL") | ${next:+$next, $(origin "$BOARD_KERNEL-next")} | $extras | \`$(basename "$img")\` |"
   done

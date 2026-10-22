@@ -11,7 +11,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 
 | Tree                | Holds                                                                                              |
 | ------------------- | -------------------------------------------------------------------------------------------------- |
-| `firmware/<board>/` | `board.conf`, `board.dts`/`.patch`/`.dtb`, `uboot.dts`/`.patch`, `payload.list`, factory idbloader |
+| `firmware/<board>/` | `board.conf`, `board.dts`/`.patch`/`.dtb`, `uboot.dts`/`.patch`, `package.list`, factory idbloader |
 | `firmware/common/`  | everything shared between boards                                                                   |
 | `upstream/<board>/` | the submission header, and the generated submission set                                            |
 | `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                                |
@@ -29,12 +29,12 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `image/`            | the image step, its package list, and the files every image's rootfs gets                          |
 | `release/`          | the release plan, the signed `apt` repo, and the upload to GitHub                                  |
 
-**Repo files carry no prefix**: each board's `payload.list` names where a file installs, under that
-board's prefix. A board directory holds `board.conf`, `board-id`, `board-name`, the tree, the
-loader, `payload.list`, `preserve-sectors` where it has a `tvb-install`, and firmware only where it
-is shown to be this board's. **Shared mechanism lives in `firmware/common/`** — a board never keeps
-its own copy of a family script. What it may keep is mechanism no other board can use: a
-`firstboot-board` hook, or a unit for hardware only it has (the R69's `bt`).
+**Repo files carry no prefix**: each board's `package.list` names where a file installs. A board
+directory holds `board.conf`, `board-id`, `board-name`, the tree, the loader, `package.list`,
+`preserve-sectors` where it has a `tvb-install`, and firmware only where it is shown to be this
+board's. **Shared mechanism lives in `firmware/common/`** — a board never keeps its own copy of a
+family script. What it may keep is mechanism no other board can use: a unit for hardware only it
+has.
 
 **Tools we build, and must:** `dtc` (`./build-dtc.sh` — vanilla cannot round-trip a vendor blob with
 `&label`s) · `e2tools` (`./build-e2tools.sh` — the stock one corrupts an image on delete) ·
@@ -88,10 +88,10 @@ another, so nothing rots when one is rewritten.
 | `patches/aic8800/README.md`           | the AIC8800 SDIO driver: Radxa's patches, then ours                   |
 | `patches/seekwave-swt6621s/README.md` | the H96 Max Wi-Fi driver patches and their PRs                        |
 | `patches/mt76-mt7668/README.md`       | mainline mt76 for the MT7668S: what it does, its gaps, its firmware   |
-| `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, shipped as DKMS                   |
+| `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, in-tree                           |
 | `patches/mt76x8-mt7668/README.md`     | the vendor MT7668 driver on 6.18: the fallback, not shipped           |
-| `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), shipped as DKMS                 |
-| `patches/meson-codecs/README.md`      | the video decoder and encoders on the GXLX2: DKMS, or in-tree         |
+| `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), in-tree                         |
+| `patches/meson-codecs/README.md`      | the video decoder in-tree and the encoders beside it on the GXLX2     |
 | `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand    |
 | `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds                |
 | `keyring/README.md`                   | the archive signing key: fingerprint, secret, rotation                |
@@ -209,20 +209,17 @@ higher one and record why.
 
 ## Hardware
 
-- **First boot lands in Armbian's setup wizard, not a shell.** Ctrl-C at each prompt aborts it and
-  leaves root at the image's default password, `1234`. With a network, copy an SSH key into
-  `/root/.ssh/authorized_keys` over serial once, and the rest of bring-up runs as
-  `ssh root@<BOARD_HOSTNAME>`.
+- **The first login asks for a new root password**: the image ships `1234`, expired. With a network,
+  copy an SSH key into `/root/.ssh/authorized_keys` over serial once, and the rest of bring-up runs
+  as `ssh root@<BOARD_HOSTNAME>.local`.
 - `mmcblk` numbering is **not stable** across images or boots. Identify the eMMC by its
   `boot0`/`boot1` companions, never by a remembered number.
 - **After any refactor, rebuild the image and diff every payload file against a pre-change build.**
-  Comment-level differences only, unless the change is deliberately a rename — and a rename of an
-  installed path is a breaking change for deployed boxes, so it needs a removal step in
-  `rk35xx-update` for what it replaces.
+  Comment-level differences only, unless the change is deliberately a rename — and a path moving
+  between packages needs `Replaces` and `Breaks`, which the release guard checks.
 - These boxes are daily drivers. Say what you're about to do to them, prefer `--no-reboot` plus an
   explicit reboot you can watch, and keep a known-good DTB where one file copy restores it.
 - **When a box won't boot after a DTB change:** power off, pull the SD (if it boots from eMMC, boot
-  an SD instead), mount its rootfs on the host and `e2cp` the known-good `board.dtb` back. Fix
-  **both** copies — `/boot/dtb-*/rockchip/board.dtb` **and** `/usr/local/share/*/board.dtb`, or the
-  dtb-persist hook reinstates the bad one on the next kernel update. On serial the two failure
-  shapes differ: a silent stop is a hang, a repeating U-Boot banner is a reset loop.
+  an SD instead), mount its rootfs on the host and `e2cp` the known-good `board.dtb` back. The boot
+  loader reads `/usr/lib/tvb/board.dtb`, the one copy. On serial the two failure shapes differ: a
+  silent stop is a hang, a repeating U-Boot banner is a reset loop.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build patched e2tools into tools/e2tools (gitignored); build-image.sh puts it ahead of PATH.
+# Build patched e2tools into tools/e2tools (gitignored), for editing a box's rootfs from the host.
 # Stock e2rm corrupts an image on delete, so the self-test below gates every build.
 #
 # Usage: ./build-e2tools.sh [--test]
@@ -8,7 +8,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 TOOLS="$REPO/tools"                               # gitignored output dir
 BUILD="$TOOLS/src/e2tools"                        # scratch clone
-OUT="$TOOLS/e2tools"                              # the binaries build-image.sh picks up
+OUT="$TOOLS/e2tools"                              # the binaries
 PATCHES="$REPO/patches/e2tools"
 
 # --- pinned dependency (bump deliberately, never float) ---

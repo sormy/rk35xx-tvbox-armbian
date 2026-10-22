@@ -1,4 +1,0 @@
-# Deliberately defines no write_uboot_platform. The u-boot package's would write Le Potato's
-# bootloader over the vendor one this box boots from, and armbian-install would partition over
-# reserved, where this unit's keys live. Without the function armbian-install finds no install method
-# and refuses before touching a disk. The eMMC install is scripts/aml-emmc-install, from a host.

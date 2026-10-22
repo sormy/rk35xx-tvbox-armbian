@@ -1,14 +1,10 @@
 # meson-dw-hdmi — mainline HDMI for the GXLX2 (S905L3)
 
-TVBian's kernel applies `0001` in-tree. An overlay box builds mainline's `meson_dw_hdmi.c` from
-Linux 6.18.44 as DKMS package `meson-dw-hdmi-gxlx2`, under its own name because the kernel's is
-built in: `firmware/common/fetch-meson-dw-hdmi-src.sh <dir>` stages it with both applied, `0002`
-being DKMS-only.
+TVBian's kernel applies `0001` in-tree.
 
-| Patch  | Holds                                                      | Upstream              |
-| ------ | ---------------------------------------------------------- | --------------------- |
-| `0001` | GXLX2 match data: G12A register access, GXL PHY            | RFC, linux-amlogic    |
-| `0002` | the module takes the node from the built-in driver at load | no — built-in kernels |
+| Patch  | Holds                                           | Upstream           |
+| ------ | ----------------------------------------------- | ------------------ |
+| `0001` | GXLX2 match data: G12A register access, GXL PHY | RFC, linux-amlogic |
 
 ## 0001
 
@@ -25,11 +21,4 @@ It is the driver half of "[RFC PATCH 0/2] drm/meson: add HDMI support for GXLX2"
 2026-07), without its `meson_drv.c` hunk: the node's GXL fallback compatible is what built-in
 meson-drm matches.
 
-## 0002
-
-Built-in meson-dw-hdmi binds the node first, through that same fallback. The tree gives the resets
-without `reset-names`, so its bind fails at the first lookup, before it writes anything. At load
-this module sets `driver_override` on the node, releases it from the built-in driver and binds it;
-meson-drm then binds the whole pipeline. The module takes the resets by index.
-
-Drop both patches, and the package, once the running kernel has GXLX2 support in its own driver.
+Drop `0001` once mainline's driver supports the GXLX2.

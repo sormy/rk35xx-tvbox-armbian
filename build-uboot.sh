@@ -163,4 +163,4 @@ DTSI
   echo "-> firmware/$BOARD/uboot.itb ($(wc -c < "$FW/$BOARD/uboot.itb") bytes)"
 done
 
-echo "mainline U-Boot $UBOOT_TAG — baked into each image by build-image.sh."
+echo "mainline U-Boot $UBOOT_TAG — tvb-<board> ships it, and each image carries it."

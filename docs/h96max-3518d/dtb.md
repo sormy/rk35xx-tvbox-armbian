@@ -51,8 +51,7 @@ is **byte-identical** in this board's tree, so it should apply essentially verba
 Both were the other way round until 2026-09-06, when the receiver was shown to be absent: the
 bundled remote drives the H96 Max box over IR, and this board answers none of it.
 
-With no node to bind, `rockchip_pwm_remotectl` does not run, so this board needs no IR workaround —
-see `board.conf`'s `BOARD_IR_BLACKLIST=""`.
+With no node to bind, `rockchip_pwm_remotectl` does not run.
 
 ### Reading the patch: `NOT FITTED` marks a correction, not a change
 

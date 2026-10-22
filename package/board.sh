@@ -47,7 +47,7 @@ done <"$FW/$BOARD/package.list"
 
 mkdir -p "$ROOT/usr/share/u-boot-menu/conf.d"
 # ro: systemd-fsck-root checks the rootfs; net.ifnames=0: eth0 and wlan0, as on Armbian
-cmdline="rootwait ro ${BOARD_SERIALCON:-} console=tty1 consoleblank=0 net.ifnames=0 ${BOARD_IR_BLACKLIST:-}"
+cmdline="rootwait ro ${BOARD_SERIALCON:-} console=tty1 consoleblank=0 net.ifnames=0"
 # the board's firmware ahead of every package's
 cmdline="$cmdline firmware_class.path=/usr/lib/tvb/firmware"
 [ -z "${BOARD_CMA:-}" ] || cmdline="$cmdline cma=$BOARD_CMA"
@@ -72,7 +72,7 @@ Package: tvb-$BOARD
 Version: $VERSION
 Architecture: arm64
 Maintainer: TVBian <archive@tvbian.com>
-Depends: linux-image-tvb-$BOARD_KERNEL, u-boot-menu${BOARD_DEPENDS:+, $BOARD_DEPENDS}
+Depends: linux-image-tvb-$BOARD_KERNEL, u-boot-menu${BOARD_DEPENDS:+, ${BOARD_DEPENDS// /, }}
 Provides: tvb-board
 Conflicts: tvb-board
 Section: admin
