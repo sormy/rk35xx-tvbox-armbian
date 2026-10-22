@@ -8,18 +8,18 @@ M20 stock means the entry of that name in the M20's factory `video_ucode.bin`, v
 `v0.2.287de0d` of 2021-01-27, in `stock/h96max-m20/firmware/video/`: per blob a 512-byte `EDOC`
 header, `data_size` at offset 200, then the payload.
 
-| File                         | Origin                                    |
-| ---------------------------- | ----------------------------------------- |
-| `vdec/gxl_h264.bin`          | M20 stock, repacked: pages 0-3, 4 2 6 3 5 |
-| `vdec/gxl_mpeg4_5.bin`       | M20 stock `gxl_xvid.bin`, identical       |
-| `vdec/gxl_mpeg12_multi.bin`  | M20 stock, zero-padded to 16 KiB          |
-| `vdec/gxl_vc1.bin`           | M20 stock, identical                      |
-| `gxlx2/g12a_hevc_mmu.bin`    | M20 stock, identical                      |
-| `gxlx2/g12a_vp9.bin`         | M20 stock, identical                      |
-| `gxlx2/gxl_mjpeg.bin`        | M20 stock, identical                      |
-| `venc/gxl_h264_enc.bin`      | M20 stock, identical                      |
-| `venc/ga_h264_enc_cabac.bin` | M20 stock `g12a_h264_enc_cabac.bin`       |
-| `venc/monet.bin`             | Chips&Media, via StarFive's SDK           |
+| File                           | Origin                                    |
+| ------------------------------ | ----------------------------------------- |
+| `vdec/gxl_h264.bin`            | M20 stock, repacked: pages 0-3, 4 2 6 3 5 |
+| `vdec/gxl_xvid.bin`            | M20 stock, identical                      |
+| `vdec/gxl_mpeg12_multi.bin`    | M20 stock, zero-padded to 16 KiB          |
+| `vdec/gxl_vc1.bin`             | M20 stock, identical                      |
+| `gxlx2/g12a_hevc_mmu.bin`      | M20 stock, identical                      |
+| `gxlx2/g12a_vp9.bin`           | M20 stock, identical                      |
+| `gxlx2/gxl_mjpeg.bin`          | M20 stock, identical                      |
+| `venc/gxl_h264_enc.bin`        | M20 stock, identical                      |
+| `venc/g12a_h264_enc_cabac.bin` | M20 stock, identical                      |
+| `venc/monet.bin`               | Chips&Media, via StarFive's SDK           |
 
 The repack: mainline's `codec_h264` loads 16 KiB of main code and then exactly 20 KiB of sections
 (`SIZE_EXT_FW`). The factory's newer build carries 12 KiB, having dropped the copies of main pages 2

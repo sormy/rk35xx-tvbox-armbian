@@ -4,6 +4,6 @@
 0644 common/aic8800/fw_patch_table.bin  /usr/lib/firmware/aic8800/SDIO/aic8800D80/fw_patch_table.bin
 0644 common/aic8800/fw_patch.bin        /usr/lib/firmware/aic8800/SDIO/aic8800D80/fw_patch.bin
 0644 common/aic8800/fmacfw.bin          /usr/lib/firmware/aic8800/SDIO/aic8800D80/fmacfw.bin
-0644 common/aic8800/fw_adid.bin         /usr/lib/firmware/aic8800/SDIO/aic8800D80/fw_adid.bin
+0644 common/aic8800/fw_adid_8800d80_u02.bin /usr/lib/firmware/aic8800/SDIO/aic8800D80/fw_adid.bin
 0644 common/aic8800/lmacfw_rf.bin       /usr/lib/firmware/aic8800/SDIO/aic8800D80/lmacfw_rf.bin
 0644 common/aic8800/aic_userconfig.txt  /usr/lib/firmware/aic8800/SDIO/aic8800D80/aic_userconfig.txt

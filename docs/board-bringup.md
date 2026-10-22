@@ -141,7 +141,9 @@ the board to the README's Boxes table and support matrix.
   symlink.
 - **Firmware is the vendor's, from the board's stock image:** built for that chip, it is the build
   known to work with it. It ships in `tvb-firmware-<chip>`, from `firmware/common/<chip>/` with a
-  `firmware.conf` and a `package.list`, which the board depends on from its first board on.
+  `firmware.conf` and a `package.list`, which the board depends on from its first board on. A file
+  keeps its name from the stock image, or from its source; `package.list` maps it to the name the
+  driver asks for. Variants that share one stock name are named for what sets them apart.
   1. A newer build wins, wherever it comes from, Debian or another vendor's SDK; so does one that
      works where the stock one fails on our driver. The package's `README.md` says which, with
      versions.

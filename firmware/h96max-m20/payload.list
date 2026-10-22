@@ -22,7 +22,7 @@
 0644 common/amlogic/gxlx2/gxl_mjpeg.bin        /lib/firmware/meson/vdec/gxl_mjpeg.bin
 0644 common/amlogic/vdec/gxl_vc1.bin          /lib/firmware/meson/vdec/gxl_vc1.bin
 0644 common/amlogic/venc/gxl_h264_enc.bin     /lib/firmware/meson/venc/gxl_h264_enc.bin
-0644 common/amlogic/venc/ga_h264_enc_cabac.bin /lib/firmware/meson/venc/ga_h264_enc_cabac.bin
+0644 common/amlogic/venc/g12a_h264_enc_cabac.bin /lib/firmware/meson/venc/ga_h264_enc_cabac.bin
 0644 common/amlogic/venc/monet.bin            /lib/firmware/meson/venc/monet.bin
 0644 common/amlogic/venc/LICENSE.monet.txt    /lib/firmware/meson/venc/LICENSE.monet.txt
 
