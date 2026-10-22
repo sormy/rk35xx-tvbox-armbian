@@ -1833,3 +1833,7 @@ With the BOE 2256x1504 panel on 6.1.172 at `develop-6.1`'s tip:
 at boot, and none, nor any `ddc read time out`, on a forced re-detect with `dw-hdmi.c` debug on,
 against five per probe then. The console font is now Terminus 16x32, `CONFIG_FONT_TER16x32` in
 `kernel/rk35xx.fragment`: 141x47 on this panel.
+
+The other AIC8800 noise, two bare `printk()`s per management frame (`done=1 retry_required=0 …` on
+TX confirm, `frame type` on a protected frame received), is deleted by `patches/aic8800/98`; the
+installed `aic8800_fdrv.ko` carries neither string.

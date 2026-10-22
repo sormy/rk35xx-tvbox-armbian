@@ -15,11 +15,9 @@ Two entries dominate the err/warn count:
   the submission tree — the shipped tree points those at `&gmac0_mtl_rx_setup` correctly. ✅ gone on
   TVBian's kernel, which carries `net-stmmac-skip-absent-mdio-reset-gpio`; the counts here are
   6.1.115's.
-- **`done=1 retry_required=0 sw_retry_required=0 acknowledged=1`, R69 only.** A bare `printk()` — no
-  level, no prefix — at `aic8800_fdrv/rwnx_tx.c:2374` in Radxa's driver, as at line 1835 in
-  `rkr5.1`'s, so it defaults to `KERN_WARNING`: 6 lines in the first 390 s of a boot. It fires in
-  the TX-confirm path for every management frame. `pr_debug()` with a prefix is the fix, one patch
-  in `patches/aic8800/`.
+- **`done=1 retry_required=0 sw_retry_required=0 acknowledged=1`, R69 only.** A bare `printk()` per
+  management frame in Radxa's driver. ✅ gone: `patches/aic8800/98` deletes it and its RX twin,
+  `frame type`.
 
 **Relevelling is not fixing.** A line that tells the reader nothing is noise at any level, and
 `dev_dbg` just hides it while leaving the log as long for anyone who raises the level. Delete it, or
@@ -33,7 +31,7 @@ describe a fault on **this** board, or an optional thing being absent?
 | Lines | Source                                   | Verdict                                                          |
 | ----: | ---------------------------------------- | ---------------------------------------------------------------- |
 |     7 | `rk_gmac-dwmac`                          | optional properties logged as errors — actionable, small         |
-|   ~30 | `aicbsp` / `rwnx_*` / `AICWFDBG`         | vendor Wi-Fi driver logging progress at error level              |
+|     1 | `AICWFDBG`                               | ✅ errors only (`aic8800/10`); the one left is `99`'s MAC        |
 |     5 | `rockchip-drm` logo/crtc                 | expected: no boot logo configured                                |
 |     4 | `SPI driver inv-icm42600-spi`            | not our hardware; in-tree driver missing `spi_device_id` entries |
 |     2 | `cacheinfo: Unable to detect ...`        | SoC exposes no cache hierarchy — cosmetic                        |
@@ -68,16 +66,9 @@ where the supply is optional — `devm_regulator_get_optional()` plus a NULL gua
 **Do not "fix" this by adding the properties to the DTS** — that would describe hardware the board
 does not have.
 
-### 2. aic8800 vendor driver
-
-Largest and least tractable — firmware paths, feature flags and interface names from a vendored
-driver with no mainline home. Progress reporting that means nothing to anyone but its author; delete
-rather than relevel, since the driver logs the same things again at info and debug.
-
 ## Order
 
 1. dwmac-rk log levels — small, self-contained, one patch in `kernel/rk35xx.conf`
-2. aic8800 — cosmetic only, do last
 
 Keep these out of functional patches. Mixing log-level churn into a fix invites another review round
 on something already verified.

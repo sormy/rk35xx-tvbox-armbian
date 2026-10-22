@@ -1,0 +1,26 @@
+diff --git a/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_rx.c b/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_rx.c
+index 04964ff..0842c72 100644
+--- a/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_rx.c
++++ b/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_rx.c
+@@ -2136,7 +2136,6 @@ void remove_sec_hdr_mgmt_frame(struct hw_rxhdr *hw_rxhdr, struct sk_buff *skb)
+ 
+ 	if (!hw_rxhdr->hwvect.ga_frame) {
+ 		if (((skb->data[0] & 0x0C) == 0) && (skb->data[1] & 0x40) == 0x40) { //protect management frame
+-			printk("frame type %x\n", skb->data[0]);
+ 			if((hw_rxhdr->hwvect.decr_status == RWNX_RX_HD_DECR_CCMP128) ||
+ 			(hw_rxhdr->hwvect.decr_status == RWNX_RX_HD_DECR_CCMP256) ||
+ 			(hw_rxhdr->hwvect.decr_status == RWNX_RX_HD_DECR_GCMP128) ||
+diff --git a/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_tx.c b/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_tx.c
+index d8354ad..3305f22 100644
+--- a/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_tx.c
++++ b/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_tx.c
+@@ -2387,9 +2387,6 @@ int rwnx_txdatacfm(void *pthis, void *host_id)
+ 
+ 	/* Update txq and HW queue credits */
+ 	if (sw_txhdr->desc.host.flags & TXU_CNTRL_MGMT) {
+-		printk("done=%d retry_required=%d sw_retry_required=%d acknowledged=%d\n",
+-					 rwnx_txst.tx_done, rwnx_txst.retry_required,
+-					 rwnx_txst.sw_retry_required, rwnx_txst.acknowledged);
+ #ifdef CREATE_TRACE_POINTS
+ 		trace_mgmt_cfm(sw_txhdr->rwnx_vif->vif_index,
+ 					   (sw_txhdr->rwnx_sta) ? sw_txhdr->rwnx_sta->sta_idx : 0xFF,
