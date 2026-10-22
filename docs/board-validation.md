@@ -185,9 +185,8 @@ Test every cell at **720p, 1080p, 4K and 8K** — both surprises this repo found
       `status = "okay"` is **its** claim, not this PCB's
 - [ ] Each ghost disabled, its `board.patch` hunk marked **`NOT FITTED -`** with the evidence, so a
       reader can tell a correction from a change we chose
-- [ ] Every other hunk carries its own rationale — upstream, `NOT FITTED` describes the board and
-      the rest describes our stack
-- [ ] `upstream/build.sh` reports `VERIFIED: native tree is content-identical to the patched tree`
+- [ ] Every other hunk carries its own rationale — `NOT FITTED` describes the board, the rest our
+      stack
 - [ ] After any tree change, re-check the nodes you did **not** touch are still `okay` — eMMC first
 
 ## Needs the human — batch these into one trip

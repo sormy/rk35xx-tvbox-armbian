@@ -1,8 +1,7 @@
 # Repo layout
 
 Every folder named for what it holds, every patch beside what it patches, every doc current or gone.
-Starts once `upstream/` is removed (`TODO.md`), so nothing is moved only to be deleted. Repo paths
-only: no box sees them.
+Repo paths only: no box sees them.
 
 ## Folders
 

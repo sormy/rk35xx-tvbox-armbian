@@ -12,9 +12,9 @@ Two entries dominate the err/warn count:
   `__mdiobus_register`. These boards have an integrated PHY and no reset line — dmesg says "No PHY
   reset control found" — so the driver puts a GPIO it never got. Benign: ethernet still measures 94
   Mbit/s. An upstream `stmmac` bug, not board data, and **not** the `snps,mtl-rx-config` defect from
-  the submission tree — the shipped tree points those at `&gmac0_mtl_rx_setup` correctly. ✅ gone on
-  TVBian's kernel, which carries `net-stmmac-skip-absent-mdio-reset-gpio`; the counts here are
-  6.1.115's.
+  the old submission tree — the shipped tree points those at `&gmac0_mtl_rx_setup` correctly. ✅
+  gone on TVBian's kernel, which carries `net-stmmac-skip-absent-mdio-reset-gpio`; the counts here
+  are 6.1.115's.
 - **`done=1 retry_required=0 sw_retry_required=0 acknowledged=1`, R69 only.** A bare `printk()` per
   management frame in Radxa's driver. ✅ gone: `patches/aic8800/98` deletes it and its RX twin,
   `frame type`.

@@ -50,15 +50,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       since a comment from a maintainer runs with the repo's token and a fork PR does not. ❓
       CodeRabbit's current limits, and the file it reads guidelines from.
 
-- [ ] **Drop `upstream/`.** No board goes upstream: `upstream/<board>/`, its `build.sh`,
-      `docs/r69/upstream.md`, the `header.dts` rule in `AGENTS.md`, and what `build-board-dts.sh`,
-      `build-uboot-dts.sh` and the bring-up, validation and U-Boot docs say of it. Then a sweep for
-      anything else nothing reads.
 - [ ] **Check the `ttyFIQ0` login on a serial header.** Every Rockchip board's console is `ttyFIQ0`,
       seen in `/proc/consoles` with its getty running; never on a cable.
-- [ ] **The repo restructure, after `upstream/` goes.** Folders named for what they hold, patches
-      beside their owner, tools under `tools/`, docs current or in `research/`:
-      `docs/todo/repo-layout.md`.
+- [ ] **The repo restructure.** Folders named for what they hold, patches beside their owner, tools
+      under `tools/`, docs current or in `research/`: `docs/todo/repo-layout.md`.
 
 - [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`
       mixes the two in one string.

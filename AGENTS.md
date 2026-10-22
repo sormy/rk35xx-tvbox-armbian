@@ -14,7 +14,6 @@ wrong.
 | ------------------- | -------------------------------------------------------------------------------------------------- |
 | `firmware/<board>/` | `board.conf`, `board.dts`/`.patch`/`.dtb`, `uboot.dts`/`.patch`, `package.list`, factory idbloader |
 | `firmware/common/`  | everything shared between boards                                                                   |
-| `upstream/<board>/` | the submission header, and the generated submission set                                            |
 | `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                                |
 | `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                                   |
 | `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                              |
@@ -76,8 +75,6 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                  |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
 | `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
-| `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why        |
-| `upstream/README.md`                  | turning the grafts into something upstreamable                       |
 | `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there     |
 | `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s      |
 | `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage       |
@@ -121,10 +118,6 @@ cannot be backed, say so rather than rounding up.
 
 - **Docs are updated in the same pass as the change.** Work isn't done when the box works; it's done
   when the docs say what the box does. A doc that contradicts the repo is worse than no doc.
-- **`upstream/<board>/header.dts` lists exactly what that board's `board.patch` changes** — no more,
-  no less. It is the submission's only account of why the tree departs from the factory blob: a
-  missing entry reads as an unexplained change, and an entry inherited from another board claims a
-  change this one never makes.
 - **Docs do not link to each other.** Name a file in plain text if a reader needs it. The index
   above is the only place that points anywhere.
 - **Worklogs are written as work happens** — dated entries, wrong turns included. They are the raw

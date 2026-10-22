@@ -6,8 +6,6 @@
 #      the string table and writes path references where the vendor wrote phandles. The content is
 #      what matters, and the patch's own -F0 gate catches a base that has moved.
 #   2. judgement — apply firmware/<board>/board.patch, which says what we change and why.
-#
-# The submission set under upstream/ derives from the same two inputs, separately.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"

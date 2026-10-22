@@ -1,9 +1,8 @@
 # H96 Max 3518D — device tree
 
 **Grafts booted and running since 2026-09-06.** `firmware/h96max-3518d/board.patch` is the source;
-`./build-board-dts.sh` compiles it to `firmware/h96max-3518d/board.dtb`, and `upstream/build.sh`'s
-gate reports `VERIFIED: native tree is content-identical to the patched tree`. The box boots from it
-and is reachable over SSH, so the grafts below are ✅ unless marked otherwise.
+`./build-board-dts.sh` compiles it to `firmware/h96max-3518d/board.dtb`. The box boots from it and
+is reachable over SSH, so the grafts below are ✅ unless marked otherwise.
 
 Factory tree: `stock/h96max-3518d/board.dtb`, carved from the `boot` partition (not from
 `/proc/device-tree` — U-Boot edits that one). 4640 lines, round-trips through the patched `dtc`.
@@ -63,8 +62,7 @@ and the graft only stops it being claimed — nine hunks, all of them `status = 
 
 Every other hunk is a change we want for our own reasons and carries its own rationale instead: the
 `compatible`/`model` strings, lima's clock names, the watchdog enable, the LED renames, and dropping
-`chosen`. The distinction matters when upstreaming — the `NOT FITTED` set describes this board,
-while the rest describes our stack.
+`chosen`. The `NOT FITTED` set describes this board; the rest describes our stack.
 
 ### USB 3 is NOT grafted out — it was, and it broke suspend ❌
 

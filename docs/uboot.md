@@ -62,8 +62,8 @@ is built the way `board.dts` is — decompile the box's own blob, then apply a s
 Two stages, each auditable alone:
 
 1. **Mechanical.** `dtc -P` decompiles the blob — and the result is checked to recompile
-   **byte-identical**, so the base really is the board's own. Then
-   `upstream/scripts/uboot-renumber.py` retargets it at mainline's bindings.
+   **byte-identical**, so the base really is the board's own. Then `scripts/uboot-renumber.py`
+   retargets it at mainline's bindings.
 2. **Judgement.** `firmware/<board>/uboot.patch`, every hunk carrying its reason.
 
 ### Why a retarget is needed at all
@@ -83,10 +83,10 @@ eMMC just gets clocked against a UART. `board.dts` needs no such pass because a 
 vendor kernel there; our U-Boot is mainline.
 
 The blob stores only the integer and no decompiler can recover which symbol produced it, so the
-**vendor header is the dictionary** (`upstream/.kernel`, fetched by `upstream/build.sh`) and
-mainline's supplies the new value. Resets need a spelling rule too — vendor `SRST_PRESETN_SARADC`,
-mainline `SRST_P_SARADC`. Per board: 29 clock cells, 11 reset cells, 40 phase tags
-(`u-boot,dm-pre-reloc` → `bootph-all`, `u-boot,dm-spl` → `bootph-pre-ram`).
+**vendor header is the dictionary** (the vendor kernel's `rk3528-cru.h`, which `build-uboot-dts.sh`
+fetches at a pinned commit) and mainline's supplies the new value. Resets need a spelling rule too —
+vendor `SRST_PRESETN_SARADC`, mainline `SRST_P_SARADC`. Per board: 29 clock cells, 11 reset cells,
+40 phase tags (`u-boot,dm-pre-reloc` → `bootph-all`, `u-boot,dm-spl` → `bootph-pre-ram`).
 
 **A cell that does not map to exactly one value stops the build**, never guessed and never shipped:
 a half-retargeted tree carries vendor indices mainline reads as other clocks. `SCMI_*` names are

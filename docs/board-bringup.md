@@ -114,10 +114,13 @@ state with the SoC's GPIO function, or the EDID reads empty and the panel drops 
 Rockchip's SoC dtsi disables everything and the board file enables what's wired. Only in-SoC blocks
 needing no board routing are candidates.
 
-- **The grafts live in `firmware/<board>/board.patch`**; `upstream/build.sh` produces
-  `firmware/<board>/board.dts` + `.dtb` from it under `SYNC=1`, and otherwise just reports that the
-  two differ. Edit the patch, never `firmware/` — except where a board diverges on purpose, which
-  belongs in its `dtb.md` with the condition that ends it.
+- **The grafts live in `firmware/<board>/board.patch`**; `./build-board-dts.sh` produces
+  `firmware/<board>/board.dts` + `.dtb` from it. Edit the patch, never `firmware/` — except where a
+  board diverges on purpose, which belongs in its `dtb.md` with the condition that ends it.
+- **To move a board onto a kernel's own reference design**, run
+  `scripts/rebase-board-dts.py <board>` on the host, adding `--rev <commit>` to choose the kernel.
+  It rewrites `board.dtb` as overrides on that dtsi in `build/rebase/<board>/native.dts`, and fails
+  unless that compiles content-identical.
 - **Verify the tree round-trips** before rebuilding:
   `diff <(dtc -I dtb -O dts board.dtb) <(dtc -I dtb -O dts <(dtc -@ -I dts -O dtb board.dts))`. If
   it doesn't, edit with `fdtput` instead.
