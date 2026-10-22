@@ -8,7 +8,7 @@ FW=/repo/firmware
 . "$FW/$BOARD/board.conf"
 : "${BOARD_FAMILY:?firmware/$BOARD/board.conf names no BOARD_FAMILY}"
 # the disk layouts written so far, below; a board of another family waits for its own
-case "$BOARD_FAMILY" in meson-gxl) ;; *) echo "– $BOARD: no image layout for $BOARD_FAMILY yet"; exit 0 ;; esac
+case "$BOARD_FAMILY" in meson-gxl | rk35xx) ;; *) echo "– $BOARD: no image layout for $BOARD_FAMILY yet"; exit 0 ;; esac
 SUITE=${TVB_BUILD_SUITE:?}
 DATE=${TVB_BUILD_DATE:-$(date -u +%F)}
 WORK=/work/image/$BOARD
@@ -49,11 +49,14 @@ mmdebstrap --variant=minbase --mode=root --architectures=arm64 \
   --customize-hook='rm -f "$1/etc/update-motd.d/10-uname"; : >"$1/etc/motd"' \
   --customize-hook='chroot "$1" update-initramfs -c -k all 2>/dev/null || chroot "$1" update-initramfs -u -k all' \
   --customize-hook='chroot "$1" u-boot-update' \
-  --customize-hook=': >"$1/etc/machine-id"; rm -f "$1/var/lib/dbus/machine-id"' \
+  --customize-hook='rm -f "$1/var/lib/dbus/machine-id"' \
   "$SUITE" "$ROOT" \
   "deb http://deb.debian.org/debian $SUITE main non-free-firmware" \
   "deb http://deb.debian.org/debian $SUITE-updates main non-free-firmware" \
   "deb http://security.debian.org/debian-security $SUITE-security main non-free-firmware"
+# a first boot: mmdebstrap's cleanup leaves the file empty, which systemd does not count as one,
+# so the first-boot units, sshd's host keys among them, would never run
+echo uninitialized >"$ROOT/etc/machine-id"
 grep -q "fdt /usr/lib/tvb/board.dtb" "$ROOT/boot/extlinux/extlinux.conf" ||
   { echo "✗ extlinux.conf names no board tree"; exit 1; }
 
@@ -136,6 +139,25 @@ EOF
     dd if="$STOCK/bootloader.bin" of="$IMG" bs=512 skip=1 seek=1 count=$((UEXT_SEEK - 1)) conv=notrunc status=none
     python3 -c "import sys; sys.stdout.buffer.write(b'\xaa\x55' * ($AML_TUNING_BYTES // 2))" |
       dd of="$IMG" bs=512 seek=$((RESERVED_SEEK + AML_TUNING_OFFSET)) conv=notrunc status=none
+    ;;
+  rk35xx)
+    # The eMMC's layout, which the BootROM and SPL read from an SD card too: the idbloader in its
+    # five slots, the FIT in both of uboot's, the rootfs above the factory trust partition. The
+    # unit's DVKR and SSKR between them are not the image's.
+    IDB_SEEK=64 IDB_SLOT=1024 IDB_COPIES=5 FIT_SEEK=16384 FIT_SLOT=4096 FIT_COPIES=2
+    ROOT_SEEK=32768 GPT_BACKUP=34
+    truncate -s $(((ROOT_SEEK + ROOT_COUNT + GPT_BACKUP) * 512)) "$IMG"
+    printf 'label: gpt\nstart=%s, size=%s, type=linux, name=rootfs, attrs=LegacyBIOSBootable\n' \
+      "$ROOT_SEEK" "$ROOT_COUNT" | sfdisk -q "$IMG"
+    for i in $(seq 0 $((IDB_COPIES - 1))); do
+      dd if="$ROOT/usr/lib/tvb/idbloader.bin" of="$IMG" bs=512 count="$IDB_SLOT" \
+        seek=$((IDB_SEEK + i * IDB_SLOT)) conv=notrunc status=none
+    done
+    for i in $(seq 0 $((FIT_COPIES - 1))); do
+      dd if="$ROOT/usr/lib/tvb/u-boot.bin" of="$IMG" bs=512 seek=$((FIT_SEEK + i * FIT_SLOT)) \
+        conv=notrunc status=none
+    done
+    dd if="$WORK/root.ext4" of="$IMG" bs=1M seek=$((ROOT_SEEK / 2048)) conv=notrunc status=none
     ;;
 esac
 

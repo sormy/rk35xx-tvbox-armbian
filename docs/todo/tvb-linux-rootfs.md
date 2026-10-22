@@ -151,7 +151,7 @@ Debian package does it where one exists; ours only where none does.
 | ------------------------- | --------------------------- | ------------------------------------ |
 | root, `1234`, must change | `armbian-firstlogin`        | `chage -d 0 root`                    |
 | unique SSH host keys      | `armbian-firstrun`          | `ssh-keygen -A` at first boot        |
-| unique `machine-id`       | `armbian-firstrun`          | empty in the image                   |
+| unique `machine-id`       | `armbian-firstrun`          | `uninitialized` in the image         |
 | rootfs fills the medium   | `armbian-resize-filesystem` | `systemd-repart`, `x-systemd.growfs` |
 | swap in RAM               | `armbian-zram-config`       | `systemd-zram-generator`             |
 | logs in RAM               | `armbian-ramlog`            | `tvb-journal-spill`, journald flush  |
