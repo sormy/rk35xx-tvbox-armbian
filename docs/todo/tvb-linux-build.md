@@ -2,9 +2,9 @@
 
 Opened 2026-10-18. The plan this serves is `docs/todo/tvb-linux.md`: the weekly build, the build
 hosts, the caches. Built: `.github/workflows/release.yml` and `./build.sh release`, as
-`docs/build.md` gives them. Not yet: the first release (below), the repin commit, a failed kernel
-keeping its last pin; `FOLLOW` and `BRANCH` resolve at build time, and the release notes name what
-they resolved to.
+`docs/build.md` gives them. Not yet: the first release (below), the vendor kernels' 7-day soak, the
+AIC8800 driver following Radxa's releases, the manual `repin` workflow; `FOLLOW` and `BRANCH`
+resolve at build time, and the release notes name what they resolved to.
 
 ## First release
 
@@ -27,40 +27,26 @@ The order agreed on 2026-10-22; each step lands before the next starts.
 ## Weekly build
 
 A GitHub Actions workflow every Monday, plus a manual trigger, runs the same container a laptop
-runs. It repins first, then builds, then publishes a release tagged by the run's date, `2026-10-01`.
+runs. It resolves what floats, builds, and publishes a release tagged by the run's date,
+`2026-10-01`, whose notes name every commit it resolved.
 
 ### Triggers
 
 | Signal                                     | Runs                         | Publishes          |
 | ------------------------------------------ | ---------------------------- | ------------------ |
-| `schedule`, Mondays, off the hour          | repin, build, publish        | yes                |
+| `schedule`, Mondays, off the hour          | resolve, build, publish      | yes                |
 | `workflow_dispatch`, or `gh workflow run`  | the same                     | yes                |
 | a push to `kernel/`, `patches/`, the build | build at the current pins    | no: early warning  |
 | a pull request                             | build at the PR's pins       | no: the PR's check |
 | the same `schedule`                        | `testing`, an image a family | never              |
 
 No external cron: the workflow's own `schedule` is the clock, and upstream sends no signal, so the
-repin is the poll. A dropped or urgent week is one `workflow_dispatch`.
+weekly resolve is the poll. A dropped or urgent week is one `workflow_dispatch`.
 
-### Repin
+### What floats
 
-Each pin moves to the newest released commit of its series, upstream:
-
-| Kernel   | Moves to                                       | 2026-10-20            |
-| -------- | ---------------------------------------------- | --------------------- |
-| mainline | the newest kernel.org stable tag of its series | `v6.18.57`, `v7.2.11` |
-| vendor   | the tip of its `develop-<series>` branch       | 6.1.172               |
-
-Rockchip tags nothing, so the vendor kernel builds its branch's tip; `develop-*` follows the newest
-series, which is how `rk35xx-next` meets a new one.
-
-- **Within a series only.** Moving a family to another series is a human change in `kernel/`.
-- **Per kernel.** A kernel whose new pin does not apply or build keeps last week's, publishes with
-  it, and opens an issue naming the patch or error.
-- **Committed.** The workflow commits the moved pins to `kernel/*.conf`, so every release names the
-  exact commits it was built from.
-
-Out-of-tree driver `SHA=` pins carry no release tags upstream and move only by hand.
+`docs/sources.md` holds the policy: kernels float, the vendor tip soaked a week; Radxa's driver
+follows its releases; the other drivers, U-Boot, firmware and host tools stay pinned.
 
 ### Jobs
 
@@ -98,7 +84,8 @@ updates. The kernel changes only when a pin moves.
 GitHub's own limits on the schedule, from its Actions docs: a `schedule` run can be delayed under
 load, worst at the top of the hour, and under enough load dropped; and a public repo's schedules are
 disabled after 60 days with no activity. So the cron sits off the hour, and a dropped week is one
-manual `workflow_dispatch`. 🟡 the repin commit is a push, which GitHub counts as activity.
+manual `workflow_dispatch`. Releases commit nothing, so a quiet two months disables the schedule;
+any push or dispatch revives it.
 
 Sources and trees are fresh every run, fetched from their pins. `ccache` alone carries over: each
 kernel job restores and saves its own through `actions/cache`, about 1 GB a kernel against the
