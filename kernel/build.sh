@@ -13,11 +13,12 @@ CACHE=${TVB_BUILD_CACHE:-1}
 CC=gcc
 if [ "$CACHE" = 1 ]; then
   CC="ccache gcc"
-  export CCACHE_DIR=/work/ccache CCACHE_MAXSIZE=${TVB_BUILD_CCACHE_SIZE:-5G}
+  export CCACHE_DIR=${CCACHE_DIR:-/work/ccache} CCACHE_MAXSIZE=${TVB_BUILD_CCACHE_SIZE:-5G}
   # the tree is extracted fresh each run: its files are new, their contents are not
   export CCACHE_SLOPPINESS=include_file_mtime,include_file_ctime
 fi
-LOGS=/out/logs
+# per kernel, so kernels built at once never write the same step log
+LOGS=/out/logs/$FAMILY
 mkdir -p "$LOGS" /out/debs
 
 step() {  # step <name> <command...>: output into a log; on failure, the log's tail
@@ -26,7 +27,7 @@ step() {  # step <name> <command...>: output into a log; on failure, the log's t
   if "$@" >"$LOGS/$name.log" 2>&1; then
     echo "✓ $name ($((SECONDS - start))s)"
   else
-    echo "✗ $name ($((SECONDS - start))s), log: build/out/logs/$name.log"
+    echo "✗ $name ($((SECONDS - start))s), log: build/out/logs/$FAMILY/$name.log"
     tail -50 "$LOGS/$name.log"
     exit 1
   fi

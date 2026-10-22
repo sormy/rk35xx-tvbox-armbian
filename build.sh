@@ -13,7 +13,9 @@
 #          ./build.sh serve                   build/out/ on port 8000
 #          ./build.sh publish                 upload a release to GitHub
 #   env:   TVB_BUILD_CPUS (all cores), TVB_BUILD_MEMORY (8g), TVB_BUILD_SUITE (Debian stable),
-#          TVB_BUILD_REVISION (0~local), TVB_BUILD_CACHE (1; 0: clean), TVB_BUILD_CCACHE_SIZE (5G)
+#          TVB_BUILD_REVISION (0~local), TVB_BUILD_CACHE (1; 0: clean), TVB_BUILD_CCACHE_SIZE (5G),
+#          TVB_BUILD_CCACHE_DIR (in the work volume; a host directory for CI's cache to keep,
+#          slow on macOS, where a bind mount is a file share)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -82,19 +84,23 @@ if [ "$RT" = container ] && ! container system status >/dev/null 2>&1; then
 fi
 
 run() {  # run a command inside the image, the repo read-only at /repo
-  local rel=""
+  local rel="" ccache=()
   "$RT" image inspect "$IMAGE" >/dev/null 2>&1 ||
     "$RT" build ${PLATFORM:+"$PLATFORM"} --build-arg SUITE="$SUITE" -t "$IMAGE" -f build-env/Containerfile build-env
   mkdir -p "$OUT"
   [ "$RT" = podman ] && rel=",Z"   # SELinux hosts relabel bind mounts; a no-op elsewhere
   "$RT" volume create "$WORK" >/dev/null 2>&1 || true
+  if [ -n "${TVB_BUILD_CCACHE_DIR:-}" ]; then
+    mkdir -p "$TVB_BUILD_CCACHE_DIR"
+    ccache=(-v "$TVB_BUILD_CCACHE_DIR:/ccache${rel:+:${rel#,}}" -e CCACHE_DIR=/ccache)
+  fi
   # Apple container does not forward a signal to the container: stop it by name
   local name=tvb-$$
   trap '"$RT" stop "$name" >/dev/null 2>&1; exit 130' INT TERM
   "$RT" run ${PLATFORM:+"$PLATFORM"} --rm --name "$name" --cpus "$CPUS" --memory "$MEMORY" -e TVB_BUILD_CPUS="$CPUS" -e TVB_BUILD_REVISION="${TVB_BUILD_REVISION:-0~local}" \
     -e TVB_BUILD_CACHE="${TVB_BUILD_CACHE:-1}" -e TVB_BUILD_CCACHE_SIZE="${TVB_BUILD_CCACHE_SIZE:-5G}" \
     -e TVB_BUILD_ENV="$IMAGE" -e TVB_BUILD_SUITE="$SUITE" \
-    -v "$WORK:/work" -v "$PWD:/repo:ro$rel" -v "$PWD/$OUT:/out${rel:+:${rel#,}}" \
+    -v "$WORK:/work" -v "$PWD:/repo:ro$rel" -v "$PWD/$OUT:/out${rel:+:${rel#,}}" ${ccache[@]+"${ccache[@]}"} \
     -w /repo "$IMAGE" "$@" </dev/null
 }
 
