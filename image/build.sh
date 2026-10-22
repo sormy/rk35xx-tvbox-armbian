@@ -57,6 +57,8 @@ mmdebstrap --variant=minbase --mode=root --architectures=arm64 \
 # a first boot: mmdebstrap's cleanup leaves the file empty, which systemd does not count as one,
 # so the first-boot units, sshd's host keys among them, would never run
 echo uninitialized >"$ROOT/etc/machine-id"
+# the build container's DNS; NetworkManager writes the box's own
+rm -f "$ROOT/etc/resolv.conf"
 grep -q "fdt /usr/lib/tvb/board.dtb" "$ROOT/boot/extlinux/extlinux.conf" ||
   { echo "✗ extlinux.conf names no board tree"; exit 1; }
 
