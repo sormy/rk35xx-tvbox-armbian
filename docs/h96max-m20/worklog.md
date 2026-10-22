@@ -1552,3 +1552,11 @@ drops a zero hour. Without `whiptail`, `apt-get install` printed debconf's fallb
 failed units. Sectors 73760-74271 hash the same on the eMMC as in `h96max-m20-stock.img.xz`, sha256
 `402778df…6081a`. A first answer of `Y` had been refused without a word, and `mount` printed
 systemd's daemon-reload hint twice; both fixed.
+
+`mount`'s daemon-reload hint during `tvb-install` was the clock. The image had no
+`/var/lib/systemd/timesync/clock`, and the M20 has no RTC, so its first boot started at systemd's
+built-in epoch, `2026-04-13 19:38:05`, and loaded its units then; network time moved the clock to
+October, past the image's `/etc/fstab`, and `mount` compares the two. Reproduced on the eMMC with
+timesyncd stopped and its clock file removed: `System time advanced to built-in epoch`, units loaded
+`2026-04-13`. With `/usr/lib/clock-epoch` touched: `advanced to timestamp on /usr/lib/clock-epoch`,
+units loaded after `fstab`. The image now touches it last.

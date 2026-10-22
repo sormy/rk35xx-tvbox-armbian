@@ -61,6 +61,9 @@ echo uninitialized >"$ROOT/etc/machine-id"
 rm -f "$ROOT/etc/resolv.conf"
 grep -q "fdt /usr/lib/tvb/board.dtb" "$ROOT/boot/extlinux/extlinux.conf" ||
   { echo "✗ extlinux.conf names no board tree"; exit 1; }
+# a box without an RTC starts its first boot at this file's time, not systemd's months-old build
+# date, so no file in the image is from its future
+touch "$ROOT/usr/lib/clock-epoch"
 
 # a quarter free, so first boot has room before it grows to the medium
 ROOT_MIB=$(( $(du -sm "$ROOT" | cut -f1) * 5 / 4 + 256 ))
