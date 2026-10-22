@@ -43,9 +43,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       (`docs/todo/rk35xx-hdmi-modes.md`). Record each board's GPU clock and devfreq governor, then
       rerun glmark2 on the same panel.
 
-- [ ] **TVBian: write `tvb-firstlogin`.** Designed in `docs/todo/tvb-linux-rootfs.md`, "First
-      login"; not built, so a fresh image stops at root, `1234`, expired. Its Wi-Fi step is the
-      M20's only network on a fresh image.
 - [ ] **The R69's stock AIC8800 firmware, on a driver that runs it.** The factory U02 set, May 2025,
       is newer than the 2023 one we ship and did not run on Armbian's `rkr5.1` driver. Next: Radxa's
       `radxa-pkg/aic8800`, which 6.12 needs anyway; our driver reads the D80's revision byte

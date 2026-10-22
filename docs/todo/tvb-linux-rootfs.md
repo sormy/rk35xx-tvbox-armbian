@@ -45,7 +45,7 @@ Bluetooth; nothing per image.
 | access      | `openssh-server`, `sudo`                                               |
 | apt         | `apt`, `ca-certificates`, `tvb-archive-keyring`                        |
 | first run   | `systemd-repart`, `systemd-zram-generator`                             |
-| first login | `adduser`, `fzf`, `locales`                                            |
+| first login | `adduser`, `locales`                                                   |
 
 `wpasupplicant` and `wireless-regdb` are only `network-manager`'s Recommends, so the list names
 them: without `regulatory.db` the kernel stays on the world domain, short of 5 GHz channels.
@@ -75,21 +75,10 @@ No seed file, no extra partition: the image is the same for every owner.
 
 ### First login
 
-The expired password makes PAM ask for a new one before any shell, on SSH and on `tty1` alike. Then
-root's first interactive login runs `tvb-firstlogin`, from `/etc/profile.d/`, once:
-
-| Step     | Tool                                                                      |
-| -------- | ------------------------------------------------------------------------- |
-| a user   | `adduser`, added to `sudo`                                                |
-| timezone | `timedatectl list-timezones`, filtered by `fzf`                           |
-| locale   | `SUPPORTED`'s UTF-8 lines through `fzf`, `locale-gen`                     |
-| Wi-Fi    | `nmcli device wifi list` through `fzf`, `nmcli --ask device wifi connect` |
-
-The default stays `C.UTF-8`, and the picker offers UTF-8 locales only.
-
-Every list filters as you type, the fix for Armbian's wizard, whose locale list neither fits a
-screen nor searches. Esc skips a step; finishing writes `/var/lib/tvb/firstlogin.done`, and an
-interrupted run starts again at the next login. Wi-Fi is offered only where a Wi-Fi device exists.
+The expired password makes PAM ask for a new one before any shell, on SSH and on `tty1` alike.
+Nothing else runs: a user, the timezone, the locale and Wi-Fi are the commands in
+`docs/first-login.md`. A wizard was written, run on the H313 and dropped, 2026-10-22: the commands
+are shorter than its code, and nothing runs that the owner did not start.
 
 `systemd-firstboot` adds nothing here. On a Debian rootfs it never asks for a root password: with
 `/etc/passwd` and `/etc/shadow` present and root at `*`, `--prompt-root-password` exits 0 silently.
@@ -190,4 +179,4 @@ own default, so it comes along regardless.
 
 ## Decide
 
-- A keymap step for a USB keyboard on `tty1`: `console-setup` and one more `fzf` list, or US only?
+- A keymap for a USB keyboard on `tty1`: `console-setup` in the image and a README line, or US only?

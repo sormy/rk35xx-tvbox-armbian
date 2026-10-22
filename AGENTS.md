@@ -55,6 +55,7 @@ another, so nothing rots when one is rewritten.
 | ------------------------------------- | --------------------------------------------------------------------- |
 | `docs/board-bringup.md`               | serial, evidence, device tree, board data, offline verify             |
 | `docs/board-validation.md`            | the criteria of done, and the caveats behind them                     |
+| `docs/first-login.md`                 | a new box's user, timezone, locale and Wi-Fi, by hand                 |
 | `docs/mpp.md`                         | reaching the video engines; the codec test commands                   |
 | `docs/armbian-install.md`             | the factory reserved window: what survives a migration, what does not |
 | `docs/emmc-layout.md`                 | the measured eMMC map: every replicated structure and its sectors     |

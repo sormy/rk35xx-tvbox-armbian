@@ -113,6 +113,10 @@ again.
 
 > **No card slot on your box?** Nothing here boots from SD, so skip to [no SD slot](#no-sd-slot).
 
+## First boot
+
+A user, the timezone, the locale and Wi-Fi: [docs/first-login.md](docs/first-login.md).
+
 ## Install to eMMC
 
 **Wipes Android and everything else on that chip.** Boot from SD, dump the chip somewhere durable,
