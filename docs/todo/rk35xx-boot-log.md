@@ -32,7 +32,6 @@ describe a fault on **this** board, or an optional thing being absent?
 
 | Lines | Source                                   | Verdict                                                          |
 | ----: | ---------------------------------------- | ---------------------------------------------------------------- |
-|    17 | `rockchip_drm_dclk_round_rate`           | real defect, misleading text — see `todo/rk35xx-hdmi-modes.md`   |
 |     7 | `rk_gmac-dwmac`                          | optional properties logged as errors — actionable, small         |
 |   ~30 | `aicbsp` / `rwnx_*` / `AICWFDBG`         | vendor Wi-Fi driver logging progress at error level              |
 |     5 | `rockchip-drm` logo/crtc                 | expected: no boot logo configured                                |
@@ -69,14 +68,7 @@ where the supply is optional — `devm_regulator_get_optional()` plus a NULL gua
 **Do not "fix" this by adding the properties to the DTS** — that would describe hardware the board
 does not have.
 
-### 2. DRM dclk warnings
-
-17 lines, one per mode the HDMI PHY cannot clock. The message itself is wrong ("clk_hw ... may be
-NULL" — nothing is NULL; `clk_round_rate()` returned negative). Fixing the underlying mode filtering
-removes the lines as a side effect. Analysis and the proposed fix are in
-`todo/rk35xx-hdmi-modes.md`.
-
-### 3. aic8800 vendor driver
+### 2. aic8800 vendor driver
 
 Largest and least tractable — firmware paths, feature flags and interface names from a vendored
 driver with no mainline home. Progress reporting that means nothing to anyone but its author; delete
@@ -85,8 +77,7 @@ rather than relevel, since the driver logs the same things again at info and deb
 ## Order
 
 1. dwmac-rk log levels — small, self-contained, one patch in `kernel/rk35xx.conf`
-2. DRM mode filtering — fixes a real defect and 17 lines with it
-3. aic8800 — cosmetic only, do last
+2. aic8800 — cosmetic only, do last
 
 Keep these out of functional patches. Mixing log-level churn into a fix invites another review round
 on something already verified.

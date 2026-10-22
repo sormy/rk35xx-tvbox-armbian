@@ -37,11 +37,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       decodes HEVC and VP9 to a half-size CAPTURE when asked; not yet watched at 60 Hz. Then:
       whether the payload sets `capture_max_height`, and whether H.264's core can scale.
 
-- [ ] **RK3518 boards: revisit display and GPU against the H96 Max M20.** Same Mali-450 and the same
-      BOE 2256x1504 panel: the M20 runs it native at 60 Hz with glmark2 **64**, where the RK3528
-      boards score 41 at 1080p and 2048x1152 and cannot clock the native mode
-      (`docs/todo/rk35xx-hdmi-modes.md`). Record each board's GPU clock and devfreq governor, then
-      rerun glmark2 on the same panel.
+- [ ] **RK3518 boards: revisit the GPU against the H96 Max M20.** Same Mali-450 and the same BOE
+      2256x1504 panel: the M20 scores glmark2 **64** at it native; the RK3528 boards scored 41 at
+      1080p and 2048x1152, before today's vendor kernel clocked the native mode. Record each board's
+      GPU clock and devfreq governor, then rerun glmark2 on the same panel.
 
 - [ ] **Retire the overlay, once the weekly build publishes.** No box runs it since 2026-10-20.
       Going: `payload.list`, `rk35xx-update`, `rk35xx-deploy`, `build-image.sh`, the
@@ -106,7 +105,7 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | --------------------------------------- | --------------------------------------------- |
 | `docs/todo/media-stick.md`              | the universal media stick                     |
 | `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                              |
-| `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 unclockable modes, slow EDID probes    |
+| `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 HDMI: the 4K line-buffer graft         |
 | `docs/todo/rk35xx-kernel-patches.md`    | Armbian's vendor patches Rockchip never took  |
 | `docs/todo/rk35xx-mac-pinning.md`       | MAC pinning below userspace                   |
 | `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it                 |

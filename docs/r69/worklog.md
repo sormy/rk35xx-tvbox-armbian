@@ -1822,3 +1822,14 @@ another id and 858 `scan channel` lines in under two hours of uptime. Radxa's ow
 `fix-Lower-the-debugging-log-level`, left out as not applying, applies to the SDIO driver once cut
 to it; it is `10` now. After a reboot, `dmesg` holds one `AICWFDBG` line, `99`'s MAC report, at
 `LOGERROR`. Wi-Fi on `8a:00:33:65:64:b6`, BT `8A:00:33:65:64:B7`, cncjs running, no failed units.
+
+## 2026-10-22 — HDMI on today's vendor kernel
+
+With the BOE 2256x1504 panel on 6.1.172 at `develop-6.1`'s tip:
+`set dclk_vop0 to 235700000, get 235700000`, `clk_hdmiphy_pixel_io` 235700000 too, mode
+`2256x1504p60.00`. On Armbian's vendor kernel (2026-08-14) the same commit got 148500000:
+`inno_hdmi_phy_clk_round_rate()` matched its table exactly or refused, and now falls back to
+`inno_hdmi_phy_pll_cal()`. The single-byte EDID probe stalls are gone as well: no `ddc read failed`
+at boot, and none, nor any `ddc read time out`, on a forced re-detect with `dw-hdmi.c` debug on,
+against five per probe then. The console font is now Terminus 16x32, `CONFIG_FONT_TER16x32` in
+`kernel/rk35xx.fragment`: 141x47 on this panel.

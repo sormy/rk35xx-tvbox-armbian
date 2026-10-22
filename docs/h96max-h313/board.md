@@ -189,16 +189,9 @@ trigger.
 
 ## HDMI on a PC monitor
 
-TVs are fine. **PC monitors whose native mode needs a non-standard pixel clock** (e.g. 2256×1504)
-show a garbled image with a dotted band and an odd refresh rate: the vendor clock driver synthesizes
-only standard HDMI rates. Pin a standard mode:
-
-```sh
-echo 'U_BOOT_PARAMETERS="$U_BOOT_PARAMETERS video=HDMI-A-1:1920x1080@60"' | sudo tee /etc/u-boot-menu/conf.d/zz-video.conf   # box
-sudo u-boot-update   # box
-```
-
-This is deliberately **not** baked into the image: it would cap 4K TVs at 1080p.
+🟡 A monitor whose native mode needs a non-standard pixel clock, such as 2256x1504 at 235.7 MHz,
+comes up native: the vendor PHY computes its PLL for any rate up to 600 MHz. ✅ on the R69,
+2026-10-22.
 
 ## Warm reboot is unreliable: dwmmc does not always re-initialise
 
