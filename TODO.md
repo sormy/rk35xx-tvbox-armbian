@@ -57,13 +57,15 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       hooks), every `board.conf`'s `BOARD_DKMS_FETCH` and hooks, and the docs and sections
       describing them, `docs/apt-upgrade.md` among them. `docs/migrate.md` stays: the repo is
       public, and a box elsewhere may still run the overlay.
+- [ ] **Drop `upstream/`, after the overlay.** No board goes upstream: `upstream/<board>/`, its
+      `build.sh`, `docs/r69/upstream.md`, the `header.dts` rule in `AGENTS.md`, and what
+      `build-board-dts.sh`, `build-uboot-dts.sh` and the bring-up, validation and U-Boot docs say of
+      it. Then a sweep for anything else nothing reads.
 - [ ] **Check the `ttyFIQ0` login on a serial header.** Every Rockchip board's console is `ttyFIQ0`,
       seen in `/proc/consoles` with its getty running; never on a cable.
-- [ ] **Name repo folders by what they hold.** `firmware/` holds boards, not only blobs, and clashes
-      with `/lib/firmware`: `firmware/<board>/` to `boards/<board>/`, `firmware/common/<chip>/` to
-      `chips/<chip>/`. Patches move beside their owner: kernel topics to `kernel/patches/<topic>/`,
-      host tools' beside the tool. Repo paths only; no box sees them, so it waits for a quiet
-      moment.
+- [ ] **The repo restructure, after the overlay and `upstream/` go.** Folders named for what they
+      hold, patches beside their owner, tools under `tools/`, docs current or in `research/`:
+      `docs/todo/repo-layout.md`.
 
 - [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`
       mixes the two in one string.
@@ -127,3 +129,4 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login       |
 | `docs/todo/tvb-linux-build.md`          | TVBian's weekly build, hosts, caches          |
 | `docs/todo/website.md`                  | tvbian.com: one page on GitHub Pages          |
+| `docs/todo/repo-layout.md`              | folders, patches, tools and docs, regrouped   |
