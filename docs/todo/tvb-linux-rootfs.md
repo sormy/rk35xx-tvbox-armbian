@@ -164,10 +164,11 @@ Debian package does it where one exists; ours only where none does.
 Wi-Fi power-save stays off: it saves battery, and every box here is mains-powered, so it would only
 add latency. The login banner shows, as `armbian-motd` does, the release by its suite, the kernel
 hold and the upgradable count, LAN and WAN addresses, load, memory, temperature and disk. The public
-address is looked up in the background with `wget`, at most hourly. The kernel's boot log reaches
-the serial and HDMI consoles until `systemd-sysctl` applies `kernel.printk = 1 4 1 7`; after that
-only emergencies, oopses and panics do, and `dmesg` and the journal keep the rest. Debian's own
-`4 4 1 7` still lets every error through.
+address is looked up in the background with `wget`, at most hourly. The prompt before `login:` reads
+`TVBian (Debian GNU/Linux 13)`, from `os-release` through agetty's `\S{}`; `os-release` stays
+Debian's. The kernel's boot log reaches the serial and HDMI consoles until `systemd-sysctl` applies
+`kernel.printk = 1 4 1 7`; after that only emergencies, oopses and panics do, and `dmesg` and the
+journal keep the rest. Debian's own `4 4 1 7` still lets every error through.
 
 Not taken: `armbian-hardware-optimize` (no case for RK3528 or GXL), `armbian-led-state` (ours),
 `armbian-firstlogin` and autologin (an expired password does the forcing), the `uInitrd` hook
