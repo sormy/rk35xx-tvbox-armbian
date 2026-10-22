@@ -104,25 +104,26 @@ locale, keymap and timezone (`C.UTF-8`, `us`, `UTC`), so it has nothing to ask a
 
 ## Firmware
 
-Taken from the first place that carries the blob, in this order, so as much as possible updates
-through Debian:
+The vendor's, from the board's stock image, unless a newer build or one that runs on our driver
+replaces it: the rule is in `docs/board-bringup.md`, each file's origin and version in its package's
+`README.md`.
 
-1. a Debian `firmware-*` package — `apt` keeps it current;
-2. `armbian/firmware`, pinned to a commit, only for a blob Debian lacks;
-3. this repo, for a blob nobody publishes, or one we patched.
+| Blob              | Source                     | In Debian, 2026-10-20 | Ships in                |
+| ----------------- | -------------------------- | --------------------- | ----------------------- |
+| Seekwave SWT6621S | H313, 3518D stock          | no                    | `tvb-firmware-swt6621s` |
+| MT7668            | M20 stock                  | Bluetooth's, older    | `tvb-firmware-mt7668`   |
+| AIC8800D80        | armbian/firmware           | no                    | `tvb-firmware-aic8800`  |
+| meson vdec, venc  | M20 stock; WAVE420L, newer | 1 of 11 identical     | `tvb-firmware-amlogic`  |
 
-| Blob              | In Debian trixie, 2026-10-20   | Boards | Ships in                |
-| ----------------- | ------------------------------ | ------ | ----------------------- |
-| Seekwave SWT6621S | no                             | 2      | `tvb-firmware-swt6621s` |
-| MT7668 code       | no, not in `firmware-mediatek` | M20    | `tvb-firmware-mt7668`   |
-| AIC8800D80        | no                             | R69    | `tvb-firmware-aic8800`  |
-| meson vdec, venc  | 2 of 11 identical, 3 differ    | M20    | `tvb-firmware-amlogic`  |
-
-Checked by comparing our files with trixie's `non-free-firmware` packages. The two identical meson
-files come from `firmware-misc-nonfree`. The three that differ are GXLX2's builds of names Debian
-builds for G12A and GXL: `tvb-firmware-amlogic` ships them in `updates/meson/gxlx2/`, which no
-request names, and the M20 links them into `/usr/lib/tvb/firmware`, so they win only there. Where
-the blobs come from is in each chip package's `package.list`.
+The AIC8800's stock build did not run on our driver, so the 2023 set stays; the WAVE420L image is
+Chips&Media's, from StarFive's SDK, newer than the one inside the factory's library. No Debian
+firmware package is a dependency: `firmware-mediatek` is 46 MB for one file and
+`firmware-misc-nonfree` 13 MB for two, both older than or identical to the stock builds. Of the four
+meson files that differ from Debian's, H.264 is the factory's newer GXL build, repacked, and shadows
+Debian's on any Amlogic box: bit-exact on GXLX2, 🟡 on other GXL chips, the vendor's own GXL file.
+The other three are GXLX2's builds of names Debian builds for G12A and GXL: `tvb-firmware-amlogic`
+ships them in `updates/meson/gxlx2/`, which no request names, and the M20 links them into
+`/usr/lib/tvb/firmware`, so they win only there.
 
 ## eMMC wear
 

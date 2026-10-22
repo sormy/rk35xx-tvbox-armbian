@@ -1769,3 +1769,27 @@ opens `/lib/firmware/aic8800/SDIO/aic8800D80/` itself (`rwnx_load_firmware :firm
 through the kernel's search, so neither `updates/` nor `firmware_class.path` reaches it. One
 `dpkg -i --force-overwrite` warned once per file; `dpkg -S` then names the chip package. The tree in
 use before, `r69-xr821`, kept as `/root/board.dtb.known-good`.
+
+### 2026-10-21 — the factory AIC8800 firmware does not run on our driver
+
+The factory vendor partition, `ext4` inside `super` at byte 2591031296 of the eMMC backup, carries
+the U02 set as `*_8800d80_u02.bin`: patch May 14 2025, git `4f0d373`, against ours of Nov 06 2023,
+git `1f5d13b`, plus an `ext0` patch. Renamed into the driver's paths and the driver reloaded under a
+guard: Wi-Fi did not come back in 120 s; the guard restored ours and reloaded, and Wi-Fi stayed
+down, the chip not recovering from a reload. The guard had no reboot fallback, and `wlan0` is this
+box's only link, so it sat unreachable until a reboot at 20:10 brought it up on ours: `wlan0` and
+`hci0` up, nothing failed, the tree `r69,rk3518-tvbox`. The journal of the failed window is lost: it
+lives in RAM and the reboot was not clean. A firmware test over the only link needs a reboot
+fallback, and a cable when one fits.
+
+### 2026-10-21 — the factory H build, by reboot: no boot back
+
+Our driver reads the D80's revision byte unmasked: `cnc` reports 199, `0xC7`, which the DC path's
+own decoding reads as U03 (`0x07`) and the H variant (`0xC0`). It matches no D80 revision, so the
+driver falls back to its plain names. The first test had installed the plain U02 main firmware; the
+factory also has `fmacfw_8800d80_h_u02.bin`. So the set went in again with the H build as
+`fmacfw.bin`, by reboot this time, under a boot-time guard: revert and reboot unless Wi-Fi is up in
+180 s, saving the kernel log either way. The box did not come back on Wi-Fi, nor on Ethernet with a
+cable in, its MAC answering neither ARP nor IPv6 neighbour discovery, over two power cycles. The
+guard's check calls `nmcli` with no timeout, so a wedged NetworkManager would stall it short of the
+revert. Recovery is offline: our files are in `/var/lib/tvb-aic-test/ours/`.

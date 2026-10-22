@@ -139,14 +139,19 @@ the board to the README's Boxes table and support matrix.
 - **On TVBian, `package.list` is `tvb-<board>`'s file list**, in `payload.list`'s format, at
   Debian's paths (`/usr/lib/...`, never `/usr/local`); a `link <target> <dest>` line makes a
   symlink.
-- **Firmware ships from the first place that has it:**
-  1. a Debian `firmware-*` package: named in `BOARD_DEPENDS`, nothing shipped;
-  2. else `firmware/common/<chip>/`, with a `firmware.conf` and a `package.list`:
-     `tvb-firmware-<chip>`, which the board depends on, from its first board on.
+- **Firmware is the vendor's, from the board's stock image:** built for that chip, it is the build
+  known to work with it. It ships in `tvb-firmware-<chip>`, from `firmware/common/<chip>/` with a
+  `firmware.conf` and a `package.list`, which the board depends on from its first board on.
+  1. A newer build wins, wherever it comes from, Debian or another vendor's SDK; so does one that
+     works where the stock one fails on our driver. The package's `README.md` says which, with
+     versions.
+  2. Two boards' stock images with different builds of one file are their own question, settled per
+     file in that `README.md`.
 
-  A chip's settings variants, the Seekwave RF NV files by antenna wiring, ship in the chip's
-  package; the board's `package.list` picks one with a `link` line. A board ships a blob only when
-  two boards' factory images hold different bytes for it. The kernel takes the first match:
+- **Where firmware installs:** a chip's settings variants, the Seekwave RF NV files by antenna
+  wiring, ship in the chip's package, and the board's `package.list` picks one with a `link` line. A
+  board ships a blob only when two boards' factory images hold different bytes for it. The kernel
+  takes the first match:
 
   | Searched | Directory                             | Owner                             |
   | -------- | ------------------------------------- | --------------------------------- |

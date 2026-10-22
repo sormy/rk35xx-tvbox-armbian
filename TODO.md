@@ -46,6 +46,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 - [ ] **TVBian: write `tvb-firstlogin`.** Designed in `docs/todo/tvb-linux-rootfs.md`, "First
       login"; not built, so a fresh image stops at root, `1234`, expired. Its Wi-Fi step is the
       M20's only network on a fresh image.
+- [ ] **The R69's stock AIC8800 firmware, on a driver that runs it.** The factory U02 set, May 2025,
+      is newer than the 2023 one we ship and did not run on Armbian's `rkr5.1` driver. Next: Radxa's
+      `radxa-pkg/aic8800`, which 6.12 needs anyway; our driver reads the D80's revision byte
+      unmasked (`0xC7`: U03, H variant), so the factory's `fmacfw_8800d80_h_u02.bin` and its `ext0`
+      patch are the build to try. On a box with serial or a cable: R69 worklog, 2026-10-21.
 - [ ] **Retire the overlay, once the weekly build publishes.** No box runs it since 2026-10-20.
       Going: `payload.list`, `rk35xx-update`, `rk35xx-deploy`, `build-image.sh`, the
       `fetch-*-src.sh` scripts, `firmware/common/`'s overlay-only files (`mac-pin`,

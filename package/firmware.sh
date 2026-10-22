@@ -10,8 +10,11 @@ VERSION=${TVB_BUILD_REVISION:-0~local}
 ROOT=/work/package/firmware-$FIRMWARE_CHIP
 rm -rf "$ROOT" && mkdir -p "$ROOT/DEBIAN"
 while read -r mode src dest; do
-  case "$mode" in '' | \#*) continue ;; esac
-  install -D -m "$mode" "$FW/$src" "$ROOT$dest"
+  case "$mode" in
+    '' | \#*) ;;
+    link) mkdir -p "$(dirname "$ROOT$dest")" && ln -s "$src" "$ROOT$dest" ;;
+    *) install -D -m "$mode" "$FW/$src" "$ROOT$dest" ;;
+  esac
 done <"$DIR/package.list"
 cat >"$ROOT/DEBIAN/control" <<CONTROL
 Package: tvb-firmware-$FIRMWARE_CHIP

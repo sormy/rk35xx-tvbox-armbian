@@ -1501,3 +1501,25 @@ GXLX2 builds in `updates/meson/gxlx2/`, which no request names; this board links
 `g12a_vp9.bin`, and `/lib/firmware/meson/vdec/gxl_h264.bin`. Through stock ffmpeg 7.1.5, H.264,
 MPEG-4, HEVC and VP9 decode 60 of 60 frames of a 720p clip and H.264 encodes 60 to a raw stream;
 MJPEG untested, stock ffmpeg has no `mjpeg_v4l2m2m`.
+
+## 2026-10-21 — no Debian firmware package
+
+`firmware-mediatek`, 46 MB installed, was here for `mt7668pr2h.bin` alone, and
+`firmware-misc-nonfree`, 13 MB, for two meson files. Bluetooth now takes the stock
+`mt7668_patch_e2_hdr.bin` under that name, a link in `tvb-firmware-mt7668`: the vendor driver's own
+choice, a newer build than Debian's, and the file Bluetooth already ran on (2026-10-06). The two
+meson files, byte-identical to linux-firmware's, ship in `tvb-firmware-amlogic` with Amlogic's
+licence. With both Debian packages purged and a reboot: `hci0` up and powered, `wlan0` connected,
+H.264 and MPEG-4 decode 60 of 60 frames, loaded from `updates/meson/vdec/`, nothing failed.
+
+Could every Amlogic blob come from the factory `video_ucode.bin` instead? `data_size` sits at offset
+200 of each 512-byte `EDOC` header. MPEG-4 already does: linux-firmware's `gxl_mpeg4_5.bin` is the
+factory's `gxl_xvid.bin`, byte for byte. H.264 needed a repack. The factory's `gxl_h264.bin` is a
+newer build, `v0.2.287de0d` of 2021-01-27, 28672 bytes; mainline's `codec_h264` wants 16 KiB of main
+code and then exactly 20 KiB (`SIZE_EXT_FW`), and refuses less. As loaded, and padded to size, it
+decoded nothing. In 4 KiB pages, linux-firmware's carries copies of main pages 2 and 3 in its
+extended area, at 5 and 7, and the factory's dropped them: its 4 matches linux-firmware's 4 at 94%,
+its 5 their 8 at 96%, its 6 their 6 at only 29%. Rebuilt as pages 0-3, then 4 2 6 3 5, it decodes 60
+of 60 frames of a 720p clip and 120 of 120 of a 1080p High clip with B-frames, all bit-exact against
+ffmpeg's software decode, the same as linux-firmware's; loaded from `updates/$(uname -r)/`, the
+loader's debug confirming. It replaces linux-firmware's.

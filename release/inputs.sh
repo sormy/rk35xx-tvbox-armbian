@@ -30,7 +30,7 @@ files() {
       [ -z "${BOARD_IDBLOADER:-}" ] || echo "firmware/$BOARD_IDBLOADER" ;;
     firmware)
       echo "firmware/common/$2/firmware.conf" "firmware/common/$2/package.list" package/firmware.sh
-      sed -E 's/#.*//' "firmware/common/$2/package.list" | awk 'NF {print "firmware/" $2}' ;;
+      sed -E 's/#.*//' "firmware/common/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}' ;;
     keyring) echo keyring/tvb-archive-keyring.gpg package/keyring.sh ;;
   esac
 }

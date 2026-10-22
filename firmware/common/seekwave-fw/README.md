@@ -5,18 +5,21 @@ Shared by every board carrying this radio. On TVBian, `package.list` here builds
 `SWT6621S_NV_SDIO.<compatible>.bin`, the name the driver asks for first, to its antenna's. On an
 overlay box each board's `payload.list` installs them to `/lib/firmware/` and picks the variant.
 
-| File                                  | Origin                                                           |
-| ------------------------------------- | ---------------------------------------------------------------- |
-| `SWT6621S_DRAM_SDIO.bin`              | factory chip code — byte-identical on both boards' vendor images |
-| `SWT6621S_IRAM_SDIO.bin`              | factory chip code — byte-identical on both boards' vendor images |
-| `SWT6621S_NV_SDIO_STANDALONE_FDD.bin` | factory NV — `BT_ANTENNA_TYPE` stand-alone, `COEX_TYPE` FDD      |
-| `SWT6621S_NV_SDIO_SHARED_TDD.bin`     | factory NV — `BT_ANTENNA_TYPE` shared, `COEX_TYPE` TDD           |
-| `SWT6621S_SEEKWAVE_R00001.bin`        | RF table — identical on both boxes, so not per-unit calibration  |
-| `sv6160lite.nvbin`                    | driver repo `retro98boy/seekwave-swt6621s` — BT NV               |
+| File                                  | Origin                                              |
+| ------------------------------------- | --------------------------------------------------- |
+| `SWT6621S_DRAM_SDIO.bin`              | H313 and 3518D stock, identical: chip code          |
+| `SWT6621S_IRAM_SDIO.bin`              | H313 and 3518D stock, identical: chip code          |
+| `SWT6621S_NV_SDIO_STANDALONE_FDD.bin` | H313 stock: BT antenna stand-alone, coexistence FDD |
+| `SWT6621S_NV_SDIO_SHARED_TDD.bin`     | 3518D stock: BT antenna shared, coexistence TDD     |
+| `SWT6621S_SEEKWAVE_R00001.bin`        | H313 and 3518D stock, identical: RF table           |
+| `sv6160lite.nvbin`                    | H313 stock, in its eMMC: BT NV                      |
 
 The factory images assert on the HCI codec reads (`BSPASSERT:hci_tl.c-386`) and never finish
 controller init; `0005` answers those opcodes locally, enabled by
 `firmware/common/skwbt-options.conf`.
+
+The chip code is one build: `SWT6621S_IRAM_SDIO.bin` stamps it `20250618-15:38:14`. The NV and RF
+files carry no version.
 
 Chip code may be upgraded; NV and RF calibration may not.
 
