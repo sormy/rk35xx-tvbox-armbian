@@ -2,9 +2,27 @@
 
 Opened 2026-10-18. The plan this serves is `docs/todo/tvb-linux.md`: the weekly build, the build
 hosts, the caches. Built: `.github/workflows/release.yml` and `./build.sh release`, as
-`docs/build.md` gives them. Not yet: the repin commit, one job per kernel, a failed kernel keeping
-its last pin; `FOLLOW` and `BRANCH` resolve at build time, and the release notes name what they
-resolved to.
+`docs/build.md` gives them. Not yet: the first release (below), the repin commit, a failed kernel
+keeping its last pin; `FOLLOW` and `BRANCH` resolve at build time, and the release notes name what
+they resolved to.
+
+## First release
+
+The order agreed on 2026-10-22; each step lands before the next starts.
+
+- [ ] **Local dry run from empty caches.** `TVB_BUILD_CACHE=0 ./build.sh release` on the Mac, the
+      `tvb-work` volume and `build/out` wiped first: every step CI runs, unsigned.
+- [ ] **Logs per kernel.** `kernel/build.sh` writes `build/out/logs/<family>/`, so kernels built at
+      once never overwrite each other's step logs.
+- [ ] **A host ccache.** `TVB_BUILD_CCACHE_DIR` mounts a host directory as `/work/ccache`, the one
+      cache CI keeps.
+- [ ] **Steps CI can call one by one:** plan, one kernel at its planned version, the rest.
+      `./build.sh release` still runs them all in order.
+- [ ] **The workflow split:** `plan`, then a kernel job each, then `release`; pull requests run it
+      all and publish nothing.
+- [ ] **Push, then dispatch once:** the first signed release, the `apt` URL live from then on.
+- [ ] **The M20 on the live repo:** `apt update`, then `0~local` to `1` with no conflict.
+- [ ] **The other boxes on the live repo,** the R69 last.
 
 ## Weekly build
 
@@ -13,12 +31,13 @@ runs. It repins first, then builds, then publishes a release tagged by the run's
 
 ### Triggers
 
-| Signal                                     | Runs                         | Publishes         |
-| ------------------------------------------ | ---------------------------- | ----------------- |
-| `schedule`, Mondays, off the hour          | repin, build, publish        | yes               |
-| `workflow_dispatch`, or `gh workflow run`  | the same                     | yes               |
-| a push to `kernel/`, `patches/`, the build | build at the current pins    | no: early warning |
-| the same `schedule`                        | `testing`, an image a family | never             |
+| Signal                                     | Runs                         | Publishes          |
+| ------------------------------------------ | ---------------------------- | ------------------ |
+| `schedule`, Mondays, off the hour          | repin, build, publish        | yes                |
+| `workflow_dispatch`, or `gh workflow run`  | the same                     | yes                |
+| a push to `kernel/`, `patches/`, the build | build at the current pins    | no: early warning  |
+| a pull request                             | build at the PR's pins       | no: the PR's check |
+| the same `schedule`                        | `testing`, an image a family | never              |
 
 No external cron: the workflow's own `schedule` is the clock, and upstream sends no signal, so the
 repin is the poll. A dropped or urgent week is one `workflow_dispatch`.
@@ -45,16 +64,15 @@ Out-of-tree driver `SHA=` pins carry no release tags upstream and move only by h
 
 ### Jobs
 
-| Job    | Count       | Does                                                                |
-| ------ | ----------- | ------------------------------------------------------------------- |
-| kernel | families: 2 | that kernel's debs, unless its input hash matches the published one |
-| images | 1           | four bases, then eight stamps                                       |
+| Job     | Count        | Does                                                                 |
+| ------- | ------------ | -------------------------------------------------------------------- |
+| plan    | 1            | each group's version, `new` or `published`, as an artifact           |
+| kernel  | one a kernel | that kernel's debs, unless the plan says `published`; as artifacts   |
+| release | 1            | firmware, boards, keyring, the guard, every image, the repo, publish |
 
-The images job bootstraps the Debian rootfs once, builds the two bases from it, then stamps each
-image, compresses it, and deletes the raw image before the next, so one image's 2.2 GB is on disk at
-a time. It builds every image, then fails listing those that did not build. It publishes last: the
-debs to `apt`, the images to a new `YYYY-MM-DD` release, notes listing the pins that moved. A
-failure publishes nothing.
+`release` starts only once every kernel job passed, so a failure publishes nothing. It alone holds
+`contents: write`, signs the index once, and publishes: the new debs and the index to `apt`, the
+images to one new `YYYY-MM-DD` release. A pull request stops before signing and publishing.
 
 No build infrastructure of ours: GitHub's hosted runners, free for a public repo. Jobs run on
 `ubuntu-24.04-arm`, native arm64 with no cross-compile and no `qemu-aarch64`. A second job on
@@ -66,7 +84,7 @@ No build infrastructure of ours: GitHub's hosted runners, free for a public repo
 | CPU, RAM     | 4, 16 GB      | ❓ kernel wall time, measured in phase 1               |
 | job time     | 6 h           | one kernel per job; ❓ all four images in one          |
 | disk         | 14 GB SSD     | **the binding limit**: see below                       |
-| between jobs | job artifacts | kernel debs into the images job, kept one day          |
+| between jobs | job artifacts | kernel debs into the release job, kept one day         |
 
 Disk: Armbian's configs build DWARF5 debug info and BTF (`CONFIG_DEBUG_INFO_DWARF5=y`,
 `CONFIG_DEBUG_INFO_BTF=y`), over 1,873 modules on rk35xx `vendor` and 3,290 on meson64 `current`.
@@ -82,8 +100,11 @@ load, worst at the top of the hour, and under enough load dropped; and a public 
 disabled after 60 days with no activity. So the cron sits off the hour, and a dropped week is one
 manual `workflow_dispatch`. 🟡 the repin commit is a push, which GitHub counts as activity.
 
-Every CI run builds clean: no `actions/cache`, sources fetched from their pins, kernels built
-without `ccache`. A release then depends on nothing but the pins and the day's Debian.
+Sources and trees are fresh every run, fetched from their pins. `ccache` alone carries over: each
+kernel job restores and saves its own through `actions/cache`, about 1 GB a kernel against the
+repo's 10 GB. A hit is the object a fresh compile gives, keyed on the command and the preprocessed
+source. A pull request reads `main`'s caches and saves only its own. A cache unused for 7 days is
+evicted, so a quiet week's run starts cold. `TVB_BUILD_CACHE=0` on a dispatch is the clean room.
 
 ❓ download throttling: GitHub documents no limit for `releases/download`, but tightened
 unauthenticated limits on other endpoints in 2025. apt fetches anonymously.
