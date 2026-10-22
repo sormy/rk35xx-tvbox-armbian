@@ -84,6 +84,7 @@ another, so nothing rots when one is rewritten.
 | `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete  |
 | `patches/linux-rockchip/README.md`    | the vendor kernel's patches, their PRs, what Rockchip fixed since     |
 | `patches/linux-meson/README.md`       | mainline kernel patches for Amlogic boards, on their way upstream     |
+| `patches/aic8800/README.md`           | the AIC8800 SDIO driver: Radxa's patches, then ours                   |
 | `patches/seekwave-swt6621s/README.md` | the H96 Max Wi-Fi driver patches and their PRs                        |
 | `patches/mt76-mt7668/README.md`       | mainline mt76 for the MT7668S: what it does, its gaps, its firmware   |
 | `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, shipped as DKMS                   |

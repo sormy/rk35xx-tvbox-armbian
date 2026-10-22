@@ -1793,3 +1793,24 @@ factory also has `fmacfw_8800d80_h_u02.bin`. So the set went in again with the H
 cable in, its MAC answering neither ARP nor IPv6 neighbour discovery, over two power cycles. The
 guard's check calls `nmcli` with no timeout, so a wedged NetworkManager would stall it short of the
 revert. Recovery is offline: our files are in `/var/lib/tvb-aic-test/ours/`.
+
+### 2026-10-22 — Radxa's AIC8800 driver, from a TVBian SD image
+
+The first rk35xx TVBian image, written to an SD card, booted the R69 ahead of its eMMC and repaired
+it: our firmware back, the guard gone, checked against the package's md5sums. The image's first boot
+skipped `sshd-keygen` until `/etc/machine-id` read `uninitialized`: empty is no first boot to
+systemd, and mmdebstrap empties it after the hooks. On that card, with the cable in:
+
+- Reloading our driver never works here: after the unload the SDIO card is gone, probe error -123.
+  The first test never reached the firmware.
+- On a freshly booted chip, our driver uploading the factory set resets the whole board seconds
+  after `fw_patch.bin`, with no panic record; at boot that is an endless reset loop, which is why
+  the box never answered and the guard never ran.
+- radxa-pkg/aic8800 `fce8802`, AIC's release `2026_0123_5f7be68d`, built against 6.1.172 and 6.12.69
+  from its Debian patches cut to the SDIO driver: `chip rev: 7`, `chip_sub_id=2`, the H build, the
+  `ext0` patch to `0x20b43c`. Radxa's firmware, Aug 01 2025, and the factory's, May 14 2025, both
+  bring Wi-Fi and Bluetooth up; Radxa's ships, as the newer.
+- Its fallback MAC is random each boot; the stable-MAC patch, rebased, gives `8a:00:33:65:64:b6`
+  from the OTP id over two reboots, DHCP's `.241` with it.
+
+As debs from `./build.sh`, after a reboot: Wi-Fi at HE-MCS 11, `hci0` up, nothing failed.

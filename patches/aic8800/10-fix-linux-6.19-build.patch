@@ -1,0 +1,28 @@
+diff --git a/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_msg_tx.c b/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_msg_tx.c
+index b4414b6..87b4d0c 100644
+--- a/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_msg_tx.c
++++ b/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_msg_tx.c
+@@ -307,7 +307,11 @@ static int rwnx_send_msg(struct rwnx_hw *rwnx_hw, const void *msg_params,
+ 
+ 	//RWNX_DBG(RWNX_FN_ENTRY_STR);
+     AICWFDBG(LOGTRACE, "%s (%d)%s reqcfm:%d in_irq:%d in_softirq:%d in_atomic:%d\r\n",
++#if (LINUX_VERSION_CODE <= KERNEL_VERSION(6, 18, 0))
+     __func__, reqid, RWNX_ID2STR(reqid), reqcfm, (int)in_irq(), (int)in_softirq(), (int)in_atomic());
++#else
++    __func__, reqid, RWNX_ID2STR(reqid), reqcfm, (int)in_hardirq(), (int)in_softirq(), (int)in_atomic());
++#endif
+ 
+ 
+ #ifdef AICWF_USB_SUPPORT
+@@ -415,7 +419,11 @@ static int rwnx_send_msg1(struct rwnx_hw *rwnx_hw, const void *msg_params,
+ 
+ //	RWNX_DBG(RWNX_FN_ENTRY_STR);
+     printk("%s (%d)%s reqcfm:%d in_irq:%d in_softirq:%d in_atomic:%d\r\n",
++#if (LINUX_VERSION_CODE <= KERNEL_VERSION(6, 18, 0))
+     __func__, reqid, RWNX_ID2STR(reqid), reqcfm, (int)in_irq(), (int)in_softirq(), (int)in_atomic());
++#else
++    __func__, reqid, RWNX_ID2STR(reqid), reqcfm, (int)in_hardirq(), (int)in_softirq(), (int)in_atomic());
++#endif
+ 
+ 	rwnx_wakeup_lock(rwnx_hw->ws_tx);
+ 	msg = container_of((void *)msg_params, struct lmac_msg, param);

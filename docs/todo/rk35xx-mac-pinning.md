@@ -39,7 +39,7 @@ the interface exists.
 | Interface      | Source, then fallback             | Patch                              |
 | -------------- | --------------------------------- | ---------------------------------- |
 | Ethernet       | vendor storage `LAN_MAC`, `cpuid` | U-Boot `0003`: `local-mac-address` |
-| AIC8800 Wi-Fi  | `WIFI_MAC`, efuse, SoC's OTP id   | `wireless-aic8800-stable-mac`      |
+| AIC8800 Wi-Fi  | `WIFI_MAC`, efuse, SoC's OTP id   | `patches/aic8800/99-stable-mac`    |
 | Seekwave Wi-Fi | `WIFI_MAC`, then the chip's efuse | none needed: the driver reads both |
 | MT7668 Wi-Fi   | the chip's firmware               | none needed                        |
 | Seekwave BT    | the chip: its efuse address + 1   | none needed                        |

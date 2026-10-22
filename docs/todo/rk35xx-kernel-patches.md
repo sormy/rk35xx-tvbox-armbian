@@ -30,11 +30,10 @@ panthor, PCIe, panels) does not reach an RK3528.
 
 ## The R69's AIC8800
 
-`rkr5.1` had it in-tree, `drivers/net/wireless/aic8800_sdio/`, where
-`patches/linux-rockchip/wireless-aic8800-stable-mac.patch` lands. `rkr7.2` dropped it for Radxa's
-`aic8800-sdio-dkms` (`radxa-pkg/aic8800`), citing a doubled firmware path. TVBian builds the
-`rkr5.1` one, `modules/aic8800.conf`, with the stable-MAC patch; it does not build on 6.12, where
-Radxa's is the source.
+`rkr5.1` had it in-tree, `drivers/net/wireless/aic8800_sdio/`; `rkr7.2` dropped it for Radxa's
+`aic8800-sdio-dkms` (`radxa-pkg/aic8800`). TVBian builds Radxa's too, `modules/aic8800.conf`, with
+the stable-MAC patch rebased, on 6.1 and 6.12 alike: `rkr5.1`'s ran neither the stock nor Radxa's
+2025 firmware.
 
 ## Decide
 

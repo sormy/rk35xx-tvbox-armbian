@@ -2,8 +2,7 @@
 
 Board-independent fixes for Rockchip's vendor kernel. TVBian's `kernel/rk35xx.conf` applies them to
 `rockchip-linux/kernel` `develop-6.1`. At the branch tip Rockchip has fixed part of two, so those
-carry only the rest. `wireless-aic8800-stable-mac` applies to the out-of-tree AIC8800 build,
-`modules/aic8800.conf`, not to the kernel.
+carry only the rest.
 
 | Patch                                    | Fixes                                                                       |
 | ---------------------------------------- | --------------------------------------------------------------------------- |
@@ -11,7 +10,6 @@ carry only the rest. `wireless-aic8800-stable-mac` applies to the out-of-tree AI
 | `net-stmmac-skip-absent-mdio-reset-gpio` | a WARN + ~416 lines of trace at every boot; Rockchip fixed one call site    |
 | `bluetooth-hci-h4-serdev`                | serdev binding for `hci_h4`, so BT needs no `hciattach` unit                |
 | `bluetooth-hci-h4-aic8800-bdaddr`        | the AIC8800's BT on a made-up address: Wi-Fi's + 1 instead                  |
-| `wireless-aic8800-stable-mac`            | the AIC8800 inventing a fresh MAC each boot                                 |
 | `mmc-dw-mmc-rockchip-per-host-inherit`   | `static bool inherit` in `dw_mci_v2_execute_tuning()` — **not needed here** |
 
 **`net-stmmac-skip-absent-mdio-reset-gpio` is worth more than the rest combined for log hygiene.**

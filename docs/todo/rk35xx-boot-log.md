@@ -15,11 +15,11 @@ Two entries dominate the err/warn count:
   the submission tree — the shipped tree points those at `&gmac0_mtl_rx_setup` correctly. ✅ gone on
   TVBian's kernel, which carries `net-stmmac-skip-absent-mdio-reset-gpio`; the counts here are
   6.1.115's.
-- **`done=1 retry_required=0 sw_retry_required=0 acknowledged=1`, R69 only, ~12/h.** A bare
-  `printk()` — no level, no prefix — at `aic8800_sdio/aic8800_fdrv/rwnx_tx.c:1835`, so it defaults
-  to `KERN_WARNING`. It fires in the TX-confirm path for every management frame, which is what makes
-  it periodic. `pr_debug()` with a prefix is the fix, and TVBian builds the driver itself,
-  `modules/aic8800.conf`, so it is one patch there.
+- **`done=1 retry_required=0 sw_retry_required=0 acknowledged=1`, R69 only.** A bare `printk()` — no
+  level, no prefix — at `aic8800_fdrv/rwnx_tx.c:2374` in Radxa's driver, as at line 1835 in
+  `rkr5.1`'s, so it defaults to `KERN_WARNING`: 6 lines in the first 390 s of a boot. It fires in
+  the TX-confirm path for every management frame. `pr_debug()` with a prefix is the fix, one patch
+  in `patches/aic8800/`.
 
 **Relevelling is not fixing.** A line that tells the reader nothing is noise at any level, and
 `dev_dbg` just hides it while leaving the log as long for anyone who raises the level. Delete it, or

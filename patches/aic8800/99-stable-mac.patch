@@ -26,11 +26,9 @@ regenerated MAC is otherwise invisible.
 
 Signed-off-by: Artem Butusov <art.sormy@gmail.com>
 ---
-diff --git a/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c b/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c
-index 29f86da..7023275 100644
---- a/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c
-+++ b/drivers/net/wireless/aic8800_sdio/aic8800_fdrv/rwnx_main.c
-@@ -6689,8 +6689,11 @@ extern int get_wifi_custom_mac_address(char *addr_str);
+--- a/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_main.c
++++ b/src/SDIO/driver_fw/driver/aic8800/aic8800_fdrv/rwnx_main.c
+@@ -5840,8 +5840,11 @@
  #endif//CONFIG_USE_CUSTOMER_MAC
  #endif//CONFIG_PLATFORM_ALLWINNER
  
@@ -43,7 +41,7 @@ index 29f86da..7023275 100644
  #endif
  #ifdef CONFIG_PLATFORM_ROCKCHIP2
  #include <linux/rfkill-wlan.h>
-@@ -6745,6 +6748,7 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
+@@ -6022,6 +6025,7 @@
  	//struct mm_set_rf_calib_cfm cfm;
  	struct mm_get_fw_version_cfm fw_version;
  	u8_l mac_addr_efuse[ETH_ALEN];
@@ -51,7 +49,7 @@ index 29f86da..7023275 100644
  	struct aicbsp_feature_t feature;
  	struct mm_set_stack_start_cfm set_start_cfm;
  #ifdef CONFIG_TEMP_COMP
-@@ -6758,7 +6762,22 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
+@@ -6035,7 +6039,22 @@
  	memset(fw_path, 0, 200);
  	aicbsp_get_feature(&feature, fw_path);
  
@@ -72,10 +70,10 @@ index 29f86da..7023275 100644
 +	{
 +		get_random_bytes(&dflt_mac[4], 2);
 +	}
- 
- 	/* create a new wiphy for use with cfg80211 */
-     AICWFDBG(LOGINFO, "%s sizeof(struct rwnx_hw):%d \r\n", __func__, (int)sizeof(struct rwnx_hw));
-@@ -6995,9 +7014,24 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
+ #ifdef CONFIG_POWER_LIMIT
+ 	memcpy(country_code, default_ccode, 4);
+ #endif
+@@ -6286,9 +6305,24 @@
          memcpy(init_conf.mac_addr, dflt_mac, ETH_ALEN);
      }
  #else
@@ -103,7 +101,7 @@ index 29f86da..7023275 100644
  #endif
  
  	if (mac_addr_efuse[0] | mac_addr_efuse[1] | mac_addr_efuse[2] | mac_addr_efuse[3]) {
-@@ -7010,6 +7044,7 @@ int rwnx_cfg80211_init(struct rwnx_plat *rwnx_plat, void **platform_data)
+@@ -6301,6 +6335,7 @@
  	AICWFDBG(LOGINFO, "get macaddr: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
  			mac_addr_efuse[0], mac_addr_efuse[1], mac_addr_efuse[2],
  			mac_addr_efuse[3], mac_addr_efuse[4], mac_addr_efuse[5]);
