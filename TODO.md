@@ -106,6 +106,9 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       keeps the card powered only in runtime suspend. The other route is the combo chip's host-wake
       GPIO 100, which needs the chip-side pin for the low-power command. Until one works, the M20's
       keys ignore suspend and poweroff.
+- [ ] **Low priority: `tvb-firstlogin`, the first-login wizard.** A user, the timezone, the locale
+      and Wi-Fi, each list filtered as you type; designed in `docs/todo/tvb-linux-rootfs.md`, "First
+      login". Until then, `docs/first-login.md` gives the commands.
 
 ## Bigger todos
 
@@ -123,3 +126,4 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | `docs/todo/tvb-linux.md`                | TVBian: our kernel and images on plain Debian |
 | `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login       |
 | `docs/todo/tvb-linux-build.md`          | TVBian's weekly build, hosts, caches          |
+| `docs/todo/website.md`                  | tvbian.com: one page on GitHub Pages          |

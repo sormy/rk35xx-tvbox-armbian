@@ -77,8 +77,21 @@ No seed file, no extra partition: the image is the same for every owner.
 
 The expired password makes PAM ask for a new one before any shell, on SSH and on `tty1` alike.
 Nothing else runs: a user, the timezone, the locale and Wi-Fi are the commands in
-`docs/first-login.md`. A wizard was written, run on the H313 and dropped, 2026-10-22: the commands
-are shorter than its code, and nothing runs that the owner did not start.
+`docs/first-login.md`. A wizard was written, run on the H313 and set aside, 2026-10-22: the commands
+are shorter than its code. It is wanted back, at low priority:
+
+| Step     | Tool                                                                      |
+| -------- | ------------------------------------------------------------------------- |
+| a user   | `adduser`, added to `sudo`                                                |
+| timezone | `timedatectl list-timezones`, filtered by `fzf`                           |
+| locale   | `SUPPORTED`'s UTF-8 lines through `fzf`, `locale-gen`                     |
+| Wi-Fi    | `nmcli device wifi list` through `fzf`, `nmcli --ask device wifi connect` |
+
+Root's first interactive login runs it once, from `/etc/profile.d/`. Every list filters as you type,
+the fix for Armbian's wizard, whose locale list neither fits a screen nor searches. Esc skips a
+step; finishing writes `/var/lib/tvb/firstlogin.done`, and an interrupted run starts again at the
+next login. Wi-Fi is offered only where a Wi-Fi device exists; on the M20 it is a fresh image's only
+network.
 
 `systemd-firstboot` adds nothing here. On a Debian rootfs it never asks for a root password: with
 `/etc/passwd` and `/etc/shadow` present and root at `*`, `--prompt-root-password` exits 0 silently.
