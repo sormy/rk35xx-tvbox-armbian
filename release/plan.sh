@@ -33,6 +33,8 @@ plan() {
     if [ "$1" = kernel ]; then
       for dep in $(field "$3" Depends "$4" | head -1 | tr ',' '\n' | sed 's/^ *//; s/ .*//'); do
         fetch "$dep" "$had"
+        # the headers, which nothing depends on, are as much the kernel's
+        case $dep in linux-image-*) fetch "linux-headers-${dep#linux-image-}" "$had" ;; esac
       done
     fi
     return
