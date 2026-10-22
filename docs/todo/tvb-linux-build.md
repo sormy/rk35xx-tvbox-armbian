@@ -131,7 +131,7 @@ Everything is published from this repo; no server of ours.
 
 | What        | Where                                                             |
 | ----------- | ----------------------------------------------------------------- |
-| apt repo    | release `apt`, rolling, a pre-release: `.deb`s plus index         |
+| apt repo    | release `apt`, rolling, never latest: `.deb`s plus index          |
 | images      | release `YYYY-MM-DD`: eight `.img.xz`, all kept                   |
 | checksums   | `SHA256SUMS`, signed, in the same release                         |
 | signing key | public: `keyring/tvb-archive-keyring.gpg`; CI signs from a secret |

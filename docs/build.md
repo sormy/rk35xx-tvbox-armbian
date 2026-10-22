@@ -57,8 +57,8 @@ src='deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] http://<mac>.lo
 echo "$src" | sudo tee /etc/apt/sources.list.d/tvb-test.list && sudo apt update   # box
 ```
 
-`publish` uploads the new debs, then the index, to the rolling `apt` pre-release, and the images
-with a signed `SHA256SUMS` to a release named by the day, `.2` for a second.
+`publish` uploads the new debs, then the index, to the rolling `apt` release, never marked latest,
+and the images with a signed `SHA256SUMS` to a release named by the day, `.2` for a second.
 
 CI splits the same steps into jobs: `plan`; one runner per new kernel, its debs as an artifact and
 its ccache kept by `actions/cache` (`TVB_BUILD_CCACHE_DIR`); then `assemble` on the debs, and
