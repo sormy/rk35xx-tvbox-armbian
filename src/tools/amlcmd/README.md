@@ -17,7 +17,7 @@ behind it, in one C file against libusb.
 On the host:
 
 ```sh
-./build-amltools.sh          # needs libusb and OpenSSL
+./build.sh tool amlcmd       # needs libusb
 ```
 
 ❓ Only macOS has run it so far.

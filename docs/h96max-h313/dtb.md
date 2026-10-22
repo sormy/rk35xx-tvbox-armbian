@@ -56,8 +56,8 @@ rather than cosmetic. **Measured on the R69**: VP9 decodes at 635 / 325 / 85 fps
 ## Rebuild
 
 `./build-board-dts.sh h96max-h313` regenerates `firmware/h96max-h313/board.dts` and `.dtb` from the
-factory blob and `board.patch`; `tvb-h96max-h313` compiles that `board.dts`. `build/tools/dtc/dtc`
-is what reads back the `&label` references this file is written with.
+factory blob and `board.patch`; `tvb-h96max-h313` compiles that `board.dts`. `build/bin/dtc` is what
+reads back the `&label` references this file is written with.
 
 ## Tried and reverted
 

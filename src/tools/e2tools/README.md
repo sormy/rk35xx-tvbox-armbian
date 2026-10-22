@@ -1,7 +1,7 @@
 # e2tools — patches
 
-Stock e2tools cannot safely edit an ext4 image. `../../build-e2tools.sh` fetches e2tools `v0.1.2`,
-applies these, builds to `tools/e2tools/`, and gates the result.
+Stock e2tools cannot safely edit an ext4 image. `./build.sh tool e2tools` fetches e2tools `v0.1.2`,
+applies these, builds to `build/tools/e2tools/`, and gates the result.
 
 | Patch  | Fixes                                                        |
 | ------ | ------------------------------------------------------------ |
@@ -44,7 +44,7 @@ e2fsck -fy <image-or-device>    # Homebrew keeps it in $(brew --prefix e2fsprogs
 
 ## Verifying
 
-`./build-e2tools.sh --test` re-runs the gate. Every case must leave the same block count as an
+`./build.sh tool e2tools --test` re-runs the gate. Every case must leave the same block count as an
 untouched filesystem: a leak reads high, a double-free as an `fsck` complaint.
 
 ```

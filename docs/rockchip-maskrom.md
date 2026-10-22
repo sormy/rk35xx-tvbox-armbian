@@ -47,9 +47,9 @@ sustained multi-GB transfers in both directions.
 **Try the button first**, held _before_ power reaches the box:
 
 ```sh
-tools/rktools/rkdeveloptool ld     # Maskrom, Loader, or nothing
-tools/rktools/rkdeveloptool rd 3   # only if it said Loader
-tools/rktools/rkdeveloptool ld     # must now say Maskrom
+build/bin/rkdeveloptool ld    # Maskrom, Loader, or nothing
+build/bin/rkdeveloptool rd 3  # only if it said Loader
+build/bin/rkdeveloptool ld    # must now say Maskrom
 ```
 
 > ⚠️ **Never work from the factory `Loader`** — the vendor's rockusb is broken in several ways, the
@@ -112,7 +112,7 @@ while time.time() < end:
     os.write(fd, b"\x02")           # ctrl+b
 EOF
 # now power-cycle the board; then:
-./tools/rktools/rkdeveloptool ld     # Maskrom
+build/bin/rkdeveloptool ld           # Maskrom
 ```
 
 Kill the loop once `ld` says `Maskrom`, or it holds the port.
@@ -148,15 +148,16 @@ route to go when a box is genuinely broken — `ctrl+b` still outranks it.
 `db` uploads Rockchip's `usbplug`, which has no read cap.
 
 ```sh
-./build-rktools.sh                                     # -> tools/rktools/
-tools/rktools/rkdeveloptool db tools/rktools/rk3528_spl_loader-<board>.bin
-tools/rktools/rkdeveloptool rfi                        # total sectors, e.g. 30777344
-tools/rktools/rkdeveloptool rl 0 <sectors> emmc-stock.img
+./build.sh tool rkdeveloptool                                 # -> build/bin/rkdeveloptool
+build/bin/rkdeveloptool db firmware/<board>/maskrom_loader.bin
+build/bin/rkdeveloptool rfi                                   # total sectors, e.g. 30777344
+build/bin/rkdeveloptool rl 0 <sectors> emmc-stock.img
 ```
 
 Try the single pass first — it completes on a healthy board. If it stalls, see **Traps**.
 
 **One loader per board**: it carries that board's own DDR init, so they are not interchangeable.
+`./build-rockchip-loaders.sh` repacks them.
 
 Verify before trusting a dump — it must be `<sectors> × 512` bytes, and sector 64 must match the
 board's own idbloader:
@@ -171,8 +172,8 @@ The only way onto a box with no card slot, and the way back on any box. **Back u
 above. With the box in `Maskrom`:
 
 ```sh
-tools/rktools/rkdeveloptool db tools/rktools/rk3528_spl_loader-<board>.bin
-tools/rktools/rkdeveloptool wl 0 <image>
+build/bin/rkdeveloptool db firmware/<board>/maskrom_loader.bin
+build/bin/rkdeveloptool wl 0 <image>
 ```
 
 The image leaves the factory window blank: put 7168-16383 back from your dump — **after** the image,
@@ -180,8 +181,8 @@ since `wl 0` writes the whole chip:
 
 ```sh
 dd if=emmc-stock.img of=window.bin bs=512 skip=7168 count=9216     # on the host
-tools/rktools/rkdeveloptool wl 7168 window.bin
-tools/rktools/rkdeveloptool rd
+build/bin/rkdeveloptool wl 7168 window.bin
+build/bin/rkdeveloptool rd
 ```
 
 Skip it and the box loses its label MAC and serial, and nothing else. Once it boots, confirm with
@@ -189,8 +190,9 @@ Skip it and the box loses its label MAC and serial, and nothing else. Once it bo
 
 ## Traps
 
-- **`db` fails** — almost always a wrongly packed loader; rebuild with `./build-rktools.sh`. The
-  real error is in `log/` beside the binary, not on the console.
+- **`db` fails** — almost always a wrongly packed loader; rebuild with
+  `./build.sh tool rkdeveloptool`. The real error is in `log/` under the directory it ran from, not
+  on the console.
 - **On macOS the first `db` raises an accessory-approval prompt** — until accepted the device
   vanishes from `ld`, looking exactly like a failed `db`.
 - **`Creating Comm Object failed!`** — the interface is still claimed by a killed `rkdeveloptool`;
@@ -229,7 +231,7 @@ SECTORS=30777344                     # `rfi` reports it; check it against the la
 STEP=4194304                         # 2 GiB — a stall costs at most this much; halve if needed
 for ((s = 0; s < SECTORS; s += STEP)); do
   n=$((SECTORS - s < STEP ? SECTORS - s : STEP))
-  tools/rktools/rkdeveloptool rl "$s" "$n" "$(printf 'chunk.%09d.img' "$s")" || break
+  build/bin/rkdeveloptool rl "$s" "$n" "$(printf 'chunk.%09d.img' "$s")" || break
 done
 cat chunk.*.img > emmc-stock.img     # %09d so the glob sorts numerically
 wc -c < emmc-stock.img               # must equal SECTORS x 512
@@ -251,7 +253,7 @@ STEP=4194304                         # 2 GiB — a stall costs at most this much
 for ((s = 0; s < SECTORS; s += STEP)); do
   n=$((SECTORS - s < STEP ? SECTORS - s : STEP))
   dd if="$IMG" of=part.img bs=512 skip="$s" count="$n" status=none
-  tools/rktools/rkdeveloptool wl "$s" part.img || break
+  build/bin/rkdeveloptool wl "$s" part.img || break
 done
 rm -f part.img
 ```

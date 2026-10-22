@@ -1,0 +1,23 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] pack: honour SOURCE_DATE_EPOCH
+
+The loader header carries the time it was packed, so two packs of the same
+inputs never match. Take the time from SOURCE_DATE_EPOCH when it is set, in
+UTC, as reproducible builds expect.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/main.cpp
++++ b/main.cpp
+@@ -1450,8 +1450,9 @@ static inline rk_time getTime(void) {
+ 	rk_time rkTime;
+ 
+ 	struct tm *tm;
+-	time_t tt = time(NULL);
+-	tm = localtime(&tt);
++	const char *epoch = getenv("SOURCE_DATE_EPOCH");
++	time_t tt = epoch ? (time_t)strtoll(epoch, NULL, 10) : time(NULL);
++	tm = epoch ? gmtime(&tt) : localtime(&tt);
+ 	rkTime.year = tm->tm_year + 1900;
+ 	rkTime.month = tm->tm_mon + 1;
+ 	rkTime.day = tm->tm_mday;

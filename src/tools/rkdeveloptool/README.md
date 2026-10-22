@@ -6,14 +6,15 @@ new-IDB with RC4 off, magic `LDR `, which Rockchip's own `rkbin/RKBOOT/RK3528MIN
 through `[SYSTEM] NEWIDB=true` and `[FLAG] RC4_OFF=true` — sections the stock parser rejects
 outright with `unknown sec: [SYSTEM]!`.
 
-`../../build-rktools.sh` fetches rkdeveloptool, applies these, and builds to `tools/rktools/`. It
-then packs each board's loader from that same rkbin ini, so the flags come from Rockchip's file
-rather than from anything this repo invents.
+`./build.sh tool rkdeveloptool` fetches rkdeveloptool, applies these, and builds it to
+`build/bin/rkdeveloptool`. `./build-rockchip-loaders.sh` then packs each board's loader from that
+same rkbin ini, so the flags come from Rockchip's file rather than from anything this repo invents.
 
-| Patch  | Fixes                                                                          |
-| ------ | ------------------------------------------------------------------------------ |
-| `0001` | `[SYSTEM]`/`[FLAG]` rejected; `LOADER<n>` off-by-one; tag and RC4 hardcoded    |
-| `0002` | progress escapes printed as text on a Windows console, and buffered when piped |
+| Patch  | Fixes                                                                             |
+| ------ | --------------------------------------------------------------------------------- |
+| `0001` | `[SYSTEM]`/`[FLAG]` rejected; `LOADER<n>` off-by-one; tag and RC4 hardcoded       |
+| `0002` | progress escapes printed as text on a Windows console, and buffered when piped    |
+| `0003` | `pack` stamps the wall clock, so no two packs match; `SOURCE_DATE_EPOCH` fixes it |
 
 `0001` also fixes an out-of-bounds write: `parseLoader` indexed `gOpts.loader[]` with the number in
 the `LOADER<n>=` key, while `[CODE471_OPTION]` decrements it. Rockchip's 1-based `LOADER1`/`LOADER2`

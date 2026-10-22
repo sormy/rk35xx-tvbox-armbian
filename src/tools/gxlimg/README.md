@@ -29,7 +29,7 @@ finds only `htole32` and `le32toh`, because `amlcblk.c` builds the rest through 
 On the host:
 
 ```sh
-./build-amltools.sh          # tools/aml/gxlimg, beside amlcmd
+./build.sh tool gxlimg       # -> build/bin/gxlimg
 ```
 
 The patch is guarded by `__APPLE__`, so Linux builds the same tree unchanged.

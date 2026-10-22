@@ -10,7 +10,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
 FW="$REPO/firmware"
-DTC="$REPO/build/tools/dtc/dtc"
+DTC="$REPO/build/bin/dtc"
 
 # return 0: the last glob entry need not exist, and set -e would take that test as failure
 boards() { for d in "$FW"/*/board.patch; do [ -f "$d" ] && basename "$(dirname "$d")"; done; return 0; }

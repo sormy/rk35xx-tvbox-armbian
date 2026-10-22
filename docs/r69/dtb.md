@@ -39,8 +39,8 @@ a `ttyS2` for `rk35xx-bt`'s `hciattach`. TVBian's kernel carries the binding
 ## Rebuild
 
 `./build-board-dts.sh r69` regenerates `firmware/r69/board.dts` and `.dtb` from the factory blob and
-`board.patch`; `tvb-r69` compiles that `board.dts` with `board.tvbian.patch` on top.
-`build/tools/dtc/dtc` is what reads back the `&label` references this file is written with.
+`board.patch`; `tvb-r69` compiles that `board.dts` with `board.tvbian.patch` on top. `build/bin/dtc`
+is what reads back the `&label` references this file is written with.
 
 ## What U-Boot injects at boot
 

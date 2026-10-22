@@ -267,8 +267,8 @@ Still open:
 
 ✅ **Maskrom is proven end to end** (2026-09-12), on this board's own `uboot.itb`. The **recessed
 button inside the AV jack**, held _before_ power reaches the box, lands in `Maskrom` directly:
-U-Boot's `adc-keys` sees it and resets into BootROM download. `db` with `rk3528_spl_loader-r69.bin`,
-then `rfi` (30777344 sectors) and `rl` — a read of sector 64 came back byte-identical to
+U-Boot's `adc-keys` sees it and resets into BootROM download. `db` with its maskrom loader, then
+`rfi` (30777344 sectors) and `rl` — a read of sector 64 came back byte-identical to
 `firmware/r69/factory_idbloader.bin`, and slot A read over USB matched the FIT written over ssh.
 
 The button is only as alive as the U-Boot in slot A: it needs a FIT with the ADC enabled, which is

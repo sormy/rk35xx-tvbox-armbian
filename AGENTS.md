@@ -10,44 +10,44 @@ userspace come from upstream; we carry only what upstream can't know. **Adding a
 code** — one `firmware/<board>/` directory. If a change needs new code per board, the design is
 wrong.
 
-| Tree                | Holds                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
-| `firmware/<board>/` | `board.conf`, `board.dts`/`.patch`/`.dtb`, `uboot.dts`/`.patch`, `package.list`, factory idbloader |
-| `firmware/common/`  | everything shared between boards                                                                   |
-| `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                                |
-| `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                                   |
-| `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                              |
-| `patches/<tool>/`   | fixes to host tools we build ourselves, formatted to send upstream                                 |
-| `src/<tool>/`       | host tools we write ourselves                                                                      |
-| `src/tools/<tool>/` | a host tool we build: its build script, our patches, its README; the binary in `build/tools/`      |
-| `scripts/`          | host-side helpers, never installed on a box                                                        |
-| `keyring/`          | the `apt` repo's public signing key                                                                |
-| `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it                       |
-| `build-env/`        | the build environment: one container image every `./build.sh` step runs in                         |
-| `modules/`          | each out-of-tree driver: its pin, our patches, the step packaging it per kernel                    |
-| `uboot/`            | each U-Boot a board package ships: its pin and defconfig, and the step building it                 |
-| `package/`          | the steps building `tvb-<board>` and `tvb-archive-keyring`                                         |
-| `image/`            | the image step, its package list, and the files every image's rootfs gets                          |
-| `release/`          | the release plan, the signed `apt` repo, and the upload to GitHub                                  |
+| Tree                | Holds                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------- |
+| `firmware/<board>/` | `board.conf`, `package.list`, the trees and their patches, `uboot.itb`, idbloader, maskrom loader |
+| `firmware/common/`  | everything shared between boards                                                                  |
+| `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                               |
+| `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                                  |
+| `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                             |
+| `patches/<topic>/`  | kernel, driver, U-Boot and GStreamer patches, formatted to send upstream                          |
+| `src/tools/<tool>/` | a host tool: `./build.sh tool <tool>` builds it, its commands linked in `build/bin/`              |
+| `scripts/`          | host-side helpers, never installed on a box                                                       |
+| `keyring/`          | the `apt` repo's public signing key                                                               |
+| `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it                      |
+| `build-env/`        | the build environment: one container image every `./build.sh` step runs in                        |
+| `modules/`          | each out-of-tree driver: its pin, our patches, the step packaging it per kernel                   |
+| `uboot/`            | each U-Boot a board package ships: its pin and defconfig, and the step building it                |
+| `package/`          | the steps building `tvb-<board>` and `tvb-archive-keyring`                                        |
+| `image/`            | the image step, its package list, and the files every image's rootfs gets                         |
+| `release/`          | the release plan, the signed `apt` repo, and the upload to GitHub                                 |
 
 **Repo files carry no prefix**: each board's `package.list` names where a file installs. A board
-directory holds `board.conf`, `board-id`, `board-name`, the tree, the loader, `package.list`,
-`preserve-sectors` where it has a `tvb-install`, and firmware only where it is shown to be this
-board's. **Shared mechanism lives in `firmware/common/`** — a board never keeps its own copy of a
-family script. What it may keep is mechanism no other board can use: a unit for hardware only it
-has.
+directory holds `board.conf`, `board-id`, `board-name`, the tree, the factory idbloader and the
+maskrom loader, `package.list`, `preserve-sectors` where it has a `tvb-install`, and firmware only
+where it is shown to be this board's. **Shared mechanism lives in `firmware/common/`** — a board
+never keeps its own copy of a family script. What it may keep is mechanism no other board can use: a
+unit for hardware only it has.
 
 **Tools we build, and must:** `dtc` (`./build.sh tool dtc` — vanilla cannot round-trip a vendor blob
-with `&label`s) · `rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd` and
-`gxlimg` (`./build-amltools.sh` — Amlogic's own are closed and x86-64 Linux only) · a per-board
-`uboot.dts` (`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all
-three at once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only on
-Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier` · `python3` · `mtools` and
+with `&label`s) · `rkdeveloptool` (`./build.sh tool rkdeveloptool`) and each board's maskrom loader
+(`./build-rockchip-loaders.sh`) · `amlcmd` and `gxlimg` (`./build.sh tool amlcmd`,
+`./build.sh tool gxlimg` — Amlogic's own are closed and x86-64 Linux only) · a per-board `uboot.dts`
+(`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all of a
+board's at once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only
+on Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier` · `python3` · `mtools` and
 `mkimage`, for a board whose image carries a FAT boot partition. **On the box:** `evtest`, `fio`,
 `stress-ng`, `iw`, `bluez`.
 
-**`e2tools`** (`./build-e2tools.sh`) — edit a box's ext4 rootfs on an SD card or USB stick from a
-Mac, which cannot mount ext4; the stock one corrupts an image on delete.
+**`e2tools`** (`./build.sh tool e2tools`) — edit a box's ext4 rootfs on an SD card or USB stick from
+a Mac, which cannot mount ext4; the stock one corrupts an image on delete.
 
 ## Where things are written down
 
@@ -76,11 +76,11 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                  |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
 | `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
-| `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there     |
+| `src/tools/<tool>/README.md`          | a host tool: what it does, why we build it, its patches              |
 | `src/tools/dtc/README.md`             | the patched `dtc` that round-trips a vendor blob with `&label`s      |
 | `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage       |
-| `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader   |
-| `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete |
+| `src/tools/rkdeveloptool/README.md`   | the patched `pack`; why the stock one cannot build a usable loader   |
+| `src/tools/e2tools/README.md`         | the patched `e2tools`; why the stock one corrupts an image on delete |
 | `patches/linux-rockchip/README.md`    | the vendor kernel's patches, their PRs, what Rockchip fixed since    |
 | `patches/linux-meson/README.md`       | mainline kernel patches for Amlogic boards, on their way upstream    |
 | `patches/aic8800/README.md`           | the AIC8800 SDIO driver: Radxa's patches, then ours                  |
@@ -91,7 +91,7 @@ another, so nothing rots when one is rewritten.
 | `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), in-tree                        |
 | `patches/meson-codecs/README.md`      | the video decoder in-tree and the encoders beside it on the GXLX2    |
 | `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand   |
-| `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds               |
+| `src/tools/gxlimg/README.md`          | the Amlogic boot-image tool, built on macOS                          |
 | `keyring/README.md`                   | the archive signing key: fingerprint, secret, rotation               |
 
 # Standing rules

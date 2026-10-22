@@ -83,9 +83,9 @@ signed checksums. Build it yourself instead with `./build.sh`: [docs/build.md](d
 is USB-C. The cable powers the box, so no PSU.
 
 ```sh
-./build-amltools.sh                              # once -> tools/aml/amlcmd
-./tools/aml/amlcmd connect                       # then plug the OTG cable into the box
-./tools/aml/amlcmd backup emmc-stock.img
+./build.sh tool amlcmd    # once -> build/bin/amlcmd
+build/bin/amlcmd connect  # then plug the OTG cable into the box
+build/bin/amlcmd backup emmc-stock.img
 xz -T0 -c emmc-stock.img > backup/<board>-stock.img.xz && rm emmc-stock.img
 ```
 
@@ -103,12 +103,12 @@ xz -dc tvbian-<date>-<board>-trixie.img.xz | sudo dd of=/dev/sdX bs=4M status=pr
 2. Point the box at it once, over the OTG cable:
 
 ```sh
-./tools/aml/amlcmd connect                       # then plug the OTG cable into the box
-./tools/aml/amlcmd setenv try_auto_burn
-./tools/aml/amlcmd setenv usb_on usb start 0
-./tools/aml/amlcmd setenv bootcmd run usb_on recovery_from_udisk storeboot
-./tools/aml/amlcmd saveenv
-./tools/aml/amlcmd reset
+build/bin/amlcmd connect  # then plug the OTG cable into the box
+build/bin/amlcmd setenv try_auto_burn
+build/bin/amlcmd setenv usb_on usb start 0
+build/bin/amlcmd setenv bootcmd run usb_on recovery_from_udisk storeboot
+build/bin/amlcmd saveenv
+build/bin/amlcmd reset
 ```
 
 Once is enough: every later power-on boots the stick. Pull it and Android boots, none the wiser.
@@ -150,8 +150,8 @@ GND, TX and RX only, crossed (box TX → adapter RX). **Never connect 3V3/VCC.**
 
 ```sh
 xz -dc backup/<board>-stock.img.xz > emmc-stock.img
-./tools/aml/amlcmd connect                       # hold the button (may not be needed); plug in OTG
-./tools/aml/amlcmd restore emmc-stock.img
+build/bin/amlcmd connect  # hold the button (may not be needed); plug in OTG
+build/bin/amlcmd restore emmc-stock.img
 ```
 
 Android comes back exactly as it was, its updates still pending. More, including the mask ROM:

@@ -23,13 +23,13 @@ the kernel has names that differ only by case (`xt_TCPMSS.h`, `xt_tcpmss.h`).
 
 Maskrom, `amlcmd` and writing a card stay on the host: a container on macOS reaches no USB. So do
 the tools they need: `./build.sh tool <name>` builds one from `src/tools/<name>/` natively, into
-`build/tools/<name>/`; `./build.sh tools` builds every one.
+`build/tools/<name>/`, its commands linked in `build/bin/`; `./build.sh tools` builds every one.
 
-| Host         | Beyond the runtime                                     |
-| ------------ | ------------------------------------------------------ |
-| macOS arm64  | `xz`; host tools from `./build-rktools.sh`, `amltools` |
-| Linux arm64  | a udev rule for maskrom USB                            |
-| Linux x86-64 | the same                                               |
+| Host         | Beyond the runtime                       |
+| ------------ | ---------------------------------------- |
+| macOS arm64  | `xz`; host tools from `./build.sh tools` |
+| Linux arm64  | a udev rule for maskrom USB              |
+| Linux x86-64 | the same                                 |
 
 ## Steps
 

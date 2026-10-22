@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Build patched e2tools into tools/e2tools (gitignored), for editing a box's rootfs from the host.
+# Build patched e2tools into build/tools/e2tools, for editing a box's rootfs from the host.
 # Stock e2rm corrupts an image on delete, so the self-test below gates every build.
 #
-# Usage: ./build-e2tools.sh [--test]
+# Usage: ./build.sh tool e2tools [--test]
 set -euo pipefail
 
-REPO="$(cd "$(dirname "$0")" && pwd)"
-TOOLS="$REPO/tools"                               # gitignored output dir
-BUILD="$TOOLS/src/e2tools"                        # scratch clone
-OUT="$TOOLS/e2tools"                              # the binaries
-PATCHES="$REPO/patches/e2tools"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$HERE/../../.." && pwd)"
+OUT="$REPO/build/tools/e2tools"                   # the binaries
+BUILD="$OUT/src"                                  # scratch clone
+PATCHES="$HERE/patches"
 
 # --- pinned dependency (bump deliberately, never float) ---
 E2TOOLS_REPO="https://github.com/e2tools/e2tools.git"
@@ -29,7 +29,7 @@ export PATH
 selftest() {
 	local img tmp fail=0
 	for t in mke2fs fsck.ext4 debugfs; do need "$t" "install e2fsprogs"; done
-	[ -x "$OUT/e2rm" ] || { echo "nothing built yet — run $0 first"; exit 1; }
+	[ -x "$OUT/e2rm" ] || { echo "nothing built yet — run ./build.sh tool e2tools first"; exit 1; }
 
 	tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
 	img="$tmp/t.img"
@@ -90,7 +90,7 @@ case "$(uname -s)" in
 	*) echo "unsupported host: $(uname -s)"; exit 1 ;;
 esac
 
-mkdir -p "$TOOLS/src" "$OUT"
+mkdir -p "$OUT"
 if [ -d "$BUILD/.git" ]; then
 	git -C "$BUILD" fetch --quiet --tags "$E2TOOLS_REPO" || true
 else
@@ -116,5 +116,5 @@ make -j"$(getconf _NPROCESSORS_ONLN)" >build.log 2>&1 || { tail -20 build.log; e
 install -m 755 "$BUILD/e2tools" "$OUT/e2tools"
 for t in $TOOLNAMES; do ln -sf e2tools "$OUT/$t"; done
 
-echo "built: tools/e2tools/{$(echo "$TOOLNAMES" | tr ' ' ',')}  (e2tools $E2TOOLS_VERSION + $(ls -1 "$PATCHES"/*.patch | wc -l | tr -d ' ') patches)"
+echo "built: build/tools/e2tools/{$(echo "$TOOLNAMES" | tr ' ' ',')}  (e2tools $E2TOOLS_VERSION + $(ls -1 "$PATCHES"/*.patch | wc -l | tr -d ' ') patches)"
 selftest

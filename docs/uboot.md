@@ -40,9 +40,8 @@ Its DDR tuning is the only one proven stable on this DRAM die; public rkbin DDR 
 The failure is a random `Synchronous Abort` whose `far` register holds ASCII text — RAM corruption,
 not a code bug. Carve it per board; it is the one bootloader file that is not shared.
 
-A backup recovers only the DDR half, so `build-rktools.sh` builds a maskrom USB loader per board
-(that board's DDR init + Rockchip's `usbplug`). Build it natively — USB does not reach a container
-on macOS.
+A backup recovers only the DDR half, so `./build-rockchip-loaders.sh` packs a maskrom USB loader per
+board into `firmware/<board>/maskrom_loader.bin`: that board's DDR init + Rockchip's `usbplug`.
 
 > ⚠️ **Our U-Boot still serves nothing on USB.** The vendor U-Boot runs rockusb, so `rkdeveloptool`
 > can always reach the box. Ours has `# CONFIG_USB is not set` and `CONFIG_NO_NET=y`, so once it
@@ -173,7 +172,7 @@ rebuild changed nothing.
 - **`ROCKCHIP_TPL=` never reaches the artifact.** Binman assembles TPL+SPL+FIT as one image; only
   the FIT is extracted and the built idbloader discarded. Reproducibility rests on the U-Boot and
   BL31 pins alone.
-- **`rkbin` is pinned to one commit shared with `build-rktools.sh`.** Bump both together.
+- **`rkbin` is pinned to one commit shared with `build-rockchip-loaders.sh`.** Bump both together.
 
 ## Rebuilding
 

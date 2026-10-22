@@ -71,6 +71,12 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       then `env export -t` `ethaddr` to fixed RAM for `boot.scr` to `env import` in the chained
       U-Boot, which sets `local-mac-address`. ❓ `env export` in this U-Boot; a RAM address neither
       relocates over.
+- [ ] **H96 Max M20: unbrick from the mask ROM.** Needed only once the eMMC's bootloader is gone;
+      the factory U-Boot's burning gadget covers every other path. A USB-boot BL2 from
+      `stock/h96max-m20/loader-stages/bl2.sign` and `acs.bin` (format v3), repacked with `gxlimg`
+      and committed beside the board as Rockchip's `maskrom_loader.bin` is; then `amlcmd` loads it
+      and U-Boot, which takes bulk writes and BL2's USB stage — `pyamlboot` has both. Safe to try:
+      `amlcmd set_usb_boot 2` enters the ROM, a power cut leaves it.
 - [ ] **Close the known gaps** listed in `patches/mt76-mt7668/README.md` and
       `docs/h96max-m20/board.md`.
 - [ ] **Wake the H96 Max M20 from `s2idle` on its Bluetooth remote**, its only remote. The SDIO

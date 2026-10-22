@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Callable, Iterator
 
 REPO = Path(__file__).resolve().parent.parent
-DTC = REPO / "build/tools/dtc/dtc"
+DTC = REPO / "build/bin/dtc"
 KERNEL_URL = "https://github.com/armbian/linux-rockchip.git"
 KERNEL_REV = "5280f9b4336199c4025c8eed894d2b4e2268dcc6"
 DTS_DIR = "arch/arm64/boot/dts/rockchip"

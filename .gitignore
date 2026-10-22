@@ -2,6 +2,8 @@
 /build/
 /uboot-build/
 /tools/
+# rkdeveloptool's own log, written where it runs
+/log/
 *.tmp
 .DS_Store
 *.swp

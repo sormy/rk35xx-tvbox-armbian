@@ -7,18 +7,16 @@ Repo paths only: no box sees them.
 
 Hand-written sources under `src/`; the pipeline's steps stay at the top. Decided 2026-10-22.
 
-| Today                                                            | To                        |
-| ---------------------------------------------------------------- | ------------------------- |
-| `firmware/<board>/`                                              | `src/boards/<board>/`     |
-| `firmware/common/<chip>/`, `modules/<x>.conf`, `patches/<x>/`    | `src/chips/<chip>/`       |
-| `firmware/common/`, the rest                                     | `src/common/`             |
-| `src/<tool>/`, `patches/<tool>/`, `build-<tool>.sh`              | `src/tools/<tool>/`       |
-| `build-board-dts.sh`, `build-uboot-dts.sh`, `build-firmware*.sh` | `src/tools/board/`        |
-| `build-uboot.sh`, the RK3528 `uboot.itb`                         | `uboot/`                  |
-| `scripts/aml-*.py`                                               | `image/`, its only user   |
-| `patches/<kernel-wide topic>/`                                   | `kernel/patches/<topic>/` |
-| `tools/`, built binaries                                         | `build/tools/`            |
-| `README_AMLOGIC.md`                                              | stays beside `README.md`  |
+| Today                                                               | To                        |
+| ------------------------------------------------------------------- | ------------------------- |
+| `firmware/<board>/`                                                 | `src/boards/<board>/`     |
+| `firmware/common/<chip>/`, `modules/<x>.conf`, `patches/<x>/`       | `src/chips/<chip>/`       |
+| `firmware/common/`, the rest                                        | `src/common/`             |
+| `build-*-dts.sh`, `build-rockchip-loaders.sh`, `build-firmware*.sh` | `src/tools/board/`        |
+| `build-uboot.sh`, the RK3528 `uboot.itb`                            | `uboot/`                  |
+| `scripts/aml-*.py`                                                  | `image/`, its only user   |
+| `patches/<kernel-wide topic>/`                                      | `kernel/patches/<topic>/` |
+| `README_AMLOGIC.md`                                                 | stays beside `README.md`  |
 
 A chip is one folder: its out-of-tree driver's pin, its patches, in-tree or not, its firmware, and
 one README. A board with a known chip touches only `src/boards/<board>/`; a new chip is one
@@ -26,7 +24,7 @@ one README. A board with a known chip touches only `src/boards/<board>/`; a new 
 `stock/`, `research/`, `docs/` and `keyring/` stay where they are.
 
 The repo root ends with `build.sh`, the READMEs, `AGENTS.md`, `TODO.md` and folders. Build outputs
-(`uboot-build/`, a tool's built binary) go under `build/`, which is gitignored whole.
+(`uboot-build/`) go under `build/`, which is gitignored whole.
 
 ## Docs
 

@@ -133,17 +133,16 @@ female adapter][ca] (~$8 for 4) on whichever end is USB-C.
 [ca]: https://www.amazon.com/dp/B0DSK82JK8
 
 ```sh
-./build-rktools.sh                                 # once -> tools/rktools/
-cd tools/rktools
+./build.sh tool rkdeveloptool                                # once -> build/bin/rkdeveloptool
 
-./rkdeveloptool ld                                 # must say Maskrom
-./rkdeveloptool db rk3528_spl_loader-<board>.bin   # the board's own loader
+build/bin/rkdeveloptool ld                                   # must say Maskrom
+build/bin/rkdeveloptool db firmware/<board>/maskrom_loader.bin
 
-./rkdeveloptool rfi                                # total sectors
-./rkdeveloptool rl 0 <sectors> emmc-stock.img      # back up first
+build/bin/rkdeveloptool rfi                                  # total sectors
+build/bin/rkdeveloptool rl 0 <sectors> emmc-stock.img        # back up first
 xz -dk tvbian-<date>-<board>-trixie.img.xz
-./rkdeveloptool wl 0 tvbian-<date>-<board>-trixie.img
-./rkdeveloptool rd                                 # reboot
+build/bin/rkdeveloptool wl 0 tvbian-<date>-<board>-trixie.img
+build/bin/rkdeveloptool rd                                   # reboot
 ```
 
 More routes, and what to do if a transfer stalls: `docs/rockchip-maskrom.md`.

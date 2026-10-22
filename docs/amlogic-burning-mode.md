@@ -2,7 +2,7 @@
 
 U-Boot's USB burning gadget, Amlogic's counterpart to Rockchip's Maskrom: the whole eMMC and any
 U-Boot command over the OTG cable, the case closed. `amlcmd` drives it, from a Mac or a Linux host;
-`./build-amltools.sh` builds it into `tools/aml/`. Every command here runs on the host.
+`./build.sh tool amlcmd` builds it into `build/tools/amlcmd/`. Every command here runs on the host.
 
 **The cable:** a USB-A male-to-male into the box's OTG port, with a USB-C→USB-A female adapter on
 any end that is USB-C. It powers the box, so the PSU stays out.
