@@ -42,6 +42,14 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       1080p and 2048x1152, before today's vendor kernel clocked the native mode. Record each board's
       GPU clock and devfreq governor, then rerun glmark2 on the same panel.
 
+- [ ] **An AI review on every pull request, against `AGENTS.md`.** A fork PR runs without our
+      secrets, so a GitHub App fits: CodeRabbit's open-source plan, free for a public repo and
+      rate-limited per developer, pointed at `AGENTS.md`. Gemini Code Assist's free GitHub app is
+      reported shut down in July 2026. To think about: the Claude Code action, automatic on the
+      maintainer's own PRs and on anyone else's only when the maintainer invokes it by comment,
+      since a comment from a maintainer runs with the repo's token and a fork PR does not. ❓
+      CodeRabbit's current limits, and the file it reads guidelines from.
+
 - [ ] **Retire the overlay, once the weekly build publishes.** No box runs it since 2026-10-20.
       Going: `payload.list`, `rk35xx-update`, `rk35xx-deploy`, `build-image.sh`, the
       `fetch-*-src.sh` scripts, `firmware/common/`'s overlay-only files (`mac-pin`,
