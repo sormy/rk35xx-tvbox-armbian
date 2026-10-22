@@ -105,8 +105,9 @@ jobs:
         if: env.TVB_BUILD_CACHE == '1'
         with:
           path: ${{ runner.temp }}/ccache
-          key: ccache-${{ steps.name.outputs.kernel }}-${{ github.run_id }}
-          restore-keys: ccache-${{ steps.name.outputs.kernel }}-
+          # restore-keys match by prefix: "ccache/rk35xx/" cannot pick up rk35xx-next's
+          key: ccache/${{ steps.name.outputs.kernel }}/${{ github.run_id }}
+          restore-keys: ccache/${{ steps.name.outputs.kernel }}/
       # rootful podman: the same as the release job, and ccache's files then belong to root
       - name: Build
         run: |
