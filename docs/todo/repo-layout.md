@@ -9,14 +9,20 @@ deleted. Repo paths only: no box sees them.
 | Today                                      | To                                 |
 | ------------------------------------------ | ---------------------------------- |
 | `firmware/<board>/`                        | `boards/<board>/`                  |
-| `firmware/common/<chip>/`                  | `chips/<chip>/`                    |
-| `patches/<kernel topic>/`                  | `kernel/patches/<topic>/`          |
-| `patches/<driver>/`                        | `modules/patches/<driver>/`        |
+| `firmware/common/<chip>/`                  | `chips/<chip>/firmware/`           |
+| `modules/<driver>.conf`                    | `chips/<chip>/driver.conf`         |
+| `patches/<driver or in-tree driver>/`      | `chips/<chip>/patches/`            |
+| `patches/<kernel-wide topic>/`             | `kernel/patches/<topic>/`          |
+| `modules/build.sh`                         | beside the kernel steps            |
 | `patches/u-boot/`                          | `uboot/patches/`                   |
 | `patches/<host tool>/`, `src/<tool>/`      | `tools/<tool>/`, patches beside it |
 | `build-dtc.sh`, `build-rktools.sh` and kin | `tools/<tool>/build.sh`            |
 | `scripts/`                                 | `tools/`, by what each script does |
 | `README_AMLOGIC.md`                        | a doc in `docs/`, or `README.md`   |
+
+A chip is one folder: its out-of-tree driver's pin, its patches, in-tree or not, its firmware, and
+one README. A board with a known chip touches only `boards/<board>/`; a new chip is one
+`chips/<chip>/`. `kernel/patches/` keeps what is not a chip's: SoC support, vendor fixes, DRM.
 
 The repo root ends with `build.sh`, the READMEs, `AGENTS.md`, `TODO.md` and folders. Build outputs
 (`images/`, `log/`, `uboot-build/`, a tool's built binary) go under `build/`, which is gitignored

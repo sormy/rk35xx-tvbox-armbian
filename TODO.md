@@ -114,19 +114,20 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 ## Bigger todos
 
-| File                                    | Open question                                 |
-| --------------------------------------- | --------------------------------------------- |
-| `docs/todo/media-stick.md`              | the universal media stick                     |
-| `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                              |
-| `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 HDMI: the 4K line-buffer graft         |
-| `docs/todo/rk35xx-kernel-patches.md`    | Armbian's vendor patches Rockchip never took  |
-| `docs/todo/rk35xx-mac-pinning.md`       | MAC pinning below userspace                   |
-| `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it                 |
-| `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport    |
-| `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset         |
-| `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                             |
-| `docs/todo/tvb-linux.md`                | TVBian: our kernel and images on plain Debian |
-| `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login       |
-| `docs/todo/tvb-linux-build.md`          | TVBian's weekly build, hosts, caches          |
-| `docs/todo/website.md`                  | tvbian.com: one page on GitHub Pages          |
-| `docs/todo/repo-layout.md`              | folders, patches, tools and docs, regrouped   |
+| File                                    | Open question                                  |
+| --------------------------------------- | ---------------------------------------------- |
+| `docs/todo/media-stick.md`              | the universal media stick                      |
+| `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                               |
+| `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 HDMI: the 4K line-buffer graft          |
+| `docs/todo/rk35xx-kernel-patches.md`    | Armbian's vendor patches Rockchip never took   |
+| `docs/todo/rk35xx-mac-pinning.md`       | MAC pinning below userspace                    |
+| `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it                  |
+| `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport     |
+| `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset          |
+| `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                              |
+| `docs/todo/tvb-linux.md`                | TVBian: our kernel and images on plain Debian  |
+| `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login        |
+| `docs/todo/tvb-linux-build.md`          | TVBian's weekly build, hosts, caches           |
+| `docs/todo/website.md`                  | tvbian.com: one page on GitHub Pages           |
+| `docs/todo/repo-layout.md`              | folders, patches, tools and docs, regrouped    |
+| `docs/todo/tanix-h313.md`               | first Allwinner board; the bring-up docs' test |
