@@ -1,8 +1,8 @@
 #!/bin/bash
 # Copy the running TVBian to another disk, bootable as the one it runs from. Every disk an image
 # makes holds the board's whole layout, so the copy is the disk itself: its partition table with the
-# rootfs grown to the target, the rootfs by file under a new UUID, and every sector before the
-# rootfs raw - the env last - but the ones in /usr/lib/tvb/preserve-sectors, this unit's own.
+# rootfs grown to the target, the rootfs by file under a new UUID, then every sector before the
+# rootfs raw but the ones in /usr/lib/tvb/preserve-sectors, this unit's own.
 set -euo pipefail
 
 PRESERVE_SECTORS=/usr/lib/tvb/preserve-sectors
@@ -105,12 +105,17 @@ HAVE_MIB=$((($(blockdev --getsz "$DST") - START) / 2048))
 [ "$HAVE_MIB" -ge "$NEED_MIB" ] || die "$DST is too small: the rootfs needs $NEED_MIB MiB, it has $HAVE_MIB"
 
 FROM_TO="TVBian from $(describe "$SRC") to $(describe "$DST")"
-if [ -n "$YES" ]; then
-  echo "Installing $FROM_TO"
-else
-  echo "Install $FROM_TO?"
+if [ -n "$YES" ]; then echo "Installing $FROM_TO"; else echo "Install $FROM_TO?"; fi
+echo "Keeping the target's own sectors:"
+RANGES=
+while read -r range note; do
+  [ -n "$range" ] && [ "${range#\#}" = "$range" ] || continue
+  RANGES="$RANGES $range"
+  printf '    %-12s %s\n' "$range" "${note#\# }"
+done <"$PRESERVE_SECTORS"
+if [ -z "$YES" ]; then
   read -rp "All data on the target will be erased; back it up first if you may want it back. [y/N] " answer
-  [ "$answer" = y ] || exit 1
+  case $answer in y | Y) ;; *) die "not installed" ;; esac
 fi
 
 T=$(mktemp -d)
@@ -130,19 +135,15 @@ OLD=$(findmnt -no UUID /)
 NEW=$(cat /proc/sys/kernel/random/uuid)
 mkfs.ext4 -q -F -L tvbian -U "$NEW" "$PART"
 mkdir "$T/src" "$T/dst"
-mount --bind / "$T/src"
-mount "$PART" "$T/dst"
+# stdout carries only systemd's daemon-reload hint, given whenever fstab outdates the units
+mount --bind / "$T/src" >/dev/null
+mount "$PART" "$T/dst" >/dev/null
 copy "$T/src" "$T/dst"
 sed -i "s/$OLD/$NEW/" "$T/dst/etc/fstab" "$T/dst/boot/extlinux/extlinux.conf"
 umount "$T/dst"
 
-step "boot sectors, preserving this unit's own"
-RANGES=
-while read -r range note; do
-  [ -n "$range" ] && [ "${range#\#}" = "$range" ] || continue
-  RANGES="$RANGES $range"
-  printf '    %-12s %s\n' "$range" "${note#\# }"
-done <"$PRESERVE_SECTORS"
+# last: the target keeps its old bootloader until its rootfs is whole
+step "boot sectors $RAW_FROM-$((START - 1))"
 pos=$RAW_FROM
 for skip in $RANGES "$START-"; do
   [ "${skip%-*}" -le "$pos" ] ||
