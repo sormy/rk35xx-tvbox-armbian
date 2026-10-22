@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Build patched dtc into tools/dtc (gitignored). Vanilla dtc prints phandles as raw numbers, which
-# a vendor blob cannot be read or diffed with; patches/dtc/ adds -P/-n/-s.
+# Build patched dtc into build/tools/dtc. Vanilla dtc prints phandles as raw numbers, which a vendor
+# blob cannot be read or diffed with; patches/ adds -P/-n/-s.
 #
-# Usage: ./build-dtc.sh [--test]
+# Usage: ./build.sh tool dtc [--test]
 set -euo pipefail
 
-REPO="$(cd "$(dirname "$0")" && pwd)"
-TOOLS="$REPO/tools"                               # gitignored output dir
-BUILD="$TOOLS/src/dtc"                            # scratch clone
-OUT="$TOOLS/dtc"
-PATCHES="$REPO/patches/dtc"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$HERE/../../.." && pwd)"
+OUT="$REPO/build/tools/dtc"
+BUILD="$OUT/src"                                  # scratch clone
+PATCHES="$HERE/patches"
 
 # --- pinned dependency (bump deliberately, never float) ---
 DTC_REPO="https://git.kernel.org/pub/scm/utils/dtc/dtc.git"
@@ -20,7 +20,7 @@ need() { command -v "$1" >/dev/null || { echo "missing: $1 — $2"; exit 1; }; }
 # --- the gate: every reference resolved, and a byte-identical round trip ---
 selftest() {
 	local fail=0 tmp
-	[ -x "$OUT/dtc" ] || { echo "nothing built yet — run $0 first"; exit 1; }
+	[ -x "$OUT/dtc" ] || { echo "nothing built yet — run ./build.sh tool dtc first"; exit 1; }
 	tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
 	for dtb in "$REPO"/firmware/*/board.dtb; do
 		[ -f "$dtb" ] || continue
@@ -44,7 +44,7 @@ if [ "${1:-}" = "--test" ]; then selftest; exit; fi
 
 for c in git cc make; do need "$c" "install build tooling"; done
 
-mkdir -p "$TOOLS/src" "$OUT"
+mkdir -p "$OUT"
 if [ -d "$BUILD/.git" ]; then
 	git -C "$BUILD" fetch --quiet --tags "$DTC_REPO" || true
 else
@@ -65,5 +65,5 @@ done
 make -C "$BUILD" NO_PYTHON=1 NO_YAML=1 dtc >"$BUILD/build.log" 2>&1 || { tail -20 "$BUILD/build.log"; exit 1; }
 install -m 755 "$BUILD/dtc" "$OUT/dtc"
 
-echo "built: tools/dtc/dtc  (dtc $DTC_VERSION + $(ls -1 "$PATCHES"/*.patch | wc -l | tr -d ' ') patches)"
+echo "built: build/tools/dtc/dtc  (dtc $DTC_VERSION + $(ls -1 "$PATCHES"/*.patch | wc -l | tr -d ' ') patches)"
 selftest

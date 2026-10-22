@@ -21,7 +21,9 @@ byte-identical modules from a macOS and a Linux host.
 The work volume is a case-sensitive ext4, never a bind mount: macOS's APFS is case-insensitive, and
 the kernel has names that differ only by case (`xt_TCPMSS.h`, `xt_tcpmss.h`).
 
-Maskrom, `amlcmd` and writing a card stay on the host: a container on macOS reaches no USB.
+Maskrom, `amlcmd` and writing a card stay on the host: a container on macOS reaches no USB. So do
+the tools they need: `./build.sh tool <name>` builds one from `src/tools/<name>/` natively, into
+`build/tools/<name>/`; `./build.sh tools` builds every one.
 
 | Host         | Beyond the runtime                                     |
 | ------------ | ------------------------------------------------------ |

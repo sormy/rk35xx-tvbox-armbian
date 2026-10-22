@@ -21,7 +21,7 @@ boards() { for d in "$FW"/*/uboot.patch; do [ -f "$d" ] && basename "$(dirname "
 BOARDS="${*:-$(boards)}"
 [ -n "$BOARDS" ] || { echo "no firmware/<board>/uboot.patch found — name a board"; exit 1; }
 
-[ -x "$REPO/tools/dtc/dtc" ] || { echo "Need the patched dtc. Run: ./build-dtc.sh"; exit 1; }
+[ -x "$REPO/build/tools/dtc/dtc" ] || { echo "Need the patched dtc. Run: ./build.sh tool dtc"; exit 1; }
 if [ ! -f "$VHDR" ]; then
   mkdir -p "$(dirname "$VHDR")"
   curl -fsSL -o "$VHDR.tmp" \
@@ -39,9 +39,9 @@ for BOARD in $BOARDS; do
   [ -f "$PATCHF" ] || { echo "Missing $PATCHF"; exit 1; }
   tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 
-  "$REPO/tools/dtc/dtc" -P -I dtb -O dts -o "$tmp/raw.dts" "$BLOB" 2>/dev/null
+  "$REPO/build/tools/dtc/dtc" -P -I dtb -O dts -o "$tmp/raw.dts" "$BLOB" 2>/dev/null
   # the factory blob must survive the round trip untouched, or the base is not the board's own
-  "$REPO/tools/dtc/dtc" -I dts -O dtb -o "$tmp/rt.dtb" "$tmp/raw.dts" 2>/dev/null
+  "$REPO/build/tools/dtc/dtc" -I dts -O dtb -o "$tmp/rt.dtb" "$tmp/raw.dts" 2>/dev/null
   cmp -s "$tmp/rt.dtb" "$BLOB" || { echo "$BOARD: decompile does not round-trip — refusing"; exit 1; }
 
   # one sed, quitting at the first hit: piping into `head` can SIGPIPE the writer, which
@@ -53,7 +53,7 @@ for BOARD in $BOARDS; do
   # -F0: a hunk that only applies with fuzz has landed on the wrong node, and the result still
   # compiles — refuse it rather than ship a mis-grafted control tree
   ( cd "$tmp" && patch -F0 -p0 --no-backup-if-mismatch -o "$tmp/out.dts" xlat.dts < "$PATCHF" )
-  "$REPO/tools/dtc/dtc" -I dts -O dtb -o /dev/null "$tmp/out.dts" 2>/dev/null \
+  "$REPO/build/tools/dtc/dtc" -I dts -O dtb -o /dev/null "$tmp/out.dts" 2>/dev/null \
     || { echo "$BOARD: result does not compile"; exit 1; }
   cp "$tmp/out.dts" "$FW/$BOARD/uboot.dts"
   echo "-> firmware/$BOARD/uboot.dts"

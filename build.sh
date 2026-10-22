@@ -14,6 +14,8 @@
 #          ./build.sh release [--key <file>]  plan, then assemble: what CI runs, in one go
 #          ./build.sh serve                   build/out/ on port 8000
 #          ./build.sh publish                 upload a release to GitHub
+#          ./build.sh tool <name> [args]      a host tool from src/tools/<name>/, built natively
+#          ./build.sh tools                   every host tool
 #   env:   TVB_BUILD_CPUS (all cores), TVB_BUILD_MEMORY (8g), TVB_BUILD_SUITE (Debian stable),
 #          TVB_BUILD_REVISION (0~local), TVB_BUILD_CACHE (1; 0: clean), TVB_BUILD_CCACHE_SIZE (5G),
 #          TVB_BUILD_CCACHE_DIR (in the work volume; a host directory for CI's cache to keep,
@@ -52,11 +54,15 @@ EOF
   exit 1
 }
 
-usage() { sed -n '3,20p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+usage() { sed -n '3,22p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 case "${1:-}" in
   kernel | uboot | board | firmware | keyring | debs | image | images | plan | repo | assemble | release) ;;
   serve) cd "$OUT" && exec python3 -m http.server 8000 ;;
   publish) exec bash release/publish.sh ;;
+  tool)
+    [ -f "src/tools/${2:-}/build.sh" ] || usage
+    exec bash "src/tools/$2/build.sh" "${@:3}" ;;
+  tools) for t in src/tools/*/build.sh; do bash "$t"; done; exit ;;
   *) usage ;;
 esac
 

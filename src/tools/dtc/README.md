@@ -1,7 +1,7 @@
 # dtc — patches to round-trip a vendor DTB
 
-Vanilla `dtc` v1.8.1 plus five patches, built by `../../build-dtc.sh` into `tools/dtc/`. Decompiling
-a blob normally gives raw numbers; this gives references:
+Vanilla `dtc` v1.8.1 plus five patches, built by `./build.sh tool dtc` into `build/tools/dtc/`.
+Decompiling a blob normally gives raw numbers; this gives references:
 
 ```
 dtc  :  clocks = <0x02 0xaf>;
@@ -9,8 +9,8 @@ dtc  :  clocks = <&cru 0xaf>;          # -P
 ```
 
 ```sh
-./build-dtc.sh          # fetch, patch, build -> tools/dtc/dtc, then gate
-./build-dtc.sh --test   # re-run the gate on firmware/*/board.dtb
+./build.sh tool dtc          # fetch, patch, build -> build/tools/dtc/dtc, then gate
+./build.sh tool dtc --test   # re-run the gate on firmware/*/board.dtb
 ```
 
 | Flag | Does                                                                  |

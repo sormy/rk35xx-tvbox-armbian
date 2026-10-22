@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Callable, Iterator
 
 REPO = Path(__file__).resolve().parent.parent
-DTC = REPO / "tools/dtc/dtc"
+DTC = REPO / "build/tools/dtc/dtc"
 KERNEL_URL = "https://github.com/armbian/linux-rockchip.git"
 KERNEL_REV = "5280f9b4336199c4025c8eed894d2b4e2268dcc6"
 DTS_DIR = "arch/arm64/boot/dts/rockchip"
@@ -245,7 +245,7 @@ def main() -> None:
     parser.add_argument("--reference", default=REFERENCE, help="the design the board derives from")
     args = parser.parse_args()
     if not DTC.is_file():
-        sys.exit("Need the patched dtc. Run: ./build-dtc.sh")
+        sys.exit("Need the patched dtc. Run: ./build.sh tool dtc")
 
     kernel = fetch_kernel(args.rev)
     includes = f'/dts-v1/;\n#include "{args.reference}"\n#include "{SOC_LINUX}"\n'

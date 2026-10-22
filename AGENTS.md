@@ -19,6 +19,7 @@ wrong.
 | `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                              |
 | `patches/<tool>/`   | fixes to host tools we build ourselves, formatted to send upstream                                 |
 | `src/<tool>/`       | host tools we write ourselves                                                                      |
+| `src/tools/<tool>/` | a host tool we build: its build script, our patches, its README; the binary in `build/tools/`      |
 | `scripts/`          | host-side helpers, never installed on a box                                                        |
 | `keyring/`          | the `apt` repo's public signing key                                                                |
 | `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it                       |
@@ -36,8 +37,8 @@ board's. **Shared mechanism lives in `firmware/common/`** — a board never keep
 family script. What it may keep is mechanism no other board can use: a unit for hardware only it
 has.
 
-**Tools we build, and must:** `dtc` (`./build-dtc.sh` — vanilla cannot round-trip a vendor blob with
-`&label`s) · `rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd` and
+**Tools we build, and must:** `dtc` (`./build.sh tool dtc` — vanilla cannot round-trip a vendor blob
+with `&label`s) · `rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd` and
 `gxlimg` (`./build-amltools.sh` — Amlogic's own are closed and x86-64 Linux only) · a per-board
 `uboot.dts` (`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all
 three at once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only on
@@ -76,7 +77,7 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
 | `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
 | `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there     |
-| `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s      |
+| `src/tools/dtc/README.md`             | the patched `dtc` that round-trips a vendor blob with `&label`s      |
 | `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage       |
 | `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader   |
 | `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete |
