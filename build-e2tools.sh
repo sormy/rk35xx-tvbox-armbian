@@ -92,7 +92,7 @@ esac
 
 mkdir -p "$TOOLS/src" "$OUT"
 if [ -d "$BUILD/.git" ]; then
-	git -C "$BUILD" fetch --quiet --tags origin || true
+	git -C "$BUILD" fetch --quiet --tags "$E2TOOLS_REPO" || true
 else
 	rm -rf "$BUILD"
 	git clone --quiet "$E2TOOLS_REPO" "$BUILD"

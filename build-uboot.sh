@@ -74,8 +74,8 @@ mkdir -p "$BUILD"; cd "$BUILD"
 # rkbin pinned to an exact commit (GitHub serves a bare SHA via fetch)
 if [ ! -e "rkbin/$BL31" ]; then
   rm -rf rkbin && mkdir rkbin && ( cd rkbin
-    git init -q && git remote add origin "$RKBIN_REPO"
-    git fetch -q --depth 1 origin "$RKBIN_SHA" && git checkout -q FETCH_HEAD )
+    git init -q
+    git fetch -q --depth 1 "$RKBIN_REPO" "$RKBIN_SHA" && git checkout -q FETCH_HEAD )
 fi
 
 # mainline u-boot pinned to a release tag

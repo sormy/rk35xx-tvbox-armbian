@@ -46,7 +46,7 @@ for c in git cc make; do need "$c" "install build tooling"; done
 
 mkdir -p "$TOOLS/src" "$OUT"
 if [ -d "$BUILD/.git" ]; then
-	git -C "$BUILD" fetch --quiet --tags origin || true
+	git -C "$BUILD" fetch --quiet --tags "$DTC_REPO" || true
 else
 	rm -rf "$BUILD"
 	git clone --quiet --depth 1 --branch "$DTC_VERSION" "$DTC_REPO" "$BUILD"

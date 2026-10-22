@@ -70,7 +70,7 @@ esac
 
 mkdir -p "$TOOLS/src" "$OUT"
 if [ -d "$BUILD/.git" ]; then
-	git -C "$BUILD" fetch --quiet origin "$RKDEV_SHA" || true
+	git -C "$BUILD" fetch --quiet "$RKDEV_REPO" "$RKDEV_SHA" || true
 else
 	rm -rf "$BUILD"
 	git clone --quiet "$RKDEV_REPO" "$BUILD"
@@ -92,8 +92,8 @@ install -m 755 "$BUILD/rkdeveloptool" "$OUT/rkdeveloptool"
 
 if [ ! -e "$RKBIN/$USBPLUG" ]; then
 	rm -rf "$RKBIN" && mkdir -p "$RKBIN" && ( cd "$RKBIN"
-		git init -q && git remote add origin "$RKBIN_REPO"
-		git fetch -q --depth 1 origin "$RKBIN_SHA" && git checkout -q FETCH_HEAD )
+		git init -q
+		git fetch -q --depth 1 "$RKBIN_REPO" "$RKBIN_SHA" && git checkout -q FETCH_HEAD )
 fi
 
 for BOARD in $BOARDS; do

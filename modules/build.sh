@@ -14,11 +14,10 @@ ROOT=/work/package/modules-$NAME
 
 # blob-less: a driver can be one directory of a kernel-sized repository, and archive fetches only
 # the blobs under SUBDIRS
-if [ ! -d "$CACHE" ]; then
-  git init -q --bare "$CACHE" && git -C "$CACHE" remote add origin "$REPO"
-fi
+[ -d "$CACHE" ] || git init -q --bare "$CACHE"
+# by URL, not a stored remote, so a driver that moves to another repository fetches from it
 git -C "$CACHE" cat-file -e "$COMMIT^{commit}" 2>/dev/null ||
-  git -C "$CACHE" fetch -q --depth=1 --filter=blob:none origin "$COMMIT"
+  git -C "$CACHE" fetch -q --depth=1 --filter=blob:none "$REPO" "$COMMIT"
 # shellcheck disable=SC2086  # one path per word
 rm -rf "$SRC" && mkdir -p "$SRC" && git -C "$CACHE" archive "$COMMIT" ${SUBDIRS:-} | tar -x -C "$SRC"
 

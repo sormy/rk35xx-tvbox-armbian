@@ -34,8 +34,7 @@ $DTC -@ -I dts -O dtb -o $B/armbian.dtb $B/armbian.dts 2>/dev/null
 
 if [ ! -d "$BINDINGS" ]; then
 	git init -q "$KERNEL"
-	git -C "$KERNEL" remote add origin "$KERNEL_URL" 2>/dev/null || true
-	git -C "$KERNEL" fetch -q --depth 1 --filter=blob:none origin "$KERNEL_REV"
+	git -C "$KERNEL" fetch -q --depth 1 --filter=blob:none "$KERNEL_URL" "$KERNEL_REV"
 	git -C "$KERNEL" sparse-checkout init --cone
 	git -C "$KERNEL" sparse-checkout set include/dt-bindings arch/arm64/boot/dts
 	git -C "$KERNEL" checkout -q FETCH_HEAD

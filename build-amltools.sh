@@ -25,7 +25,7 @@ cc -O2 -Wall -Wextra -o tools/aml/amlcmd src/amlcmd/amlcmd.c \
   $(pkg-config --cflags --libs libusb-1.0)
 
 [ -d "$GXLIMG_SRC/.git" ] || git clone --quiet "$GXLIMG_REPO" "$GXLIMG_SRC"
-git -C "$GXLIMG_SRC" fetch --quiet origin "$GXLIMG_SHA" || true
+git -C "$GXLIMG_SRC" fetch --quiet "$GXLIMG_REPO" "$GXLIMG_SHA" || true
 git -C "$GXLIMG_SRC" checkout --quiet --force "$GXLIMG_SHA"
 git -C "$GXLIMG_SRC" clean -qfd
 for p in patches/gxlimg/*.patch; do
