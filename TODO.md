@@ -108,6 +108,9 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       keeps the card powered only in runtime suspend. The other route is the combo chip's host-wake
       GPIO 100, which needs the chip-side pin for the low-power command. Until one works, the M20's
       keys ignore suspend and poweroff.
+- [ ] **No kernel self-tests in meson64.** 146 of its 4433 modules are KUnit and test modules, from
+      Armbian's config: off in `kernel/meson64.fragment` (`CONFIG_KUNIT`), then a boot on the M20.
+      The rest of its breadth stays: USB Wi-Fi, tuners and cameras are why a box is general.
 - [ ] **Low priority: `tvb-firstlogin`, the first-login wizard.** A user, the timezone, the locale
       and Wi-Fi, each list filtered as you type; designed in `docs/todo/tvb-linux-rootfs.md`, "First
       login". Until then, `docs/first-login.md` gives the commands.
