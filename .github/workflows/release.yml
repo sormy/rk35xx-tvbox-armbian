@@ -58,7 +58,7 @@ jobs:
     outputs:
       kernels: ${{ steps.plan.outputs.kernels }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install podman
         run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
       - id: plan
@@ -66,13 +66,13 @@ jobs:
         run: |
           sudo -E env "PATH=$PATH" ./build.sh plan
           echo "kernels=$(awk '$1 == "kernel" && $4 == "new" { print $2 }' build/out/release/plan | jq -Rsc 'split("\n")[:-1]')" >>"$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: plan
           path: build/out/release
           retention-days: 1
       # the published debs of groups the plan reuses
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: debs-published
           path: build/out/debs
@@ -89,19 +89,19 @@ jobs:
       matrix:
         conf: ${{ fromJSON(needs.plan.outputs.kernels) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Free disk
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
       - name: Install podman
         run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: plan
           path: build/out/release
       - id: name
         run: echo "kernel=$(basename "${{ matrix.conf }}" .conf)" >>"$GITHUB_OUTPUT"
       # a pull request reads main's cache and saves only its own
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         if: env.TVB_BUILD_CACHE == '1'
         with:
           path: ${{ runner.temp }}/ccache
@@ -115,7 +115,7 @@ jobs:
             TVB_BUILD_REVISION="${version##*-}" ./build.sh kernel "${{ matrix.conf }}"
           sudo chown -R "$USER" "$RUNNER_TEMP/ccache"
           df -h / | tail -1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: debs-${{ steps.name.outputs.kernel }}
           path: build/out/debs
@@ -130,16 +130,16 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Free disk
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
       - name: Install podman
         run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: plan
           path: build/out/release
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: debs-*
           path: build/out/debs
