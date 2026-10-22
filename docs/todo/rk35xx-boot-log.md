@@ -19,9 +19,9 @@ Two entries dominate the err/warn count:
   management frame in Radxa's driver. ✅ gone: `patches/aic8800/98` deletes it and its RX twin,
   `frame type`.
 
-**Relevelling is not fixing.** A line that tells the reader nothing is noise at any level, and
-`dev_dbg` just hides it while leaving the log as long for anyone who raises the level. Delete it, or
-make it conditional on something actually being wrong.
+**Each line at its true level.** Progress a driver reports is `info` or `debug`, never `warn`; a
+bare `printk()` has no level and lands at `warn`. Relevel what tells a debugging reader something;
+delete only what tells nobody anything.
 
 There is no usable stock baseline for this board, so judge each line on its own terms: does it
 describe a fault on **this** board, or an optional thing being absent?
@@ -66,9 +66,42 @@ where the supply is optional — `devm_regulator_get_optional()` plus a NULL gua
 **Do not "fix" this by adding the properties to the DTS** — that would describe hardware the board
 does not have.
 
+### 2. aic8800 — progress as bare `printk()`, R69
+
+121 lines at `warn` or worse on the R69 against 49-60 on the other RK3528 boards (2026-10-22).
+Radxa's driver prints its progress with no level: `get_txpwr_max:txpwr_max:18` ×17, `file md5:` ×5,
+`rwnx_load_firmware :firmware path =` ×5, `rwnx_plat_bin_fw_upload_android` ×4,
+`aicbsp_get_feature … 150 MHz` ×3, an asterisk banner, `tcp_ack_init`, `rwnx_reg_notifier Enter`,
+and the SSID and channel of every connect. Give each `pr_debug()` or `pr_info()`, one patch in
+`patches/aic8800/`.
+
+### 3. MPP — absent resources reported at `warn`
+
+Every RK3528 board, about a dozen lines: `rkvdec2_init: No … reset resource define` ×4,
+`failed on clk_get clk_core`/`clk_cabac`, `mpp_rkvdec2: shared_* is not found!` ×4,
+`mpp_rkvenc2: failed to init opp info`/`init_opp_table`, `rkvenc_init: failed to add venc devfreq`,
+`rockchip-dmc: failed to get vop …` ×2. The decoders work; the code probes for resources this SoC
+does not have. One patch in `kernel/rk35xx.conf`, down to `debug`.
+
+### 4. Small, once each
+
+| Lines | Source                                        | Fix                                   |
+| ----: | --------------------------------------------- | ------------------------------------- |
+|     4 | `inv-icm42600-spi has no spi_device_id`       | the IMU driver off in the fragment    |
+|     4 | `dwmmc_rockchip: No normal/idle pinctrl`      | `dev_dbg`: both states are optional   |
+|     3 | `Can't reduce the clock below 52MHz`          | `dev_dbg` in `sdhci-of-dwcmshc`       |
+|     2 | `hci0: Failed to read local supported codecs` | ❓ the SWT6621S answers `-56`         |
+|     2 | `Direct firmware load for <name>.<board>…`    | the driver's board name tried first   |
+|     1 | `optee: api uid mismatch`                     | `CONFIG_OPTEE` off: we ship no OP-TEE |
+|     2 | `alsa-restore.rules` stale lines              | `alsa-utils` from Armbian; not ours   |
+|     1 | `bpf-restrict-fs: Failed to load BPF object`  | no BPF LSM: `lsm=` or ignore          |
+
 ## Order
 
 1. dwmac-rk log levels — small, self-contained, one patch in `kernel/rk35xx.conf`
+2. aic8800 progress `printk()`s — the R69's bulk
+3. MPP probe chatter
+4. the small ones
 
 Keep these out of functional patches. Mixing log-level churn into a fix invites another review round
 on something already verified.
