@@ -10,9 +10,9 @@ if [ ! -e "$cache" ] || [ /var/lib/apt/lists -nt "$cache" ]; then
     </dev/null >/dev/null 2>&1 &
 fi
 wan=/run/tvb-motd-wan
-if command -v curl >/dev/null && { [ ! -e "$wan" ] || [ -n "$(find "$wan" -mmin +60)" ]; }; then
+if [ ! -e "$wan" ] || [ -n "$(find "$wan" -mmin +60)" ]; then
   touch "$wan"
-  (curl -4fsS --max-time 5 https://ipv4.whatismyip.akamai.com/ >"$wan.new" && mv "$wan.new" "$wan") \
+  (wget -4qO- -T5 https://ipv4.whatismyip.akamai.com/ >"$wan.new" && mv "$wan.new" "$wan") \
     </dev/null >/dev/null 2>&1 &
 fi
 # the release apt follows, by its suite: stable, testing, unstable
@@ -53,7 +53,7 @@ read -r up _ </proc/uptime
 up=${up%.*}
 temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
 load=$(awk -v l="$load" -v n="$(nproc)" 'BEGIN {printf "%d%%", l * 100 / n}')
-uptime="$([ "$up" -lt 86400 ] || echo "$((up / 86400))d ")$((up % 86400 / 3600))h $((up % 3600 / 60))m"
+uptime="$([ "$up" -lt 86400 ] || echo "$((up / 86400))d ")$([ "$up" -lt 3600 ] || echo "$((up % 86400 / 3600))h ")$((up % 3600 / 60))m"
 mem=$(free -m | awk '/^Mem:/ {printf "%d%%", $3 * 100 / $2}')
 memtotal=$(free -m | awk '/^Mem:/ {printf "of %.2fG", $2 / 1024}')
 

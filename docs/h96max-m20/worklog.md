@@ -1523,3 +1523,26 @@ its 5 their 8 at 96%, its 6 their 6 at only 29%. Rebuilt as pages 0-3, then 4 2 
 of 60 frames of a 720p clip and 120 of 120 of a 1080p High clip with B-frames, all bit-exact against
 ffmpeg's software decode, the same as linux-firmware's; loaded from `updates/$(uname -r)/`, the
 loader's debug confirming. It replaces linux-firmware's.
+
+## 2026-10-22 — the first TVBian image: an old board package, and 1920x1200
+
+Booted from USB, the image's banner was one line, and `dpkg -l` showed `tvb-h96max-m20` at `1`: a
+release build of 2026-10-20 left in `build/out/debs/`, which `image/build.sh` picked by version over
+the fresh `0~local`. It now takes the last built deb of each name.
+
+HDMI came up at 1920x1200, not the panel's 2256x1504 (EDID: one detailed timing, 235.70 MHz). With
+`drm.debug=0x1e` and a re-probe: `Rejected mode: "2256x1504" ... (BAD_HVALUE)`. 6.18's
+`meson_venc_hdmi_supported_mode` caps a DMT mode at 1920 wide; the PLL solver had found the clock.
+Armbian's meson64 carries Hardkernel's 2560 cap, which is why the overlay showed the native mode;
+upstream lifted it to 3840x2160 in 6.19, `26ce0b87a815`, backported to meson64 as `0003`.
+
+Rebuilt with both: `tvb-h96max-m20 0~local` in the image, the native 2256x1504 @ 60 on HDMI. At that
+size fbcon picks the built-in Terminus 16x32 over 8x16, so the console reads larger than it did
+under Armbian.
+
+The console stayed noisy after boot: `kernel.printk = 4 4 1 7` is the kernel's and procps' own
+default, so every error still reached it. At `1 4 1 7` it is quiet once `systemd-sysctl` runs.
+
+The banner's WAN address needs `wget`, now listed in the image (`curl` is not in it), and the uptime
+drops a zero hour. Without `whiptail`, `apt-get install` printed debconf's fallbacks through
+`Term::ReadLine`; with it, nothing.

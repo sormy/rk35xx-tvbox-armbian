@@ -7,3 +7,5 @@ network-manager wpasupplicant wireless-regdb iw iproute2 systemd-timesyncd
 avahi-daemon openssh-server sudo apt ca-certificates
 # swap in RAM; users and locales
 systemd-zram-generator adduser locales
+# the login banner's public address; debconf's prompts, which without it fall back noisily
+wget whiptail
