@@ -1814,3 +1814,11 @@ systemd, and mmdebstrap empties it after the hooks. On that card, with the cable
   from the OTP id over two reboots, DHCP's `.241` with it.
 
 As debs from `./build.sh`, after a reboot: Wi-Fi at HE-MCS 11, `hci0` up, nothing failed.
+
+## 2026-10-22 — the AIC8800 driver quiet
+
+Radxa's driver logged every debug class by default: 2181 `rwnx_rx_handle_msg` lines, 888 more of
+another id and 858 `scan channel` lines in under two hours of uptime. Radxa's own
+`fix-Lower-the-debugging-log-level`, left out as not applying, applies to the SDIO driver once cut
+to it; it is `10` now. After a reboot, `dmesg` holds one `AICWFDBG` line, `99`'s MAC report, at
+`LOGERROR`. Wi-Fi on `8a:00:33:65:64:b6`, BT `8A:00:33:65:64:B7`, cncjs running, no failed units.
