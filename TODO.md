@@ -55,12 +55,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 - [ ] **The repo restructure.** Folders named for what they hold, patches beside their owner, tools
       under `tools/`, docs current or in `research/`: `docs/todo/repo-layout.md`.
 
-- [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`
-      mixes the two in one string.
-  - `board.conf` gets the product name and the PCB silkscreen as two settings; `board-name` derives
-    from them the same way on every board.
-  - A key rename is a package rename, `tvb-<board>`, and a hostname change.
-
 - [ ] **`tvb-install`, a first real install.** `firmware/common/tvb-install` has reached its prompt
       on the H313, never past it: the H313 from its SD to the eMMC, keeping `DVKR`/`SSKR`; the M20
       image from a stick to the eMMC, then back from the eMMC to a stick. Together they test phases

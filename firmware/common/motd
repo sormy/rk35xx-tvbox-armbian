@@ -67,12 +67,8 @@ cat <<'LOGO'
 
 LOGO
 printf '%s' "$n"
-# board-name is the product, then the PCB's silkscreen when it has one: the last word, with an underscore
-board=$(cat /usr/lib/tvb/board-name)
-case ${board##* } in
-  *_*) board="$e[1m${board% *}$n $e[0;90m${board##* }$n" ;;
-  *) board="$e[1m$board$n" ;;
-esac
+board="$e[1m$(cat /usr/lib/tvb/board-name)$n"
+[ ! -s /usr/lib/tvb/board-pcb ] || board="$board $e[0;90m$(cat /usr/lib/tvb/board-pcb)$n"
 printf ' TVBian for %s, running Linux %s%s%s\n\n' "$board" "$g" "$(uname -r)" "$n"
 printf ' %-14s%s\n' "Base:" "${NAME%% *} $suite ($VERSION_CODENAME)"
 [ -z "$updates" ] || printf ' %-14s%s\n' "Updates:" "$updates"

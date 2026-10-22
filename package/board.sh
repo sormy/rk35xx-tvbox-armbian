@@ -6,7 +6,8 @@ BOARD=$1
 FW=/repo/firmware
 # shellcheck source=/dev/null
 . "$FW/$BOARD/board.conf"
-: "${BOARD_FAMILY:?firmware/$BOARD/board.conf names no BOARD_FAMILY}"
+: "${BOARD_FAMILY:?firmware/$BOARD/board.conf names no BOARD_FAMILY}" "${BOARD_NAME:?firmware/$BOARD/board.conf names no BOARD_NAME}"
+[ "${BOARD_ID:-}" = "$BOARD" ] || { echo "firmware/$BOARD/board.conf: BOARD_ID=${BOARD_ID:-} is not its directory" >&2; exit 1; }
 # Rockchip's defaults: the vendor's ttyFIQ0 console, and CMA for a 4K frame (the tree has 8 MiB)
 if [ "$BOARD_FAMILY" = rk35xx ]; then
   : "${BOARD_SERIALCON:=earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0}" "${BOARD_CMA:=256M}"
@@ -17,7 +18,9 @@ LIB=$ROOT/usr/lib/tvb
 rm -rf "$ROOT" && mkdir -p "$ROOT/DEBIAN" "$LIB"
 
 dtc -q -@ -I dts -O dtb -o "$LIB/board.dtb" "$FW/$BOARD/board.dts"
-cp "$FW/$BOARD/board-name" "$LIB/board-name"
+echo "$BOARD_ID" >"$LIB/board-id"
+echo "$BOARD_NAME" >"$LIB/board-name"
+[ -z "${BOARD_PCB:-}" ] || echo "$BOARD_PCB" >"$LIB/board-pcb"
 
 # loader files only: nothing in this package writes a sector
 if [ -n "${BOARD_UBOOT_BUILD:-}" ]; then
@@ -73,7 +76,7 @@ Conflicts: tvb-board
 Section: admin
 Priority: optional
 X-Tvb-Inputs: $(bash /repo/release/inputs.sh board "$BOARD")
-Description: TVBian board support for the $(cat "$FW/$BOARD/board-name")
+Description: TVBian board support for the $BOARD_NAME
  The board's device tree, its firmware and settings, and its loader files.
 CONTROL
 dpkg-deb --root-owner-group -Zxz -b "$ROOT" "/out/debs/tvb-${BOARD}_${VERSION}_arm64.deb" >/dev/null

@@ -19,17 +19,15 @@ version() { awk -v c="kernel/$1.conf" '$1 == "kernel" && $2 == c { sub(/-[0-9]+$
   echo "| --- | --- | --- | --- | --- | --- | --- | --- |"
   for img in /out/images/*.img.xz; do
     board=$(basename "$img" | sed -E 's/^tvbian-[0-9]{4}-[0-9]{2}-[0-9]{2}-(.*)-[a-z]+\.img\.xz$/\1/')
+    unset "${!BOARD_@}"   # a key one board leaves out must not carry over from the last
     # shellcheck source=/dev/null
     . "firmware/$board/board.conf"
     next=$(version "$BOARD_KERNEL-next")
-    # board-name: the product, then the PCB's silkscreen when it has one, the last word with an "_"
-    name=$(cat "firmware/$board/board-name") pcb=-
-    case ${name##* } in *_*) pcb=${name##* } name=${name% *} ;; esac
     # the board's own chips, firmware and driver both; the SoC's, named after its maker, go unsaid
     soc=$(vendor "$BOARD_FAMILY")
     extras=$(tr ' ' '\n' <<<"$BOARD_DEPENDS" | sed -n 's/^tvb-firmware-//p' | grep -vix "$soc" |
       tr '[:lower:]' '[:upper:]' | paste -sd, | sed 's/,/, /g')
-    echo "| $name | $pcb | $(vendor "$BOARD_FAMILY") ($BOARD_KERNEL) | Debian ${TVB_BUILD_SUITE:?} | $(version "$BOARD_KERNEL"), $(origin "$BOARD_KERNEL") | ${next:+$next, $(origin "$BOARD_KERNEL-next")} | $extras | \`$(basename "$img")\` |"
+    echo "| $BOARD_NAME | ${BOARD_PCB:--} | $(vendor "$BOARD_FAMILY") ($BOARD_KERNEL) | Debian ${TVB_BUILD_SUITE:?} | $(version "$BOARD_KERNEL"), $(origin "$BOARD_KERNEL") | ${next:+$next, $(origin "$BOARD_KERNEL-next")} | $extras | \`$(basename "$img")\` |"
   done
   echo
   next=$(for k in kernel/*-next.conf; do basename "$k" -next.conf; done | paste -sd'|')

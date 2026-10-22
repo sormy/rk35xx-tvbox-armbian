@@ -131,11 +131,11 @@ needing no board routing are candidates.
 
 ## Board data
 
-Copy the closest `firmware/<board>/` and edit: `board.conf` (`BOARD_FAMILY`, required,
-`BOARD_HOSTNAME`, `BOARD_KERNEL`, `BOARD_DEPENDS`), `package.list`, `board-id`, `board-name` (the
-login banner — carry the PCB silkscreen, since these boxes vary between production runs), plus the
-DTB and idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add the board to
-the README's Boxes table and support matrix.
+Copy the closest `firmware/<board>/` and edit: `board.conf` (`BOARD_ID`, the directory's name;
+`BOARD_NAME`, the product; `BOARD_PCB`, the PCB silkscreen, since these boxes vary between
+production runs; `BOARD_FAMILY`; `BOARD_HOSTNAME`, `BOARD_KERNEL`, `BOARD_DEPENDS`), `package.list`,
+plus the DTB and idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add the
+board to the README's Boxes table and support matrix.
 
 - **`package.list` is `tvb-<board>`'s file list**: mode, repo file, install path, at Debian's paths
   (`/usr/lib/...`, never `/usr/local`); a `link <target> <dest>` line makes a symlink.
@@ -175,7 +175,7 @@ Cheaper here than on the box. Attach the built image and check:
 - **Loaders byte-identical** to `firmware/<board>/factory_idbloader.bin` (sector 64) and
   `firmware/<board>/uboot.itb` (16384) — `dd` + `md5`.
 - **DTB** matches `firmware/<board>/board.dtb` at `/usr/lib/tvb/board.dtb`.
-- **`/usr/lib/tvb/`** populated: `board-name`, `board.dtb`, the loaders.
+- **`/usr/lib/tvb/`** populated: `board-id`, `board-name`, `board-pcb`, `board.dtb`, the loaders.
 - **Filesystem clean** — the build's `fsck.ext4 -fn` gate must have passed.
 
 Validation is the last gate, and it has its own criteria list.

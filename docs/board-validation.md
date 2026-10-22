@@ -14,7 +14,7 @@ Risk order: SDIO Wi-Fi, the Ethernet PHY, the video codec, anything the DTB touc
 - [ ] Boot time at or under the board's recorded figure, on the **second** boot
 - [ ] `dmesg` accounted for line by line — nothing repeated at any level; tolerated lines named in
       `board.md` with the reason
-- [ ] `hostname` and `/usr/lib/tvb/board-name` correct
+- [ ] `hostname` and `/usr/lib/tvb/board-{id,name,pcb}` correct
 - [ ] `dpkg -l 'tvb-*-modules'`: every out-of-tree module installed, and present in `lsmod`
 - [ ] Ten warm reboots in a row, and after each one **every device still works** — root mounts, the
       SD enumerates, `wlan0` associates, `hci0` is up, IR responds. Coming back up is not the test

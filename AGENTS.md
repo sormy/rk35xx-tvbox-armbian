@@ -30,11 +30,11 @@ wrong.
 | `release/`          | the release plan, the signed `apt` repo, and the upload to GitHub                                 |
 
 **Repo files carry no prefix**: each board's `package.list` names where a file installs. A board
-directory holds `board.conf`, `board-id`, `board-name`, the tree, the factory idbloader and the
-maskrom loader, `package.list`, `preserve-sectors` where it has a `tvb-install`, and firmware only
-where it is shown to be this board's. **Shared mechanism lives in `firmware/common/`** — a board
-never keeps its own copy of a family script. What it may keep is mechanism no other board can use: a
-unit for hardware only it has.
+directory holds `board.conf`, the tree, the factory idbloader and the maskrom loader,
+`package.list`, `preserve-sectors` where it has a `tvb-install`, and firmware only where it is shown
+to be this board's. **Shared mechanism lives in `firmware/common/`** — a board never keeps its own
+copy of a family script. What it may keep is mechanism no other board can use: a unit for hardware
+only it has.
 
 **Tools we build, and must:** `dtc` (`./build.sh tool dtc` — vanilla cannot round-trip a vendor blob
 with `&label`s) · `rkdeveloptool` (`./build.sh tool rkdeveloptool`) and each board's maskrom loader
