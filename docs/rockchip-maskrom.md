@@ -71,11 +71,6 @@ The BootROM rescues you only when it never handed off — so **erasing sector 64
 writing a wrong DDR blob there is not.** `ctrl+b` needs DRAM up, so it is only ever as good as the
 DDR init beside it in the same block.
 
-✅ **A vanilla Armbian install keeps `ctrl+b`** — its ROCK 2F idbloader carries the same
-`ctrl+b: Bootrom download!` and `back_to_bootrom()` as every factory loader here, so a box bricked
-by stock `armbian-install` is still reachable over serial. 🟡 Unknown whether that image's older
-`ddr-v1.09` brings up every board's DRAM.
-
 **No `rd` subcode works before `db`.** They are answered by `usbplug` — the loader's CODE472 entry,
 which `db` uploads and runs — not by the BootROM. Before `db` every one fails with
 `Reset Device failed!` (exit 1) and changes nothing; after it they all succeed, and on a bus-powered
@@ -180,8 +175,8 @@ tools/rktools/rkdeveloptool db tools/rktools/rk3528_spl_loader-<board>.bin
 tools/rktools/rkdeveloptool wl 0 <image>
 ```
 
-The factory window is blank unless `build-image.sh` was given `FACTORY_DUMP`. If it was not, put
-7168-16383 back from your dump — **after** the image, since `wl 0` writes the whole chip:
+The image leaves the factory window blank: put 7168-16383 back from your dump — **after** the image,
+since `wl 0` writes the whole chip:
 
 ```sh
 dd if=emmc-stock.img of=window.bin bs=512 skip=7168 count=9216     # on the host

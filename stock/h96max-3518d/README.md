@@ -2,8 +2,8 @@
 
 All of it came from **one root shell on the running stock Android**, over the serial console on
 2026-09-05, before anything on the box was modified. `su` is present (`/system/xbin/su`,
-`ro.build.type=userdebug`, `ro.debuggable=1`), so unlike `stock/h96max-h313/` nothing here is inferred
-from a boot log.
+`ro.build.type=userdebug`, `ro.debuggable=1`), so unlike `stock/h96max-h313/` nothing here is
+inferred from a boot log.
 
 Binaries were pulled as `dd | gzip | base64` per 1 MiB chunk over the 1.5 Mbaud console; gzip's
 CRC32 gates each chunk and a whole-range `md5sum` on the box was compared against the host file.
@@ -11,15 +11,15 @@ Every file below matched.
 
 ## Identity
 
-| Property            | Value                                                                          |
-| ------------------- | ------------------------------------------------------------------------------ |
+| Property            | Value                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------- |
 | `ro.product.name`   | `rk3518_box_32` — same as `stock/h96max-h313/`; `_32` is the vendor's 32-bit target |
-| `ro.product.model`  | `H96_Max_3518_TS`                                                              |
-| `ro.board.platform` | `rk3528`                                                                       |
-| Build               | `RZX.V01.20260608.1237`, Android 14, kernel 6.1.118 `#147` (armv7l)            |
-| Serial              | `SN26072800001`                                                                |
-| SoC OTP             | `524b 3518 …` = literal `RK3518`; BL31 prints `RK3518 SoC`                     |
-| PCB silkscreen      | `3518_DG_ZX_V01 20250401`                                                      |
+| `ro.product.model`  | `H96_Max_3518_TS`                                                                   |
+| `ro.board.platform` | `rk3528`                                                                            |
+| Build               | `RZX.V01.20260608.1237`, Android 14, kernel 6.1.118 `#147` (armv7l)                 |
+| Serial              | `SN26072800001`                                                                     |
+| SoC OTP             | `524b 3518 …` = literal `RK3518`; BL31 prints `RK3518 SoC`                          |
+| PCB silkscreen      | `3518_DG_ZX_V01 20250401`                                                           |
 
 ## The tree
 
@@ -97,9 +97,9 @@ needs. `docs/h96max-3518d/worklog.md` has how it was finally captured.
 
 ### Radio
 
-`swt6621s_wifi` + `skw_sdio_lite` — the **same Seekwave SWT6621S** as `firmware/h96max-h313/`, driver
-`VERSION: 2.0.250319-250618.eececbe`. SDIO on `mmc@ffc20000`, control GPIOs off `/seekwcn_boot`
-(`seekwave,sv6160lite`).
+`swt6621s_wifi` + `skw_sdio_lite` — the **same Seekwave SWT6621S** as `firmware/h96max-h313/`,
+driver `VERSION: 2.0.250319-250618.eececbe`. SDIO on `mmc@ffc20000`, control GPIOs off
+`/seekwcn_boot` (`seekwave,sv6160lite`).
 
 **Its factory blobs are byte-identical to the other H96 Max's**, except the NV. Measured:
 `SWT6621S_DRAM_SDIO.bin` (192816 B), `SWT6621S_IRAM_SDIO.bin` (358776 B) and
@@ -118,8 +118,7 @@ share a file between boards.
 `seekwave_nv_name = "SEEKWAVE_NV_SWT6652.bin"` in the tree names a file that does not exist in
 `/vendor/etc/firmware` — same dangling reference as the other H96 Max.
 
-`wlan0` MAC is `fe:fd:fc:c4:f3:27`, locally administered and not in vendor storage — the
-`rk35xx-mac-pin` case exactly.
+`wlan0` MAC is `fe:fd:fc:c4:f3:27`, locally administered and not in vendor storage.
 
 Bluetooth rides the same chip over SDIO. Only `rfkill0`/`phy0` (wlan) exists; there is **no
 `hci0`**, and the log says

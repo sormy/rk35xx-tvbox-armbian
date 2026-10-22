@@ -146,7 +146,7 @@ xz -dk tvbian-<date>-<board>-trixie.img.xz
 ./rkdeveloptool rd                                 # reboot
 ```
 
-More routes, and what to do if a transfer stalls: `docs/maskrom.md`.
+More routes, and what to do if a transfer stalls: `docs/rockchip-maskrom.md`.
 
 ## Update a running box
 
@@ -206,8 +206,8 @@ Power-cycle to see the log.
 **SD still boots** — write the backup straight back:
 `sudo dd if=emmc-stock.img of=/dev/mmcblkX bs=4M status=progress; sync`.
 
-**Nothing boots, or the box has no SD slot** — go in over USB: `docs/maskrom.md`, section **Write an
-image over USB**. It is very hard to truly brick these boxes. Not impossible. Hard.
+**Nothing boots, or the box has no SD slot** — go in over USB: `docs/rockchip-maskrom.md`, section
+**Write an image over USB**. It is very hard to truly brick these boxes. Not impossible. Hard.
 
 ## Credits
 

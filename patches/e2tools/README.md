@@ -1,8 +1,7 @@
 # e2tools — patches
 
 Stock e2tools cannot safely edit an ext4 image. `../../build-e2tools.sh` fetches e2tools `v0.1.2`,
-applies these, builds to `tools/e2tools/`, and gates the result. `build-image.sh` puts that
-directory ahead of `PATH` and refuses to run without it.
+applies these, builds to `tools/e2tools/`, and gates the result.
 
 | Patch  | Fixes                                                        |
 | ------ | ------------------------------------------------------------ |

@@ -29,22 +29,6 @@ A board is a directory and a package, and never touches another's. Shared things
 serve: firmware per chip once two boards share it, kernel per family. CI's input-hash skip builds
 only what a change moved, so a board-only change builds no kernel.
 
-## What it retires
-
-| Today                                  | Why it exists              | After                 |
-| -------------------------------------- | -------------------------- | --------------------- |
-| `kernel-prepare`, `kernel-dkms-src`    | Armbian's headers, DKMS    | gone                  |
-| `dtb-persist`                          | upgrades ship stock DTBs   | DTB in our package    |
-| `boardname` hook, `BOARD=rock-2f`      | `armbian-bsp` rewrites it  | gone                  |
-| `linux-u-boot-*` hold                  | ROCK 2F loaders soft-brick | no such package       |
-| `BOARD_DKMS_FETCH`, `board_stage_dkms` | drivers built on the box   | built with the kernel |
-| `BOARD_APT_DEBS` offline staging       | no toolchain on Lepotato   | gone                  |
-| `patches/linux-rockchip/` unapplied    | kernel comes from apt      | applied               |
-| `platform-install`, its caveats        | Armbian's installer        | `tvb-install`         |
-| M20 chain-loading Lepotato's U-Boot    | base image's own build     | our build             |
-| first-boot wizard                      | Armbian's first login      | `tvb-firstlogin`      |
-| `mac-pin`, `mac-oui`                   | drivers invent addresses   | drivers read them     |
-
 ## One kernel per family
 
 | Family  | Kernel                | Boards           |
@@ -149,8 +133,7 @@ comes only with hardware that kernel cannot drive yet, such as a new Wi-Fi chip.
 
 ## Images
 
-Every board, minimal: four images a build. Each is a generic base plus a board stamp, the split
-`build-image.sh` already makes with Armbian's image as the base.
+Every board, minimal: four images a build. Each is a generic base plus a board stamp.
 
 | Stage | Per       | Holds                                               |
 | ----- | --------- | --------------------------------------------------- |
@@ -227,8 +210,8 @@ alike on every board: `u-boot.bin`, the M20's chain-loaded U-Boot or a Rockchip 
 `idbloader.bin` where a board has one. `tvb-install` knows by family where each goes. One board per
 package, so no board directory, unlike Debian's many-board `u-boot-rockchip`. Each board package
 `Provides:` and `Conflicts:` `tvb-board`, so two boards never install together. Its postinst never
-writes a sector: `apt` flashing a loader is the soft-brick `docs/apt-upgrade.md` defends against.
-`tvb-install --uboot` writes it, on purpose, watched.
+writes a sector: `apt` flashing a loader can soft-brick a box. `tvb-install --uboot` writes it, on
+purpose, watched.
 
 ## Hosted on GitHub
 
@@ -238,16 +221,13 @@ The `apt` repo and every image are GitHub release assets of this repo, signed wi
 
 ## Weekly build
 
-Every Monday, GitHub Actions repins every kernel to the newest released upstream commit within its
-series, builds two kernels and four images from scratch on GitHub's hosted runners, and publishes a
-release tagged by date, `2026-10-01`. The repin rules, jobs and runner limits are in
-`docs/todo/tvb-linux-build.md`.
+Every Monday, GitHub Actions builds each kernel whose upstream moved, as `docs/sources.md` sets out,
+and four images, on GitHub's hosted runners, and publishes a release tagged by date, `2026-10-01`.
+The jobs and runner limits are in `docs/todo/tvb-linux-build.md`.
 
 ## MAC addresses come from the drivers
 
-`mac-pin` goes. Each driver reads its own address at probe, through the kernel series; which patch
-covers which interface, and the one-time change to derived addresses, is in
-`docs/todo/rk35xx-mac-pinning.md`.
+Each driver reads its own address at probe, through the kernel series.
 
 ## Build hosts
 
@@ -284,8 +264,6 @@ Armbian and plain Debian are what it is run on. ❓ Ubuntu: our kernel debs need
 
 ## tvb-install
 
-Replaces `armbian-install`, `platform-install` and `scripts/aml-emmc-install`.
-
 It ships in `tvb-<board>`, as `/usr/sbin/tvb-install`, not as a package of its own: what it writes
 is the board's, and the board package already carries it. One script for every family,
 `firmware/common/tvb-install`: it copies the running system to another disk, USB, eMMC or SD, the
@@ -304,12 +282,12 @@ without it ships no `tvb-install`.
 | meson-gxl | `reserved`'s unifykeys: serial, MACs |
 | rk35xx    | `DVKR`, `SSKR`: 7168–16383           |
 
-| Must                                            | Source of the rule        |
-| ----------------------------------------------- | ------------------------- |
-| never write sectors 7168–16383 (`DVKR`, `SSKR`) | `docs/armbian-install.md` |
-| write idbloader to all five slots, FIT to both  | `docs/uboot.md`           |
-| find the eMMC by `boot0`/`boot1`                | `AGENTS.md`               |
-| follow the factory layout on Amlogic            | `docs/emmc-layout.md`     |
+| Must                                            | Source of the rule    |
+| ----------------------------------------------- | --------------------- |
+| never write sectors 7168–16383 (`DVKR`, `SSKR`) | `docs/emmc-layout.md` |
+| write idbloader to all five slots, FIT to both  | `docs/uboot.md`       |
+| find the eMMC by `boot0`/`boot1`                | `AGENTS.md`           |
+| follow the factory layout on Amlogic            | `docs/emmc-layout.md` |
 
 ## Phases
 
@@ -336,11 +314,10 @@ Each phase ships alone and reverts by reinstalling Armbian's kernel.
 4. **Images.** Done when every board boots its image from SD, or maskrom where there is no slot, and
    passes validation.
 5. **tvb-install.** Done when SD → eMMC keeps `DVKR`/`SSKR` byte-identical on every board.
-6. **Weekly build.** Done when one scheduled run repins, publishes debs and four images under its
-   date, and a forced failure publishes nothing.
-7. **Delete** every row of "What it retires", and fold the root `build-*.sh` that survive into
-   `./build.sh` subcommands. Done when `grep -ri armbian firmware/ scripts/` finds only history, and
-   `./build.sh` is the only build entry point.
+6. **Weekly build.** Done when one scheduled run publishes debs and four images under its date, and
+   a forced failure publishes nothing.
+7. **One entry point.** Fold the root `build-*.sh` that survive into `src/tools/`, per
+   `docs/todo/repo-layout.md`. Done when `./build.sh` is the only build entry at the root.
 
 ## Costs and risks
 
@@ -350,7 +327,7 @@ Each phase ships alone and reverts by reinstalling Armbian's kernel.
 | a patch applies, but is wrong | the box misbehaves   | validation script, on hardware     |
 | an out-of-tree driver's API   | CI fails on a series | human work, with the series move   |
 | an untested vendor tip        | the box misbehaves   | validation script, on hardware     |
-| kernel security updates       | upstream advisories  | the weekly repin brings them       |
+| kernel security updates       | upstream advisories  | the weekly build follows them      |
 | deployed boxes                | old layout           | `docs/migrate.md`, in place        |
 
 The loud rows are rarer than they look: the mt76 and btmtksdio patches applied unchanged from 6.18
@@ -383,8 +360,8 @@ Two-way:
 - The keyring's name, which every source's `signed-by=` names: `tvb-archive-keyring`, or
   `tvbian-archive-keyring` after `debian-archive-keyring`?
 - BTF: dropped with debug info to fit the runner, or kept for BPF tools at the cost of disk?
-- A repin that moved a kernel: publish only after the validation script passes on one box of that
-  family, or automatically?
+- A kernel that moved: publish only after the validation script passes on one box of that family, or
+  automatically?
 
 ## Done means
 

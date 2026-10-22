@@ -32,7 +32,7 @@ box runs the R69 image from SD (the eMMC's Android is untouched):
 | File                                     | What                                                                 |
 | ---------------------------------------- | -------------------------------------------------------------------- |
 | `cpuinfo.txt`, `meminfo.txt`             | 4× A53; `MemTotal 2015176 kB` — the full 2 GB is real                |
-| `soc-serial.txt`                         | SoC cpuid `6a97e688…` (matches stock boot.log; feeds mac-pin)        |
+| `soc-serial.txt`                         | SoC cpuid `6a97e688…` (matches stock boot.log)                       |
 | `emmc-identity.txt`                      | eMMC `R1J96N`, manfid `0x13`, CID/CSD — for the storage-caps work    |
 | `sd-identity.txt`                        | the SD used during bring-up (Samsung `JC1S5`, 64 GB)                 |
 | `partitions.txt`, `partition-labels.txt` | Android GPT: p7=`boot` (stock DTB), p13=`super` (dynamic partitions, |

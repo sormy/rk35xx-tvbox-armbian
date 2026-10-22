@@ -253,8 +253,7 @@ PHY, clocks and VPU are GXL's. `patches/meson-dw-hdmi/` carries the driver.
 **The node keeps a GXL fallback and drops `reset-names`.** Built-in meson-drm finds its HDMI
 component only by a compatible it knows, so the fallback stays. That also binds built-in
 meson-dw-hdmi first, and its GXL port writes into the direct window stop the boot; without
-`reset-names` its first reset lookup fails before it maps anything. The overlay's DKMS driver takes
-resets by index.
+`reset-names` its first reset lookup fails before it maps anything.
 
 ## CEC
 
@@ -279,13 +278,10 @@ fits no AV or S/PDIF jack, so nothing would consume a graft.
 ## TVBian's kernel
 
 `board.tvbian.patch` applies on top of `board.patch`, for TVBian's kernel only; `package/board.sh`
-builds the tree with it. Armbian's image keeps `board.patch` alone.
+builds the tree with it.
 
 | Change                     | What it gives                                             |
 | -------------------------- | --------------------------------------------------------- |
 | `hdmi-tx` `reset-names`    | in-tree dw-hdmi takes its resets by name, not by index    |
 | `/ao-secure@c8100140`      | `meson-gx-socinfo`: `soc0`, `GXLX2 (S905L3)`              |
 | `/firmware/secure-monitor` | `meson_sm`: the chip serial, in `firmware:secure-monitor` |
-
-❓ the three on Armbian's 6.18.44 kernel: a boot with them hung, with a boot script change beside
-them, and neither was isolated.

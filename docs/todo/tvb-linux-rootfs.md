@@ -189,8 +189,8 @@ Not taken: `armbian-hardware-optimize` (no case for RK3528 or GXL), `armbian-led
 (serial and maskrom backup cover them), the Realtek, Chromium and AXP udev rules (no such hardware),
 `armbian-config`.
 
-The `/tmp` tmpfs that breaks a large `apt full-upgrade` in `docs/apt-upgrade.md` is Debian trixie's
-own default, so it comes along regardless.
+The `/tmp` tmpfs that breaks a large `apt full-upgrade` is Debian trixie's own default, so it comes
+along regardless.
 
 ## Decide
 

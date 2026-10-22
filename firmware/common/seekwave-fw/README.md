@@ -1,9 +1,8 @@
 # Seekwave SWT6621S firmware
 
-Shared by every board carrying this radio. On TVBian, `package.list` here builds
-`tvb-firmware-swt6621s` with both NV variants, and each board's package links
-`SWT6621S_NV_SDIO.<compatible>.bin`, the name the driver asks for first, to its antenna's. On an
-overlay box each board's `payload.list` installs them to `/lib/firmware/` and picks the variant.
+Shared by every board carrying this radio. `package.list` here builds `tvb-firmware-swt6621s` with
+both NV variants, and each board's package links `SWT6621S_NV_SDIO.<compatible>.bin`, the name the
+driver asks for first, to its antenna's.
 
 | File                                  | Origin                                                 |
 | ------------------------------------- | ------------------------------------------------------ |

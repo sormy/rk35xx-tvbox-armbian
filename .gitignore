@@ -1,4 +1,3 @@
-/images/
 /backup/
 /build/
 /uboot-build/
@@ -11,7 +10,6 @@
 *.img
 /*.log
 /.claude/
-/log
 # python bytecode from the host-side build helpers
 __pycache__/
 # the archive signing key: only the public half is committed

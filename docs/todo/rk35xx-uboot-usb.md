@@ -174,9 +174,10 @@ boots through on our FIT (confirmed 2026-09-12): mainline's `setup_boot_mode()` 
 Making it work needs a U-Boot code patch on top of the Kconfig and the DT nodes.
 
 **Not worth chasing**, because it needs a booted OS — and `reboot maskrom` already covers that case
-with one line of DT and no code (`docs/maskrom.md`). The case this todo exists for is the opposite
-one: **U-Boot alive, Linux dead**, where no reboot flag can help. So trigger rockusb on something
-that does not need Linux — a failed boot, a key, or a timeout — rather than on a reboot mode.
+with one line of DT and no code (`docs/rockchip-maskrom.md`). The case this todo exists for is the
+opposite one: **U-Boot alive, Linux dead**, where no reboot flag can help. So trigger rockusb on
+something that does not need Linux — a failed boot, a key, or a timeout — rather than on a reboot
+mode.
 
 Do not remap `mode-loader` to the maskrom magic either: the value is the vendor's documented one, a
 box booting its factory U-Boot still reaches a real `Loader` with it, and aliasing would collide

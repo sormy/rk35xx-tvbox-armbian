@@ -1,32 +1,33 @@
 # Repo layout
 
 Every folder named for what it holds, every patch beside what it patches, every doc current or gone.
-Starts once the overlay and `upstream/` are removed (`TODO.md`), so nothing is moved only to be
-deleted. Repo paths only: no box sees them.
+Starts once `upstream/` is removed (`TODO.md`), so nothing is moved only to be deleted. Repo paths
+only: no box sees them.
 
 ## Folders
 
-| Today                                      | To                                 |
-| ------------------------------------------ | ---------------------------------- |
-| `firmware/<board>/`                        | `boards/<board>/`                  |
-| `firmware/common/<chip>/`                  | `chips/<chip>/firmware/`           |
-| `modules/<driver>.conf`                    | `chips/<chip>/driver.conf`         |
-| `patches/<driver or in-tree driver>/`      | `chips/<chip>/patches/`            |
-| `patches/<kernel-wide topic>/`             | `kernel/patches/<topic>/`          |
-| `modules/build.sh`                         | beside the kernel steps            |
-| `patches/u-boot/`                          | `uboot/patches/`                   |
-| `patches/<host tool>/`, `src/<tool>/`      | `tools/<tool>/`, patches beside it |
-| `build-dtc.sh`, `build-rktools.sh` and kin | `tools/<tool>/build.sh`            |
-| `scripts/`                                 | `tools/`, by what each script does |
-| `README_AMLOGIC.md`                        | a doc in `docs/`, or `README.md`   |
+Hand-written sources under `src/`; the pipeline's steps stay at the top. Decided 2026-10-22.
+
+| Today                                                            | To                        |
+| ---------------------------------------------------------------- | ------------------------- |
+| `firmware/<board>/`                                              | `src/boards/<board>/`     |
+| `firmware/common/<chip>/`, `modules/<x>.conf`, `patches/<x>/`    | `src/chips/<chip>/`       |
+| `firmware/common/`, the rest                                     | `src/common/`             |
+| `src/<tool>/`, `patches/<tool>/`, `build-<tool>.sh`              | `src/tools/<tool>/`       |
+| `build-board-dts.sh`, `build-uboot-dts.sh`, `build-firmware*.sh` | `src/tools/board/`        |
+| `build-uboot.sh`, the RK3528 `uboot.itb`                         | `uboot/`                  |
+| `scripts/aml-*.py`                                               | `image/`, its only user   |
+| `patches/<kernel-wide topic>/`                                   | `kernel/patches/<topic>/` |
+| `tools/`, built binaries                                         | `build/tools/`            |
+| `README_AMLOGIC.md`                                              | stays beside `README.md`  |
 
 A chip is one folder: its out-of-tree driver's pin, its patches, in-tree or not, its firmware, and
-one README. A board with a known chip touches only `boards/<board>/`; a new chip is one
-`chips/<chip>/`. `kernel/patches/` keeps what is not a chip's: SoC support, vendor fixes, DRM.
+one README. A board with a known chip touches only `src/boards/<board>/`; a new chip is one
+`src/chips/<chip>/`. `kernel/patches/` keeps what is not a chip's: SoC support, vendor fixes, DRM.
+`stock/`, `research/`, `docs/` and `keyring/` stay where they are.
 
 The repo root ends with `build.sh`, the READMEs, `AGENTS.md`, `TODO.md` and folders. Build outputs
-(`images/`, `log/`, `uboot-build/`, a tool's built binary) go under `build/`, which is gitignored
-whole.
+(`uboot-build/`, a tool's built binary) go under `build/`, which is gitignored whole.
 
 ## Docs
 

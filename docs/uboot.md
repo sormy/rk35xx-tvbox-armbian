@@ -26,11 +26,10 @@ tree. With no arguments `build-uboot.sh` builds only the boards whose `board.con
 To enable a board: write `firmware/<board>/uboot.patch` against that box's
 `stock/<board>/uboot.dtb`, run `./build-uboot-dts.sh <board>` and `./build-uboot.sh <board>`, boot
 it once with serial attached, confirm the recovery button reaches Maskrom — then commit the graft
-and point `BOARD_UBOOT` and the overlay's `payload.list` line at `<board>/uboot.itb`. `tvb-<board>`
-installs it as `/usr/lib/tvb/u-boot.bin`.
+and point `BOARD_UBOOT` at `<board>/uboot.itb`. `tvb-<board>` installs it as
+`/usr/lib/tvb/u-boot.bin`.
 
-`build-image.sh` fills all five BootROM idbloader slots (64, 1088, 2112, 3136, 4160) and both U-Boot
-slots.
+The image fills all five BootROM idbloader slots (64, 1088, 2112, 3136, 4160) and both U-Boot slots.
 
 ## Why the idbloader stays factory
 

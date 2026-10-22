@@ -77,28 +77,17 @@ MiB, both H96 Max boards 2304 MiB.
 
 ## What our image reproduces
 
-The overlay's `build-image.sh` lays down an Armbian GPT with one `rootfs` starting at sector 32768 —
-exactly where the factory `misc` began, so nothing below it is touched by the filesystem. TVBian's
-`image/build.sh` lays the same GPT, the idbloader in all five slots and the FIT in both, and leaves
-7168–16383 empty: that window is the unit's, which `tvb-install` keeps on the eMMC.
+`image/build.sh` lays a GPT with one `rootfs` starting at sector 32768, exactly where the factory
+`misc` began, the idbloader in all five slots and the FIT in both, and leaves 7168–16383 empty: that
+window is the unit's, which `tvb-install` keeps on the eMMC.
 
-With `FACTORY_DUMP=<that box's stock image, plain or .xz>` it first restores **the whole window —
-sector 7168 up to the first partition** — then lays our bootloader on top. Copying the span
-wholesale rather than the regions we happen to have catalogued is the point: anything the vendor
-puts there survives, including regions that read back as zero on the three boards measured here.
-
-| Region              | Factory            | Our image                                             |
-| ------------------- | ------------------ | ----------------------------------------------------- |
-| idbloader           | 5 slots (R69: 2)   | ✅ **all five**, from the board's own blob            |
-| vendor storage      | `DVKR` ×4          | ✅ ×4, with `FACTORY_DUMP=` — per unit, never shipped |
-| secure storage      | `SSKR` ×4          | ✅ ×4, with `FACTORY_DUMP=` — per unit, never shipped |
-| `security` tail     | zero               | ✅ with `FACTORY_DUMP=`                               |
-| `uboot`, both slots | factory U-Boot ×2  | ✅ ours ×2 — the two slots are kept identical         |
-| `trust`             | zero, one region   | ✅ with `FACTORY_DUMP=` — copies zeros today          |
-| everything ≥ 32768  | Android partitions | ➖ replaced by `rootfs` — deliberate                  |
-
-The window's end is read out of the GPT rather than hardcoded, and the build aborts if a base image
-ever puts its first partition inside the window.
+| Region              | Factory            | Our image                                     |
+| ------------------- | ------------------ | --------------------------------------------- |
+| idbloader           | 5 slots (R69: 2)   | ✅ **all five**, from the board's own blob    |
+| vendor storage      | `DVKR` ×4          | ➖ left empty: `tvb-install` keeps the unit's |
+| secure storage      | `SSKR` ×4          | ➖ left empty: `tvb-install` keeps the unit's |
+| `uboot`, both slots | factory U-Boot ×2  | ✅ ours ×2 — the two slots are kept identical |
+| everything ≥ 32768  | Android partitions | ➖ replaced by `rootfs` — deliberate          |
 
 **Only the first slot boots**; the second is a copy the SPL never falls back to on its own.
 

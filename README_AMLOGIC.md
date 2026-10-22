@@ -154,7 +154,8 @@ xz -dc backup/<board>-stock.img.xz > emmc-stock.img
 ./tools/aml/amlcmd restore emmc-stock.img
 ```
 
-Android comes back exactly as it was, its updates still pending.
+Android comes back exactly as it was, its updates still pending. More, including the mask ROM:
+`docs/amlogic-burning-mode.md`.
 
 ## License
 

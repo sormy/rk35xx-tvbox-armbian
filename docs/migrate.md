@@ -1,173 +1,87 @@
-# Moving a box off the overlay, in place
+# Moving a box off the overlay
 
-From Armbian with the overlay (`rk35xx-update`, `payload.list`) to what TVBian's image installs,
-without a reflash. ✅ from local debs on a meson-gxl box and three rk35xx boxes, 2026-10-20; ❓ from
-the published repo, which does not exist yet.
+Before 2026-10-22 TVBian shipped as an overlay on an Armbian image: `rk35xx-update`, `payload.list`,
+DKMS drivers. Those images and that tool are gone. Back up first; then move in place, or reinstall.
 
-A board can move once `kernel/` has its `BOARD_KERNEL`. The way back is the backup: Armbian's kernel
-goes in step 4.
+## In place — Rockchip
 
-## 0. Back up
+Keeps the system as it is. ✅ on three rk35xx boxes from local debs, 2026-10-20; 🟡 from the
+published repo, the same packages. Every command runs on the box.
 
-The stock eMMC in `backup/<board>-stock.img.xz` is enough for a box with no data of its own: it
-holds what cannot be recreated, and the rest rebuilds. A box with data also needs a whole copy of
-its boot medium: a stick or SD on another machine, an eMMC by `docs/maskrom.md`.
-
-## 1. Install the packages
+**1. TVBian's packages and files**, then a reboot into its kernel:
 
 ```sh
-./build.sh debs                                                           # host
-scp build/out/debs/linux-image-*.deb build/out/debs/tvb-*.deb <user>@<host>:/tmp/tvb/   # host
-sudo apt-get install -y u-boot-menu /tmp/tvb/*.deb                        # box
-cat /boot/extlinux/extlinux.conf                                          # box
-sudo systemctl reboot                                                     # box
+wget https://github.com/sormy/tvbian/releases/download/apt/tvb-archive-keyring_1_all.deb
+sudo apt install ./tvb-archive-keyring_1_all.deb && sudo apt update
+sudo apt install u-boot-menu tvb-<board> systemd-zram-generator
+# the image's own /etc files, zram's among them; not its locale or its root-password login
+curl -fsSL https://github.com/sormy/tvbian/archive/refs/heads/main.tar.gz | sudo tar -xz -C / \
+  --strip-components=3 --exclude='*/etc/default/locale' --exclude='*/tvb-root-password.conf' \
+  tvbian-main/image/rootfs
+grep -m1 tvb /boot/extlinux/extlinux.conf && sudo reboot      # then: uname -r ends in -tvb-rk35xx
 ```
 
-Where `sshd` serves no `sftp` subsystem `scp` closes at once; `tar -cf - … | ssh … tar -xf -` copies
-the same files. With our `linux-headers` installed, DKMS builds the overlay's modules for our kernel
-too and archives ours as "Original modules": `sudo dkms remove <module>/<version> -k <release>`
-before the reboot puts ours back.
-
-Where the box's only network is an out-of-tree driver, make this boot a one-shot: a unit with
-`ConditionKernelVersion=<release>` writes `U_BOOT_DEFAULT=l1` into `/etc/u-boot-menu/conf.d/`
-(created first) and runs `u-boot-update`; it goes once the network is seen on our kernel.
-
-Before the reboot, `l0` is the `-tvb-<family>` kernel, with an `initrd`,
-`fdt /usr/lib/tvb/board.dtb` and the fstab's `root=`. After it, `uname -r` ends in `-tvb-<family>`.
-
-| Family    | Who reads `extlinux.conf`                              |
-| --------- | ------------------------------------------------------ |
-| meson-gxl | the FAT's `boot.scr`, by `sysboot`: ✅                 |
-| rk35xx    | our U-Boot's bootstd, `extlinux` ahead of `script`: ✅ |
-
-## 2. Retire the overlay
-
-The overlay's files the board package supersedes, moved aside, deleted at the sweep. Firmware goes
-only where `/usr/lib/firmware/updates/` holds a byte-identical copy.
-
-| Overlay file                                      | Superseded by                  |
-| ------------------------------------------------- | ------------------------------ |
-| `/lib/firmware/<chip>/…`                          | the same file under `updates/` |
-| `/etc/systemd/{logind,system}.conf.d/zz-rk35xx-*` | `/usr/lib/systemd/*.conf.d`    |
-| `/etc/udev/{rules,hwdb}.d/*rk35xx*`               | `/usr/lib/udev/{rules,hwdb}.d` |
-| `/etc/udev/hwdb.bin`                              | `/usr/lib/udev/hwdb.bin`       |
-| `/etc/kernel/*postinst.d/*rk35xx*`                | the package's DTB              |
-| `/usr/local/sbin/rk35xx-*`, `rk35xx-*.service`    | the package's units, or none   |
-| `/usr/local/share/rk35xx/`                        | nothing                        |
-| `/etc/apt/apt.conf.d/99-rk35xx-boardname`         | the package's motd             |
+**2. The overlay** — its units, scripts, hooks, rules and keymap, `r69-` in early images and
+`rk35xx-` later; a file a package owns is never touched:
 
 ```sh
-find /etc /usr/local /usr/lib/systemd /usr/lib/udev -name '*rk35xx*'   # box: before and after
+sudo systemctl disable --now $(systemctl list-unit-files 'r69-*' 'rk35xx-*' --no-legend | cut -d' ' -f1)
+find /etc /usr/local /usr/lib/systemd /usr/src \( -name '*r69*' -o -name '*rk35xx*' \) -prune |
+  while read -r f; do dpkg -S "$f" >/dev/null 2>&1 || sudo rm -rf "$f"; done
+# and the ones it named without a prefix
+sudo rm -f /etc/udev/hwdb.bin /etc/systemd/system/multi-user.target.d/10-{r69,h96max*}.conf \
+  /etc/modules-load.d/seekwave.conf /etc/systemd/system/serial-getty@ttyFIQ0.service \
+  /etc/modprobe.d/blacklist-aic8800-usb.conf
 ```
 
-The overlay compiled its keymap into `/etc/udev/hwdb.bin`, which udev prefers over the `/usr/lib`
-one that udev's dpkg trigger keeps current; rebuild only with `systemd-hwdb --usr update`.
-
-On rk35xx `mac-pin` and `vendor-storage` go too: U-Boot reads Ethernet's address from vendor
-storage, and the Seekwave driver its chip's efuse, so the Wi-Fi address changes once, back to the
-chip's, and DHCP may move the box. The IR driver is in-tree; its DKMS package goes with the Seekwave
-one.
-
-## 3. NetworkManager
-
-Armbian's netplan drives networkd and wpa_supplicant; the image runs NetworkManager. On a box with
-no Ethernet the switch is the step that can strand it, so a unit reverts it: no default route within
-5 minutes of boot, and networkd comes back.
+**3. Every DKMS module**, packaged or added by hand, while `dkms` still exists:
 
 ```sh
-printf '#!/bin/sh\nexit 101\n' | sudo tee /usr/sbin/policy-rc.d && sudo chmod +x /usr/sbin/policy-rc.d   # box
-sudo apt-get install -y network-manager avahi-daemon zstd cloud-initramfs-growroot && sudo rm /usr/sbin/policy-rc.d   # box
+for m in $(dkms status | cut -d, -f1 | sort -u); do sudo dkms remove "$m" --all; done
 ```
 
-`policy-rc.d` keeps NetworkManager from starting mid-install and taking the link. Then, on the box:
-
-- the image's `tvb-wifi.conf` into `/etc/NetworkManager/conf.d/`;
-- a keyfile in `/etc/NetworkManager/system-connections/`, mode 0600: the network's SSID, PSK and any
-  pinned BSSID, from where the box keeps them;
-
-  | Family    | Wi-Fi credentials                               |
-  | --------- | ----------------------------------------------- |
-  | meson-gxl | `/etc/wpa_supplicant/wpa_supplicant-wlan0.conf` |
-  | rk35xx    | `/etc/netplan/*wifis*.yaml`, `access-points`    |
-
-- the fallback unit: a loop on `ip route | grep -q ^default`, else put the old config back, disable
-  NetworkManager, reboot;
-- netplan's YAML moved aside, so its generator writes neither networkd's config nor its own
-  `netplan-wpa-<if>` supplicant; a hand-written `.network`, the M20's `25-wlan0.network`, goes with
-  `wpa_supplicant@<if>` disabled;
-- `NetworkManager` and `avahi-daemon` enabled; reboot.
-
-## 4. Remove Armbian
+**4. Armbian** — its repository, kernel, U-Boot packages, BSP and `base-files`:
 
 ```sh
-sudo rm /etc/apt/sources.list.d/armbian*.sources && sudo apt-mark unhold $(apt-mark showhold)   # box
-dkms status                                                               # box: whose each module is
-sudo dkms remove <module>/<version> --all && sudo rm -rf /usr/src/<module>-<version>   # box: the overlay's
-sudo apt-get purge -y linux-{image,dtb,headers}-<branch>-<family> 'linux-u-boot-*' \
-  'armbian-bsp-cli-*' armbian-config armbian-firmware dkms netplan.io rsyslog fake-hwclock \
-  console-setup console-setup-linux keyboard-configuration                # box
-sudo apt-get update && sudo apt-get install -y --allow-downgrades -o Dpkg::Options::=--force-confnew base-files=<debian version>   # box
-sudo apt-get autoremove --purge -y                                        # box
+sudo rm /etc/apt/sources.list.d/armbian*.sources && sudo apt-mark unhold $(apt-mark showhold)
+sudo apt purge linux-image-vendor-rk35xx linux-dtb-vendor-rk35xx 'linux-u-boot-*' \
+  'armbian-bsp-cli-*' armbian-config dkms '*-dkms' && sudo apt autoremove --purge
+sudo apt install --allow-downgrades base-files/trixie
 ```
 
-`<branch>-<family>` is Armbian's, `vendor-rk35xx` or `current-meson64`, never a glob:
-`linux-image-*-<family>` matches TVBian's `linux-image-<release>-tvb-<family>` too. A DKMS module
-the overlay did not install stays, and `dkms` with it.
-
-Before `armbian-firmware` goes, every blob the box loads needs another owner: `dpkg -S` on its
-`/usr/lib/firmware/` path names Debian's package or ours. Every box's known here does. A board
-package can ship a path `armbian-firmware` also owns under the `/lib` alias:
-`dpkg --verify tvb-<board>` after the purge shows whether it survived.
-
-What the purge leaves goes by hand:
-
-| Where                | What                                                                |
-| -------------------- | ------------------------------------------------------------------- |
-| `/boot`              | everything but our kernel's four files and `extlinux/`              |
-| `/etc`               | `armbian*`, `default/armbian-*`, `netplan/`, `dpkg/origins/armbian` |
-| `/etc/systemd`       | Armbian's drop-ins; the `systemd-firstboot` mask; `journald.conf`   |
-| `/var`               | `log/armbian-*`, `log.hdd`, `lib/apt/lists/*armbian*`, the markers  |
-| `/usr/src`           | the overlay's DKMS sources                                          |
-| `/usr/share`         | `keyrings/armbian*`                                                 |
-| `/etc/update-motd.d` | all but `10-tvbian`; `/etc/motd` emptied                            |
-
-Armbian edits `journald.conf`, a conffile Debian's package never changed, so a reinstall keeps the
-edit: Debian's comes out of `apt-get download systemd` with `dpkg-deb --fsys-tarfile`.
-
-Then `systemd-resolved` goes: purge it, delete `/etc/resolv.conf` and restart NetworkManager, which
-writes its own. The image's files replace Armbian's: fstab's options, and the zram, getty, apt and
-sshd drop-ins under `image/rootfs/`, with `systemd-zram-generator`; the journal's comes with
-`tvb-<board>`. The hostname becomes the board's `BOARD_HOSTNAME`, as the image's is, unless the box
-has a name of its own: `sudo hostnamectl hostname <board>`, and the router's DNS learns it from the
-next DHCP lease. On a new address avahi can lose the name to its own stale record and take
-`<host>-2.local`: restart it.
-
-On rk35xx the overlay laid the disk out as the image does, so the rootfs takes the image's label,
-which `tvb-install` checks:
+**5. What they leave** — Armbian's `/boot` files and RAM log, whose logrotate entries still name
+`/var/log.hdd`; DKMS's sources, builds and state; the purged kernel's modules; copied firmware:
 
 ```sh
-sudo e2label "$(findmnt -no SOURCE /)" tvbian   # box: rk35xx only
+sudo rm -f /boot/armbianEnv.txt /boot/boot.scr /boot/boot.cmd /boot/uInitrd* /boot/Image /boot/dtb
+sudo rm -rf /etc/armbian* /etc/default/armbian-* /etc/dpkg/origins/armbian /usr/share/keyrings/armbian* \
+  /var/lib/apt/lists/*armbian* && sudo apt clean
+sudo rm /etc/bluetooth/main.conf && sudo apt install --reinstall -o Dpkg::Options::=--force-confmiss bluez
+sudo rm -rf /var/log.hdd && sudo sed -i 's#/var/log\.hdd#/var/log#' /etc/logrotate.d/*
+for d in /usr/src/* /lib/modules/* /lib/modules/*/updates/dkms /var/lib/dkms; do
+  [ -e "$d" ] && ! dpkg -S "$d" >/dev/null 2>&1 && sudo rm -rf "$d"; done
+find /usr/lib/firmware -type f | while read -r f; do dpkg -S "$f" >/dev/null 2>&1 || sudo rm "$f"; done
+sudo e2label "$(findmnt -no SOURCE /)" tvbian                 # the label tvb-install expects
 ```
 
-A meson-gxl overlay stick has Armbian's layout, its FAT at sector 2048 over the vendor bootloader's
-sectors, so it keeps its label and `tvb-install` refuses it: that box gets TVBian's layout by
-booting the image.
-
-On the M20's FAT, `boot.scr` and `aml_autoscript` are the image's, and `u-boot.ext` is
-`/usr/lib/tvb/u-boot.bin`, the old one kept beside it until
-`/proc/device-tree/chosen/u-boot,version` names the new one. On a Rockchip box the FIT goes into
-both of the eMMC's slots, the eMMC found by its `boot0`:
+**6. Check**, after a reboot — each prints `0`:
 
 ```sh
-for s in 16384 20480; do sudo dd if=/usr/lib/tvb/u-boot.bin of=/dev/<emmc> bs=512 seek=$s conv=fsync; done   # box
+find / -xdev \( -iname '*armbian*' -o -name '*r69-*' -o -name 'rk35xx-*' \) | wc -l
+dpkg -l | grep -c dkms
+systemctl --failed --no-legend | wc -l
 ```
 
-## 5. Sweep
+Networking stays Armbian's; the image's NetworkManager is optional.
 
-After a reboot with nothing failed, the network up and the board's hardware checked: the fallback
-unit, networkd's mask, the old supplicant and networkd config, and the moved-aside overlay go.
+## Reinstall — Amlogic, or a clean box
 
-```sh
-find / -xdev \( -iname '*armbian*' -o -iname '*rk35xx*' \) | wc -l      # box: 0
-systemctl --failed --no-legend | wc -l                                   # box: 0
-```
+The overlay's Amlogic stick boots through Armbian's `boot.scr`, which never reads TVBian's
+`extlinux.conf`, so it takes the image instead.
+
+1. Copy off what is yours: `/home`, `/srv`, any `/etc` file you changed.
+2. Write the board's image from the latest release to an SD card or USB stick, as the README gives
+   it; an Amlogic box the overlay set up already boots its stick. A box with no card slot takes it
+   straight onto the eMMC over USB, `docs/rockchip-maskrom.md`, unit's own sectors restored after.
+3. Boot it; `sudo tvb-install` writes the eMMC and keeps the unit's MAC and serial.
+4. Put your files back; `docs/first-login.md` covers the user, locale and Wi-Fi.

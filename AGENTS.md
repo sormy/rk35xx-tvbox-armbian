@@ -5,9 +5,10 @@ Rules for anyone — human or agent — adding a board or changing this repo. Mo
 
 ## What this repo is
 
-A thin layer of fixes over a stock Armbian image, not a distro. Kernel and userspace come from
-upstream; we carry only what upstream can't know. **Adding a board is data, not code** — one
-`firmware/<board>/` directory. If a change needs new code per board, the design is wrong.
+Debian with our own kernel, drivers and board packages, not a fork of a distro. Kernel sources and
+userspace come from upstream; we carry only what upstream can't know. **Adding a board is data, not
+code** — one `firmware/<board>/` directory. If a change needs new code per board, the design is
+wrong.
 
 | Tree                | Holds                                                                                              |
 | ------------------- | -------------------------------------------------------------------------------------------------- |
@@ -51,50 +52,49 @@ Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier` · `pyt
 **This table is the only index.** Docs are independent — each stands alone and none links to
 another, so nothing rots when one is rewritten.
 
-| Doc                                   | Holds                                                                 |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| `docs/board-bringup.md`               | serial, evidence, device tree, board data, offline verify             |
-| `docs/board-validation.md`            | the criteria of done, and the caveats behind them                     |
-| `docs/first-login.md`                 | a new box's user, timezone, locale and Wi-Fi, by hand                 |
-| `docs/mpp.md`                         | reaching the video engines; the codec test commands                   |
-| `docs/armbian-install.md`             | the factory reserved window: what survives a migration, what does not |
-| `docs/emmc-layout.md`                 | the measured eMMC map: every replicated structure and its sectors     |
-| `docs/build.md`                       | `./build.sh`: hosts, steps, outputs, and making a release             |
-| `docs/sources.md`                     | every upstream we build from: what floats, what is pinned, and why    |
-| `docs/migrate.md`                     | moving a box from the overlay to TVBian's packages, in place          |
-| `docs/uboot.md`                       | the bootloader pair: what we build, what stays factory, why           |
-| `docs/maskrom.md`                     | the USB service modes: entry, the 32 MiB Loader trap, backup, restore |
-| `docs/apt-upgrade.md`                 | the hooks and the hold that keep the overlay alive across upgrades    |
-| `docs/watchdog.md`                    | why it cannot be stopped, and why a soft reboot can strand the box    |
-| `docs/hdmi-edid-override.md`          | banning a display mode the panel advertises but nothing should pick   |
-| `docs/remote-keymap.md`               | validating IR and BLE keymaps separately; the `hwdb` override         |
-| `docs/mt7668-sdio-protocol.md`        | the MT7668's SDIO host protocol, as its vendor driver speaks it       |
-| `research/<experiment>/`              | dead ends and partial results, kept so nobody re-walks them           |
-| `TODO.md`                             | small open items, and where the bigger ones live                      |
-| `docs/todo/`                          | open questions — `rk35xx-` is family-wide, `<board>-` is one box      |
-| `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                   |
-| `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too         |
-| `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows     |
-| `docs/h96max-h313/wifi-tx-latch.md`   | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest          |
-| `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why         |
-| `upstream/README.md`                  | turning the grafts into something upstreamable                        |
-| `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there      |
-| `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s       |
-| `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage        |
-| `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader    |
-| `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete  |
-| `patches/linux-rockchip/README.md`    | the vendor kernel's patches, their PRs, what Rockchip fixed since     |
-| `patches/linux-meson/README.md`       | mainline kernel patches for Amlogic boards, on their way upstream     |
-| `patches/aic8800/README.md`           | the AIC8800 SDIO driver: Radxa's patches, then ours                   |
-| `patches/seekwave-swt6621s/README.md` | the H96 Max Wi-Fi driver patches and their PRs                        |
-| `patches/mt76-mt7668/README.md`       | mainline mt76 for the MT7668S: what it does, its gaps, its firmware   |
-| `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, in-tree                           |
-| `patches/mt76x8-mt7668/README.md`     | the vendor MT7668 driver on 6.18: the fallback, not shipped           |
-| `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), in-tree                         |
-| `patches/meson-codecs/README.md`      | the video decoder in-tree and the encoders beside it on the GXLX2     |
-| `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand    |
-| `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds                |
-| `keyring/README.md`                   | the archive signing key: fingerprint, secret, rotation                |
+| Doc                                   | Holds                                                                |
+| ------------------------------------- | -------------------------------------------------------------------- |
+| `docs/board-bringup.md`               | serial, evidence, device tree, board data, offline verify            |
+| `docs/board-validation.md`            | the criteria of done, and the caveats behind them                    |
+| `docs/first-login.md`                 | a new box's user, timezone, locale and Wi-Fi, by hand                |
+| `docs/mpp.md`                         | reaching the video engines; the codec test commands                  |
+| `docs/emmc-layout.md`                 | the measured eMMC map: every replicated structure and its sectors    |
+| `docs/build.md`                       | `./build.sh`: hosts, steps, outputs, and making a release            |
+| `docs/sources.md`                     | every upstream we build from: what floats, what is pinned, and why   |
+| `docs/migrate.md`                     | moving a box off the overlay: in place on Rockchip, or a reinstall   |
+| `docs/uboot.md`                       | the bootloader pair: what we build, what stays factory, why          |
+| `docs/rockchip-maskrom.md`            | Rockchip's USB service modes: entry, the 32 MiB Loader trap, restore |
+| `docs/amlogic-burning-mode.md`        | the Amlogic burning gadget: entry, backup, restore, the mask ROM     |
+| `docs/watchdog.md`                    | why it cannot be stopped, and why a soft reboot can strand the box   |
+| `docs/hdmi-edid-override.md`          | banning a display mode the panel advertises but nothing should pick  |
+| `docs/remote-keymap.md`               | validating IR and BLE keymaps separately; the `hwdb` override        |
+| `docs/mt7668-sdio-protocol.md`        | the MT7668's SDIO host protocol, as its vendor driver speaks it      |
+| `research/<experiment>/`              | dead ends and partial results, kept so nobody re-walks them          |
+| `TODO.md`                             | small open items, and where the bigger ones live                     |
+| `docs/todo/`                          | open questions — `rk35xx-` is family-wide, `<board>-` is one box     |
+| `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                  |
+| `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
+| `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
+| `docs/h96max-h313/wifi-tx-latch.md`   | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest         |
+| `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why        |
+| `upstream/README.md`                  | turning the grafts into something upstreamable                       |
+| `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there     |
+| `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s      |
+| `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage       |
+| `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader   |
+| `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete |
+| `patches/linux-rockchip/README.md`    | the vendor kernel's patches, their PRs, what Rockchip fixed since    |
+| `patches/linux-meson/README.md`       | mainline kernel patches for Amlogic boards, on their way upstream    |
+| `patches/aic8800/README.md`           | the AIC8800 SDIO driver: Radxa's patches, then ours                  |
+| `patches/seekwave-swt6621s/README.md` | the H96 Max Wi-Fi driver patches and their PRs                       |
+| `patches/mt76-mt7668/README.md`       | mainline mt76 for the MT7668S: what it does, its gaps, its firmware  |
+| `patches/btmtksdio-mt7668/README.md`  | mainline Bluetooth for the MT7668S, in-tree                          |
+| `patches/mt76x8-mt7668/README.md`     | the vendor MT7668 driver on 6.18: the fallback, not shipped          |
+| `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), in-tree                        |
+| `patches/meson-codecs/README.md`      | the video decoder in-tree and the encoders beside it on the GXLX2    |
+| `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand   |
+| `patches/gxlimg/README.md`            | the Amlogic boot-image tool `build-amltools.sh` builds               |
+| `keyring/README.md`                   | the archive signing key: fingerprint, secret, rotation               |
 
 # Standing rules
 

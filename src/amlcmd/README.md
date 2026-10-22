@@ -2,7 +2,7 @@
 
 ## Why
 
-Armbian on an Amlogic box usually starts from an SD card: write it, insert it, boot. A box with no
+Linux on an Amlogic box usually starts from an SD card: write it, insert it, boot. A box with no
 card slot has no such path; what is left is the OTG port and a serial console behind the case.
 
 `amlcmd` takes the OTG port, from a Mac or a Linux host: back up and restore the whole eMMC, read
@@ -30,40 +30,8 @@ echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1b8e", MODE="0660", TAG+="uaccess"' \
 sudo udevadm control --reload
 ```
 
-## Connect
-
-Start `amlcmd connect` **before** triggering the box: it abandons burning mode unless identified
-within 750 ms, and once identified the link holds with no host process attached.
-
-| From              | Do this                                                      |
-| ----------------- | ------------------------------------------------------------ |
-| a stock box, off  | apply power; its `try_auto_burn` opens the gadget for 700 ms |
-| a powered-off box | hold the button, apply power                                 |
-| an Android shell  | `su -c 'reboot update'`                                      |
-| a U-Boot prompt   | `update`                                                     |
-
-```sh
-amlcmd connect               # start first, then trigger the box
-amlcmd status                # which gadget answered
-amlcmd --help                # every verb
-```
-
-## Backup and restore
-
-```sh
-amlcmd backup emmc-stock.img
-amlcmd restore emmc-stock.img
-amlcmd backup part.img 0x2ae000 0x8000    # start sector, count
-amlcmd read store boot 0x1000 boot.bin    # a named partition, through the store layer
-```
-
-- 10.5 MiB/s: a 15 GB eMMC takes about 25 minutes. The cost is the vendor U-Boot's per-chunk round
-  trip, not the host.
-- Sectors are absolute eMMC sectors, the offsets in a board's `partition-map.txt`.
-- Both lift the key guard with `store disprotect key`, or a pass stops at the key window. A restore
-  therefore writes the image's keys back: right for that box's own backup, wrong for any other.
-- The size comes from `amlmmc size wholeDev`, the boot device; another device takes an explicit
-  count.
+The procedure, entering the gadget, backup, restore, the mask ROM and recovering, is
+`docs/amlogic-burning-mode.md`; this page is the tool.
 
 ## Verbs, and everything else
 
@@ -121,41 +89,10 @@ Measured on one board only, and possibly that U-Boot build's rather than the fam
 command loses four bytes (`connect` spends it), `md` resets the box, and `usb start` aborts while
 the gadget runs.
 
-## The mask ROM
-
-| Gadget         | `identify`          | Reaches                      |
-| -------------- | ------------------- | ---------------------------- |
-| burning gadget | ROM 0.7, Stage 0.16 | eMMC, and any U-Boot command |
-| mask ROM       | ROM 2.4, Stage 0.0  | SRAM and code, no storage    |
-
-The button cannot reach it — U-Boot samples the button — but one command does:
-
-```sh
-amlcmd set_usb_boot 2
-amlcmd reset                 # BL2 then prints `Skip usb!` and stops
-amlcmd rom read 0xd9000000 0x1000 sram.bin
-```
-
-- Only `rom` works there; any other command kills the link.
-- There is no way back without cutting power. Enter it only to unbrick.
-- A write to DRAM drops the box off the bus, so the ROM runs code but cannot move an image.
-- The addresses are GX-family; `pyamlboot`'s board directories have the others.
-- Not implemented: bulk memory (`0x11` `0x12`), the AMLC handover G12 uses, ADNL. `pyamlboot` has
-  them.
-
 ## Known gaps
 
 - A second process holding the gadget makes every other one fail with
   `claim interface: Access denied`, and can hang one mid-command.
-
-## Recovering
-
-```sh
-amlcmd drain                 # a transfer killed mid-way left a chunk queued
-```
-
-A gadget that stays enumerated but times out on identify takes a power cycle; no USB-level reset
-clears it.
 
 ## The protocol, as measured
 

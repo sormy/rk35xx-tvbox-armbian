@@ -129,17 +129,13 @@ needing no board routing are candidates.
 ## Board data
 
 Copy the closest `firmware/<board>/` and edit: `board.conf` (`BOARD_FAMILY`, required,
-`BOARD_HOSTNAME`, `BOARD_PREFIX`, `BOARD_WANTS`, the two hooks), `payload.list`, `board-id`,
-`board-name` (the login banner — carry the PCB silkscreen, since these boxes vary between production
-runs), plus the DTB and idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add
-the board to the README's Boxes table and support matrix.
+`BOARD_HOSTNAME`, `BOARD_KERNEL`, `BOARD_DEPENDS`), `package.list`, `board-id`, `board-name` (the
+login banner — carry the PCB silkscreen, since these boxes vary between production runs), plus the
+DTB and idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add the board to
+the README's Boxes table and support matrix.
 
-- **Anything that must exist on a running box goes in `payload.list`**: that one list is consumed by
-  both `build-image.sh` and `rk35xx-update`, so it cannot drift. Only one-time image surgery (raw
-  loader `dd`, `armbianEnv.txt`, hostname rebrand) belongs in the build script.
-- **On TVBian, `package.list` is `tvb-<board>`'s file list**, in `payload.list`'s format, at
-  Debian's paths (`/usr/lib/...`, never `/usr/local`); a `link <target> <dest>` line makes a
-  symlink.
+- **`package.list` is `tvb-<board>`'s file list**: mode, repo file, install path, at Debian's paths
+  (`/usr/lib/...`, never `/usr/local`); a `link <target> <dest>` line makes a symlink.
 - **Firmware is the vendor's, from the board's stock image:** built for that chip, it is the build
   known to work with it. It ships in `tvb-firmware-<chip>`, from `firmware/common/<chip>/` with a
   `firmware.conf` and a `package.list`, which the board depends on from its first board on. A file
@@ -165,10 +161,10 @@ the board to the README's Boxes table and support matrix.
 
   The first is `firmware_class.path` on every board's command line. No path has two owners.
 
-- **Deleting from an image needs the patched `e2rm`** — `./build-e2tools.sh`, which `build-image.sh`
-  requires. Stock `e2rm` corrupts ext4 two ways: it frees a fast symlink's target string as block
-  numbers (multiply-claimed metadata block → read-only rootfs on first boot), and it unlinks a
-  directory without freeing it. Both are silent until the box mounts.
+- **Deleting from an image needs the patched `e2rm`** — `./build-e2tools.sh`. Stock `e2rm` corrupts
+  ext4 two ways: it frees a fast symlink's target string as block numbers (multiply-claimed metadata
+  block → read-only rootfs on first boot), and it unlinks a directory without freeing it. Both are
+  silent until the box mounts.
 - **Never bake in user preferences or big compiled userspace.** An HDMI `video=` pin would cap every
   4K TV to suit one PC monitor; a Kodi/ffmpeg-MPP stack would break the property that makes this
   repo cheap. Document those as recipes.
@@ -179,10 +175,8 @@ Cheaper here than on the box. Attach the built image and check:
 
 - **Loaders byte-identical** to `firmware/<board>/factory_idbloader.bin` (sector 64) and
   `firmware/<board>/uboot.itb` (16384) — `dd` + `md5`.
-- **DTB** matches `firmware/<board>/board.dtb`; `armbianEnv.txt` has `fdtfile` + the `ttyFIQ0` args.
-- **Identity dir** populated: `board-id`, `board-name`, `board.dtb`, both loaders.
-- **No other board's names leaked** — grep `/usr/local/sbin`, `/etc/kernel/postinst.d`,
-  `/usr/lib/systemd/system-*`, `/usr/src`.
+- **DTB** matches `firmware/<board>/board.dtb` at `/usr/lib/tvb/board.dtb`.
+- **`/usr/lib/tvb/`** populated: `board-name`, `board.dtb`, the loaders.
 - **Filesystem clean** — the build's `fsck.ext4 -fn` gate must have passed.
 
 Validation is the last gate, and it has its own criteria list.

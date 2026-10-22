@@ -74,7 +74,7 @@ tested and broken · ➖ not on this board. Nothing is inherited from the siblin
 | MAC / `BD_ADDR`            |  ✅   | both stable across reboot; `LAN_MAC` matches the sticker                         |
 | Loaders on disk            |  ✅   | sectors 64 and 16384 md5-match the identity dir                                  |
 | File ownership             |  ✅   | `root:root` throughout; no build-host uid left                                   |
-| `apt full-upgrade`         |  ✅   | 76 pkgs incl. a kernel — name, hold, dtb-persist and DKMS all survived           |
+| `apt full-upgrade`         |  ✅   | 76 pkgs incl. a kernel                                                           |
 | LEDs                       |  ✅   | green and red both confirmed by eye; dark while suspended, see suspend section   |
 
 ## Measured numbers — 2026-09-06, **heatsink fitted**, antenna fitted
@@ -120,8 +120,7 @@ bump.
 **It roams bands** — check `iw dev wlan0 link` before trusting a throughput figure.
 
 **MAC and `BD_ADDR` are the chip's own** — `wlan0 fe:fd:fc:c4:f3:27` from the Seekwave efuse,
-`BD_ADDR FE:FD:FC:C4:F3:28` one above it; Armbian's `mac-pin` had set `wlan0` to
-`fe:fd:fc:d8:87:b9`. Vendor storage holds `lan` and `sn` only. Vendor storage
+`BD_ADDR FE:FD:FC:C4:F3:28` one above it. Vendor storage holds `lan` and `sn` only. Vendor storage
 `LAN_MAC 00:ef:01:1a:be:a0` matches the sticker.
 
 ## Caps and limits — the things that bound performance
@@ -353,7 +352,7 @@ needed; it says nothing about how fiddly the contact was.
 **There is no SD slot, so there is no SD rescue.** On every other board a bad DTB is undone by
 booting an SD and copying a known-good blob back. Not here: maskrom over USB is the only way back,
 and it must be proven working _before_ the first write. Modes, entry, the 32 MiB `Loader` read cap
-and the restore commands are all in `docs/maskrom.md`; what is board-specific:
+and the restore commands are all in `docs/rockchip-maskrom.md`; what is board-specific:
 
 > ✅ **The gate is passed, 2026-09-06.** The recovery button — reachable through the tiny hole
 > beside the USB-C socket, no disassembly — gives true `Maskrom` on **our** U-Boot, and `db`, `rl`

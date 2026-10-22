@@ -8,9 +8,6 @@ from a sibling board.
 Run every unattended check before asking the human for anything, then hand them one batched list.
 Risk order: SDIO Wi-Fi, the Ethernet PHY, the video codec, anything the DTB touched.
 
-Everything up to **Overlay mode only** applies to any board; that section assumes this repo's
-payload and an upstreamed board skips it.
-
 ## System
 
 - [ ] `systemd-analyze` recorded; `blame` explains every second and waits on no absent hardware
@@ -209,26 +206,6 @@ Per transport, with `evtest` on `/dev/input/ir-remote` and on `/dev/input/bt-rem
 - [ ] `upstream/build.sh` reports `VERIFIED: native tree is content-identical to the patched tree`
 - [ ] After any tree change, re-check the nodes you did **not** touch are still `okay` — eMMC first
 
-## Overlay mode only
-
-Skip on an upstreamed board — it takes kernel, DTB and identity from Armbian's own packages and
-never reads `firmware/` or `/usr/local/share/*/`.
-
-- [ ] Every installed file is `root:root` —
-      `find / -xdev \( -uid <build-uid> -o -gid <build-gid> \)` returns nothing. e2tools copy the
-      build host's ownership straight into the image
-- [ ] Identity dir populated and correct: `board-id`, `board-name`, `board.dtb`, both loaders
-- [ ] No other board's names under `/etc`, `/usr/local`, `/usr/lib/systemd`, `/usr/src`
-- [ ] Loaders on disk match the identity dir — `dd` sectors 64 and 16384, md5 against
-      `/usr/local/share/*/`
-- [ ] Survives `apt full-upgrade`: `BOARD_NAME` intact, `linux-u-boot-*` held
-- [ ] Both update paths work — `rk35xx-deploy` from a host, `rk35xx-update --pull` on the box
-- [ ] Every DKMS module survives `rmmod` and `modprobe` back, and nothing sharing the chip goes down
-      with it
-- [ ] Payload udev rules fire: anything a recipe names as `event<N>` has its `SYMLINK+=`
-- [ ] The dtb-persist hook survives a kernel update — `/boot/dtb-*/rockchip/board.dtb` still matches
-      `/usr/local/share/*/board.dtb`
-
 ## Needs the human — batch these into one trip
 
 LED polarity (running, suspended, off) · every remote button under `evtest`, **once per transport**
@@ -246,7 +223,6 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
 
 - `ssh` is not a throughput test — its encryption is itself CPU load. Use `iperf3` or `nc`.
 - Measure the **second** boot; the first legitimately spends a minute on resize and first-run setup.
-- On the overlay, first boot compiles DKMS offline — allow ~4 minutes before calling it a failure.
 - Level-filtering `dmesg` hides most of it: on the R69, 914 lines against 121 for `-l err,warn`.
   Judge a line by whether it tells the reader something, not by the level it was logged at —
   demoting a chatty `dev_err` to `dev_dbg` hides it rather than fixing it.
@@ -288,7 +264,7 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
   that restores whatever it found, so a dropped connection cannot strand the box.
 - A boot that has grown since the last measurement is the cheapest signal something is wrong. Usual
   causes: a unit waiting on absent hardware, a getty retrying a tty, a first-boot script that never
-  marked itself done, DHCP on an unplugged interface, a DKMS rebuild meant to happen once.
+  marked itself done, DHCP on an unplugged interface.
 
 ## Proving something is absent
 
@@ -317,8 +293,8 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
   `grep -E "mmc|sdio|eth|gmac|dwmac" /proc/interrupts`. Remedies, cheapest first: pin the IRQ
   (`/proc/irq/<n>/smp_affinity`), spread receive processing
   (`/sys/class/net/<if>/queues/rx-0/rps_cpus`), then raise the driver's own bus-thread priorities if
-  it exposes them. Any of these is board data and ships in the payload with the measurement that
-  justified it.
+  it exposes them. Any of these is board data and ships in the board package with the measurement
+  that justified it.
 
 ## MAC addresses
 
@@ -382,7 +358,3 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
   reboot, which `watchdog.md` covers.
 - Serial is a **prospective** instrument — attaching it to an already-hung box shows nothing,
   because the interesting output scrolled past. Attach it, then reproduce.
-- `armbian-install` clears the first 16 MiB to lay down partitions. Upstream keeps sectors
-  7168–16383 when it finds the `DVKR`/`SSKR` tags, and **that is the whole of the protection** —
-  everything else there is overwritten and nothing restores it, so a full eMMC backup before any
-  migration is mandatory.

@@ -22,7 +22,7 @@ latch lands at t+170–180 s, and nothing follows, while TIDs 1 and 4 keep cycli
 ## The fix
 
 `patches/seekwave-swt6621s/0002-skw-renegotiate-silently-dropped-tx-ba.patch`, applied to the pinned
-driver by `fetch-seekwave-src.sh`. Suspicion is a session claimed longer than `txba_stale_sec`
+driver by `modules/swt6621s.conf`. Suspicion is a session claimed longer than `txba_stale_sec`
 (default **10 s**, against ~5 s measured); confirmation is a `GET_STA` showing `tx.rate` legacy
 while `rx.rate` is not, which cannot happen on a working aggregated link. A peer with no HE reads
 legacy both ways, so it never fires there. On by default.

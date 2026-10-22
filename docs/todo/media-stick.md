@@ -214,8 +214,7 @@ point, and this is the only input device the board has.
   is the worst case, and the cost is unmeasured.
 - **The captive portal has to be satisfied from the box's own MAC.** Either a minimal browser
   on-screen driven by the remote, or register a phone on the portal and give `wlan0` that address
-  afterwards — no browser, no UI, and the MAC machinery exists (`docs/todo/rk35xx-mac-pinning.md`).
-  ❓ whether portals bind to the MAC alone.
+  afterwards — no browser, no UI. ❓ whether portals bind to the MAC alone.
 
 ## VPN, Plex, and the PS5
 

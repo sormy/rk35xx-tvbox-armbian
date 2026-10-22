@@ -150,7 +150,7 @@ lines.
 
 ## eMMC over the OTG port
 
-`amlcmd` drives the burning gadget; `src/amlcmd/README.md` is the procedure.
+`amlcmd` drives the burning gadget; `docs/amlogic-burning-mode.md` is the procedure.
 
 | Measure          | Value                                 |
 | ---------------- | ------------------------------------- |
@@ -169,14 +169,11 @@ Sectors 73760–74271 are the key window inside `reserved`; a whole-device pass 
 ## Building an image
 
 ```bash
-brew install xz coreutils mtools u-boot-tools   # macOS  ·  apt install xz-utils mtools u-boot-tools
-./build-e2tools.sh                              # once — stock e2tools corrupts an image on delete
-./build-image.sh Armbian_..._Lepotato_..._minimal.img.xz h96max-m20
+./build.sh image h96max-m20   # host -> build/out/images/
 ```
 
-The base is Armbian Le Potato, and the build refuses any other image. Output is two partitions: a
-512 MiB FAT32 holding `aml_autoscript`, `u-boot.ext` and `boot.scr`, then the Armbian rootfs. The
-eMMC is untouched — Android still boots with the stick out.
+Two partitions: a 512 MiB FAT32 holding `aml_autoscript`, `u-boot.ext` and `boot.scr`, then the
+rootfs. The eMMC is untouched — Android still boots with the stick out.
 
 ## Booting it
 
@@ -322,12 +319,10 @@ It copies the stick to the eMMC, all but the unifykeys, sectors 73760–74271.
 | Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
 | Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing |
 | Install to eMMC      | ✅ `tvb-install` from the stick; boots without it, keys intact       |
-| `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`         |
 | Panic under a build  | ✅ three 4-job DKMS builds clean since the secmon fix                |
 | Silent reset         | ✅ none since the secmon fix; once before it, during HEVC bring-up   |
 | Network drop         | ❓ once, after a driver reload, minutes without ping; no reboot      |
 | mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                 |
-| Fresh image          | ❓ built with both DKMS sources staged; never booted                 |
 | TVBian kernel        | ✅ 6.18.57: Wi-Fi, BT, HDMI, codecs, `soc0` `GXLX2 (S905L3)`         |
 | TVBian image         | ✅ boots from a USB stick: native HDMI, Wi-Fi, first login           |
 | Our U-Boot           | ✅ libretech-cc `v2026.10`, chain-loaded from the stick's FAT        |

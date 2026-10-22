@@ -276,7 +276,7 @@ why this board ships its own.
 
 **The OTG port is the USB 3 port.** Use an **A male-to-male** cable; this box has only USB-A ports,
 so add an A-female→C adapter at the host end if that host is USB-C only. Modes and the restore
-commands are in `docs/maskrom.md`.
+commands are in `docs/rockchip-maskrom.md`.
 
 **Measured over maskrom, 2026-09-12** — one pass each way, all 30777344 sectors, rate flat
 throughout:
@@ -287,7 +287,7 @@ throughout:
 | write (`wl`) | 18.4 MB/s  | ✅ 15.76 GB in 858 s, no degradation |
 
 The box booted normally afterwards, with no filesystem errors. Neither direction throttles here;
-`docs/maskrom.md` has the pre-flight signal for boards that do.
+`docs/rockchip-maskrom.md` has the pre-flight signal for boards that do.
 
 ✅ **The A-to-A cable alone powers the box** — no PSU, through a full 15.76 GB read and write. The
 button must still be held **before** power reaches it, whatever supplies it.
@@ -305,8 +305,3 @@ for i in 0 1 2 3 4; do   # the BootROM scans five slots 1024 sectors apart
 done
 for s in 16384 20480; do sudo dd if=/usr/lib/tvb/u-boot.bin of=$EMMC bs=512 seek=$s conv=fsync; done
 ```
-
-> **Overlay images built before August 2026 soft-brick on `armbian-install`**
-> ([#6](https://github.com/sormy/tvbian/issues/6)) — stock `armbian-install` writes the generic ROCK
-> 2F loaders, which lack this box's DDR tuning. On such an image, run `rk35xx-update` **before**
-> installing to eMMC. TVBian ships no `armbian-install`; `/usr/lib/tvb/` holds the R69 pair.

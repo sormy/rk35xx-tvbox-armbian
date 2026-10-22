@@ -50,21 +50,14 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       since a comment from a maintainer runs with the repo's token and a fork PR does not. ❓
       CodeRabbit's current limits, and the file it reads guidelines from.
 
-- [ ] **Retire the overlay, once the weekly build publishes.** No box runs it since 2026-10-20.
-      Going: `payload.list`, `rk35xx-update`, `rk35xx-deploy`, `build-image.sh`, the
-      `fetch-*-src.sh` scripts, `firmware/common/`'s overlay-only files (`mac-pin`,
-      `vendor-storage`, `firstboot`, `boardname`, `dtb-persist`, `platform-install`, the kernel
-      hooks), every `board.conf`'s `BOARD_DKMS_FETCH` and hooks, and the docs and sections
-      describing them, `docs/apt-upgrade.md` among them. `docs/migrate.md` stays: the repo is
-      public, and a box elsewhere may still run the overlay.
-- [ ] **Drop `upstream/`, after the overlay.** No board goes upstream: `upstream/<board>/`, its
-      `build.sh`, `docs/r69/upstream.md`, the `header.dts` rule in `AGENTS.md`, and what
-      `build-board-dts.sh`, `build-uboot-dts.sh` and the bring-up, validation and U-Boot docs say of
-      it. Then a sweep for anything else nothing reads.
+- [ ] **Drop `upstream/`.** No board goes upstream: `upstream/<board>/`, its `build.sh`,
+      `docs/r69/upstream.md`, the `header.dts` rule in `AGENTS.md`, and what `build-board-dts.sh`,
+      `build-uboot-dts.sh` and the bring-up, validation and U-Boot docs say of it. Then a sweep for
+      anything else nothing reads.
 - [ ] **Check the `ttyFIQ0` login on a serial header.** Every Rockchip board's console is `ttyFIQ0`,
       seen in `/proc/consoles` with its getty running; never on a cable.
-- [ ] **The repo restructure, after the overlay and `upstream/` go.** Folders named for what they
-      hold, patches beside their owner, tools under `tools/`, docs current or in `research/`:
+- [ ] **The repo restructure, after `upstream/` goes.** Folders named for what they hold, patches
+      beside their owner, tools under `tools/`, docs current or in `research/`:
       `docs/todo/repo-layout.md`.
 
 - [ ] **Name every board by its product, with the silkscreen as a separate field.** `board-name`
@@ -123,7 +116,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                               |
 | `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 HDMI: the 4K line-buffer graft          |
 | `docs/todo/rk35xx-kernel-patches.md`    | Armbian's vendor patches Rockchip never took   |
-| `docs/todo/rk35xx-mac-pinning.md`       | MAC pinning below userspace                    |
 | `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it                  |
 | `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport     |
 | `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset          |
