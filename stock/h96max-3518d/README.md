@@ -51,7 +51,7 @@ The bootloader's edits, `board-runtime` minus `board`:
 out and negates only `uboot.img`, which is model-generic and carries no per-unit data:
 
 ```sh
-dd if=backup/h96max-3518d/emmc-full.img bs=512 skip=24576 count=8192 of=trust.img   # p3
+xz -dc backup/h96max-3518d-stock.img.xz | head -c $((32768 * 512)) | tail -c $((8192 * 512)) > trust.img  # p3
 ```
 
 **The eMMC is capped far below its rating.** `DEVICE_TYPE 0x57` advertises HS400/HS200/DDR52, but
@@ -60,7 +60,7 @@ the factory tree sets `max-frequency = <50000000>` on `sdhci` with no
 Vendor U-Boot uses HS400 200 MHz for its own reads — so the cap is the kernel tree's choice, not the
 part's.
 
-**The full eMMC image is not here** — it is `backup/h96max-3518d/emmc-full.img`, gitignored like
+**The full eMMC image is not here** — it is `backup/h96max-3518d-stock.img.xz`, gitignored like
 every other board's. Take the reserved window from there, not from this directory: it is the only
 copy of this box's `SSKR` at sector 8192, and the source of the `FACTORY_DUMP` a full-image write
 needs. `docs/h96max-3518d/worklog.md` has how it was finally captured.
@@ -140,11 +140,12 @@ remote.
 Two entries were struck on 2026-09-05 once the USB cable went on: the **USB-C is the OTG port**
 (`dwc3`/`xhci`) and it very much carries data — the box enumerates on it as `Vid=0x2207,Pid=0x350c`
 and is bus-powered through it. The USB-A is the `ehci`/`ohci` pair, USB 2.0 only. The full eMMC
-image is being read over that link into `backup/h96max-3518d/`.
+image is being read over that link into `backup/`.
 
 ## `uboot.dtb` / `uboot.dts`
 
 The factory U-Boot's own control device tree, not the kernel's. Carved from the U-Boot FIT in the
-eMMC backup — `dd if=backup/h96max-3518d/emmc-full.img bs=512 skip=16384 count=8192`, then the
-second `d00dfeed` inside that FIT. Round-trips exactly through our patched `dtc`. It describes
+eMMC backup —
+`xz -dc backup/h96max-3518d-stock.img.xz | head -c $((24576 * 512)) | tail -c $((8192 * 512))`, then
+the second `d00dfeed` inside that FIT. Round-trips exactly through our patched `dtc`. It describes
 uart2, eMMC timing, `saradc` and `adc-keys` (the download key) — and no USB controllers at all.

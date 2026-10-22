@@ -16,7 +16,7 @@ upstream; we carry only what upstream can't know. **Adding a board is data, not 
 | `upstream/<board>/` | the submission header, and the generated submission set                                            |
 | `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                                |
 | `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                                   |
-| `backup/<board>/`   | eMMC images (gitignored)                                                                           |
+| `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                              |
 | `patches/<tool>/`   | fixes to host tools we build ourselves, formatted to send upstream                                 |
 | `src/<tool>/`       | host tools we write ourselves                                                                      |
 | `scripts/`          | host-side helpers, never installed on a box                                                        |

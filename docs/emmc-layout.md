@@ -1,6 +1,6 @@
 # The eMMC layout, measured
 
-Every number here was read out of the factory backups in `backup/<board>/emmc-full.img`, not taken
+Every number here was read out of the factory backups in `backup/<board>-stock.img.xz`, not taken
 from a vendor document.
 
 All three boards have the **same 16 GB eMMC geometry**: 30,777,344 sectors of 512 B, backup GPT at
@@ -82,10 +82,10 @@ exactly where the factory `misc` began, so nothing below it is touched by the fi
 `image/build.sh` lays the same GPT, the idbloader in all five slots and the FIT in both, and leaves
 7168–16383 empty: that window is the unit's, which `tvb-install` keeps on the eMMC.
 
-With `FACTORY_DUMP=<that box's emmc-full.img>` it first restores **the whole window — sector 7168 up
-to the first partition** — then lays our bootloader on top. Copying the span wholesale rather than
-the regions we happen to have catalogued is the point: anything the vendor puts there survives,
-including regions that read back as zero on the three boards measured here.
+With `FACTORY_DUMP=<that box's stock image, plain or .xz>` it first restores **the whole window —
+sector 7168 up to the first partition** — then lays our bootloader on top. Copying the span
+wholesale rather than the regions we happen to have catalogued is the point: anything the vendor
+puts there survives, including regions that read back as zero on the three boards measured here.
 
 | Region              | Factory            | Our image                                             |
 | ------------------- | ------------------ | ----------------------------------------------------- |
@@ -108,7 +108,8 @@ comes before a first write.
 ## Re-deriving this
 
 ```sh
-IMG=backup/<board>/emmc-full.img
+IMG=head.img
+xz -dc backup/<board>-stock.img.xz | head -c $((64 * 1024 * 1024)) > "$IMG"
 # structures: RKNS idbloader, DVKR/SSKR stores, d00dfeed FITs, ANDROID! boot
 python3 - "$IMG" <<'PY'
 import sys

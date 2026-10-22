@@ -9,9 +9,9 @@ goes in step 4.
 
 ## 0. Back up
 
-The stock eMMC in `backup/<board>/` is enough for a box with no data of its own: it holds what
-cannot be recreated, and the rest rebuilds. A box with data also needs a whole copy of its boot
-medium: a stick or SD on another machine, an eMMC by `docs/maskrom.md`.
+The stock eMMC in `backup/<board>-stock.img.xz` is enough for a box with no data of its own: it
+holds what cannot be recreated, and the rest rebuilds. A box with data also needs a whole copy of
+its boot medium: a stick or SD on another machine, an eMMC by `docs/maskrom.md`.
 
 ## 1. Install the packages
 

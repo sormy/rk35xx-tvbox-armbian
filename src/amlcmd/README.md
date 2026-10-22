@@ -51,8 +51,8 @@ amlcmd --help                # every verb
 ## Backup and restore
 
 ```sh
-amlcmd backup backup/<board>/emmc-full.img
-amlcmd restore backup/<board>/emmc-full.img
+amlcmd backup emmc-stock.img
+amlcmd restore emmc-stock.img
 amlcmd backup part.img 0x2ae000 0x8000    # start sector, count
 amlcmd read store boot 0x1000 boot.bin    # a named partition, through the store layer
 ```

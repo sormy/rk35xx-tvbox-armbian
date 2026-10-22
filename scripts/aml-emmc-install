@@ -39,7 +39,9 @@ PY
 echo "checking the backup is this box's"
 KEYS=$((RESERVED_SEEK + KEYS_OFFSET))
 "$AMLCMD" backup "$T/keys-box" "$KEYS" "$KEYS_SECTORS" >/dev/null
-dd if="$BACKUP" of="$T/keys-backup" bs=512 skip="$KEYS" count="$KEYS_SECTORS" 2>/dev/null
+# a plain or .xz backup; xz dies of SIGPIPE once head has the window
+{ xz -dcf "$BACKUP" || true; } | head -c $(((KEYS + KEYS_SECTORS) * 512)) |
+  tail -c $((KEYS_SECTORS * 512)) > "$T/keys-backup"
 cmp -s "$T/keys-box" "$T/keys-backup" ||
   { echo "the backup's key window is not this box's - refusing without a backup of this box"; exit 1; }
 

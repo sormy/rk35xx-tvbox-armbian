@@ -18,7 +18,7 @@ LEDs at boot; ❓ HDMI, suspend, the remote and IR wake on this kernel.
 | Sold as       | [amazon.com/dp/B0GK8P5YFT](https://www.amazon.com/dp/B0GK8P5YFT) — ~$35 complete with PSU                                                       |
 | SoC           | **RK3518A** — `SoC: 35181001`, reports `rk3528` (RK3518 is a variant in the RK3528 family)                                                      |
 | RAM / storage | 2 GB DRAM (**~1.5 GB usable** — boot-chain ceiling) · 16 GB Samsung eMMC 5.x (HS200) · microSD                                                  |
-| Runs from     | eMMC since 2026-08-09 (`mmcblk2p1`); factory Android overwritten — backup in `backup/r69/`                                                      |
+| Runs from     | eMMC since 2026-08-09 (`mmcblk2p1`); factory Android overwritten — backup in `backup/r69-stock.img.xz`                                          |
 | Label MAC     | **`C4:2A:FE:10:51:77`** — assigned, and held in eMMC vendor storage as `LAN_MAC`                                                                |
 | Wi-Fi / BT    | **AIC8800D80** — SDIO Wi-Fi + UART Bluetooth                                                                                                    |
 | Ports         | HDMI · USB 2.0 · USB 3.0 · 10/100 Ethernet · microSD · AV jack · IR-extender jack                                                               |
@@ -247,12 +247,12 @@ Still open:
 - **Never exercised**: **HDMI-CEC**, **HDMI 4K60 / EDID mode list / hotplug re-detect**, honest
   **Wi-Fi throughput** on either band, **SD hotplug removal**, **the IR-extender jack**, and
   **A2DP** to a speaker. Each needs a screen or hands on the box.
-- **Back-to-stock is unverified.** `backup/r69/emmc-full.img` (15,758,000,128 B) is the only route
-  back to Android, and a full restore has never been tested — either `dd` to the eMMC node from an
-  SD rescue boot, or maskrom + `rkdeveloptool wl 0`. A **partial** restore is proven: on 2026-08-18
-  sectors 7168–16383 were written back from that image after `armbian-install` zeroed them, and
-  `DVKR`/`SSKR`/`LAN_MAC` all came back. Identify the eMMC by its `boot0`/`boot1` companions, not a
-  remembered number.
+- **Back-to-stock is unverified.** `backup/r69-stock.img.xz` (15,758,000,128 B unpacked) is the only
+  route back to Android, and a full restore has never been tested — either `dd` to the eMMC node
+  from an SD rescue boot, or maskrom + `rkdeveloptool wl 0`. A **partial** restore is proven: on
+  2026-08-18 sectors 7168–16383 were written back from that image after `armbian-install` zeroed
+  them, and `DVKR`/`SSKR`/`LAN_MAC` all came back. Identify the eMMC by its `boot0`/`boot1`
+  companions, not a remembered number.
 - **Wi-Fi and BT addresses are derived, the efuse holding neither.** `wlan0` is `8a:00:33:65:64:b6`:
   AIC's `88:00:33` prefix, which no one holds as an OUI, marked locally administered, and the SoC
   serial's low bytes. BT is that + 1, `8A:00:33:65:64:B7`, written at setup with AIC's vendor

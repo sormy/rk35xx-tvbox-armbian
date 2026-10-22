@@ -197,6 +197,7 @@ need patch gpatch patch "the DKMS source fetch"
 need tar gnu-tar tar "the DKMS source fetch"
 [ -z "${BOARD_APT_DEBS:-}" ] || need python3 python python3 "offline package staging"
 case "$BASE" in *.xz) need xz xz xz-utils "the .xz base image" ;; esac
+case "${FACTORY_DUMP:-}" in *.xz) need xz xz xz-utils "the .xz factory dump" ;; esac
 
 # ---- 1. base image -> OUT ------------------------------------------------------------
 echo "[1/5] Writing base image -> $OUT"
@@ -235,20 +236,28 @@ if [ "$BOARD_FAMILY" = rk35xx ]; then
   # armbian-install keeps them itself.
   if [ -n "${FACTORY_DUMP:-}" ]; then
     [ -f "$FACTORY_DUMP" ] || { echo "FACTORY_DUMP not found: $FACTORY_DUMP"; exit 1; }
+    FACTORY_WINDOW_END=$(((FACTORY_WINDOW_SEEK + FACTORY_WINDOW_SECTORS) * 512))
+    DUMP="$FACTORY_DUMP"
+    if [[ "$DUMP" == *.xz ]]; then
+      DUMP="$OUT.dump"
+      # xz dies of SIGPIPE once head has the window; a short read fails the size check below
+      { xz -dc "$FACTORY_DUMP" || true; } | head -c "$FACTORY_WINDOW_END" > "$DUMP"
+    fi
     # dd stops early and silently on a short file, restoring part of the window - a dump cut off by
     # the Loader's 32 MiB read cap is the way this happens
-    [ "$(wc -c < "$FACTORY_DUMP")" -ge $(((FACTORY_WINDOW_SEEK + FACTORY_WINDOW_SECTORS) * 512)) ] ||
+    [ "$(wc -c < "$DUMP")" -ge "$FACTORY_WINDOW_END" ] ||
       { echo "FACTORY_DUMP is short: it does not reach the end of the vendor window"; exit 1; }
     # catches a dump from a different board *model* - the idbloader is model-generic, so nothing here
     # can tell one unit from another of the same model, and passing the wrong one stamps its MAC and
     # keys into the image. Compare the first slot only: that copy is what we write to all five, so it
     # matches whether the dump came from a factory box or an already-migrated one.
-    cmp -s <(dd if="$FACTORY_DUMP" bs=512 skip="$IDBLOADER_SEEK" count="$IDBLOADER_COPY_SECTORS" 2>/dev/null) \
+    cmp -s <(dd if="$DUMP" bs=512 skip="$IDBLOADER_SEEK" count="$IDBLOADER_COPY_SECTORS" 2>/dev/null) \
            <(dd if="$IDBLOADER" bs=512 count="$IDBLOADER_COPY_SECTORS" 2>/dev/null) ||
       { echo "FACTORY_DUMP is not from a $BOARD: its idbloader differs from $BOARD_IDBLOADER"; exit 1; }
     echo "      Restoring DVKR + SSKR @${FACTORY_WINDOW_SEEK} from $(basename "$FACTORY_DUMP")"
-    dd if="$FACTORY_DUMP" of="$OUT" bs=512 skip="$FACTORY_WINDOW_SEEK" seek="$FACTORY_WINDOW_SEEK" \
+    dd if="$DUMP" of="$OUT" bs=512 skip="$FACTORY_WINDOW_SEEK" seek="$FACTORY_WINDOW_SEEK" \
        count="$FACTORY_WINDOW_SECTORS" conv=notrunc 2>/dev/null
+    if [ "$DUMP" != "$FACTORY_DUMP" ]; then rm -f "$DUMP"; fi
   fi
 
   echo "[2/5] Overlaying $BOARD idbloader x${IDBLOADER_COPIES} @${IDBLOADER_SEEK} + uboot.itb x${UBOOT_COPIES} @${UBOOT_SEEK}"

@@ -364,9 +364,9 @@ and the restore commands are all in `docs/maskrom.md`; what is board-specific:
   host**. Both ends are USB-C here, so it is the two-adapter case: an A male-to-male cable with a
   C-male→A-female adapter at the box and another at the host.
 - ✅ **Maskrom works** with an `LDR `-format loader (new IDB, RC4 off) from `boot_merger -r 6 -n`.
-- ✅ **eMMC backup taken and verified** — `backup/h96max-3518d/emmc-full.img`, 15,758,000,128 B,
-  re-read in full and 100% byte-identical. Three sessions with a replug between, because the box
-  overheats in maskrom with no OS to throttle it.
+- ✅ **eMMC backup taken and verified** — `backup/h96max-3518d-stock.img.xz`, 15,758,000,128 B
+  unpacked, re-read in full and 100% byte-identical. Three sessions with a replug between, because
+  the box overheats in maskrom with no OS to throttle it.
 - ✅ `wl` (writing) proven — 64 MiB pattern written, read back identical, original restored.
 - ⚠️ **It overheats in maskrom** — no cpufreq, no thermal driver, no OS. **A heatsink does not fix
   it**: a single-pass 15.7 GB read died at 68% / 10 GB _with_ one fitted, averaging 14.2 MB/s and

@@ -52,8 +52,8 @@ box runs the R69 image from SD (the eMMC's Android is untouched):
 | `armbian-first-boot-serial.log`      | full serial capture of that first Armbian boot (DDR banner →     |
 |                                      | login) — proves the eMMC-SPL-prefers-SD boot path                |
 
-**(D) Extracted from the eMMC dump** (`../../backup/h96max/emmc-full.img` — GPT parsed, partitions
-carved, `super` unpacked with `lpunpack`; all images turned out ext4, not EROFS):
+**(D) Extracted from the eMMC dump** (`../../backup/h96max-h313-stock.img.xz` — GPT parsed,
+partitions carved, `super` unpacked with `lpunpack`; all images turned out ext4, not EROFS):
 
 | File               | What                                                                          |
 | ------------------ | ----------------------------------------------------------------------------- |
@@ -82,6 +82,7 @@ gpio claims (`/sys/kernel/debug/gpio`), `pinmux-pins`, full `getprop`, `lsmod`, 
 ## `uboot.dtb` / `uboot.dts`
 
 The factory U-Boot's own control device tree, not the kernel's. Carved from the U-Boot FIT in the
-eMMC backup — `dd if=backup/h96max/emmc-full.img bs=512 skip=16384 count=8192`, then the second
-`d00dfeed` inside that FIT. Round-trips exactly through our patched `dtc`. It describes uart2, eMMC
-timing, `saradc` and `adc-keys` (the download key) — and no USB controllers at all.
+eMMC backup —
+`xz -dc backup/h96max-h313-stock.img.xz | head -c $((24576 * 512)) | tail -c $((8192 * 512))`, then
+the second `d00dfeed` inside that FIT. Round-trips exactly through our patched `dtc`. It describes
+uart2, eMMC timing, `saradc` and `adc-keys` (the download key) — and no USB controllers at all.

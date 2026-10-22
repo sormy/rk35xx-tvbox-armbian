@@ -42,8 +42,9 @@ The box's own firmware is the specification. Capture it before changing anything
    first.
 2. Dump to `stock/<board>/`: `dmesg`, `cmdline`, `getprop`, `/proc/iomem`, `lsmod`, partition table,
    Wi-Fi/BT firmware from `/vendor`.
-3. **Full eMMC image → `backup/<board>/emmc-full.img`**; verify byte count =
-   `/sys/block/<dev>/size × 512`. ~25 min at 100 Mb/s — start on the device tree while it runs.
+3. **Full eMMC image → `backup/<board>-stock.img.xz`**; verify byte count =
+   `/sys/block/<dev>/size × 512`, then `xz -T0`. ~25 min at 100 Mb/s — start on the device tree
+   while it runs.
 4. Carve `factory_idbloader.bin` (sector 64, 4096 sectors) → `firmware/<board>/`.
 5. Carve `board.dtb` out of the eMMC image — see below.
 
@@ -65,8 +66,8 @@ bytes:
 ```sh
 # boot partition start comes from the GPT; two identical copies exist, either will do
 python3 - <<'EOF'
-import struct
-buf = open('backup/<board>/emmc-full.img','rb')
+import lzma, struct
+buf = lzma.open('backup/<board>-stock.img.xz')
 buf.seek(51200*512); d = buf.read(64*1024*1024)
 i = d.find(b'\xd0\x0d\xfe\xed')
 open('stock/<board>/board.dtb','wb').write(d[i:i+struct.unpack('>I', d[i+4:i+8])[0]])

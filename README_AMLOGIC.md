@@ -84,7 +84,8 @@ is USB-C. The cable powers the box, so no PSU.
 ```sh
 ./build-amltools.sh                              # once -> tools/aml/amlcmd
 ./tools/aml/amlcmd connect                       # then plug the OTG cable into the box
-./tools/aml/amlcmd backup backup/<board>/emmc-full.img
+./tools/aml/amlcmd backup emmc-stock.img
+xz -T0 -c emmc-stock.img > backup/<board>-stock.img.xz && rm emmc-stock.img
 ```
 
 A stock box needs no button: `connect` is waiting when its cold boot opens the burning gadget for
@@ -145,7 +146,7 @@ the backup, which must be this box's:
 
 ```sh
 ./tools/aml/amlcmd connect                       # hold the button (may not be needed); plug in OTG
-scripts/aml-emmc-install Armbian_..._-<board>.img backup/<board>/emmc-full.img
+scripts/aml-emmc-install Armbian_..._-<board>.img backup/<board>-stock.img.xz
 ./tools/aml/amlcmd reset
 ```
 
@@ -176,8 +177,9 @@ without typing, GND and TX are enough — GND off any metal shield on the board 
 ## Recovery
 
 ```sh
+xz -dc backup/<board>-stock.img.xz > emmc-stock.img
 ./tools/aml/amlcmd connect                       # hold the button (may not be needed); plug in OTG
-./tools/aml/amlcmd restore backup/<board>/emmc-full.img
+./tools/aml/amlcmd restore emmc-stock.img
 ```
 
 ## License
