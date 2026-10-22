@@ -11,17 +11,17 @@ on this kernel.
 
 ## Identity — check yours matches before flashing
 
-|               |                                                                                                                                                              |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Name          | **H96 Max H313** — the model name on the back of the case (LEFFOT). Case plate: `RAM 2GB · ROM 16GB · Input 5V⎓2A`                                           |
-| Board         | silkscreen **`3518_ZX_V01 20250818`** — combined RAM+eMMC module, on-PCB Wi-Fi/BT antennas                                                                   |
-| SoC           | **RK3518** — `SoC: 35181001` (same ID as the R69)                                                                                                            |
-| Label MAC     | **`00:EF:00:4A:43:A6`** ✅ — matches the case label, and held in eMMC vendor storage as `LAN_MAC` (live copy v74); serial `YT26050805378`                    |
-| RAM / storage | 2 GB LPDDR3 (**a real 2 GB**) · 16 GB Micron eMMC `R1J96N` (14.7 GiB) · SD card slot                                                                         |
-| Wi-Fi / BT    | **Seekwave SV6160LITE** (module **SWT6621S**) — SDIO Wi-Fi 6, BT muxed over the same SDIO link. **Known bug: TX latches at 6 Mbps** — see `wifi-tx-latch.md` |
-| Ports         | HDMI · USB 3.0 · USB 2.0 · 10/100 Ethernet · SD slot · AV jack · IR receiver · toothpick button                                                              |
-| Remote        | **dual-mode** — works over IR unpaired, and pairs over BLE for air-mouse + battery                                                                           |
-| Stock         | Android 14, 32-bit, kernel 6.1.118                                                                                                                           |
+|               |                                                                                                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name          | **H96 Max H313** — the model name on the back of the case (LEFFOT). Case plate: `RAM 2GB · ROM 16GB · Input 5V⎓2A`                                                                          |
+| Board         | silkscreen **`3518_ZX_V01 20250818`** — combined RAM+eMMC module, on-PCB Wi-Fi/BT antennas                                                                                                  |
+| SoC           | **RK3518** — `SoC: 35181001` (same ID as the R69)                                                                                                                                           |
+| Label MAC     | **`00:EF:00:4A:43:A6`** ✅ — matches the case label, and held in eMMC vendor storage as `LAN_MAC` (live copy v74); serial `YT26050805378`                                                   |
+| RAM / storage | 2 GB LPDDR3 (**a real 2 GB**) · 16 GB Micron eMMC `R1J96N` (14.7 GiB) · SD card slot                                                                                                        |
+| Wi-Fi / BT    | **Seekwave SV6160LITE** (module **SWT6621S**) — SDIO Wi-Fi 6, BT muxed over the same SDIO link. **Known bug: TX latches at 6 Mbps** — see `research/seekwave-tx-latch-bug/wifi-tx-latch.md` |
+| Ports         | HDMI · USB 3.0 · USB 2.0 · 10/100 Ethernet · SD slot · AV jack · IR receiver · toothpick button                                                                                             |
+| Remote        | **dual-mode** — works over IR unpaired, and pairs over BLE for air-mouse + battery                                                                                                          |
+| Stock         | Android 14, 32-bit, kernel 6.1.118                                                                                                                                                          |
 
 Unlike the R69, all 2 GB of RAM is usable here.
 

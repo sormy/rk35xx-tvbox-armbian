@@ -70,24 +70,6 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       on the H313, never past it: the H313 from its SD to the eMMC, keeping `DVKR`/`SSKR`; the M20
       image from a stick to the eMMC, then back from the eMMC to a stick. Together they test phases
       4 and 5.
-- [ ] **Install an Amlogic box to eMMC: single boot, as CoreELEC does.** Android goes, `cache` goes,
-      `env` moves down; only the bootloader areas are lost. One image per board, written by
-      `amlcmd restore`, which never writes a hole:
-  - board data burnt in: the bootloader, `reserved`'s `MPT` and both multi-DTB copies with `cache`
-    shrunk, a preset `env` at its new offset, `u-boot.ext` raw in the 4-36 MiB gap, then the rootfs;
-  - the one hole: `reserved`'s key window, this unit's serial and MAC;
-  - the `MPT` and DTB checksums from ampart's source, reproduced offline against the stock copies
-    first;
-  - testable on the eMMC only, with serial attached - a U-Boot that stops before its prompt needs
-    the mask ROM, which is ❓. Staged: rehearse a no-op `restore` of `reserved`; rewrite DTB copy 1
-    alone with a neutral change and our checksum, leaving copy 2 stock - U-Boot's `total valid 2`
-    proves the checksum, and the layout does not move; only then the real layout.
-  - the vendor U-Boot loads `u-boot.ext` with `amlmmc read`: it reads the eMMC as `PART_TYPE_AML`,
-    not our MBR;
-  - `restore` refuses a bootloader that differs from the box's, and skips an identical one.
-  - the installer insists on a full backup of this box - the only way back to Android - and checks
-    it by comparing the box's key window with the backup's; the image itself never takes data from
-    it.
 - [ ] **Keep an Amlogic board's Ethernet address, as `LAN_MAC` is kept on Rockchip.** It is the
       unifykey `mac` slot, encrypted, so only the vendor U-Boot reads it (`keyman read mac`); the
       stock env hands it to Android as `mac=`. Our `aml_autoscript` runs in that U-Boot: read it,
@@ -104,9 +86,30 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 - [ ] **No kernel self-tests in meson64.** 146 of its 4433 modules are KUnit and test modules, from
       Armbian's config: off in `kernel/meson64.fragment` (`CONFIG_KUNIT`), then a boot on the M20.
       The rest of its breadth stays: USB Wi-Fi, tuners and cameras are why a box is general.
-- [ ] **Low priority: `tvb-firstlogin`, the first-login wizard.** A user, the timezone, the locale
-      and Wi-Fi, each list filtered as you type; designed in `docs/todo/tvb-linux-rootfs.md`, "First
-      login". Until then, `docs/first-login.md` gives the commands.
+- [ ] **Low priority: `tvb-firstlogin`, the first-login wizard.** Until then, `docs/first-login.md`
+      gives the commands. Runs once, from `/etc/profile.d/`, at root's first interactive login; Esc
+      skips a step; `/var/lib/tvb/firstlogin.done` marks it finished, so an interrupted run starts
+      again:
+  - a user: `adduser`, added to `sudo`;
+  - the timezone: `timedatectl list-timezones` through `fzf`;
+  - the locale: `SUPPORTED`'s UTF-8 lines through `fzf`, then `locale-gen`;
+  - Wi-Fi, where a Wi-Fi device exists: `nmcli device wifi list` through `fzf`, then
+    `nmcli --ask device wifi connect`.
+- [ ] **RK3528 boards: a 4K display on the R69 and the H313.** Every RK3528 `board.dts` sets
+      `esmart_lb_mode = [02]`, a 4K line buffer for Esmart0, where the factory's `[03]` corrupts the
+      right third of a 4K frame; ✅ on the 3518D only. Check `3840x2160p60` full-screen with no
+      fringe on the right, then that a 1080p display still comes up clean.
+- [ ] **Fold `board.tvbian.patch` into `board.patch`** on the M20 and the R69. The split served only
+      the retired overlay's Armbian kernel. A tree change, so a boot test on each box.
+- [ ] **A USB keyboard's keymap on `tty1`:** `console-setup` in the image and a README line, or US
+      only.
+- [ ] **BTF:** dropped with debug info by `CONFIG_DEBUG_INFO_NONE`, or kept for BPF tools at the
+      cost of runner disk.
+- [ ] **Gate a kernel that moved** on the validation script passing on one box of its family, or
+      keep publishing it automatically.
+- [ ] **Sealed TVBian:** image-based A/B updates, an option for any flavour, plain or Kodi. Levels:
+      a read-only root, a volatile root, then A/B with `systemd-sysupdate`, two roots plus a data
+      partition and a fallback at boot.
 
 ## Bigger todos
 
@@ -114,15 +117,8 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 | --------------------------------------- | ---------------------------------------------- |
 | `docs/todo/media-stick.md`              | the universal media stick                      |
 | `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                               |
-| `docs/todo/rk35xx-hdmi-modes.md`        | RK3528 HDMI: the 4K line-buffer graft          |
-| `docs/todo/rk35xx-kernel-patches.md`    | Armbian's vendor patches Rockchip never took   |
-| `docs/todo/rk35xx-optee-widevine.md`    | OP-TEE, and Widevine after it                  |
-| `docs/todo/rk35xx-remote-keymaps.md`    | keymap correctness per board and transport     |
 | `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset          |
 | `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                              |
-| `docs/todo/tvb-linux.md`                | TVBian: our kernel and images on plain Debian  |
-| `docs/todo/tvb-linux-rootfs.md`         | TVBian's minimal rootfs and first login        |
-| `docs/todo/tvb-linux-build.md`          | TVBian's weekly build, hosts, caches           |
 | `docs/todo/website.md`                  | tvbian.com: one page on GitHub Pages           |
 | `docs/todo/repo-layout.md`              | folders, patches, tools and docs, regrouped    |
 | `docs/todo/tanix-h313.md`               | first Allwinner board; the bring-up docs' test |

@@ -38,14 +38,16 @@ family script. What it may keep is mechanism no other board can use: a unit for 
 has.
 
 **Tools we build, and must:** `dtc` (`./build-dtc.sh` — vanilla cannot round-trip a vendor blob with
-`&label`s) · `e2tools` (`./build-e2tools.sh` — the stock one corrupts an image on delete) ·
-`rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd` and `gxlimg`
-(`./build-amltools.sh` — Amlogic's own are closed and x86-64 Linux only) · a per-board `uboot.dts`
-(`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all three at
-once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only on
+`&label`s) · `rkdeveloptool` + a per-board maskrom loader (`./build-rktools.sh`) · `amlcmd` and
+`gxlimg` (`./build-amltools.sh` — Amlogic's own are closed and x86-64 Linux only) · a per-board
+`uboot.dts` (`./build-uboot-dts.sh`) and the `uboot.itb` a board ships (`./build-uboot.sh`) — or all
+three at once with `./build-firmware-all.sh`. **From the host:** `fdtput` · `fsck.ext4` (keg-only on
 Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier` · `python3` · `mtools` and
 `mkimage`, for a board whose image carries a FAT boot partition. **On the box:** `evtest`, `fio`,
 `stress-ng`, `iw`, `bluez`.
+
+**`e2tools`** (`./build-e2tools.sh`) — edit a box's ext4 rootfs on an SD card or USB stick from a
+Mac, which cannot mount ext4; the stock one corrupts an image on delete.
 
 ## Where things are written down
 
@@ -68,14 +70,12 @@ another, so nothing rots when one is rewritten.
 | `docs/watchdog.md`                    | why it cannot be stopped, and why a soft reboot can strand the box   |
 | `docs/hdmi-edid-override.md`          | banning a display mode the panel advertises but nothing should pick  |
 | `docs/remote-keymap.md`               | validating IR and BLE keymaps separately; the `hwdb` override        |
-| `docs/mt7668-sdio-protocol.md`        | the MT7668's SDIO host protocol, as its vendor driver speaks it      |
 | `research/<experiment>/`              | dead ends and partial results, kept so nobody re-walks them          |
 | `TODO.md`                             | small open items, and where the bigger ones live                     |
 | `docs/todo/`                          | open questions — `rk35xx-` is family-wide, `<board>-` is one box     |
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                  |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
 | `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
-| `docs/h96max-h313/wifi-tx-latch.md`   | the 6 Mbit/s TX latch: cause, the shipped fix, how to retest         |
 | `docs/r69/upstream.md`                | what the two closed upstream submissions established, and why        |
 | `upstream/README.md`                  | turning the grafts into something upstreamable                       |
 | `src/<tool>/`                         | a tool we wrote: its README, and the worklog of how it got there     |

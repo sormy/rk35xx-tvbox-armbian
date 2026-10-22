@@ -30,3 +30,21 @@ SD has no `vqmmc-supply` and so no 1.8 V switch to run UHS with at all, and the 
 not declare `use-v2-tuning`, so it stays on the non-v2 path however its SD is configured. The bug is
 real — a per-host decision in a static is wrong regardless — but we cannot make it fire, and
 carrying it unverified would ship a change nothing here has run.
+
+## Armbian's patches Rockchip never took
+
+Candidates from Armbian's `rkr7.2` tree, which is based on `develop-6.1`'s tip, that `git apply`
+cleanly and that these boxes would use. Each is validated on a box before it joins
+`kernel/rk35xx.conf`.
+
+| Commit              | Change                                       | Matters for             |
+| ------------------- | -------------------------------------------- | ----------------------- |
+| `7a45090`+`5ec5131` | stmmac: no unicast filter without registers  | RK3528, by name         |
+| `6d8125e`           | dw-hdmi CEC: EDID read again on replug       | CEC after a TV cycle    |
+| `78c67d9`           | hdmi-codec: no capture on HDMI-TX            | mono HDMI in PulseAudio |
+| `6a0a08d`+`8c6bb40` | stmmac and phylink resume order              | Ethernet after suspend  |
+| `2aa67a0`           | mmc core: NULL `vqmmc` in the voltage switch | one line                |
+| `f16cb5f`           | sdhci: request size per the spec             | eMMC speed, to measure  |
+
+❓ whether the RK3528's FEPHY is the v1 that `develop-6.1`'s `rockchip-fephy` fixes key on: the
+driver reads it from register `0xfc`.

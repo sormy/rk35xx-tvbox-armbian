@@ -132,14 +132,10 @@ Risk order: SDIO Wi-Fi, the Ethernet PHY, the video codec, anything the DTB touc
 - [ ] GPU renders **on screen** — use `kmscube`. It honours the connector's `preferred` mode and
       renders correctly at 4K
 
-**The GPU check does not need a display.** Debian's `glmark2-es2` is the X11 build and `kmscube`
-needs a connected connector, which would strand the whole row behind a TV. EGL on the GBM platform
-plus `EGL_KHR_surfaceless_context` renders to an FBO on the render node instead — `glReadPixels` on
-a known triangle is the pass/fail, and timing the loop gives the fill rate. Two traps: choose the
-config **without** `EGL_SURFACE_TYPE`, since GBM exposes window configs and asking for
-`EGL_PBUFFER_BIT` fails; and the user needs the `render` group. Record `GL_MAX_TEXTURE_SIZE` while
-you are there — on Mali-450 it is 4096, which caps what the GPU can do with 8K the VPU decodes
-happily.
+**The GPU check needs no display:** EGL on GBM with `EGL_KHR_surfaceless_context` renders to an FBO
+on the render node; `glReadPixels` on a known triangle is the pass, the loop's timing the fill rate.
+Choose the config without `EGL_SURFACE_TYPE`, run in the `render` group, and record
+`GL_MAX_TEXTURE_SIZE`.
 
 ## Video codec
 
@@ -177,23 +173,11 @@ Test every cell at **720p, 1080p, 4K and 8K** — both surprises this repo found
 - [ ] Toothpick/recovery button registers on the `adc-keys` node
 - [ ] LED polarity confirmed by eye: running, suspended, off
 
-## Remote keymap — run this once per transport
+## Remote keymap
 
-IR and BLE are two independent keymaps in one handset: IR is looked up in the `ir_keyN` table we
-ship in `board.dts`, BLE is whatever HID usages the handset transmits. Neither predicts the other,
-so passing one proves nothing about the other. `docs/remote-keymap.md` has the procedure and the
-`hwdb` override.
-
-Per transport, with `evtest` on `/dev/input/ir-remote` and on `/dev/input/bt-remote`:
-
-- [ ] Every button produces an event, and its `MSC_SCAN` scancode is recorded alongside the keycode
-- [ ] No button reports `KEY_UNKNOWN`
-- [ ] No two buttons share a keycode
-- [ ] The keycode matches the printed label — `KEY_MENU` on a ⌫ key is a fault, not a quirk
-- [ ] Where the board has both transports, the two agree button for button
-- [ ] The table, scancodes included, is recorded in `board.md`
-- [ ] Any override shipped, compiled with `systemd-hwdb update`, and the keycode re-read off the
-      handset — a passing `systemd-hwdb query` only proves the match, not the remap
+- [ ] `docs/remote-keymap.md`'s checklist passes once per transport, IR and BLE, scancodes recorded
+- [ ] Any `hwdb` override compiled and the keycode re-read off the handset — a passing
+      `systemd-hwdb query` proves the match, not the remap
 
 ## Device tree
 
@@ -221,16 +205,14 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
 
 ## Measuring
 
-- `ssh` is not a throughput test — its encryption is itself CPU load. Use `iperf3` or `nc`.
-- Measure the **second** boot; the first legitimately spends a minute on resize and first-run setup.
-- Level-filtering `dmesg` hides most of it: on the R69, 914 lines against 121 for `-l err,warn`.
-  Judge a line by whether it tells the reader something, not by the level it was logged at —
-  demoting a chatty `dev_err` to `dev_dbg` hides it rather than fixing it.
-- `stock/<board>/dmesg.txt` is only a baseline if it covers early boot. The R69's starts at 523 s
-  because the ring buffer had wrapped, so it classifies nothing and passes everything.
-- **The `fio` parameters are fixed** — identical on every board and every medium, or the numbers do
-  not compare. 1 MiB blocks at `iodepth=8` sequential, 4 KiB at `iodepth=32` random, always
-  `--direct=1` so nothing is served from page cache:
+- `ssh` is not a throughput test: its encryption is CPU load. Use `iperf3` or `nc`.
+- Measure the **second** boot; the first spends a minute on resize and first-run setup.
+- Judge a `dmesg` line by what it tells the reader, not its level: `-l err,warn` hid 793 of the
+  R69's 914 lines. Demoting a `dev_err` to `dev_dbg` hides it rather than fixing it.
+- `stock/<board>/dmesg.txt` is a baseline only if it covers early boot; a wrapped ring passes
+  everything.
+- **The `fio` parameters are fixed**, so every board and medium compare. Record decimal MB/s
+  (`bw=371MiB/s` is 389 MB/s), and idle a few seconds between phases: a drive throttles.
 
   ```sh
   fio --name=seq  --filename=<file> --rw=read|write         --bs=1M --size=1G   \
@@ -239,122 +221,74 @@ insert and remove · AV jack · power meter at idle / suspended / off, bare boar
       --direct=1 --ioengine=libaio --iodepth=32 --numjobs=1 --runtime=30 --time_based
   ```
 
-  Record decimal MB/s; `fio` reports KiB/s, so `bw=371MiB/s` is 389 MB/s. Let a drive idle a few
-  seconds between phases — it throttles thermally, and a read taken straight after heavy writes
-  under-reported by ~12%.
-
-- **`glmark2-es2-drm` is the wrong tool on a 4K TV — use `kmscube`.** It picks the largest-area mode
-  and ignores `DRM_MODE_TYPE_PREFERRED`, so on a TV advertising DCI 4K it renders a healthy frame
-  rate onto a black screen. It cannot be steered. `docs/hdmi-edid-override.md` has the reasoning and
-  the way to get comparable numbers anyway.
-- `glmark2-es2-drm` also needs a VT and an **unoccupied** display. Over SSH it prints
-  `Failed to become DRM master`, and so does `openvt` while an earlier run still holds
-  `/dev/dri/card0` — that leftover is the usual cause, not permissions. `fuser -v /dev/dri/card0`,
-  `pkill -9 -f glmark2`, then `openvt -s -w -- sh -c 'glmark2-es2-drm > /tmp/gl.log 2>&1'`.
-- Anything driving the screen from a unit needs its **stdin held open** — `sleep 60 | kmscube` — or
-  it reads EOF, exits immediately, and the mode reverts before you can look at it.
-- Codec tests run as a **normal user** — the nodes ship `0600` and root hides a missing udev rule.
-  Record fps: a silent fall back to software is the failure the matrix exists to catch.
-- **A warm reboot is not a cold one, and one of them is not a test.** On this family a `dwmmc`
-  controller can return `-110` on its first init after `reboot` and never recover — the SD root goes
-  missing, or the SDIO Wi-Fi comes up wedged — while a cold power cycle always clears it. It is
-  intermittent and per-driver (the `sdhci` eMMC has never done it), so reboot ten times and watch
-  the root mount and `wlan0` specifically.
-- **Reloading a module you are connected through:** unload, check and reload in one detached script
-  that restores whatever it found, so a dropped connection cannot strand the box.
-- A boot that has grown since the last measurement is the cheapest signal something is wrong. Usual
-  causes: a unit waiting on absent hardware, a getty retrying a tty, a first-boot script that never
-  marked itself done, DHCP on an unplugged interface.
+- **On a 4K TV use `kmscube`, not `glmark2-es2-drm`:** the latter picks the largest-area mode, DCI
+  4K, and renders onto a black screen; `docs/hdmi-edid-override.md` gets comparable numbers anyway.
+- `glmark2-es2-drm` needs a VT and a free display: `Failed to become DRM master` usually means an
+  earlier run holds `/dev/dri/card0`. `fuser -v /dev/dri/card0`, `pkill -9 -f glmark2`, then
+  `openvt -s -w -- sh -c 'glmark2-es2-drm > /tmp/gl.log 2>&1'`.
+- Anything driving the screen from a unit needs its stdin held open: `sleep 60 | kmscube`.
+- Codec tests run as a **normal user**: the nodes ship `0600`, and root hides a missing udev rule.
+- **Ten warm reboots, not one:** a `dwmmc` controller can fail its first init after `reboot` with
+  `-110` and never recover, losing the SD root or wedging SDIO Wi-Fi; a cold cycle clears it.
+- **Reloading a module you are connected through:** one detached script that unloads, checks and
+  reloads, so a dropped connection cannot strand the box.
+- A boot that grew is the cheapest signal: a unit waiting on absent hardware, a getty retrying a
+  tty, a first-boot script never marked done, DHCP on an unplugged interface.
 
 ## Proving something is absent
 
-- **"Nothing enumerated" is not evidence of absence**, and neither is an empty command. Disabling a
-  node needs a _positive_ signal: a driver error (`gmac0`: `phy_poll_reset failed: -110`), a probe
-  reading nothing (`sfc`: `unrecognized JEDEC id bytes: 00, 00, 00`), or vendor docs that omit the
-  feature. Without one, silence is equally explained by a cable, an adapter, or a tool that is not
-  installed — empty `iw`/`hciconfig` output read as broken hardware here, and `iw` lives in `/sbin`,
+- **Silence is not absence.** Disabling a node needs a positive signal: a driver error
+  (`phy_poll_reset failed: -110`), a probe reading nothing
+  (`unrecognized JEDEC id bytes: 00, 00, 00`), or vendor docs omitting it. `iw` lives in `/sbin`,
   off a non-login ssh `PATH`.
-- **A silent input device is ambiguous.** The IR driver registers whether or not a receiver is
-  soldered, and is silent both when there is none and when the remote matches no DT usercode table.
-  Drive a _known-good_ receiver with the same handset to separate the two.
-- **A capability measured before a boot stage was replaced says nothing about the box after.**
-  Maskrom was ✅ via `Loader` → `rd 3`, which existed only because the **factory** U-Boot served
-  rockusb. Ours does not, so it went back to 🟡.
+- **A silent IR node is ambiguous:** the driver registers with no receiver fitted, and is silent too
+  when the remote matches no usercode table. A known-good receiver separates the two.
+- **A capability measured before a boot stage was replaced** says nothing after it: maskrom through
+  `Loader` existed only because the factory U-Boot served rockusb.
 
 ## Network under load
 
-- A >20% drop, latency spikes into hundreds of ms, retries climbing in `iw dev wlan0 station dump`,
-  or driver errors in `dmesg` are all worth investigating.
-- A slowdown under load is contention and expected; a link that does not return afterwards is a
-  **latch** and a defect. Stop the load, re-measure immediately and again after 60 s idle; `tx` far
-  below `rx` at a strong signal is the signature. Record which rung clears it — reassociate, reload
-  the module, reboot.
-- Check where the interrupts land before reaching for anything else —
-  `grep -E "mmc|sdio|eth|gmac|dwmac" /proc/interrupts`. Remedies, cheapest first: pin the IRQ
-  (`/proc/irq/<n>/smp_affinity`), spread receive processing
-  (`/sys/class/net/<if>/queues/rx-0/rps_cpus`), then raise the driver's own bus-thread priorities if
-  it exposes them. Any of these is board data and ships in the board package with the measurement
-  that justified it.
+- Worth investigating: a >20% drop, latency in the hundreds of ms, retries climbing in
+  `iw dev wlan0 station dump`, driver errors.
+- A slowdown under load is contention; a link that does not return is a **latch**. Re-measure at
+  once and after 60 s idle, and record which rung clears it: reassociate, reload, reboot.
+- Check where interrupts land, `grep -E "mmc|sdio|eth|gmac|dwmac" /proc/interrupts`, then, cheapest
+  first: `smp_affinity`, `rps_cpus`, the driver's bus-thread priorities. Each ships as board data
+  with its measurement.
 
 ## MAC addresses
 
-- A moving IP after a reboot means the MAC is not pinned, not DHCP. Compare
-  `/sys/class/net/wlan0/address` across three boots.
-- A valid but **wrong** address wins, and `dwmac-rk` takes any valid address it is handed. On these
-  images that address comes from mainline's `rockchip_setup_macaddr()` — SHA256 of the OTP `cpuid#`,
-  multicast cleared, LA bit set — because our U-Boot has no vendor-storage driver to read `LAN_MAC`
-  with. Deterministic, so it will not churn; still step 4 on an interface that has a step 1. Check
-  against the sticker, not against the last boot.
-- **Order of truth, best first.** Each step is a weaker claim to being this unit's address, and the
-  first two are assigned where the last two are only pseudo-unique:
+**Order of truth, best first.** Random is not a step; it is the bug.
 
-  1. **The printed label**, with vendor storage as its readable copy — one path, not two.
-  2. **The eFUSE on the chip that carries the interface.**
-  3. **Derived from that same chip's id.**
-  4. **Derived from the SoC's id** — last resort, and only for an interface with no id of its own.
+1. **The printed label**, with vendor storage as its readable copy.
+2. **The eFUSE on the chip that carries the interface.**
+3. **Derived from that same chip's id.**
+4. **Derived from the SoC's id**, only for an interface with no id of its own.
 
-  In practice Ethernet starts at 1 and a radio on its own chip starts at 2. Sourcing across that — a
-  radio derived from the SoC while its eFUSE holds an address, an Ethernet address invented from a
-  chip id — is the fault this section exists to catch. Random is not step 5; it is the bug. Never a
-  rootfs file, never a rename-after-the-fact unit, never one constant shared by every board.
-
-- **Step 1 can disagree with itself.** `LAN_MAC` appears in several copies at different versions —
-  one board's two stale copies hold a locally-administered address the live copy does not. The label
-  settles which is real, and matched the live copy on every board here.
-- **Step 1 does not exist for a radio.** `WIFI_MAC` and `BT_MAC` are ids 2 and 4 in the schema, but
-  they are unpopulated on every board measured here. 🟡 the label and vendor storage look like one
-  path rather than two — no box seen here prints a Wi-Fi or Bluetooth address on its label either,
-  so there is likely nothing assigned at manufacture to write into either place. So a radio is
-  checked against a second unit or the blob, never the label.
-- **A derived address — steps 3 and 4 — is locally administered**, bit `0x02` of the first octet.
-  Neither `C4:2A:FE` nor `88:00:33` is a registered OUI, so deriving under them squats on space that
-  is not ours; a derivation sets the bit whatever prefix it starts from. Addresses read from vendor
-  storage are assigned and stay untouched.
-- Bluetooth has the same requirement and a worse failure — a wandering `BD_ADDR` invalidates every
-  pairing on every boot, and nothing in the logs says why.
+- Ethernet starts at 1, a radio on its own chip at 2. Sourcing across that is the fault to catch.
+  Never a rootfs file, a rename-after-the-fact unit, or a constant every board shares.
+- A moving IP after a reboot means an unpinned MAC. Compare `/sys/class/net/*/address` across three
+  boots, and against the sticker.
+- `dwmac-rk` takes any valid address: mainline U-Boot alone derives one from the OTP `cpuid#`, step
+  4; ours reads `LAN_MAC` from vendor storage, `patches/u-boot/README.md`.
+- `LAN_MAC` has stale copies; the label settles which is live. `WIFI_MAC` and `BT_MAC` are
+  unpopulated on every board measured here, so a radio is checked against a second unit or the blob.
+- A derived address sets the locally-administered bit, `0x02` of the first octet; one read from
+  vendor storage stays as it is.
+- A wandering `BD_ADDR` invalidates every pairing on every boot, silently.
 
 ## Power
 
-- No RTC on this family, so no `rtcwake`.
-- **Wake-on-LAN cannot work** with an integrated PHY (`phy-is-integrated`, no `phy-supply`): deep
-  suspend powers it down, so nothing is left to see the magic packet. Exhausted on the R69 —
-  `ethtool -s end0 wol g`, `power/wakeup: enabled`, `RKPM_GMAC_WKUP_EN` in `rockchip,wakeup-config`,
-  ten magic packets, no wake. No Rockchip board in this BSP enables that wake bit either.
-- **Never suspend a box remotely** — it is stranded until someone presses the remote.
-- Expect off to cost **more** than suspend: with no PMIC, `rockchip,virtual-poweroff` parks the SoC
-  with the rails up and DDR out of self-refresh, and drivers get `.shutdown()` not `.suspend()`. Do
-  not fix that by dropping rails — suspend has a standard mechanism
-  (`regulator-state-mem { regulator-off-in-suspend; }`, 130 Rockchip boards in-tree) and poweroff
-  has none, so cutting a rail there splits one behaviour across layers. Prefer suspend.
-- Meter the bare board — nothing in USB, no HDMI — or the numbers are not comparable between boards.
-  A USB stick and HDMI moved every R69 figure by several tenths of a watt. Any measurement with
-  peripherals attached is a separate row, labelled with what was plugged in.
+- No RTC on this family, so no `rtcwake`; never suspend a box remotely.
+- **Wake-on-LAN cannot work** with an integrated PHY: deep suspend powers it down. ❌ on the R69
+  with `ethtool -s end0 wol g`, `power/wakeup`, `RKPM_GMAC_WKUP_EN`.
+- **Off costs more than suspend:** `rockchip,virtual-poweroff` parks the SoC with the rails up.
+  Prefer suspend; cutting a rail at poweroff splits one behaviour across layers.
+- Meter the bare board: a USB stick and HDMI moved every R69 figure by tenths of a watt. A reading
+  with peripherals is its own row, naming them.
 
 ## Recovery
 
-- The watchdog is also the only hang recorder: its reset preserves ramoops to
-  `/var/lib/systemd/pstore/`, and a cold power cycle loses it. It is unconditional and cannot be
-  disarmed once armed, so a board that hangs early will loop — and its count carries across a soft
-  reboot, which `watchdog.md` covers.
-- Serial is a **prospective** instrument — attaching it to an already-hung box shows nothing,
-  because the interesting output scrolled past. Attach it, then reproduce.
+- The watchdog's reset keeps ramoops in `/var/lib/systemd/pstore/`; a cold cycle loses it. It cannot
+  be disarmed, so a board that hangs early loops: `docs/watchdog.md`.
+- Serial is prospective: attach it, then reproduce.

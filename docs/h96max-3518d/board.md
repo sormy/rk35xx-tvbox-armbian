@@ -114,8 +114,8 @@ fill-rate bound (565 Mpix/s measured, near-identical at every resolution). Same 
 workload. Compare the offscreen Mpix/s figure instead.
 
 **No latch on either band** — no sag under 4-core load, immediate recovery after. The sibling's 6
-Mbit/s TX latch (`docs/h96max-h313/wifi-tx-latch.md`) does not reproduce; retest after a driver
-bump.
+Mbit/s TX latch (`research/seekwave-tx-latch-bug/wifi-tx-latch.md`) does not reproduce; retest after
+a driver bump.
 
 **It roams bands** — check `iw dev wlan0 link` before trusting a throughput figure.
 

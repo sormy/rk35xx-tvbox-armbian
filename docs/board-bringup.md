@@ -161,10 +161,6 @@ the README's Boxes table and support matrix.
 
   The first is `firmware_class.path` on every board's command line. No path has two owners.
 
-- **Deleting from an image needs the patched `e2rm`** — `./build-e2tools.sh`. Stock `e2rm` corrupts
-  ext4 two ways: it frees a fast symlink's target string as block numbers (multiply-claimed metadata
-  block → read-only rootfs on first boot), and it unlinks a directory without freeing it. Both are
-  silent until the box mounts.
 - **Never bake in user preferences or big compiled userspace.** An HDMI `video=` pin would cap every
   4K TV to suit one PC monitor; a Kodi/ffmpeg-MPP stack would break the property that makes this
   repo cheap. Document those as recipes.

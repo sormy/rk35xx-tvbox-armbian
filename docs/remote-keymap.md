@@ -182,3 +182,23 @@ Two traps worth knowing: there is **no `60-keyboard.rules`** on current systemd 
 > Capture, query, reload onto a live device and the remapped keycodes read back off the handset are
 > confirmed on the H96 Max 3518D, 2026-09-07; the `--usr` install and query on the H96 Max M20,
 > 2026-10-20.
+
+## Known gaps
+
+No board's IR table has had this pass; each was transcribed from what the hardware emitted. Where
+the same button disagrees, known here:
+
+| Button      | R69, IR      | H96 Max H313, IR | BLE, after `hwdb` |
+| ----------- | ------------ | ---------------- | ----------------- |
+| Cog         | `KEY_SETUP`  | `KEY_F13`        | `KEY_SETUP`       |
+| OK (centre) | `KEY_ENTER`  | `KEY_REPLY`      | `KEY_OK`          |
+| Home        | `KEY_HOME`   | `KEY_HOME`       | `KEY_HOMEPAGE`    |
+| Voice       | `KEY_HELP`   | `KEY_F14`        | `KEY_SEARCH`      |
+| P +/-       | `KEY_PAGEUP` | `KEY_CHANNELUP`  | `KEY_CHANNELUP`   |
+| Prime Video | `KEY_F3`     | `KEY_F8`         | `KEY_PROG3`       |
+| Google Play | `KEY_F8`     | `KEY_F9`         | `KEY_PROG4`       |
+
+- **IR:** pick one keycode per printed button, BLE's, and make every `ir_keyN` table agree with it.
+  The app keys are `KEY_PROG1`…`KEY_PROG4` in the order YouTube, Netflix, Prime Video, Google Play.
+- **BLE:** every board's remote reports `2B54:1600`, but the map is ✅ only where its scancodes were
+  captured; ❓ on the R69 and H313 until someone captures theirs.

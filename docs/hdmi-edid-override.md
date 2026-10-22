@@ -29,18 +29,9 @@ So a TV that advertises both 3840x2160 (its native panel, marked preferred) and 
 6% more pixels) splits its clients in two. The ones picking by area select a mode the panel cannot
 display and render a healthy frame rate onto a black screen.
 
-## Why the obvious fixes do not work
-
-| Attempt                                  | Why not                                                                                                                                                       |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `video=HDMI-A-1:3840x2160@60`            | pins **fbcon only**; a KMS client still modesets to its own choice                                                                                            |
-| A device-tree property                   | none exists — the mode list is built from EDID, not the tree                                                                                                  |
-| Kernel command line                      | no parameter removes a single mode; `video=…d` disables the whole connector                                                                                   |
-| Stock `/lib/firmware/edid/1920x1080.bin` | replaces the EDID **wholesale**, so the display's real detailed timings go too — on an LG 4K TV this gave vertical colour bars, worse than the original fault |
-| Patching the client                      | `glmark2` has no connector/CRTC/mode option at all; `--size` sets the render surface, not the scanout mode                                                    |
-
-What is left is to change what the connector advertises, starting from **the display's own EDID** so
-its timings survive.
+No kernel parameter or tree property removes one mode, and `video=` pins fbcon only. So edit what
+the connector advertises, starting from **the display's own EDID**: a stock file from
+`/lib/firmware/edid/` replaces its detailed timings too.
 
 ## Why this must stay local
 
@@ -107,11 +98,3 @@ reboot:
 echo "" | sudo tee /sys/module/drm_kms_helper/parameters/edid_firmware
 echo detect | sudo tee /sys/class/drm/card0-HDMI-A-1/status
 ```
-
-## Worked example
-
-An LG 4K TV advertised eight 4096x2160 variants. Removing CEA VICs 98-102 left **two** still listed
-— the HDMI VSDB was advertising `HDMI_VIC` 1-4, and 4 is 4096x2160@24. Dropping that as well (VIC
-list 1-4 → 1-3, block length 14 → 13, DTD offset 103 → 102, checksum recomputed) cleared the list.
-Every client then agreed on 3840x2160, because "largest area" and "preferred" finally named the same
-mode.
