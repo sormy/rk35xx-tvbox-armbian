@@ -1546,3 +1546,9 @@ default, so every error still reached it. At `1 4 1 7` it is quiet once `systemd
 The banner's WAN address needs `wget`, now listed in the image (`curl` is not in it), and the uptime
 drops a zero hour. Without `whiptail`, `apt-get install` printed debconf's fallbacks through
 `Term::ReadLine`; with it, nothing.
+
+`tvb-install` from the USB stick to the eMMC: 754 MiB of rootfs, then sectors 1-253951 raw but
+73760-74271. With the stick out it boots from the eMMC, root on the partition beside `boot0`, no
+failed units. Sectors 73760-74271 hash the same on the eMMC as in `h96max-m20-stock.img.xz`, sha256
+`402778df…6081a`. A first answer of `Y` had been refused without a word, and `mount` printed
+systemd's daemon-reload hint twice; both fixed.

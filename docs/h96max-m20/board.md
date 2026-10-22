@@ -4,10 +4,10 @@ Board id `h96max-m20`, provisional — the box's own strings say `S905LTS` on pl
 Measured on one unit; these numbers are per-unit and they decay. The full factory evidence sweep is
 `stock/h96max-m20/README.md`.
 
-**In bring-up.** Boots from a USB stick unattended and runs TVBian from it, migrated in place from
-Armbian: Debian trixie, kernel `6.18.57-tvb-meson64`, `tvb-h96max-m20`, NetworkManager. eMMC, USB,
-Ethernet (via a USB adapter), the power LED, HDMI, the GPU, and H.264, HEVC and VP9 decode and
-encode work. Nothing is installed to eMMC. Known gaps are at the bottom.
+**In bring-up.** Runs TVBian from its eMMC, installed from the image on a USB stick: Debian trixie,
+kernel `6.18.58-tvb-meson64`, `tvb-h96max-m20`, NetworkManager. eMMC, USB, Ethernet (via a USB
+adapter), the power LED, HDMI, the GPU, and H.264, HEVC and VP9 decode and encode work. Android is
+gone. Known gaps are at the bottom.
 
 ## Identity
 
@@ -277,10 +277,15 @@ associate either way. Vendor driver, same access point and position, `iperf3` TX
 
 ## Installing to eMMC
 
-❓ Single boot, as CoreELEC installs: Android and `cache` go, the vendor bootloader stays and
+Single boot, as CoreELEC installs: Android and `cache` go, the vendor bootloader stays and
 chain-loads the image's own U-Boot. The image step rewrites the factory MPT and both DTB copies in
-`reserved` to this layout; `tvb-install`, on the box booted from the stick, copies the stick to the
-eMMC, all but the unifykeys.
+`reserved` to this layout. On the box, booted from the stick:
+
+```
+tvb-install
+```
+
+It copies the stick to the eMMC, all but the unifykeys, sectors 73760–74271.
 
 | Sectors       | Holds                                           |
 | ------------- | ----------------------------------------------- |
@@ -316,7 +321,7 @@ eMMC, all but the unifykeys.
 | Reset button         | ➖ no Linux input: no free GPIO or ADC channel moves when pressed    |
 | Suspend              | ❌ `s2idle` only, and no wake: keys ignore suspend and poweroff      |
 | Standby LED          | ➖ not fitted: `GPIOZ_14`, the factory's `sys_green`, lights nothing |
-| Install to eMMC      | ❓ the single-boot image verifies offline; never flashed             |
+| Install to eMMC      | ✅ `tvb-install` from the stick; boots without it, keys intact       |
 | `armbian-install`    | ✅ refuses before touching a disk: no `write_uboot_platform`         |
 | Panic under a build  | ✅ three 4-job DKMS builds clean since the secmon fix                |
 | Silent reset         | ✅ none since the secmon fix; once before it, during HEVC bring-up   |
@@ -324,7 +329,7 @@ eMMC, all but the unifykeys.
 | mt76 at boot         | ✅ loads and joins on its own, 18 of 18 warm reboots                 |
 | Fresh image          | ❓ built with both DKMS sources staged; never booted                 |
 | TVBian kernel        | ✅ 6.18.57: Wi-Fi, BT, HDMI, codecs, `soc0` `GXLX2 (S905L3)`         |
-| TVBian image         | ❓ `./build.sh image h96max-m20` builds it; never booted             |
+| TVBian image         | ✅ boots from a USB stick: native HDMI, Wi-Fi, first login           |
 | Our U-Boot           | ✅ libretech-cc `v2026.10`, chain-loaded from the stick's FAT        |
 | Poweroff             | ❓ on TVBian's kernel, without Armbian's `POWER_RESET_MESON64`       |
 | First HEVC session   | ❌ aborts once in a while on `dec_status 0`; the next run decodes    |
