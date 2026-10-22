@@ -4,12 +4,18 @@ on:
   schedule:
     - cron: "17 3 * * 1" # Mondays, off the hour: a busy hour delays or drops a schedule
   workflow_dispatch:
+    inputs:
+      clean:
+        description: "No ccache: a clean-room build"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
       - build.sh
       - build-env/**
       - kernel/**
+      - modules/**
       - uboot/**
       - patches/**
       - package/**
@@ -17,45 +23,142 @@ on:
       - release/**
       - keyring/**
       - firmware/**
+      - .github/workflows/release.yml
+  pull_request:
+    paths:
+      - build.sh
+      - build-env/**
+      - kernel/**
+      - modules/**
+      - uboot/**
+      - patches/**
+      - package/**
+      - image/**
+      - release/**
+      - keyring/**
+      - firmware/**
+      - .github/workflows/release.yml
 
 permissions:
-  contents: write
+  contents: read
 
+# one release at a time; a pull request's newer push replaces its older run
 concurrency:
-  group: release
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.ref) || 'release' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TVB_BUILD_CACHE: ${{ inputs.clean && '0' || '1' }}
+  # only these two events publish, so only they sign
+  PUBLISH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
 
 jobs:
-  release:
+  plan:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 360
-    env:
-      TVB_BUILD_CACHE: "0"
+    outputs:
+      kernels: ${{ steps.plan.outputs.kernels }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Free disk
-        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
-
       - name: Install podman
         run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
+      - id: plan
+        name: Plan
+        run: |
+          sudo -E env "PATH=$PATH" ./build.sh plan
+          echo "kernels=$(awk '$1 == "kernel" && $4 == "new" { print $2 }' build/out/release/plan | jq -Rsc 'split("\n")[:-1]')" >>"$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plan
+          path: build/out/release
+          retention-days: 1
+      # the published debs of groups the plan reuses
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debs-published
+          path: build/out/debs
+          retention-days: 1
+          if-no-files-found: ignore
 
-      # rootful podman: mmdebstrap creates device nodes, which a rootless user namespace cannot
+  kernel:
+    needs: plan
+    if: needs.plan.outputs.kernels != '[]'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        conf: ${{ fromJSON(needs.plan.outputs.kernels) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+      - name: Install podman
+        run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
+      - uses: actions/download-artifact@v4
+        with:
+          name: plan
+          path: build/out/release
+      - id: name
+        run: echo "kernel=$(basename "${{ matrix.conf }}" .conf)" >>"$GITHUB_OUTPUT"
+      # a pull request reads main's cache and saves only its own
+      - uses: actions/cache@v4
+        if: env.TVB_BUILD_CACHE == '1'
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-${{ steps.name.outputs.kernel }}-${{ github.run_id }}
+          restore-keys: ccache-${{ steps.name.outputs.kernel }}-
+      # rootful podman: the same as the release job, and ccache's files then belong to root
       - name: Build
+        run: |
+          version=$(awk -v c="${{ matrix.conf }}" '$1 == "kernel" && $2 == c { print $3 }' build/out/release/plan)
+          sudo -E env "PATH=$PATH" TVB_BUILD_CCACHE_DIR="$RUNNER_TEMP/ccache" \
+            TVB_BUILD_REVISION="${version##*-}" ./build.sh kernel "${{ matrix.conf }}"
+          sudo chown -R "$USER" "$RUNNER_TEMP/ccache"
+          df -h / | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debs-${{ steps.name.outputs.kernel }}
+          path: build/out/debs
+          retention-days: 1
+
+  release:
+    needs: [plan, kernel]
+    # every kernel built, or none needed building
+    if: always() && needs.plan.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.kernel.result)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+      - name: Install podman
+        run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
+      - uses: actions/download-artifact@v4
+        with:
+          name: plan
+          path: build/out/release
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: debs-*
+          path: build/out/debs
+          merge-multiple: true
+      # rootful podman: mmdebstrap creates device nodes, which a rootless user namespace cannot
+      - name: Assemble
         env:
-          ARCHIVE_SIGNING_KEY: ${{ secrets.ARCHIVE_SIGNING_KEY }}
+          ARCHIVE_SIGNING_KEY: ${{ env.PUBLISH == 'true' && secrets.ARCHIVE_SIGNING_KEY || '' }}
         run: |
           key=()
           if [ -n "$ARCHIVE_SIGNING_KEY" ]; then
-            printf '%s\n' "$ARCHIVE_SIGNING_KEY" > "$RUNNER_TEMP/signing.key"
+            printf '%s\n' "$ARCHIVE_SIGNING_KEY" >"$RUNNER_TEMP/signing.key"
             key=(--key "$RUNNER_TEMP/signing.key")
           fi
-          sudo -E env "PATH=$PATH" ./build.sh release "${key[@]}"
+          sudo -E env "PATH=$PATH" ./build.sh assemble "${key[@]}"
           rm -f "$RUNNER_TEMP/signing.key"
           df -h / | tail -1
-
       - name: Publish
-        if: github.event_name != 'push'
+        if: env.PUBLISH == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./build.sh publish

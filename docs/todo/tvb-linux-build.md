@@ -18,7 +18,7 @@ The order agreed on 2026-10-22; each step lands before the next starts.
 - [x] **A host ccache.** ✅ a warm rebuild of rk35xx-next hit 10127 of 10127, 144 s against 969 s.
       `TVB_BUILD_CCACHE_DIR` mounts a host directory as ccache's, the one cache CI keeps; unset on a
       Mac, where the volume's is twice as fast.
-- [ ] **Steps CI can call one by one:** plan, one kernel at its planned version, the rest.
+- [x] **Steps CI can call one by one:** plan, one kernel at its planned version, the rest.
       `./build.sh release` still runs them all in order.
 - [ ] **The workflow split:** `plan`, then a kernel job each, then `release`; pull requests run it
       all and publish nothing.

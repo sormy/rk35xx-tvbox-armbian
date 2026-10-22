@@ -42,7 +42,9 @@ arm64 host could build without it, and does not. An x86-64 host runs that arm64 
 
 The plan looks up each group's `X-Tvb-Inputs`, from `release/inputs.sh`, in the published
 `Packages`: a match is fetched, anything else builds at the next revision, `6.18.57-1` then `-2`, or
-`1` then `2`. Plan and notes land in `build/out/release/`.
+`1` then `2`. Plan and notes land in `build/out/release/`. `release` is `plan` then `assemble`;
+`assemble` builds what the plan calls new, skipping a kernel whose debs are already in
+`build/out/debs/`, then the guard, the images and the repo.
 
 A path that moves between packages needs `Replaces` and `Breaks` on its new owner, versioned below
 the old owner's first release without it; `release/guard.sh` fails the release otherwise, against
@@ -58,16 +60,20 @@ echo "$src" | sudo tee /etc/apt/sources.list.d/tvb-test.list && sudo apt update 
 `publish` uploads the new debs, then the index, to the rolling `apt` pre-release, and the images
 with a signed `SHA256SUMS` to a release named by the day, `.2` for a second.
 
-CI runs `release` and `publish` on Mondays and on `workflow_dispatch`, clean (`TVB_BUILD_CACHE=0`),
-signed from the `ARCHIVE_SIGNING_KEY` secret; a push to a build input runs `release` only.
+CI splits the same steps into jobs: `plan`; one runner per new kernel, its debs as an artifact and
+its ccache kept by `actions/cache` (`TVB_BUILD_CCACHE_DIR`); then `assemble` on the debs, and
+`publish`. Mondays and `workflow_dispatch` publish, signed from the `ARCHIVE_SIGNING_KEY` secret; a
+push or a pull request touching a build input builds only. A dispatch with `clean` builds without
+ccache.
 
 ## Measured
 
-| Apple M-series, 10 CPUs                | Wall time |
-| -------------------------------------- | --------- |
-| meson64 kernel, cold, 8 GB             | 16 min    |
-| meson64 kernel, cold, 32 GB            | 13 min    |
-| meson64 kernel, ccache warm            | 81 s      |
-| `release`, ccache warm, image included | 170 s     |
+| Apple M-series, 10 CPUs                 | Wall time |
+| --------------------------------------- | --------- |
+| meson64 kernel, cold, 8 GB              | 16 min    |
+| meson64 kernel, cold, 32 GB             | 13 min    |
+| meson64 kernel, ccache warm             | 81 s      |
+| `release`, ccache warm, image included  | 170 s     |
+| `release`, every cache empty, 4 kernels | 49 min    |
 
 ❓ a GitHub-hosted arm64 runner: wall time and peak disk, measured on the first run.

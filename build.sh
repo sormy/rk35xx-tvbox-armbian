@@ -9,7 +9,9 @@
 #          ./build.sh image <board>           its image, from build/out/debs/
 #          ./build.sh images                  every board's image
 #          ./build.sh repo [--key <file>]     build/out/debs/ as a signed flat apt repo
-#          ./build.sh release [--key <file>]  what CI runs: plan, build what moved, images, repo
+#          ./build.sh plan                    each group's version against the published repo
+#          ./build.sh assemble [--key <file>] build what the plan calls new, images, repo
+#          ./build.sh release [--key <file>]  plan, then assemble: what CI runs, in one go
 #          ./build.sh serve                   build/out/ on port 8000
 #          ./build.sh publish                 upload a release to GitHub
 #   env:   TVB_BUILD_CPUS (all cores), TVB_BUILD_MEMORY (8g), TVB_BUILD_SUITE (Debian stable),
@@ -50,9 +52,9 @@ EOF
   exit 1
 }
 
-usage() { sed -n '3,16p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+usage() { sed -n '3,20p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 case "${1:-}" in
-  kernel | uboot | board | firmware | keyring | debs | image | images | repo | release) ;;
+  kernel | uboot | board | firmware | keyring | debs | image | images | plan | repo | assemble | release) ;;
   serve) cd "$OUT" && exec python3 -m http.server 8000 ;;
   publish) exec bash release/publish.sh ;;
   *) usage ;;
@@ -136,18 +138,23 @@ case "$1" in
     run bash package/keyring.sh ;;
   image) run bash image/build.sh "${2:?usage: ./build.sh image <board>}" ;;
   images) for b in $(boards); do run bash image/build.sh "$b"; done ;;
-  repo | release)
+  plan)
+    rm -rf "$OUT/debs" "$OUT/images" "$OUT/release"
+    run bash release/plan.sh ;;
+  repo | assemble | release)
     if [ "${2:-}" = --key ]; then
       cp "${3:?usage: ./build.sh $1 --key <file>}" "$OUT/signing.key"
       trap 'rm -f "$OUT/signing.key"' EXIT
     fi
-    if [ "$1" = release ]; then
-      rm -rf "$OUT/debs" "$OUT/images" "$OUT/release"
-      run bash release/plan.sh
+    [ "$1" != release ] || "$0" plan
+    if [ "$1" != repo ]; then
+      [ -s "$OUT/release/plan" ] || { echo "✗ no plan in $OUT/release: ./build.sh plan first" >&2; exit 1; }
       while read -r step arg version state; do
         [ "$state" = new ] || continue
         case $step in
-          kernel) TVB_BUILD_REVISION=${version##*-} run bash kernel/build.sh "$arg" ;;
+          # a kernel built in its own CI job arrives as debs: skip it
+          kernel) [ -f "$OUT/debs/linux-image-tvb-$(basename "$arg" .conf)_${version}_arm64.deb" ] ||
+            TVB_BUILD_REVISION=${version##*-} run bash kernel/build.sh "$arg" ;;
           board) TVB_BUILD_REVISION=$version board "$arg" ;;
           firmware) TVB_BUILD_REVISION=$version run bash package/firmware.sh "$arg" ;;
           keyring) TVB_BUILD_REVISION=$version run bash package/keyring.sh ;;
