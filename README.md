@@ -1,10 +1,15 @@
-# TVBian — Debian-based Linux for TV boxes
+# TVBian — Debian for TV boxes
 
-Debian on a **$15–35 Android TV box** — silent, fanless, cables and a remote in the box.
+[![Latest release](https://img.shields.io/github/v/release/sormy/tvbian?label=release&sort=date)](https://github.com/sormy/tvbian/releases/latest)
+[![Released](https://img.shields.io/github/release-date/sormy/tvbian?label=released)](https://github.com/sormy/tvbian/releases/latest)
+[![Weekly build](https://github.com/sormy/tvbian/actions/workflows/release.yml/badge.svg)](https://github.com/sormy/tvbian/actions/workflows/release.yml)
 
-Each image is a stock Armbian image for a board of the same SoC family, named as the base image
-below. Everything board-specific — factory bootloader, device tree, drivers, boot fixups — is
-sideloaded into it. Nothing is forked, so `apt upgrade` keeps updating the kernel and userspace.
+Debian on a **$15–35 Android TV box**: silent, fanless, a remote in the box, and an Android it
+shipped with and never updated. We fixed the last part.
+
+TVBian is plain Debian plus our own kernel, drivers and board packages, from a signed `apt`
+repository. Every Monday a robot builds fresh images and nobody has to remember to. This page is the
+Rockchip boxes; Amlogic ones are in [README_AMLOGIC.md](README_AMLOGIC.md).
 
 ## Boxes
 
@@ -20,14 +25,12 @@ sideloaded into it. Nothing is forked, so `apt upgrade` keeps updating the kerne
 | USB        | USB-A 3.0 (OTG) + USB-A 2.0                 | USB-A 3.0 (OTG) + USB-A 2.0                         | USB-C 2.0 (OTG) + USB-A 2.0                          |
 | Ethernet   | 10/100                                      | 10/100                                              | **none**                                             |
 | Wi-Fi / BT | AIC8800D80                                  | Seekwave SWT6621S                                   | Seekwave SWT6621S                                    |
-| Base image | [Armbian ROCK 2F][rock2f]                   | [Armbian ROCK 2F][rock2f]                           | [Armbian ROCK 2F][rock2f]                            |
-| Install    | SD + Maskrom                                | SD + Maskrom                                        | Maskrom only                                         |
+| Install    | SD card                                     | SD card                                             | Maskrom over USB                                     |
 | Details    | [board doc][r69]                            | [board doc][h96]                                    | [board doc][h96d]                                    |
 
 [r69]: docs/r69/board.md
 [h96]: docs/h96max-h313/board.md
 [h96d]: docs/h96max-3518d/board.md
-[rock2f]: https://www.armbian.com/rock-2f/
 
 ## What works
 
@@ -79,69 +82,44 @@ sideloaded into it. Nothing is forked, so `apt upgrade` keeps updating the kerne
 | Serial console                              | ✅  |      ✅      |      ✅       |
 | Maskrom recovery over USB                   | ✅  |      ✅      |      ✅       |
 
-## Build
+The remote's voice button stays 🟡: nobody here has worked out what to say to a TV box.
 
-Needs a stock Armbian `.img.xz` (tested: `minimal` vendor 6.1), and a **microSD** (8 GB+) on the
-boxes that have a slot — the rest take the same image over USB, below.
+## Get an image
 
-Which Armbian image is the board's own, and the build refuses any other. Run `./build-image.sh` with
-no arguments to list every board and its base.
-
-```bash
-brew install xz coreutils                    # macOS  ·  apt install xz-utils on Debian
-./build-e2tools.sh                           # once — stock e2tools corrupts an image on delete
-./build-image.sh Armbian_..._Rock-2f_..._minimal.img.xz h96max-h313
-```
-
-~1 minute, no Docker, no kernel build. Output: `Armbian_..._-<board>.img`.
+Every box's image is on the [latest release](https://github.com/sormy/tvbian/releases/latest), with
+signed checksums. Build it yourself instead with `./build.sh`: [docs/build.md](docs/build.md).
 
 ## Flash and boot
 
 ```bash
-diskutil list                            # macOS — find the card   ·   lsblk on Linux
+diskutil list                                    # macOS — find the card   ·   lsblk on Linux
 diskutil unmountDisk /dev/diskN
-sudo gdd if=Armbian_..._-h96max.img of=/dev/rdiskN bs=4M conv=fsync status=progress; sync   # macOS
-sudo dd  if=Armbian_..._-h96max.img of=/dev/sdX    bs=4M conv=fsync status=progress; sync   # Linux
-
-ssh root@<box-ip>                        # Armbian default password for root is 1234
+xz -dc tvbian-<date>-<board>-trixie.img.xz | sudo dd of=/dev/rdiskN bs=4m status=progress; sync   # macOS
+xz -dc tvbian-<date>-<board>-trixie.img.xz | sudo dd of=/dev/sdX bs=4M status=progress; sync      # Linux
 ```
 
-…or [Balena Etcher](https://etcher.balena.io/). Android is untouched: eject the SD and it boots
-again.
+…or [Balena Etcher](https://etcher.balena.io/), which takes the `.img.xz` as it is. Android is
+untouched: eject the card and it boots again, unaware of what almost happened.
 
-> **First boot takes ~5 minutes** and is off the network while DKMS compiles.
+> **No card slot on your box?** Nothing boots from SD on it, so skip to [no SD slot](#no-sd-slot).
 
-> **No card slot on your box?** Nothing here boots from SD, so skip to [no SD slot](#no-sd-slot).
+## First login
 
-## First boot
-
-A user, the timezone, the locale and Wi-Fi: [docs/first-login.md](docs/first-login.md).
+`ssh root@<board-key>.local`, or a keyboard on HDMI. The password is `1234`, and it is expired, so
+the first thing the box does is make you pick a better one. A user, the timezone, the locale and
+Wi-Fi: [docs/first-login.md](docs/first-login.md).
 
 ## Install to eMMC
 
 **Wipes Android and everything else on that chip.** Boot from SD, dump the chip somewhere durable,
-then install — in that order.
+then install — in that order. Skipping the dump is how a $30 box becomes a $30 lesson.
 
 ```sh
 lsblk                                        # the eMMC is the disk with mmcblkXboot0/boot1 beside it
 sudo dd if=/dev/mmcblkX bs=4M status=progress | ssh you@host 'cat > emmc-stock.img'
-
-sudo armbian-install                         # choose "Boot from eMMC / system on eMMC"
-
-ssh you@host 'dd if=emmc-stock.img bs=512 skip=7168 count=9216' \
-  | sudo dd of=/dev/mmcblkX bs=512 seek=7168 conv=notrunc,fsync        # optional, see below
-sudo rk35xx-vendor-storage lan                                         # must match the box label
-
+sudo tvb-install
 sudo poweroff                                # pull the SD; it boots from eMMC
 ```
-
-Dump the **disk**, not partitions; `stat -c %s` must equal `/sys/block/mmcblkX/size` × 512. Keep it
-off the box and off the SD.
-
-Sectors 7168–16383 hold `DVKR` (the factory `LAN_MAC`) and `SSKR` (HDCP/DRM keys). `armbian-config`
-spares them; older versions zero everything below 20480. Neither is needed: without `DVKR`
-`rk35xx-mac-pin` derives a stable address instead, and `SSKR` is unreachable under our U-Boot.
-Restore only if you want the factory MAC back. `docs/armbian-install.md` has the detail.
 
 ## No SD slot
 
@@ -149,8 +127,7 @@ Nothing to boot from, so backup and install both go over USB in Maskrom. Hold th
 then plug the OTG cable in — the cable powers the box, so the PSU stays out.
 
 **One cable, ordered before you need it:** a [USB-A male-to-male][amm] (~$4), with a [USB-C→USB-A
-female adapter][ca] (~$8 for 4) on whichever end is USB-C. Charge-only cables enumerate nothing, and
-a plain USB-C→USB-A cable with the C end in the host does not do OTG at all.
+female adapter][ca] (~$8 for 4) on whichever end is USB-C.
 
 [amm]: https://www.amazon.com/dp/B0CLB4Y5XD
 [ca]: https://www.amazon.com/dp/B0DSK82JK8
@@ -160,28 +137,22 @@ a plain USB-C→USB-A cable with the C end in the host does not do OTG at all.
 cd tools/rktools
 
 ./rkdeveloptool ld                                 # must say Maskrom
-./rkdeveloptool db rk3528_spl_loader-<board>.bin   # one loader per board, it carries its DDR init
+./rkdeveloptool db rk3528_spl_loader-<board>.bin   # the board's own loader
 
-./rkdeveloptool rfi                                # total sectors, e.g. 30777344
+./rkdeveloptool rfi                                # total sectors
 ./rkdeveloptool rl 0 <sectors> emmc-stock.img      # back up first
-./rkdeveloptool wl 0 <image>                       # then write
+xz -dk tvbian-<date>-<board>-trixie.img.xz
+./rkdeveloptool wl 0 tvbian-<date>-<board>-trixie.img
 ./rkdeveloptool rd                                 # reboot
 ```
 
-`docs/maskrom.md` has the other entry routes, how to verify a dump, and what to do if a transfer
-stalls.
+More routes, and what to do if a transfer stalls: `docs/maskrom.md`.
 
 ## Update a running box
 
-For changes in **this repo** — DTB, drivers, scripts. Everything else: `apt upgrade`.
-
 ```bash
-./rk35xx-deploy root@<box-ip>     # push this repo and apply  (--reboot if the DTB changed)
-sudo rk35xx-update --pull         # …or on the box, fetching the repo itself
+sudo apt update && sudo apt upgrade
 ```
-
-Installs the payload, rebuilds DKMS, reinstalls the DTB, restarts changed services. Reboots only if
-`board.dtb` changed; never touches the bootloader. **Overwrites the files it ships.**
 
 ## Remote
 
@@ -189,12 +160,10 @@ IR works unpaired, unless the board has no IR receiver — the stick models do n
 air-mouse and battery; read your keycodes with `sudo evtest /dev/input/bt-remote` or
 `/dev/input/ir-remote`.
 
-Pairing mode is **left + right until the LED blinks**; the entry is named **`Bluetooth remote`**.
-Pair in **one `bluetoothctl` session with a scan running**:
+Pairing mode is **left + right until the LED blinks**; the entry is named **`Bluetooth remote`**,
+because naming things is hard. Pair in **one `bluetoothctl` session with a scan running**:
 
 ```sh
-sudo apt install bluez            # minimal images ship without it
-
 # 1. remote in pairing mode (LED blinking), then find it by name:
 MAC=$(bluetoothctl --timeout 20 scan on | grep -im1 "bluetooth remote" \
       | grep -oE '([0-9A-F]{2}:){5}[0-9A-F]{2}')
@@ -218,7 +187,7 @@ with a plastic pry tool; the H313 needs a couple of screws out to reach the pads
 
 - **Adapter:** 3.3 V USB-TTL doing 1.5 Mbaud — **FT232 or CH340**, e.g.
   [Waveshare FT232RNL](https://www.amazon.com/dp/B0CX55K4RG) (~$14). **Not a CP2102** — it cannot do
-  1.5 Mbaud and prints plausible garbage.
+  1.5 Mbaud and prints plausible garbage, which is the worst kind.
 - **Wiring:** GND, TX, RX only, crossed (box TX → adapter RX). **Never connect 3V3/VCC.**
 - **Contact:** no soldering where there are holes or a header —
   [test-hook grabbers](https://www.amazon.com/dp/B07BCZSNGS) (~$10). Bare test points give a hook
@@ -230,9 +199,7 @@ tio -b 1500000 -L --log-file boot.log /dev/cu.usbserial-XXXX  # macOS: cu.*, not
 tio -b 1500000 -L --log-file boot.log /dev/ttyUSB0            # Linux
 ```
 
-Power-cycle to see the log; U-Boot's countdown is interruptible. Output but no input: recheck
-contact and the TX↔RX crossing. Full kernel log on serial and HDMI: `verbosity=7` in
-`/boot/armbianEnv.txt`.
+Power-cycle to see the log.
 
 ## Recovery
 
@@ -240,7 +207,7 @@ contact and the TX↔RX crossing. Full kernel log on serial and HDMI: `verbosity
 `sudo dd if=emmc-stock.img of=/dev/mmcblkX bs=4M status=progress; sync`.
 
 **Nothing boots, or the box has no SD slot** — go in over USB: `docs/maskrom.md`, section **Write an
-image over USB**.
+image over USB**. It is very hard to truly brick these boxes. Not impossible. Hard.
 
 ## Credits
 
