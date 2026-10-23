@@ -26,19 +26,11 @@ new() {
 new | sort -u | xargs -r cp -t "$REPO"
 
 cd "$REPO"
-{
-  [ ! -s "$REL/Packages.published" ] || { cat "$REL/Packages.published"; echo; }
-  apt-ftparchive packages .
-} | cat -s >Packages
+# the published index and this run's debs, less what has expired: publish.sh deletes those debs
+apt-ftparchive packages . >"$REL/Packages.new"
+apt-ftparchive contents . >"$REL/Contents.new"
+python3 /repo/release/expire.py "$REL" /out/debs .
 xz -k Packages
-# every path's package: the published ones this run did not rebuild, and the new debs'
-rebuilt=$(find . -name '*.deb' -exec dpkg-deb -f {} Package \;)
-{
-  [ ! -s "$REL/Contents.published" ] ||
-    awk -v r="$rebuilt" 'BEGIN { n = split(r, a, "\n"); for (i = 1; i <= n; i++) skip[a[i]] }
-      { p = $NF; sub(/.*\//, "", p); if (!(p in skip)) print }' "$REL/Contents.published"
-  apt-ftparchive contents .
-} | sort -u >Contents
 # Contents too: a flat repo's has no -<arch> suffix, which the default patterns want
 apt-ftparchive -o APT::FTPArchive::Release::Origin=TVBian -o APT::FTPArchive::Release::Label=TVBian \
   -o APT::FTPArchive::Release::Patterns::=Contents release . >Release

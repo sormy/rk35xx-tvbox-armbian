@@ -8,8 +8,19 @@ APT=${TVB_APT_URL:-https://github.com/sormy/tvbian/releases/download/apt}
 REL=/out/release
 mkdir -p "$REL" /out/debs
 rm -f "$REL/plan"
-curl -fsSL "$APT/Packages" -o "$REL/Packages.published" 2>/dev/null || : >"$REL/Packages.published"
-curl -fsSL "$APT/Contents" -o "$REL/Contents.published" 2>/dev/null || : >"$REL/Contents.published"
+# published <file>: the repo's own copy; none only when nothing is published. Read as empty after a
+# failed fetch, the index would expire everything this run did not build, and publish.sh delete it.
+published() {
+  local code
+  code=$(curl -sSL -w '%{http_code}' -o "$REL/$1.published" "$APT/$1") || code=000
+  case $code in
+    200) ;;
+    404) : >"$REL/$1.published" ;;
+    *) echo "✗ $APT/$1: HTTP $code, refusing to plan against a repo it cannot read" >&2; exit 1 ;;
+  esac
+}
+published Packages
+published Contents
 
 field() {  # field <package> <name> [inputs]: that field of the package's stanza, by inputs if given
   awk -v RS= -v p="$1" -v f="$2" -v i="${3:-}" '
@@ -26,12 +37,13 @@ fetch() {  # fetch <package> <version>: its published deb, into /out/debs
 # plan <step> <argument> <package> <inputs> <upstream>: the next version counts revisions per upstream
 plan() {
   local had next
-  had=$(field "$3" Version "$4" | head -1)
+  # the newest match: the index lists a package's versions oldest first
+  had=$(field "$3" Version "$4" | tail -1)
   if [ -n "$had" ]; then
     echo "$1 $2 $had published" >>"$REL/plan"
     fetch "$3" "$had"
     if [ "$1" = kernel ]; then
-      for dep in $(field "$3" Depends "$4" | head -1 | tr ',' '\n' | sed 's/^ *//; s/ .*//'); do
+      for dep in $(field "$3" Depends "$4" | tail -1 | tr ',' '\n' | sed 's/^ *//; s/ .*//'); do
         fetch "$dep" "$had"
         # the headers, which nothing depends on, are as much the kernel's
         case $dep in linux-image-*) fetch "linux-headers-${dep#linux-image-}" "$had" ;; esac

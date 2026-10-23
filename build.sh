@@ -25,9 +25,11 @@
 #          ./build.sh loader <board>          maskrom_loader.bin from factory_idbloader.bin + rkbin
 #          ./build.sh board-dtbs | uboot-dtbs | loaders   the same, for every board that has the input
 #          ./build.sh boards                  all three plurals, then whether boards/ drifted from git
+#          ./build.sh test                    tests/, in the build container
 #   env:   TVB_BUILD_CPUS (all cores), TVB_BUILD_MEMORY (8g), TVB_BUILD_SUITE (Debian stable),
 #          TVB_BUILD_REVISION (0~local), TVB_BUILD_CACHE (1; 0: clean), TVB_BUILD_CCACHE_SIZE (5G),
 #          TVB_RELEASE_GUARD (1; 0: skip the guard on paths changing package),
+#          TVB_APT_KEEP_DAYS (183: how long apt keeps a version after a newer one replaced it),
 #          TVB_BUILD_CCACHE_DIR (in the work volume; a host directory for CI's cache to keep,
 #          slow on macOS, where a bind mount is a file share)
 set -euo pipefail
@@ -86,7 +88,7 @@ boards_files() {
 
 usage() { awk 'NR > 2 { if (!/^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 1; }
 case "${1:-}" in
-  kernel | uboot | board | firmware | base | keyring | debs | image | images | plan | repo | assemble | release) ;;
+  kernel | uboot | board | firmware | base | keyring | test | debs | image | images | plan | repo | assemble | release) ;;
   serve) cd "$OUT" && exec python3 -m http.server 8000 ;;
   publish) exec bash release/publish.sh ;;
   tool)
@@ -141,7 +143,7 @@ run() {  # run a command inside the image, the repo read-only at /repo
   trap '"$RT" stop "$name" >/dev/null 2>&1; exit 130' INT TERM
   "$RT" run ${PLATFORM:+"$PLATFORM"} --rm --name "$name" --cpus "$CPUS" --memory "$MEMORY" -e TVB_BUILD_CPUS="$CPUS" -e TVB_BUILD_REVISION="${TVB_BUILD_REVISION:-0~local}" \
     -e TVB_BUILD_CACHE="${TVB_BUILD_CACHE:-1}" -e TVB_BUILD_CCACHE_SIZE="${TVB_BUILD_CCACHE_SIZE:-5G}" \
-    -e TVB_BUILD_SUITE="$SUITE" \
+    -e TVB_BUILD_SUITE="$SUITE" -e TVB_APT_KEEP_DAYS="${TVB_APT_KEEP_DAYS:-183}" \
     -v "$WORK:/work" -v "$PWD:/repo:ro$rel" -v "$PWD/$OUT:/out${rel:+:${rel#,}}" ${ccache[@]+"${ccache[@]}"} \
     -w /repo "$IMAGE" "$@" </dev/null
 }
@@ -169,6 +171,7 @@ case "$1" in
   board) board "${2:?usage: ./build.sh board <board>}" ;;
   firmware) run bash package/firmware.sh "${2:?usage: ./build.sh firmware <dir>}" ;;
   base) run bash package/base.sh ;;
+  test) run python3 -m unittest discover -s /repo/tests -v ;;
   keyring) run bash package/keyring.sh ;;
   debs)
     for k in kernel/*.conf; do run bash kernel/build.sh "$k"; done

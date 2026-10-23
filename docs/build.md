@@ -42,6 +42,7 @@ the tools they need: `./build.sh tool <name>` builds one from `tools/<name>/` na
 ./build.sh keyring                      # host: tvb-archive-keyring
 ./build.sh debs                         # host: all of the above, every kernel and board
 ./build.sh image h96max-m20             # host: build/out/images/, from build/out/debs/
+./build.sh test                         # host: tests/, in the build container
 ```
 
 `./build.sh` alone lists every step and `TVB_BUILD_*` variable. A kernel's out-of-tree drivers,
@@ -75,13 +76,14 @@ src='deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] http://<mac>.lo
 echo "$src" | sudo tee /etc/apt/sources.list.d/tvb-test.list && sudo apt update   # box
 ```
 
-`publish` uploads the new debs, then the index, to the rolling `apt` release, a pre-release so it is
-never latest, and the images with a signed `SHA256SUMS` to a release named by the day, `.2` for a
-second. It uploads the files built, never a rebuild, and refuses a dirty tree or an unpushed commit,
-so every release names its commit. One key signs CI's releases and a Mac's alike. Before the images
-go up, `release/verify.py` reads the repo back as a box would: `InRelease` signed by our key, the
-index matching `Release`, every deb served at its indexed size, and every `Depends` on a `tvb-` or
-kernel package resolvable. It runs alone the same way, on the host.
+`publish` refuses a dirty tree or an unpushed commit, so every release names its commit, and a live
+index other than the one the run was planned against. It deletes the debs no index names, a failed
+run's, then uploads the new debs and the index to the rolling `apt` release, a pre-release so it is
+never latest. `release/verify.py` then reads the repo back as a box would: `InRelease` signed by our
+key, the index matching `Release`, every deb served at its indexed size, every `Depends` on a `tvb-`
+or kernel package resolvable. Only then do the expired debs go, and the images with a signed
+`SHA256SUMS` go up to a release named by the day, `.2` for a second. One key signs CI's releases and
+a Mac's alike; `verify.py` also runs alone, on the host.
 
 ## CI
 
@@ -128,10 +130,15 @@ Everything is published from this repo, as GitHub releases.
 | signing key | `keyring/tvb-archive-keyring.gpg`; CI signs from secret |
 
 An image is named `tvbian-<board>-<codename>-<YYYY-MM-DD>.img.xz`, so a downloaded file still says
-what it is, and a board's images sort together. Nothing is pruned: a past image can be flashed to
-bisect, and `apt` keeps every kernel it published under versioned names, so
-`apt install linux-image-<kernelrelease>` goes back without a reflash. ❓ whether GitHub caps assets
-per release; `apt` gains about 150 kernel debs a year.
+what it is, and a board's images sort together. Every image is kept, so a past one can be flashed to
+bisect.
+
+`apt` expires, since GitHub holds at most 1000 assets in a release. `release/expire.py` keeps each
+package's newest version, and an older one for `TVB_APT_KEEP_DAYS` after something newer replaced
+it, six months by default; a kernel's own packages, named for its release, stay while a kept
+metapackage depends on them, its headers beside them, and every deb a run built or reused stays. So
+`apt install linux-image-<kernelrelease>` goes back to any kernel replaced in that window without a
+reflash. `./build.sh test` runs the rule's cases.
 
 The repo is flat, `Packages.xz`, `Release` and `InRelease` beside the `.deb`s, from
 `apt-ftparchive`, signed with `gpg`. apt's `https` method follows `releases/download`'s redirect to

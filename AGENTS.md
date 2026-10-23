@@ -28,6 +28,7 @@ code** — one `boards/<board>/` directory. If a change needs new code per board
 | `package/`         | the steps building `tvb-<board>`, `tvb-firmware-<chip>`, `tvb-base` and `tvb-archive-keyring`  |
 | `image/`           | the image step, its package list, and the image's own state: locale, root's first SSH login    |
 | `release/`         | the release plan, the signed `apt` repo, and the upload to GitHub                              |
+| `tests/`           | the scripts' tests, one file a script, run by `./build.sh test` in the build container         |
 
 **Repo files carry no prefix**: each board's `package.list` names where a file installs. A board
 directory holds `board.conf`, the tree, the factory idbloader and the maskrom loader,

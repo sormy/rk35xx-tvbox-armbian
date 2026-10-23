@@ -22,6 +22,7 @@ KEYRING = REPO / "keyring/tvb-archive-keyring.gpg"
 DEFAULT_URL = "https://github.com/sormy/tvbian/releases/download/apt"
 INDEX = ("Packages", "Packages.xz", "Contents")
 OURS = re.compile(r"^(tvb-|linux-(image|headers)-.*tvb)")
+PINNED = re.compile(r"^([^\s(]+)(?:\s*\(=\s*([^)]+)\))?")
 SHA256_LINE = re.compile(r"^ ([0-9a-f]{64}) +(\d+) (\S+)$", re.M)
 
 
@@ -82,16 +83,21 @@ class Repo:
                 self.fail(f"{name}: indexed at {stanza['Size']} bytes, served {served}")
 
     def check_depends(self, stanzas: list[dict[str, str]]) -> None:
+        """Each Depends on our packages names one here; an exact (= version) pin, that version."""
+        versions = {(s["Package"], s["Version"]) for s in stanzas}
         named = {s["Package"] for s in stanzas}
         named |= {
             p.split()[0] for s in stanzas for p in s.get("Provides", "").split(",") if p.strip()
         }
         for stanza in stanzas:
             for clause in stanza.get("Depends", "").split(","):
-                package = clause.split("|")[0].strip().split(" ")[0]
-                if OURS.match(package) and package not in named:
+                match = PINNED.match(clause.split("|")[0].strip())
+                if not match or not OURS.match(match.group(1)):
+                    continue
+                package, pin = match.groups()
+                if package not in named or (pin and (package, pin.strip()) not in versions):
                     self.fail(
-                        f"{stanza['Package']} {stanza['Version']} depends on {package}: not here"
+                        f"{stanza['Package']} {stanza['Version']} depends on {clause.strip()}: not here"
                     )
 
 
