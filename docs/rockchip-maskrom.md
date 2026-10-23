@@ -207,8 +207,8 @@ Skip it and the box loses its label MAC and serial, and nothing else. Once it bo
 #### Reading
 
 **The pre-flight signal is the factory tree's own eMMC tuning** — read `sdhci` in
-`stock/<board>/board.dts` before you start. A downclocked eMMC is the vendor saying the board is
-marginal.
+`boards/<board>/factory_board.dts` before you start. A downclocked eMMC is the vendor saying the
+board is marginal.
 
 | Factory `sdhci` tuning | One-pass 15.7 GB read |
 | ---------------------- | --------------------- |

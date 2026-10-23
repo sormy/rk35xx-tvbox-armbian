@@ -55,20 +55,20 @@ box runs the R69 image from SD (the eMMC's Android is untouched):
 **(D) Extracted from the eMMC dump** (`../../backup/h96max-h313-stock.img.xz` — GPT parsed,
 partitions carved, `super` unpacked with `lpunpack`; all images turned out ext4, not EROFS):
 
-| File               | What                                                                          |
-| ------------------ | ----------------------------------------------------------------------------- |
-| `board.dtb`/`.dts` | **the stock DTB** — two identical FDT copies inside `boot` (p7); 4641-line    |
-|                    | dts, `rockchip,rk3518-evb1-ddr4-v10`. The radio runs off `/seekwcn_boot`      |
-|                    | (`seekwave,sv6160lite`, chip_en/host_wake/chip_wake = gpio3.10/11/12); the    |
-|                    | `wireless-wlan`/`wireless-bluetooth` nodes are **disabled** leftovers         |
-|                    | (`ap6275s`!) → stock BT runs over the **SDIO mux**, not UART2                 |
-| `firmware/`        | the complete `SWT6621S_*` set from `vendor:/etc/firmware` (10 files incl. the |
-|                    | 4 the stock boot loads + NV variants and `.ini` configs)                      |
-| `vendor-modules/`  | the Seekwave `.ko`s from `vendor_dlkm` + `modules.{load,dep,alias,softdep}`.  |
-|                    | vermagic `6.1.118 … ARMv7` (32-bit — evidence only, can't load on arm64);     |
-|                    | `version=1.0.0`, same lineage as the retro98boy DKMS. Stock ships **both**    |
-|                    | the full (`skw_sdio`+`skw_bootcoms`+`skw`) and lite                           |
-|                    | (`skw_sdio_lite`+`swt6621s_wifi`) stacks; the community DKMS builds the lite  |
+| File                                   | What                                                                          |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| `boards/h96max-h313/factory_board.dtb` | **the stock DTB** — two identical FDT copies inside `boot` (p7); 4641-line    |
+|                                        | dts, `rockchip,rk3518-evb1-ddr4-v10`. The radio runs off `/seekwcn_boot`      |
+|                                        | (`seekwave,sv6160lite`, chip_en/host_wake/chip_wake = gpio3.10/11/12); the    |
+|                                        | `wireless-wlan`/`wireless-bluetooth` nodes are **disabled** leftovers         |
+|                                        | (`ap6275s`!) → stock BT runs over the **SDIO mux**, not UART2                 |
+| `firmware/`                            | the complete `SWT6621S_*` set from `vendor:/etc/firmware` (10 files incl. the |
+|                                        | 4 the stock boot loads + NV variants and `.ini` configs)                      |
+| `vendor-modules/`                      | the Seekwave `.ko`s from `vendor_dlkm` + `modules.{load,dep,alias,softdep}`.  |
+|                                        | vermagic `6.1.118 … ARMv7` (32-bit — evidence only, can't load on arm64);     |
+|                                        | `version=1.0.0`, same lineage as the retro98boy DKMS. Stock ships **both**    |
+|                                        | the full (`skw_sdio`+`skw_bootcoms`+`skw`) and lite                           |
+|                                        | (`skw_sdio_lite`+`swt6621s_wifi`) stacks; the community DKMS builds the lite  |
 
 Notes for the driver phase: the DTS asks for `seekwave_nv_name = "SEEKWAVE_NV_SWT6652.bin"`, which
 does **not** exist in the firmware dir — the driver evidently falls back to `SWT6621S_NV_SDIO.bin`.
@@ -79,7 +79,7 @@ gpio claims (`/sys/kernel/debug/gpio`), `pinmux-pins`, full `getprop`, `lsmod`, 
 `/sys/firmware/fdt`. The carved DTB + `boot.log` cover most of what those provided on the R69.
 `iomem.txt` here is address-zeroed (read without root) — re-dump with root if ever needed.
 
-## `uboot.dtb` / `uboot.dts`
+## `boards/h96max-h313/factory_uboot.dtb`
 
 The factory U-Boot's own control device tree, not the kernel's. Carved from the U-Boot FIT in the
 eMMC backup —

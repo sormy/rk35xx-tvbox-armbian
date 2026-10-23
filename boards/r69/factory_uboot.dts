@@ -23,7 +23,7 @@
 
 		scmi {
 			compatible = "arm,scmi-smc";
-			shmem = <0x1000000f>;
+			shmem = <&{/scmi-shmem@10f000}>;
 			arm,smc-id = <0x82000010>;
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
@@ -63,7 +63,7 @@
 	clock-controller@ff4a0000 {
 		compatible = "rockchip,rk3528-cru";
 		reg = <0x00 0xff4a0000 0x00 0x30000>;
-		rockchip,grf = <0x1000000a>;
+		rockchip,grf = <&{/syscon@ff300000}>;
 		#clock-cells = <0x01>;
 		#reset-cells = <0x01>;
 		u-boot,dm-spl;
@@ -83,7 +83,7 @@
 		compatible = "rockchip,rk3528-uart", "snps,dw-apb-uart";
 		reg = <0x00 0xffa00000 0x00 0x100>;
 		interrupts = <0x00 0x2a 0x04>;
-		clocks = <0x10000011 0x1b 0x10000011 0xc0>;
+		clocks = <&{/clock-controller@ff4a0000} 0x1b &{/clock-controller@ff4a0000} 0xc0>;
 		reg-shift = <0x02>;
 		reg-io-width = <0x04>;
 		dmas = <0x1000002b 0x0d 0x1000002b 0x0c>;
@@ -97,8 +97,8 @@
 		reg = <0x00 0xffae0000 0x00 0x10000>;
 		interrupts = <0x00 0x8c 0x04>;
 		#io-channel-cells = <0x01>;
-		clocks = <0x10000011 0x101 0x10000011 0x100>;
-		resets = <0x10000011 0x20b>;
+		clocks = <&{/clock-controller@ff4a0000} 0x101 &{/clock-controller@ff4a0000} 0x100>;
+		resets = <&{/clock-controller@ff4a0000} 0x20b>;
 		reset-names = "saradc-apb";
 		status = "okay";
 		u-boot,dm-pre-reloc;
@@ -109,8 +109,8 @@
 		compatible = "rockchip,rk3528-dwcmshc";
 		reg = <0x00 0xffbf0000 0x00 0x10000>;
 		interrupts = <0x00 0x88 0x04>;
-		clocks = <0x10000011 0xa3 0x10000011 0xa4 0x10000011 0xa5 0x10000011 0xa6 0x10000011 0xa7>;
-		resets = <0x10000011 0x19f 0x10000011 0x1a0 0x10000011 0x1a1 0x10000011 0x1a2 0x10000011 0x1a3>;
+		clocks = <&{/clock-controller@ff4a0000} 0xa3 &{/clock-controller@ff4a0000} 0xa4 &{/clock-controller@ff4a0000} 0xa5 &{/clock-controller@ff4a0000} 0xa6 &{/clock-controller@ff4a0000} 0xa7>;
+		resets = <&{/clock-controller@ff4a0000} 0x19f &{/clock-controller@ff4a0000} 0x1a0 &{/clock-controller@ff4a0000} 0x1a1 &{/clock-controller@ff4a0000} 0x1a2 &{/clock-controller@ff4a0000} 0x1a3>;
 		reset-names = "core", "bus", "axi", "block", "timer";
 		max-frequency = <0x2faf080>;
 		status = "okay";
@@ -124,7 +124,7 @@
 		compatible = "rockchip,sfc";
 		reg = <0x00 0xffc00000 0x00 0x4000>;
 		interrupts = <0x00 0x87 0x04>;
-		clocks = <0x10000011 0xa1 0x10000011 0xa0>;
+		clocks = <&{/clock-controller@ff4a0000} 0xa1 &{/clock-controller@ff4a0000} 0xa0>;
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
 		status = "okay";
@@ -157,11 +157,11 @@
 		max-frequency = <0x8f0d180>;
 		clocks = <0x10000011 0x198 0x10000011 0x197 0x10000056 0x01 0x10000056 0x02>;
 		fifo-depth = <0x100>;
-		resets = <0x10000011 0x2a9>;
+		resets = <&{/clock-controller@ff4a0000} 0x2a9>;
 		reset-names = "reset";
 		rockchip,use-v2-tuning;
 		pinctrl-names = "default";
-		pinctrl-0 = <0x10000057 0x10000058 0x10000059 0x1000005a>;
+		pinctrl-0 = <&{/pinctrl/sdmmc-pins/sdmmc-clk} &{/pinctrl/sdmmc-pins/sdmmc-cmd} &{/pinctrl/sdmmc-pins/sdmmc-det} &{/pinctrl/sdmmc-pins/sdmmc-bus4}>;
 		status = "okay";
 		u-boot,dm-spl;
 	};
@@ -170,10 +170,10 @@
 		compatible = "rockchip,crypto-v4";
 		reg = <0x00 0xffc40000 0x00 0x2000>;
 		interrupts = <0x00 0x13 0x04>;
-		clocks = <0x10000005 0x18 0x10000005 0x1a 0x10000005 0x17 0x10000005 0x19>;
-		assigned-clocks = <0x10000005 0x17 0x10000005 0x19>;
+		clocks = <&{/firmware/scmi/protocol@14} 0x18 &{/firmware/scmi/protocol@14} 0x1a &{/firmware/scmi/protocol@14} 0x17 &{/firmware/scmi/protocol@14} 0x19>;
+		assigned-clocks = <&{/firmware/scmi/protocol@14} 0x17 &{/firmware/scmi/protocol@14} 0x19>;
 		assigned-clock-rates = <0x11e1a300 0x11e1a300>;
-		resets = <0x10000011 0x3a>;
+		resets = <&{/clock-controller@ff4a0000} 0x3a>;
 		reset-names = "crypto-rst";
 		status = "okay";
 		u-boot,dm-spl;
@@ -183,8 +183,8 @@
 		compatible = "rockchip,rkrng";
 		reg = <0x00 0xffc50000 0x00 0x200>;
 		interrupts = <0x00 0x17 0x04>;
-		clocks = <0x10000005 0x20>;
-		resets = <0x10000011 0xa3>;
+		clocks = <&{/firmware/scmi/protocol@14} 0x20>;
+		resets = <&{/clock-controller@ff4a0000} 0xa3>;
 		reset-names = "reset";
 		status = "okay";
 		u-boot,dm-pre-reloc;
@@ -194,13 +194,13 @@
 		compatible = "rockchip,rk3528-naneng-combphy";
 		reg = <0x00 0xffdc0000 0x00 0x10000>;
 		#phy-cells = <0x01>;
-		clocks = <0x10000011 0x91 0x10000011 0xdc 0x10000011 0xdd>;
-		assigned-clocks = <0x10000011 0x91>;
+		clocks = <&{/clock-controller@ff4a0000} 0x91 &{/clock-controller@ff4a0000} 0xdc &{/clock-controller@ff4a0000} 0xdd>;
+		assigned-clocks = <&{/clock-controller@ff4a0000} 0x91>;
 		assigned-clock-rates = <0x5f5e100>;
-		resets = <0x10000011 0x1e6 0x10000011 0x1e2>;
+		resets = <&{/clock-controller@ff4a0000} 0x1e6 &{/clock-controller@ff4a0000} 0x1e2>;
 		reset-names = "combphy-apb", "combphy";
-		rockchip,pipe-grf = <0x1000000a>;
-		rockchip,pipe-phy-grf = <0x1000000a>;
+		rockchip,pipe-grf = <&{/syscon@ff300000}>;
+		rockchip,pipe-phy-grf = <&{/syscon@ff300000}>;
 		status = "okay";
 		u-boot,dm-pre-reloc;
 		phandle = <0x10000013>;
@@ -209,9 +209,9 @@
 	usb2-phy@ffdf0000 {
 		compatible = "rockchip,rk3528-usb2phy";
 		reg = <0x00 0xffdf0000 0x00 0x10000>;
-		clocks = <0x10000011 0x1ab 0x10000011 0x1aa>;
+		clocks = <&{/clock-controller@ff4a0000} 0x1ab &{/clock-controller@ff4a0000} 0x1aa>;
 		#clock-cells = <0x00>;
-		rockchip,usbgrf = <0x1000000a>;
+		rockchip,usbgrf = <&{/syscon@ff300000}>;
 		status = "okay";
 		u-boot,dm-pre-reloc;
 		phandle = <0x10000015>;
@@ -228,7 +228,7 @@
 
 	pinctrl {
 		compatible = "rockchip,rk3528-pinctrl";
-		rockchip,grf = <0x1000005c>;
+		rockchip,grf = <&{/syscon@ff540000}>;
 		#address-cells = <0x02>;
 		#size-cells = <0x02>;
 		ranges;
@@ -240,10 +240,10 @@
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xff610000 0x00 0x200>;
 			interrupts = <0x00 0x47 0x04>;
-			clocks = <0x10000011 0x1fd 0x10000011 0x1fe>;
+			clocks = <&{/clock-controller@ff4a0000} 0x1fd &{/clock-controller@ff4a0000} 0x1fe>;
 			gpio-controller;
 			#gpio-cells = <0x02>;
-			gpio-ranges = <0x1000005d 0x00 0x00 0x20>;
+			gpio-ranges = <&{/pinctrl} 0x00 0x00 0x20>;
 			interrupt-controller;
 			#interrupt-cells = <0x02>;
 			u-boot,dm-spl;
@@ -254,10 +254,10 @@
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffaf0000 0x00 0x200>;
 			interrupts = <0x00 0x49 0x04>;
-			clocks = <0x10000011 0xa8 0x10000011 0xa9>;
+			clocks = <&{/clock-controller@ff4a0000} 0xa8 &{/clock-controller@ff4a0000} 0xa9>;
 			gpio-controller;
 			#gpio-cells = <0x02>;
-			gpio-ranges = <0x1000005d 0x00 0x20 0x20>;
+			gpio-ranges = <&{/pinctrl} 0x00 0x20 0x20>;
 			interrupt-controller;
 			#interrupt-cells = <0x02>;
 			u-boot,dm-spl;
@@ -267,10 +267,10 @@
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffb00000 0x00 0x200>;
 			interrupts = <0x00 0x4b 0x04>;
-			clocks = <0x10000011 0x194 0x10000011 0x195>;
+			clocks = <&{/clock-controller@ff4a0000} 0x194 &{/clock-controller@ff4a0000} 0x195>;
 			gpio-controller;
 			#gpio-cells = <0x02>;
-			gpio-ranges = <0x1000005d 0x00 0x40 0x20>;
+			gpio-ranges = <&{/pinctrl} 0x00 0x40 0x20>;
 			interrupt-controller;
 			#interrupt-cells = <0x02>;
 			u-boot,dm-spl;
@@ -280,10 +280,10 @@
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffb10000 0x00 0x200>;
 			interrupts = <0x00 0x4c 0x04>;
-			clocks = <0x10000011 0xba 0x10000011 0xbb>;
+			clocks = <&{/clock-controller@ff4a0000} 0xba &{/clock-controller@ff4a0000} 0xbb>;
 			gpio-controller;
 			#gpio-cells = <0x02>;
-			gpio-ranges = <0x1000005d 0x00 0x60 0x20>;
+			gpio-ranges = <&{/pinctrl} 0x00 0x60 0x20>;
 			interrupt-controller;
 			#interrupt-cells = <0x02>;
 			u-boot,dm-pre-reloc;
@@ -293,10 +293,10 @@
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffb20000 0x00 0x200>;
 			interrupts = <0x00 0x4e 0x04>;
-			clocks = <0x10000011 0x12c 0x10000011 0x12d>;
+			clocks = <&{/clock-controller@ff4a0000} 0x12c &{/clock-controller@ff4a0000} 0x12d>;
 			gpio-controller;
 			#gpio-cells = <0x02>;
-			gpio-ranges = <0x1000005d 0x00 0x80 0x20>;
+			gpio-ranges = <&{/pinctrl} 0x00 0x80 0x20>;
 			interrupt-controller;
 			#interrupt-cells = <0x02>;
 			u-boot,dm-pre-reloc;
@@ -344,25 +344,25 @@
 			u-boot,dm-spl;
 
 			sdmmc-bus4 {
-				rockchip,pins = <0x02 0x00 0x01 0x1000005f 0x02 0x01 0x01 0x1000005f 0x02 0x02 0x01 0x1000005f 0x02 0x03 0x01 0x1000005f>;
+				rockchip,pins = <0x02 0x00 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2} 0x02 0x01 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2} 0x02 0x02 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2} 0x02 0x03 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
 				u-boot,dm-spl;
 				phandle = <0x1000005a>;
 			};
 
 			sdmmc-clk {
-				rockchip,pins = <0x02 0x05 0x01 0x1000005f>;
+				rockchip,pins = <0x02 0x05 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
 				u-boot,dm-spl;
 				phandle = <0x10000057>;
 			};
 
 			sdmmc-cmd {
-				rockchip,pins = <0x02 0x04 0x01 0x1000005f>;
+				rockchip,pins = <0x02 0x04 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
 				u-boot,dm-spl;
 				phandle = <0x10000058>;
 			};
 
 			sdmmc-det {
-				rockchip,pins = <0x02 0x06 0x01 0x10000061>;
+				rockchip,pins = <0x02 0x06 0x01 &{/pinctrl/pcfg-pull-up}>;
 				u-boot,dm-spl;
 				phandle = <0x10000059>;
 			};
@@ -386,7 +386,7 @@
 
 	adc-keys {
 		compatible = "adc-keys";
-		io-channels = <0x10000062 0x01>;
+		io-channels = <&{/saradc@ffae0000} 0x01>;
 		io-channel-names = "buttons";
 		keyup-threshold-microvolt = <0x1b7740>;
 		u-boot,dm-pre-reloc;

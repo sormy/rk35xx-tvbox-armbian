@@ -70,7 +70,7 @@ import lzma, struct
 buf = lzma.open('backup/<board>-stock.img.xz')
 buf.seek(51200*512); d = buf.read(64*1024*1024)
 i = d.find(b'\xd0\x0d\xfe\xed')
-open('stock/<board>/board.dtb','wb').write(d[i:i+struct.unpack('>I', d[i+4:i+8])[0]])
+open('boards/<board>/factory_board.dtb','wb').write(d[i:i+struct.unpack('>I', d[i+4:i+8])[0]])
 EOF
 ```
 
@@ -114,7 +114,7 @@ state with the SoC's GPIO function, or the EDID reads empty and the panel drops 
 Rockchip's SoC dtsi disables everything and the board file enables what's wired. Only in-SoC blocks
 needing no board routing are candidates.
 
-- **The grafts live in `boards/<board>/board.patch`**; `./build-board-dts.sh` produces
+- **The grafts live in `boards/<board>/board.patch`**; `./build-board-dtb.sh` produces
   `boards/<board>/board.dts` + `.dtb` from it. Edit the patch, never the generated `board.dts` —
   except where a board diverges on purpose, which belongs in its `dtb.md` with the condition that
   ends it.

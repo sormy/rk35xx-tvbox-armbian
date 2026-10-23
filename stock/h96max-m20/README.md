@@ -26,18 +26,18 @@ the host file; both matched.
 
 ## The tree
 
-| File                   | What                                                                                         |
-| ---------------------- | -------------------------------------------------------------------------------------------- |
-| `factory-multidtb.bin` | the whole Amlogic multi-DTB container, `dd` from `/dev/dtb` and gunzipped. `AML_` v2, 6 DTBs |
-| `board.dtb`/`.dts`     | entry 5 of that container — `soc=gxlx2 plat=p291 vari=2g`, the one U-Boot selects            |
-| `factory-mpt.bin`      | `reserved`'s first 4 KiB: the vendor MPT the build rewrites                                  |
-| `factory-env.bin`      | the 64 KiB `env`, CRC32 first: the env the build edits                                       |
-| `uboot-env.txt`        | `strings` of `/dev/block/env`                                                                |
-| `boot.log`             | the vendor serial boot, power-on to Android idle                                             |
+| File                                  | What                                                                                         |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `factory-multidtb.bin`                | the whole Amlogic multi-DTB container, `dd` from `/dev/dtb` and gunzipped. `AML_` v2, 6 DTBs |
+| `boards/h96max-m20/factory_board.dtb` | entry 5 of that container — `soc=gxlx2 plat=p291 vari=2g`, the one U-Boot selects            |
+| `factory-mpt.bin`                     | `reserved`'s first 4 KiB: the vendor MPT the build rewrites                                  |
+| `factory-env.bin`                     | the 64 KiB `env`, CRC32 first: the env the build edits                                       |
+| `uboot-env.txt`                       | `strings` of `/dev/block/env`                                                                |
+| `boot.log`                            | the vendor serial boot, power-on to Android idle                                             |
 
-`board.dtb` is the factory tree, not a runtime one: `/proc/device-tree` on this box reports
-`model = "Amlogic"` and `compatible = "amlogic, Gxl"`, and the vendor tree names its pinctrl
-`amlogic,meson-gxlx-{aobus,periphs}-pinctrl`.
+`boards/h96max-m20/factory_board.dtb` is the factory tree, not a runtime one: `/proc/device-tree` on
+this box reports `model = "Amlogic"` and `compatible = "amlogic, Gxl"`, and the vendor tree names
+its pinctrl `amlogic,meson-gxlx-{aobus,periphs}-pinctrl`.
 
 ## Derived on the host
 

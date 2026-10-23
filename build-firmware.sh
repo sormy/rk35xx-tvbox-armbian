@@ -14,10 +14,10 @@ BOARDS="${*:-$(boards)}"
 with() { for b in $BOARDS; do [ -e "boards/$b/$1" ] && printf '%s ' "$b"; done; return 0; }
 
 sel=$(with board.patch)                      # stock board.dtb + board.patch -> board.dts + board.dtb
-[ -z "$sel" ] || ./build-board-dts.sh $sel
+[ -z "$sel" ] || ./build-board-dtb.sh $sel
 
 sel=$(with uboot.patch)                      # stock uboot.dtb + uboot.patch -> uboot.dts
-[ -z "$sel" ] || ./build-uboot-dts.sh $sel
+[ -z "$sel" ] || ./build-uboot-dtb.sh $sel
 
 sel=$(with factory_idbloader.bin)            # factory idbloader + rkbin usbplug -> maskrom_loader.bin
 [ -z "$sel" ] || ./build-rockchip-loaders.sh $sel

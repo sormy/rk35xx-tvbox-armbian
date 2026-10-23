@@ -9,25 +9,25 @@ Debian with our own kernel, drivers and board packages, not a fork of a distro. 
 userspace come from upstream; we carry only what upstream can't know. **Adding a board is data, not
 code** — one `boards/<board>/` directory. If a change needs new code per board, the design is wrong.
 
-| Tree               | Holds                                                                                |
-| ------------------ | ------------------------------------------------------------------------------------ |
-| `boards/<board>/`  | `board.conf`, `package.list`, the trees and their patches, idbloader, maskrom loader |
-| `boards/common/`   | everything shared between boards                                                     |
-| `firmware/<chip>/` | a chip's firmware, packaged as `tvb-firmware-<chip>`                                 |
-| `docs/<board>/`    | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                  |
-| `stock/<board>/`   | factory evidence: dumps, logs, the box's own DTB                                     |
-| `backup/`          | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                |
-| `patches/<topic>/` | every patch to an upstream's code, one folder per upstream, with its upstream status |
-| `tools/<tool>/`    | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`       |
-| `scripts/`         | host-side helpers, never installed on a box                                          |
-| `keyring/`         | the `apt` repo's public signing key                                                  |
-| `kernel/`          | each kernel's pin, config, fragment and patch list, and the step building it         |
-| `build-env/`       | the build environment: one container image every `./build.sh` step runs in           |
-| `modules/`         | each out-of-tree driver: its pin, our patches, the step packaging it per kernel      |
-| `uboot/`           | each U-Boot a board package ships: its pin and defconfig, and the step building it   |
-| `package/`         | the steps building `tvb-<board>` and `tvb-archive-keyring`                           |
-| `image/`           | the image step, its package list, and the files every image's rootfs gets            |
-| `release/`         | the release plan, the signed `apt` repo, and the upload to GitHub                    |
+| Tree               | Holds                                                                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| `boards/<board>/`  | `board.conf`, the factory trees, the patches on them and their output, loaders, `package.list` |
+| `boards/common/`   | everything shared between boards                                                               |
+| `firmware/<chip>/` | a chip's firmware, packaged as `tvb-firmware-<chip>`                                           |
+| `docs/<board>/`    | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                            |
+| `stock/<board>/`   | factory evidence: dumps, logs, partition maps                                                  |
+| `backup/`          | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                          |
+| `patches/<topic>/` | every patch to an upstream's code, one folder per upstream, with its upstream status           |
+| `tools/<tool>/`    | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`                 |
+| `scripts/`         | host-side helpers, never installed on a box                                                    |
+| `keyring/`         | the `apt` repo's public signing key                                                            |
+| `kernel/`          | each kernel's pin, config, fragment and patch list, and the step building it                   |
+| `build-env/`       | the build environment: one container image every `./build.sh` step runs in                     |
+| `modules/`         | each out-of-tree driver: its pin, our patches, the step packaging it per kernel                |
+| `uboot/`           | each U-Boot a board package ships: its pin and defconfig, and the step building it             |
+| `package/`         | the steps building `tvb-<board>` and `tvb-archive-keyring`                                     |
+| `image/`           | the image step, its package list, and the files every image's rootfs gets                      |
+| `release/`         | the release plan, the signed `apt` repo, and the upload to GitHub                              |
 
 **Repo files carry no prefix**: each board's `package.list` names where a file installs. A board
 directory holds `board.conf`, the tree, the factory idbloader and the maskrom loader,
@@ -40,7 +40,7 @@ only it has.
 with `&label`s) · `rkdeveloptool` (`./build.sh tool rkdeveloptool`) and each board's maskrom loader
 (`./build-rockchip-loaders.sh`) · `amlcmd` and `gxlimg` (`./build.sh tool amlcmd`,
 `./build.sh tool gxlimg` — Amlogic's own are closed and x86-64 Linux only) · a per-board `uboot.dts`
-(`./build-uboot-dts.sh`) — or all of a board's at once with `./build-firmware-all.sh`. **From the
+(`./build-uboot-dtb.sh`) — or all of a board's at once with `./build-firmware-all.sh`. **From the
 host:** `fdtput` · `fsck.ext4` (keg-only on Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` ·
 `npx prettier` · `python3` · `mtools` and `mkimage`, for a board whose image carries a FAT boot
 partition. **On the box:** `evtest`, `fio`, `stress-ng`, `iw`, `bluez`.

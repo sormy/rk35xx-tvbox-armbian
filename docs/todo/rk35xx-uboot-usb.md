@@ -28,10 +28,10 @@ BootROM, a dead SPL takes the CLK short, as before.
 | `bootcount` / `altbootcmd`   | useful          | most valuable: no button |
 
 - **Nodes:** mainline's `rk3528.dtsi` has no USB controller or PHY. The factory tree has them,
-  `stock/h96max-3518d/board.dts`: `dwc3@fe500000`, `usb@ff100000` (EHCI), `usb@ff140000` (OHCI),
-  `usb2-phy@ffdf0000`, `combphy@ffdc0000`. The controllers are SoC-level and shared; the VBUS
-  regulators are per board, and a wrong OTG GPIO fails silently with no VBUS: pin 18 on the R69, 12
-  on the H96 Max boards.
+  `boards/h96max-3518d/factory_board.dts`: `dwc3@fe500000`, `usb@ff100000` (EHCI), `usb@ff140000`
+  (OHCI), `usb2-phy@ffdf0000`, `combphy@ffdc0000`. The controllers are SoC-level and shared; the
+  VBUS regulators are per board, and a wrong OTG GPIO fails silently with no VBUS: pin 18 on the
+  R69, 12 on the H96 Max boards.
 - **Sockets on the 3518D:** USB-C is OTG (`dwc3`, the gadget side); USB-A is the EHCI/OHCI pair, so
   a boot stick there needs EHCI and OHCI.
 - **Config:** `radxa-e20c-rk3528_defconfig`, the same SoC, is the template, plus `USB_OHCI_HCD` and

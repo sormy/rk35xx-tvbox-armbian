@@ -1,17 +1,17 @@
 # H96 Max 3518D — device tree
 
 **Grafts booted and running since 2026-09-06.** `boards/h96max-3518d/board.patch` is the source;
-`./build-board-dts.sh` compiles it to `boards/h96max-3518d/board.dtb`. The box boots from it and is
+`./build-board-dtb.sh` compiles it to `boards/h96max-3518d/board.dtb`. The box boots from it and is
 reachable over SSH, so the grafts below are ✅ unless marked otherwise.
 
-Factory tree: `stock/h96max-3518d/board.dtb`, carved from the `boot` partition (not from
+Factory tree: `boards/h96max-3518d/factory_board.dtb`, carved from the `boot` partition (not from
 `/proc/device-tree` — U-Boot edits that one). 4640 lines, round-trips through the patched `dtc`.
 
 ## It is four lines away from the H96 Max
 
 Both boxes ship the same vendor tree, `rockchip,rk3518-evb1-ddr4-v10`, same `model` string. Diffing
-`stock/h96max-h313/board.dtb` against `stock/h96max-3518d/board.dtb` with phandles normalised gives
-**four differences in 4640 lines**:
+`boards/h96max-h313/factory_board.dtb` against `boards/h96max-3518d/factory_board.dtb` with phandles
+normalised gives **four differences in 4640 lines**:
 
 | Node                     | H96 Max                                       | 3518D                                   | Consequence                                                                                                                                                                                      |
 | ------------------------ | --------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

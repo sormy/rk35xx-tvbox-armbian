@@ -20,10 +20,10 @@ Every board here has one — a shared FIT built from mainline's `rk3528-generic`
 DT and no `CONFIG_ADC`, so the recovery button cannot reach Maskrom from U-Boot on it. Whether a
 board has ever booted its own belongs in that board's `board.md`.
 
-To enable a board: write `boards/<board>/uboot.patch` against that box's `stock/<board>/uboot.dtb`,
-run `./build-uboot-dts.sh <board>` and `./build.sh uboot <board>`, boot it once with serial
-attached, confirm the recovery button reaches Maskrom — then commit the tree and set
-`BOARD_UBOOT=rk3528`.
+To enable a board: write `boards/<board>/uboot.patch` against that box's
+`boards/<board>/factory_uboot.dtb`, run `./build-uboot-dtb.sh <board>` and
+`./build.sh uboot <board>`, boot it once with serial attached, confirm the recovery button reaches
+Maskrom — then commit the tree and set `BOARD_UBOOT=rk3528`.
 
 The image fills all five BootROM idbloader slots (64, 1088, 2112, 3136, 4160) and both U-Boot slots.
 
@@ -51,7 +51,7 @@ Same rule as everywhere else here: **follow the factory DTB and graft the minimu
 is built the way `board.dts` is — decompile the box's own blob, then apply a small commented patch.
 
 ```sh
-./build-uboot-dts.sh            # stock/<board>/uboot.dtb -> boards/<board>/uboot.dts
+./build-uboot-dtb.sh            # boards/<board>/factory_uboot.dtb -> boards/<board>/uboot.dts
 ```
 
 Two stages, each auditable alone:
@@ -78,7 +78,7 @@ eMMC just gets clocked against a UART. `board.dts` needs no such pass because a 
 vendor kernel there; our U-Boot is mainline.
 
 The blob stores only the integer and no decompiler can recover which symbol produced it, so the
-**vendor header is the dictionary** (the vendor kernel's `rk3528-cru.h`, which `build-uboot-dts.sh`
+**vendor header is the dictionary** (the vendor kernel's `rk3528-cru.h`, which `build-uboot-dtb.sh`
 fetches at a pinned commit) and mainline's supplies the new value. Resets need a spelling rule too —
 vendor `SRST_PRESETN_SARADC`, mainline `SRST_P_SARADC`. Per board: 29 clock cells, 11 reset cells,
 40 phase tags (`u-boot,dm-pre-reloc` → `bootph-all`, `u-boot,dm-spl` → `bootph-pre-ram`).
@@ -131,8 +131,8 @@ to discover the hard way.
 
 The eMMC tuning is per board, so the tree cannot be shared either — speed mode, `max-frequency` and
 `fixed-emmc-driver-type` all differ between boxes. Each is measured from that box's factory U-Boot
-DT in `stock/<board>/uboot.dts`, inherited automatically by a tree derived from one, and recorded in
-that board's `board.md`.
+DT in `boards/<board>/factory_uboot.dts`, inherited automatically by a tree derived from one, and
+recorded in that board's `board.md`.
 
 The control DTB lives inside the FIT, so a per-board tree means a per-board FIT.
 

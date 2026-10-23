@@ -1,8 +1,8 @@
 # H96 Max M20 — device tree
 
-The factory tree is `stock/h96max-m20/board.dtb`, entry 5 of the Amlogic multi-DTB container
-(`gxlx2` / `p291` / `2g`). The candidate mainline tree is `meson-gxlx-s905l-p271.dtb`, shipped in
-official Armbian's `meson64` set — the only `gxlx` tree in mainline.
+The factory tree is `boards/h96max-m20/factory_board.dtb`, entry 5 of the Amlogic multi-DTB
+container (`gxlx2` / `p291` / `2g`). The candidate mainline tree is `meson-gxlx-s905l-p271.dtb`,
+shipped in official Armbian's `meson64` set — the only `gxlx` tree in mainline.
 
 Both were sorted through the patched `dtc` (`-s -I dtb -O dts`) and compared by node path. The
 bindings differ completely, a vendor 4.9 tree against mainline, so the comparison is by address.
@@ -64,10 +64,10 @@ Ethernet, serial — is present at the same address.
 
 ## How the tree is built
 
-`stock/h96max-m20/board.dtb` is the base, as on every other board: `build-board-dts.sh` decompiles
-it with the patched `dtc` and applies `boards/h96max-m20/board.patch`. The tree describes this board
-and the board has not changed — what changes is the driver that reads it, so the patch says what
-each modern binding needs and why.
+`boards/h96max-m20/factory_board.dtb` is the base, as on every other board: `build-board-dtb.sh`
+decompiles it with the patched `dtc` and applies `boards/h96max-m20/board.patch`. The tree describes
+this board and the board has not changed — what changes is the driver that reads it, so the patch
+says what each modern binding needs and why.
 
 The mainline `meson-gxlx-s905l-p271.dtb` is the **reference** for what a node should look like,
 never the base: p271 is a different board.

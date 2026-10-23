@@ -23,10 +23,10 @@ Every file below matched.
 
 ## The tree
 
-| File                | What                                                                                                                                                                                                               |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `board.dtb`/`.dts`  | **the factory tree, carved from disk** — `boot` partition (p7) + 18407424, size 98700, located via the Android boot-image v2 header (`header_size=1660`, `dtb_size=98700`). Round-trips through the patched `dtc`. |
-| `board-runtime.dtb` | `/sys/firmware/fdt`, i.e. after U-Boot edited it. Kept only to diff against the above                                                                                                                              |
+| File                                    | What                                                                                                                                                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `boards/h96max-3518d/factory_board.dtb` | **the factory tree, carved from disk** — `boot` partition (p7) + 18407424, size 98700, located via the Android boot-image v2 header (`header_size=1660`, `dtb_size=98700`). Round-trips through the patched `dtc`. |
+| `board-runtime.dtb`                     | `/sys/firmware/fdt`, i.e. after U-Boot edited it. Kept only to diff against the above                                                                                                                              |
 
 The bootloader's edits, `board-runtime` minus `board`:
 
@@ -141,7 +141,7 @@ Two entries were struck on 2026-09-05 once the USB cable went on: the **USB-C is
 and is bus-powered through it. The USB-A is the `ehci`/`ohci` pair, USB 2.0 only. The full eMMC
 image is being read over that link into `backup/`.
 
-## `uboot.dtb` / `uboot.dts`
+## `boards/h96max-3518d/factory_uboot.dtb`
 
 The factory U-Boot's own control device tree, not the kernel's. Carved from the U-Boot FIT in the
 eMMC backup —
