@@ -25,11 +25,48 @@ HID usage that produces the wrong key is still the wrong key.
 - [ ] no button reports `KEY_UNKNOWN`
 - [ ] no two buttons share a keycode
 - [ ] the keycode matches the icon — `KEY_MENU` on a ⌫ key is a fault, not a quirk
-- [ ] where the board has both transports, the two agree button for button
+- [ ] both transports produce the canonical keymap below, button for button
 - [ ] the resulting table is recorded in `docs/<board>/board.md`
 
 Run it once per transport. On a board with no IR receiver, BLE is the only pass; on a board with
 both, a handset that works over IR can still have dead buttons over BLE.
+
+## The canonical keymap
+
+One key per printed label, for every board and both transports: a board's IR table in its
+`board.patch`, and the shared BLE `hwdb`, both produce this.
+
+**Why these keys:** a TV box's remote drives a media centre. Kodi on Linux reads it through
+libxkbcommon, so a keycode is right when xkeyboard-config gives it a keysym and Kodi gives that
+keysym an action. Traced through xkeyboard-config's `symbols/inet`, and Kodi's
+`LibInputKeyboard.cpp` and `system/keymaps/keyboard.xml`, on 2026-10-23.
+
+| Label       | Keycode                | Keysym                 | Kodi                          |
+| ----------- | ---------------------- | ---------------------- | ----------------------------- |
+| Power       | `KEY_POWER`            | `XF86PowerOff`         | none: logind suspends first   |
+| Mouse       | ➖                     | ➖                     | not a key: air-mouse toggle   |
+| Hamburger   | `KEY_MENU`             | `XF86MenuKB`           | `ContextMenu`; held, `Menu`   |
+| Voice       | `KEY_SEARCH`           | `XF86Search`           | `VoiceRecognizer`             |
+| Cog         | `KEY_CONFIG`           | `XF86Tools`            | the Settings window           |
+| D-pad       | `KEY_UP` …             | `Up` …                 | navigation                    |
+| OK          | `KEY_OK`               | `XF86OK`               | `Select`; held, `ContextMenu` |
+| Back        | `KEY_BACK`             | `XF86Back`             | `Back`; held, Home            |
+| Home        | `KEY_HOMEPAGE`         | `XF86HomePage`         | the Home window               |
+| Backspace   | `KEY_BACKSPACE`        | `BackSpace`            | `Back`; typing, deletes       |
+| Vol +/-     | `KEY_VOLUMEUP`/`DOWN`  | `XF86Audio…Volume`     | `VolumeUp` / `VolumeDown`     |
+| Mute        | `KEY_MUTE`             | `XF86AudioMute`        | `Mute`                        |
+| P +/-       | `KEY_CHANNELUP`/`DOWN` | `XF86ChannelUp`/`Down` | `PageUp` / `PageDown`         |
+| YouTube     | `KEY_RED`              | `XF86Red`              | TV channels; rebindable       |
+| Netflix     | `KEY_YELLOW`           | `XF86Yellow`           | Music; rebindable             |
+| Prime Video | `KEY_BLUE`             | `XF86Blue`             | Pictures; rebindable          |
+| Google Play | `KEY_GREEN`            | `XF86Green`            | Videos; rebindable            |
+| Digits      | `KEY_0` … `KEY_9`      | `0` … `9`              | numbers                       |
+
+The keys a likely alternative would get wrong: `KEY_HOME` is `Home`, which Kodi takes as
+`FirstPage`; `KEY_SETUP` has no keysym, so the key never reaches Kodi. `KEY_PROG2`…`4` become
+`XF86Launch2`…`4`, which Kodi has no key for, so no keymap can bind them; the colour keys reach
+Kodi, and a `userdata/keymaps/` file rebinds each to the app its button names. `KEY_OK` and
+`KEY_CHANNELUP` are evdev codes above 255, which libxkbcommon carries and X11 does not.
 
 ## Capturing
 
@@ -75,34 +112,35 @@ the **model**, which is what the modalias carries:
 evdev:input:b0005v2B54p1600*
  KEYBOARD_KEY_700aa=reserved
  KEYBOARD_KEY_c0011=menu
- KEYBOARD_KEY_c003b=prog2
- KEYBOARD_KEY_c003d=prog3
- KEYBOARD_KEY_c003e=prog4
+ KEYBOARD_KEY_c003b=yellow
+ KEYBOARD_KEY_c003d=blue
+ KEYBOARD_KEY_c003e=green
  KEYBOARD_KEY_c0040=backspace
  KEYBOARD_KEY_c0041=ok
- KEYBOARD_KEY_c0056=prog1
- KEYBOARD_KEY_c008f=setup
+ KEYBOARD_KEY_c0056=red
+ KEYBOARD_KEY_c008f=config
 ```
 
 Nine overrides for the bundled handset. Six rename a usage the kernel could not map at all; three
 correct a usage it mapped to the wrong key.
 
-| Scancode                        | Button          | Override        | Was           |
-| ------------------------------- | --------------- | --------------- | ------------- |
-| `c0011`                         | hamburger       | `menu`          | `KEY_UNKNOWN` |
-| `c0056` `c003b` `c003d` `c003e` | four app keys   | `prog1`…`prog4` | `KEY_UNKNOWN` |
-| `700aa`                         | voice, 2nd code | `reserved`      | ➖            |
-| `c0040`                         | ⌫               | `backspace`     | `KEY_MENU`    |
-| `c008f`                         | cog             | `setup`         | `KEY_GAMES`   |
-| `c0041`                         | centre          | `ok`            | `KEY_SELECT`  |
+| Scancode                        | Button          | Override                      | Was           |
+| ------------------------------- | --------------- | ----------------------------- | ------------- |
+| `c0011`                         | hamburger       | `menu`                        | `KEY_UNKNOWN` |
+| `c0056` `c003b` `c003d` `c003e` | four app keys   | `red` `yellow` `blue` `green` | `KEY_UNKNOWN` |
+| `700aa`                         | voice, 2nd code | `reserved`                    | ➖            |
+| `c0040`                         | ⌫               | `backspace`                   | `KEY_MENU`    |
+| `c008f`                         | cog             | `config`                      | `KEY_GAMES`   |
+| `c0041`                         | centre          | `ok`                          | `KEY_SELECT`  |
 
 ⌫ and the cog were mapped, just wrongly: the handset sends consumer usage `Menu` for ⌫ and
 `Media Select Games` for the cog. The voice key emits a second usage per press, which `reserved`
 swallows.
 
-Pick the keycode from the printed button, then check the name exists — `KEY_SETTINGS` does not, so a
-cog is `KEY_SETUP`. `grep '^#define KEY_' /usr/include/linux/input-event-codes.h` is the list udev
-accepts, lowercased and without the prefix.
+Pick the keycode from the printed button and the canonical keymap, then check the name exists:
+`KEY_SETTINGS` does not, and `KEY_SETUP` has no XKB keysym, so a cog is `KEY_CONFIG`.
+`grep '^#define KEY_' /usr/include/linux/input-event-codes.h` is the list udev accepts, lowercased
+and without the prefix.
 
 The voice key itself is untouched: `c0221` is consumer _AC Search_ and already reports `KEY_SEARCH`.
 Only its companion usage is deleted, so one press yields one event.
@@ -191,15 +229,16 @@ the same button disagrees, known here:
 
 | Button      | R69, IR      | H96 Max H313, IR | BLE, after `hwdb` |
 | ----------- | ------------ | ---------------- | ----------------- |
-| Cog         | `KEY_SETUP`  | `KEY_F13`        | `KEY_SETUP`       |
+| Cog         | `KEY_SETUP`  | `KEY_F13`        | `KEY_CONFIG`      |
 | OK (centre) | `KEY_ENTER`  | `KEY_REPLY`      | `KEY_OK`          |
 | Home        | `KEY_HOME`   | `KEY_HOME`       | `KEY_HOMEPAGE`    |
 | Voice       | `KEY_HELP`   | `KEY_F14`        | `KEY_SEARCH`      |
 | P +/-       | `KEY_PAGEUP` | `KEY_CHANNELUP`  | `KEY_CHANNELUP`   |
-| Prime Video | `KEY_F3`     | `KEY_F8`         | `KEY_PROG3`       |
-| Google Play | `KEY_F8`     | `KEY_F9`         | `KEY_PROG4`       |
+| Prime Video | `KEY_F3`     | `KEY_F8`         | `KEY_BLUE`        |
+| Google Play | `KEY_F8`     | `KEY_F9`         | `KEY_GREEN`       |
 
 - **IR:** pick one keycode per printed button, BLE's, and make every `ir_keyN` table agree with it.
-  The app keys are `KEY_PROG1`…`KEY_PROG4` in the order YouTube, Netflix, Prime Video, Google Play.
+  The app keys are YouTube `KEY_RED`, Netflix `KEY_YELLOW`, Prime Video `KEY_BLUE`, Google Play
+  `KEY_GREEN`.
 - **BLE:** every board's remote reports `2B54:1600`, but the map is ✅ only where its scancodes were
   captured; ❓ on the R69 and H313 until someone captures theirs.

@@ -175,7 +175,8 @@ Test every cell at **720p, 1080p, 4K and 8K** — both surprises this repo found
 
 ## Remote keymap
 
-- [ ] `docs/remote-keymap.md`'s checklist passes once per transport, IR and BLE, scancodes recorded
+- [ ] `docs/remote-keymap.md`'s checklist passes once per transport, IR and BLE, scancodes recorded:
+      both produce its canonical keymap
 - [ ] Any `hwdb` override compiled and the keycode re-read off the handset — a passing
       `systemd-hwdb query` proves the match, not the remap
 

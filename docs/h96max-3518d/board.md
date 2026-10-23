@@ -222,23 +222,23 @@ reconnecting over BLE.
 Scancodes read with `evtest /dev/input/bt-remote`, 2026-09-07; they are the raw HID usages the
 handset sends (`c…` consumer page, `7…` keyboard page). The remote must be paired and trusted first.
 
-| Button                  | Scancode                        | Keycode                                                 |
-| ----------------------- | ------------------------------- | ------------------------------------------------------- |
-| D-pad                   | `c0042` `c0043` `c0044` `c0045` | `KEY_UP` `KEY_DOWN` `KEY_LEFT` `KEY_RIGHT`              |
-| OK (centre)             | `c0041`                         | `KEY_OK` ✅ remapped, was `KEY_SELECT`                  |
-| Back                    | `c0224`                         | `KEY_BACK`                                              |
-| Home                    | `c0223`                         | `KEY_HOMEPAGE`                                          |
-| Voice search            | `c0221`                         | `KEY_SEARCH` — native, not remapped                     |
-| ↳ same press also sends | `700aa`                         | nothing ✅ suppressed; was a stray `KEY_UNKNOWN`        |
-| Cog                     | `c008f`                         | `KEY_SETUP` ✅ remapped, was `KEY_GAMES`                |
-| Mute                    | `c00e2`                         | `KEY_MUTE`                                              |
-| Vol +/-                 | `c00e9` / `c00ea`               | `KEY_VOLUMEUP` / `KEY_VOLUMEDOWN`                       |
-| P +/-                   | `c009c` / `c009d`               | `KEY_CHANNELUP` / `KEY_CHANNELDOWN`                     |
-| Power                   | `c0030`                         | `KEY_POWER` — logind takes it to suspend                |
-| Backspace               | `c0040`                         | `KEY_BACKSPACE` ✅ remapped, was `KEY_MENU`             |
-| Hamburger               | `c0011`                         | `KEY_MENU` ✅ remapped, was `KEY_UNKNOWN`               |
-| App shortcuts, in order | `c0056` `c003b` `c003d` `c003e` | `KEY_PROG1`…`KEY_PROG4` ✅ remapped, were `KEY_UNKNOWN` |
-| Mouse button            | ➖                              | not a key — toggles air-mouse mode                      |
+| Button                  | Scancode                        | Keycode                                                                       |
+| ----------------------- | ------------------------------- | ----------------------------------------------------------------------------- |
+| D-pad                   | `c0042` `c0043` `c0044` `c0045` | `KEY_UP` `KEY_DOWN` `KEY_LEFT` `KEY_RIGHT`                                    |
+| OK (centre)             | `c0041`                         | `KEY_OK` ✅ remapped, was `KEY_SELECT`                                        |
+| Back                    | `c0224`                         | `KEY_BACK`                                                                    |
+| Home                    | `c0223`                         | `KEY_HOMEPAGE`                                                                |
+| Voice search            | `c0221`                         | `KEY_SEARCH` — native, not remapped                                           |
+| ↳ same press also sends | `700aa`                         | nothing ✅ suppressed; was a stray `KEY_UNKNOWN`                              |
+| Cog                     | `c008f`                         | `KEY_CONFIG` ✅ remapped, was `KEY_GAMES`                                     |
+| Mute                    | `c00e2`                         | `KEY_MUTE`                                                                    |
+| Vol +/-                 | `c00e9` / `c00ea`               | `KEY_VOLUMEUP` / `KEY_VOLUMEDOWN`                                             |
+| P +/-                   | `c009c` / `c009d`               | `KEY_CHANNELUP` / `KEY_CHANNELDOWN`                                           |
+| Power                   | `c0030`                         | `KEY_POWER` — logind takes it to suspend                                      |
+| Backspace               | `c0040`                         | `KEY_BACKSPACE` ✅ remapped, was `KEY_MENU`                                   |
+| Hamburger               | `c0011`                         | `KEY_MENU` ✅ remapped, was `KEY_UNKNOWN`                                     |
+| App shortcuts, in order | `c0056` `c003b` `c003d` `c003e` | `KEY_RED` `KEY_YELLOW` `KEY_BLUE` `KEY_GREEN` ✅ remapped, were `KEY_UNKNOWN` |
+| Mouse button            | ➖                              | not a key — toggles air-mouse mode                                            |
 
 Six usages arrive with no kernel mapping: the hamburger, the four app shortcuts, and a second usage
 the voice key sends alongside `KEY_SEARCH`. `boards/common/bt-remote.hwdb` renames those, plus three
@@ -247,10 +247,10 @@ It keys on the handset model, not the board, so any box this remote is paired to
 ✅ verified on the handset 2026-09-07: all nine properties reach the device and the remapped buttons
 report the new keycodes. `docs/remote-keymap.md` has the procedure.
 
-The app shortcuts are **YouTube · Netflix · Prime Video · Google Play**, in that order, so
-`KEY_PROG1` is YouTube. `KEY_PROG*` is what Linux defines for programmable app keys; the two IR
-tables for this same handset name them `KEY_F6 F7 F3 F8` (R69) and `KEY_F6 F7 F8 F9` (H96 Max), and
-disagreeing with each other they are not a convention worth copying.
+The app shortcuts are **YouTube · Netflix · Prime Video · Google Play**, in that order: `KEY_RED`,
+`KEY_YELLOW`, `KEY_BLUE`, `KEY_GREEN`, the four keys a media centre can bind. The two IR tables for
+this same handset name them `KEY_F6 F7 F3 F8` (R69) and `KEY_F6 F7 F8 F9` (H96 Max), and disagreeing
+with each other they are not a convention worth copying.
 
 The D-pad sends the consumer _Menu Up/Down/Left/Right_ usages rather than keyboard arrows — it still
 arrives as `KEY_UP`…`KEY_RIGHT`, so nothing needs fixing, but bind by keycode rather than by what
