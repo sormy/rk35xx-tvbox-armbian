@@ -11,9 +11,9 @@ git fetch -q origin
 git merge-base --is-ancestor HEAD "origin/$(git rev-parse --abbrev-ref HEAD)" ||
   { echo "✗ HEAD is not pushed: a release names a commit others can see" >&2; exit 1; }
 
-# a release, never the latest: releases/latest names the newest images
+# a pre-release, so never the latest: releases/latest and the README's badge name the newest images
 gh release view apt >/dev/null 2>&1 ||
-  gh release create apt --latest=false --title "apt repository" \
+  gh release create apt --prerelease --latest=false --title "apt repository" \
     --notes "TVBian's flat apt repository. Install tvb-archive-keyring, or see the README."
 # the debs before the index that names them; the plan fetched the published ones, already there
 have=$(gh release view apt --json assets -q '.assets[].name')

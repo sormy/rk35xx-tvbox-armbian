@@ -75,13 +75,13 @@ src='deb [signed-by=/usr/share/keyrings/tvb-archive-keyring.gpg] http://<mac>.lo
 echo "$src" | sudo tee /etc/apt/sources.list.d/tvb-test.list && sudo apt update   # box
 ```
 
-`publish` uploads the new debs, then the index, to the rolling `apt` release, never marked latest,
-and the images with a signed `SHA256SUMS` to a release named by the day, `.2` for a second. It
-uploads the files built, never a rebuild, and refuses a dirty tree or an unpushed commit, so every
-release names its commit. One key signs CI's releases and a Mac's alike. Before the images go up,
-`release/verify.py` reads the repo back as a box would: `InRelease` signed by our key, the index
-matching `Release`, every deb served at its indexed size, and every `Depends` on a `tvb-` or kernel
-package resolvable. It runs alone the same way, on the host.
+`publish` uploads the new debs, then the index, to the rolling `apt` release, a pre-release so it is
+never latest, and the images with a signed `SHA256SUMS` to a release named by the day, `.2` for a
+second. It uploads the files built, never a rebuild, and refuses a dirty tree or an unpushed commit,
+so every release names its commit. One key signs CI's releases and a Mac's alike. Before the images
+go up, `release/verify.py` reads the repo back as a box would: `InRelease` signed by our key, the
+index matching `Release`, every deb served at its indexed size, and every `Depends` on a `tvb-` or
+kernel package resolvable. It runs alone the same way, on the host.
 
 ## CI
 
