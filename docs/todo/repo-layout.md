@@ -13,7 +13,6 @@ Hand-written sources under `src/`; the pipeline's steps stay at the top. Decided
 | `firmware/common/<chip>/`, `modules/<x>.conf`, `patches/<x>/`       | `src/chips/<chip>/`       |
 | `firmware/common/`, the rest                                        | `src/common/`             |
 | `build-*-dts.sh`, `build-rockchip-loaders.sh`, `build-firmware*.sh` | `src/tools/board/`        |
-| `build-uboot.sh`, the RK3528 `uboot.itb`                            | `uboot/`                  |
 | `scripts/aml-*.py`                                                  | `image/`, its only user   |
 | `patches/<kernel-wide topic>/`                                      | `kernel/patches/<topic>/` |
 | `README_AMLOGIC.md`                                                 | stays beside `README.md`  |
@@ -24,7 +23,7 @@ one README. A board with a known chip touches only `src/boards/<board>/`; a new 
 `stock/`, `research/`, `docs/` and `keyring/` stay where they are.
 
 The repo root ends with `build.sh`, the READMEs, `AGENTS.md`, `TODO.md` and folders. Build outputs
-(`uboot-build/`) go under `build/`, which is gitignored whole.
+go under `build/`, which is gitignored whole.
 
 ## Docs
 

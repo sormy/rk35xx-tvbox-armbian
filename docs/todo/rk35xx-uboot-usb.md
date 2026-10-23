@@ -1,6 +1,6 @@
 # USB in our U-Boot
 
-Family-wide. Our U-Boot is mainline `v2026.04` + `generic-rk3528_defconfig`:
+Family-wide. Our U-Boot is mainline `v2026.10` + `generic-rk3528_defconfig`:
 `# CONFIG_USB is not set`, `CONFIG_NO_NET=y`. Once it runs, serial is the only interface; the
 factory U-Boot it replaces served rockusb.
 

@@ -3,9 +3,9 @@
 A stick-form RK3518 box. Sibling to `docs/h96max-h313/`, which is the same SoC and the same radio on
 a different PCB (`3518_ZX_V01` there, `3518_DG_ZX_V01` here).
 
-Runs TVBian, migrated in place from Armbian: Debian trixie, kernel `6.1.172-tvb-rk35xx`,
-`tvb-h96max-3518d`, NetworkManager, hostname `h96max-3518d`. ✅ Wi-Fi, BT, console `ttyFIQ0`, the
-VPU nodes, LEDs at boot; ❓ HDMI, suspend and the remote on this kernel.
+Runs TVBian, migrated in place from Armbian: Debian trixie, kernel `6.1.172-tvb-rk35xx`, U-Boot
+`v2026.10`, `tvb-h96max-3518d`, NetworkManager, hostname `h96max-3518d`. ✅ Wi-Fi, BT, console
+`ttyFIQ0`, the VPU nodes, LEDs at boot; ❓ HDMI, suspend and the remote on this kernel.
 
 **Ran Armbian from 2026-09-06 to 2026-10-20**, reachable over SSH. Every number below was measured
 on this unit, on Armbian unless it says TVBian, **with the heatsink fitted**. Known gaps are listed
@@ -316,8 +316,8 @@ part this box does not have.
 | U-Boot | 2017.09-250331-dirty — **AArch32** (`SPSR = 0x1d3`) |
 | Kernel | 6.1.118 `#147`, **armv7l**                          |
 
-The 32-bit half is a vendor choice, not silicon: `uboot.itb` replaces U-Boot and the kernel is
-Armbian's, so both 32-bit stages go away.
+The 32-bit half is a vendor choice, not silicon: our U-Boot replaces the vendor's and the kernel is
+arm64, so both 32-bit stages go away.
 
 ## Serial console
 

@@ -45,7 +45,7 @@ Risk order: SDIO Wi-Fi, the Ethernet PHY, the video codec, anything the DTB touc
 - [ ] SD: enumerates, hotplug insert **and** remove, `fio` recorded
 - [ ] Boots from eMMC on its own loader pair — `dd` sectors 64 and 16384
 - [ ] After migration, sectors 7168–16383 are byte-identical to the backup; only the GPT, the
-      idbloader and `uboot.itb` differ
+      idbloader and the U-Boot FIT differ
 - [ ] `DVKR` at sector 7168 and `SSKR` at 8192 still tagged; `LAN_MAC` still the sticker address
 - [ ] Maskrom proven **before** it is needed — recovery button at power-on, `rkdeveloptool ld`
       reports `Maskrom`. **Entry is not recovery**: `db`, `rl` and a verified `wl` are a separate

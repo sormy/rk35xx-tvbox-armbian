@@ -216,5 +216,5 @@ Bring-up method from
 ## License
 
 Scripts MIT. Device trees are decompiled from each box's factory DTB: a factual hardware description
-in the bindings' layout, no vendor header or comments. `factory_idbloader.bin` (vendor blob) and
-`uboot.itb` (mainline U-Boot + Rockchip ATF) keep their own licenses.
+in the bindings' layout, no vendor header or comments. `factory_idbloader.bin` (vendor blob) and the
+U-Boot a board package ships (mainline U-Boot + Rockchip ATF) keep their own licenses.

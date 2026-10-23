@@ -1,6 +1,5 @@
 /backup/
 /build/
-/uboot-build/
 /tools/
 # rkdeveloptool's own log, written where it runs
 /log/

@@ -10,7 +10,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 FW="$REPO/firmware"
 RKDEV="$REPO/build/bin/rkdeveloptool"
-RKBIN="$REPO/uboot-build/rkbin"                   # shared with build-uboot.sh, gitignored
+RKBIN="$REPO/build/rkbin"
 
 # --- pinned dependency (bump deliberately, never float) ---
 RKBIN_REPO="https://github.com/rockchip-linux/rkbin.git"

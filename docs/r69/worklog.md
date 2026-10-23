@@ -1837,3 +1837,16 @@ against five per probe then. The console font is now Terminus 16x32, `CONFIG_FON
 The other AIC8800 noise, two bare `printk()`s per management frame (`done=1 retry_required=0 …` on
 TX confirm, `frame type` on a protected frame received), is deleted by `patches/aic8800/98`; the
 installed `aic8800_fdrv.ko` carries neither string.
+
+## 2026-10-22 — U-Boot from the container, then v2026.10
+
+The FIT is now built by `./build.sh uboot r69` in the build container, no longer on the Mac and no
+longer committed. Against the committed `uboot.itb`, the ATF segments and the control tree came out
+byte-identical; only U-Boot proper differs, a different compiler's code.
+
+- `v2026.04` from the container, slot A only (`c5ffae53…`), slot B left on the committed
+  `d6dd8002…`: Linux reported `u-boot,version` `2026.04` (the Mac build said `2026.04-dirty`), back
+  in 31 s, the label MAC on `eth0`.
+- `v2026.10` (`34644c8d…`) in slot A on /dev/mmcblk1 (eMMC), rebooted: `u-boot,version` `2026.10`,
+  back in 29 s; `cncjs` active, nothing failed, `eth0` on `C4:2A:FE:10:51:77`, the label MAC. Slot B
+  then copied from slot A; both read back `34644c8d…`.

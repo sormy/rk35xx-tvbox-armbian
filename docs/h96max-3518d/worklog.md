@@ -3146,3 +3146,13 @@ byte-identical `skw_btdriver.c` — verified by diffing the result against the f
 - Our U-Boot with `0003` in both slots, the old pair in `backup/`. Boot 15.0 s (4.6 + 10.4), reboot
   to SSH 31 s, nothing failed, journal in RAM, zram swap, `power` lit and `standby` dark from the
   tree's `default-state`. Nothing on the box names Armbian or rk35xx.
+
+## 2026-10-22 — U-Boot from the container, then v2026.10
+
+The FIT is now built by `./build.sh uboot h96max-3518d` in the build container, no longer on the Mac
+and no longer committed. Against the committed `uboot.itb`, the ATF segments and the control tree
+came out byte-identical; only U-Boot proper differs, a different compiler's code.
+
+- `v2026.10` (`118bc614…`) in slot A on the eMMC, rebooted: `u-boot,version` `2026.10`, back in
+  under a minute; nothing failed (no Ethernet fitted). Slot B then copied from slot A; both read
+  back `118bc614…`.

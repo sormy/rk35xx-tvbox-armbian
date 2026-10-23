@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build TVBian in one container image: Apple `container` on macOS, `podman` on Linux.
 #   usage: ./build.sh kernel <kernel/*.conf>  its debs and metapackage
-#          ./build.sh uboot <uboot/*.conf>    a U-Boot a board package ships
+#          ./build.sh uboot <board>           the U-Boot a board package ships
 #          ./build.sh board <board>           tvb-<board>, after its U-Boot
 #          ./build.sh firmware <dir>          tvb-firmware-<chip>, from firmware/common/<dir>/
 #          ./build.sh keyring                 tvb-archive-keyring
@@ -132,18 +132,16 @@ boards() {
   return 0
 }
 firmwares() { for c in firmware/common/*/firmware.conf; do [ -f "$c" ] && basename "$(dirname "$c")"; done; return 0; }
-uboot_of() { sed -n 's/^BOARD_UBOOT_BUILD=//p' "firmware/$1/board.conf"; }
 
 board() {
-  local u
-  u=$(uboot_of "$1")
-  [ -z "$u" ] || [ -f "$OUT/uboot/$u/u-boot.bin" ] || run bash uboot/build.sh "uboot/$u.conf"
+  ! grep -q '^BOARD_UBOOT=' "firmware/$1/board.conf" || [ -f "$OUT/uboot/$1/u-boot.bin" ] ||
+    run bash uboot/build.sh "$1"
   run bash package/board.sh "$1"
 }
 
 case "$1" in
   kernel) run bash kernel/build.sh "${2:?usage: ./build.sh kernel <kernel/*.conf>}" ;;
-  uboot) run bash uboot/build.sh "${2:?usage: ./build.sh uboot <uboot/*.conf>}" ;;
+  uboot) run bash uboot/build.sh "${2:?usage: ./build.sh uboot <board>}" ;;
   board) board "${2:?usage: ./build.sh board <board>}" ;;
   firmware) run bash package/firmware.sh "${2:?usage: ./build.sh firmware <dir>}" ;;
   keyring) run bash package/keyring.sh ;;

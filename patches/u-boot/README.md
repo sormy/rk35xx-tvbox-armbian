@@ -1,8 +1,9 @@
 # u-boot — patches on mainline
 
-Mainline U-Boot v2026.04 plus three patches, applied by `../../build-uboot.sh` to its own clone
-under `uboot-build/`. `0001` and `0002` are in `scripts/dtc/pylibfdt`, which `binman` needs and
-which assumes a Linux host; they leave the FIT as it is. `0003` is target code.
+Three patches on mainline U-Boot. `uboot/rk3528.conf` applies `0003`, target code, to every RK3528
+board's build. `0001` and `0002` are in `scripts/dtc/pylibfdt`, which `binman` needs and which
+assumes a Linux host: they built the FIT on macOS, and the build now runs in the container, so
+nothing applies them. They are kept to send upstream.
 
 | Patch  | Fixes                                                                         |
 | ------ | ----------------------------------------------------------------------------- |

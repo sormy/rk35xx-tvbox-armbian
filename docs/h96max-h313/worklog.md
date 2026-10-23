@@ -2155,3 +2155,13 @@ the legacy path and defensive.
   `SWT6621S_NV_SDIO.h96max-h313,rk3518-tvbox.bin` loaded, `wlan0` connected, nothing failed.
 - The rootfs, an SD card, relabelled `tvbian`, so `tvb-install` takes it as a source; it reached its
   prompt with the eMMC as target, and wrote nothing on `n`.
+
+## 2026-10-22 — U-Boot from the container, then v2026.10
+
+The FIT is now built by `./build.sh uboot h96max-h313` in the build container, no longer on the Mac
+and no longer committed. Against the committed `uboot.itb`, the ATF segments and the control tree
+came out byte-identical; only U-Boot proper differs, a different compiler's code.
+
+- `v2026.10` (`b6c0e0a8…`) in slot A on its SD card, `mmcblk0`, rebooted: `u-boot,version`
+  `2026.10`, back in under a minute; nothing failed, `eth0` on `00:EF:00:4A:43:A6`, the label MAC.
+  Slot B then copied from slot A; both read back `b6c0e0a8…`.

@@ -13,8 +13,10 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 FW="$REPO/firmware"
 # any vendor kernel since 2023-02 numbers the RK3528's clocks the same; pinned to stay reproducible
 VENDOR_REV=5280f9b4336199c4025c8eed894d2b4e2268dcc6
-VHDR="${VHDR:-$REPO/uboot-build/vendor/rk3528-cru.h}"
-MDIR="${MDIR:-$REPO/uboot-build/u-boot/dts/upstream/include/dt-bindings}"
+# mainline's numbering, at the tag the boards' U-Boot builds from
+UBOOT_TAG=$(sed -n 's/^TAG=//p' "$REPO/uboot/rk3528.conf")
+VHDR="${VHDR:-$REPO/build/uboot-dts/vendor/rk3528-cru.h}"
+MDIR="${MDIR:-$REPO/build/uboot-dts/$UBOOT_TAG}"
 
 # return 0: the last glob entry need not exist, and set -e would take that test as failure
 boards() { for d in "$FW"/*/uboot.patch; do [ -f "$d" ] && basename "$(dirname "$d")"; done; return 0; }
@@ -29,7 +31,11 @@ if [ ! -f "$VHDR" ]; then
   mv "$VHDR.tmp" "$VHDR"
 fi
 for h in clock/rockchip,rk3528-cru.h reset/rockchip,rk3528-cru.h; do
-  [ -f "$MDIR/$h" ] || { echo "Need mainline's dt-bindings ($h). Run: ./build-uboot.sh"; exit 1; }
+  [ -f "$MDIR/$h" ] && continue
+  mkdir -p "$(dirname "$MDIR/$h")"
+  curl -fsSL -o "$MDIR/$h.tmp" \
+    "https://raw.githubusercontent.com/u-boot/u-boot/$UBOOT_TAG/dts/upstream/include/dt-bindings/$h"
+  mv "$MDIR/$h.tmp" "$MDIR/$h"
 done
 
 for BOARD in $BOARDS; do

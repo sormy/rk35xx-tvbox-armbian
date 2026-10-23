@@ -1,0 +1,16 @@
+#include "rockchip-u-boot.dtsi"
+
+/ {
+	dmc {
+		compatible = "rockchip,rk3528-dmc";
+		bootph-all;
+	};
+
+	/* misc_init_r() -> rockchip_cpuid_from_efuse() needs this; the factory tree has only the
+	 * vendor's secure-otp@ffcd0000, which mainline has no driver for */
+	nvmem@ffce0000 {
+		compatible = "rockchip,rk3528-otp";
+		reg = <0x0 0xffce0000 0x0 0x4000>;
+		bootph-some-ram;
+	};
+};

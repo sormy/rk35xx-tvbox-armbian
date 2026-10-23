@@ -28,8 +28,12 @@ files() {
       echo "firmware/$2/board.dts" package/board.sh
       [ ! -f "firmware/$2/preserve-sectors" ] || echo "firmware/$2/preserve-sectors" firmware/common/tvb-install
       sed -E 's/#.*//' "firmware/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}'
-      [ -z "${BOARD_UBOOT_BUILD:-}" ] || echo "uboot/$BOARD_UBOOT_BUILD.conf" uboot/build.sh
-      [ -z "${BOARD_UBOOT:-}" ] || echo "firmware/$BOARD_UBOOT"
+      if [ -n "${BOARD_UBOOT:-}" ]; then
+        echo "uboot/$BOARD_UBOOT.conf" uboot/build.sh
+        [ ! -f "firmware/$2/uboot.dts" ] || echo "firmware/$2/uboot.dts"
+        # shellcheck source=/dev/null
+        (. "uboot/$BOARD_UBOOT.conf"; echo ${PATCHES:-}; [ -z "${SOC:-}" ] || echo "uboot/$SOC-u-boot.dtsi")
+      fi
       [ -z "${BOARD_IDBLOADER:-}" ] || echo "firmware/$BOARD_IDBLOADER" ;;
     firmware)
       echo "firmware/common/$2/firmware.conf" "firmware/common/$2/package.list" package/firmware.sh
@@ -55,7 +59,7 @@ tools() {
     board)
       dtc --version
       # shellcheck source=/dev/null
-      (. "firmware/$2/board.conf"; [ -z "${BOARD_UBOOT_BUILD:-}" ] || { gcc -dumpfullversion; ld --version | head -1; }) ;;
+      (. "firmware/$2/board.conf"; [ -z "${BOARD_UBOOT:-}" ] || { gcc -dumpfullversion; ld --version | head -1; }) ;;
   esac
 }
 # shellcheck disable=SC2046  # one path per word

@@ -32,10 +32,9 @@ it, so the encoders and the decoder move together, as a porting job.
 
 ## Bootloaders
 
-| U-Boot             | Upstream      | Follows      | Built by         |
-| ------------------ | ------------- | ------------ | ---------------- |
-| M20, chain-loaded  | u-boot/u-boot | pinned `TAG` | `uboot/*.conf`   |
-| RK3528 `uboot.itb` | u-boot/u-boot | pinned tag   | `build-uboot.sh` |
+| U-Boot      | Upstream      | Follows      | Built by       |
+| ----------- | ------------- | ------------ | -------------- |
+| every board | u-boot/u-boot | pinned `TAG` | `uboot/*.conf` |
 
 Pinned: a bad bootloader can leave a box with no way back short of maskrom. A new tag goes onto a
 box before its pin moves.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Regenerate everything derived under firmware/<board>/ — board tree, U-Boot tree, U-Boot FIT,
-# maskrom loader — for the boards named, or for every board when none is.
+# Regenerate everything derived under firmware/<board>/ — board tree, U-Boot tree, maskrom
+# loader — for the boards named, or for every board when none is.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
@@ -18,10 +18,6 @@ sel=$(with board.patch)                      # stock board.dtb + board.patch -> 
 
 sel=$(with uboot.patch)                      # stock uboot.dtb + uboot.patch -> uboot.dts
 [ -z "$sel" ] || ./build-uboot-dts.sh $sel
-
-# after build-uboot-dts.sh: a board getting its first uboot.dts is only buildable once it exists
-sel=$(with uboot.dts)
-[ -z "$sel" ] || ./build-uboot.sh $sel
 
 sel=$(with factory_idbloader.bin)            # factory idbloader + rkbin usbplug -> maskrom_loader.bin
 [ -z "$sel" ] || ./build-rockchip-loaders.sh $sel

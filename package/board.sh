@@ -23,11 +23,7 @@ echo "$BOARD_NAME" >"$LIB/board-name"
 [ -z "${BOARD_PCB:-}" ] || echo "$BOARD_PCB" >"$LIB/board-pcb"
 
 # loader files only: nothing in this package writes a sector
-if [ -n "${BOARD_UBOOT_BUILD:-}" ]; then
-  cp "/out/uboot/$BOARD_UBOOT_BUILD/u-boot.bin" "$LIB/u-boot.bin"
-elif [ -n "${BOARD_UBOOT:-}" ]; then
-  cp "$FW/$BOARD_UBOOT" "$LIB/u-boot.bin"
-fi
+[ -z "${BOARD_UBOOT:-}" ] || cp "/out/uboot/$BOARD/u-boot.bin" "$LIB/u-boot.bin"
 [ -z "${BOARD_IDBLOADER:-}" ] || cp "$FW/$BOARD_IDBLOADER" "$LIB/idbloader.bin"
 # tvb-install, on a board that names the sectors a copy leaves as they are: the unit's own
 if [ -f "$FW/$BOARD/preserve-sectors" ]; then

@@ -173,7 +173,7 @@ board to the README's Boxes table and support matrix.
 Cheaper here than on the box. Attach the built image and check:
 
 - **Loaders byte-identical** to `firmware/<board>/factory_idbloader.bin` (sector 64) and
-  `firmware/<board>/uboot.itb` (16384) — `dd` + `md5`.
+  `/usr/lib/tvb/u-boot.bin` (16384) — `dd` + `md5`.
 - **DTB** matches `firmware/<board>/board.dtb` at `/usr/lib/tvb/board.dtb`.
 - **`/usr/lib/tvb/`** populated: `board-id`, `board-name`, `board-pcb`, `board.dtb`, the loaders.
 - **Filesystem clean** — the build's `fsck.ext4 -fn` gate must have passed.

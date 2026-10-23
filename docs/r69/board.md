@@ -3,10 +3,11 @@
 Sold as the "R69". Its SoC reports `rk3528` — RK3518 is a variant in that family, which is what
 makes a stock ROCK 2F image the right base.
 
-Runs TVBian, migrated in place from Armbian: Debian trixie, kernel `6.1.172-tvb-rk35xx`, `tvb-r69`,
-NetworkManager, hostname `cnc`. ✅ Wi-Fi on the out-of-tree AIC8800, Bluetooth bound through serdev
-with no `hciattach`, Ethernet on the label MAC from our U-Boot, console `ttyFIQ0`, the VPU nodes,
-LEDs at boot; ❓ HDMI, suspend, the remote and IR wake on this kernel.
+Runs TVBian, migrated in place from Armbian: Debian trixie, kernel `6.1.172-tvb-rk35xx`, U-Boot
+`v2026.10`, `tvb-r69`, NetworkManager, hostname `cnc`. ✅ Wi-Fi on the out-of-tree AIC8800,
+Bluetooth bound through serdev with no `hciattach`, Ethernet on the label MAC from our U-Boot,
+console `ttyFIQ0`, the VPU nodes, LEDs at boot; ❓ HDMI, suspend, the remote and IR wake on this
+kernel.
 
 <img src="image1.jpg" alt="The R69 RK3518 Android TV box" width="320">
 
@@ -265,7 +266,7 @@ Still open:
 
 ## Recovery
 
-✅ **Maskrom is proven end to end** (2026-09-12), on this board's own `uboot.itb`. The **recessed
+✅ **Maskrom is proven end to end** (2026-09-12), on this board's own U-Boot FIT. The **recessed
 button inside the AV jack**, held _before_ power reaches the box, lands in `Maskrom` directly:
 U-Boot's `adc-keys` sees it and resets into BootROM download. `db` with its maskrom loader, then
 `rfi` (30777344 sectors) and `rl` — a read of sector 64 came back byte-identical to
