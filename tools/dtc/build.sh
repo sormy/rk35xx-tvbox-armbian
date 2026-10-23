@@ -6,7 +6,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-REPO="$(cd "$HERE/../../.." && pwd)"
+REPO="$(cd "$HERE/../.." && pwd)"
 OUT="$REPO/build/tools/dtc"
 BUILD="$OUT/src"                                  # scratch clone
 PATCHES="$REPO/patches/dtc"

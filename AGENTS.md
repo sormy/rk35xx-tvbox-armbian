@@ -18,7 +18,7 @@ wrong.
 | `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                     |
 | `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                |
 | `patches/<topic>/`  | every patch to an upstream's code, one folder per upstream, with its upstream status |
-| `src/tools/<tool>/` | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`       |
+| `tools/<tool>/`     | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`       |
 | `scripts/`          | host-side helpers, never installed on a box                                          |
 | `keyring/`          | the `apt` repo's public signing key                                                  |
 | `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it         |
@@ -75,7 +75,7 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                  |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
 | `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
-| `src/tools/amlcmd/README.md`          | the Amlogic burning-mode client we wrote, and its worklog            |
+| `tools/amlcmd/README.md`              | the Amlogic burning-mode client we wrote, and its worklog            |
 | `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s      |
 | `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage       |
 | `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader   |

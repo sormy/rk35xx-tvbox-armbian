@@ -3,7 +3,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-OUT="$(cd "$HERE/../../.." && pwd)/build/tools/amlcmd"
+OUT="$(cd "$HERE/../.." && pwd)/build/tools/amlcmd"
 
 # Homebrew keeps libusb keg-only
 if command -v brew >/dev/null; then

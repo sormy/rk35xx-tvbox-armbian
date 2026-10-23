@@ -6,7 +6,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-REPO="$(cd "$HERE/../../.." && pwd)"
+REPO="$(cd "$HERE/../.." && pwd)"
 OUT="$REPO/build/tools/e2tools"                   # the binaries
 BUILD="$OUT/src"                                  # scratch clone
 PATCHES="$REPO/patches/e2tools"

@@ -5,20 +5,37 @@ paths only: no box sees them.
 
 ## Folders
 
-Hand-written sources under `src/`; the pipeline's steps stay at the top. Decided 2026-10-22.
+Subject folders at the root, the pipeline's steps beside them; one mechanism per job. Decided
+2026-10-22.
 
-| Today                                                               | To                       |
-| ------------------------------------------------------------------- | ------------------------ |
-| `firmware/<board>/`                                                 | `src/boards/<board>/`    |
-| `firmware/common/<chip>/`, `modules/<x>.conf`                       | `src/chips/<chip>/`      |
-| `firmware/common/`, the rest                                        | `src/common/`            |
-| `build-*-dts.sh`, `build-rockchip-loaders.sh`, `build-firmware*.sh` | `src/tools/board/`       |
-| `scripts/aml-*.py`                                                  | `image/`, its only user  |
-| `README_AMLOGIC.md`                                                 | stays beside `README.md` |
+| Folder              | Holds                                                                 |
+| ------------------- | --------------------------------------------------------------------- |
+| `base/`             | `tvb-base`: what every box gets, laid out at install paths            |
+| `boards/<board>/`   | `board.conf`, trees, loaders, and its own files under `rootfs/`       |
+| `boards/common/`    | one folder a family, `rootfs/` taken whole by that family's boards    |
+| `firmware/<chip>/`  | a chip's blobs and its driver's options, under `rootfs/`              |
+| `modules/`          | out-of-tree driver pins, and the step packaging them                  |
+| `patches/<target>/` | every deviation from an upstream, its README saying what upstream has |
+| `tools/<tool>/`     | host tools; `tools/board/` for the board generators                   |
 
-A chip is one folder: its out-of-tree driver's pin, its firmware, and one README. A board with a
-known chip touches only `src/boards/<board>/`; a new chip is one `src/chips/<chip>/`. Every patch
-stays in `patches/<upstream>/`, where its README says what upstream has of it. `stock/`,
+A board is a folder with a `board.conf`: no loop lists `boards/` by name.
+
+**On the box: vanilla Debian plus packages.** A default goes under `/usr/lib` where the program
+reads it, an `/etc` conffile only where it does not, and never into a file another package owns.
+Locale and the first root-password login are image state, not packaged.
+
+In order, one commit each:
+
+| From                                        | To                                              |
+| ------------------------------------------- | ----------------------------------------------- |
+| `image/rootfs/` and the all-board files     | `base/`, packaged as `tvb-base`                 |
+| `firmware/<board>/`                         | `boards/<board>/`                               |
+| the family-shared files                     | `boards/common/<family>/`                       |
+| `firmware/common/<chip>/`                   | `firmware/<chip>/`; `seekwave-fw` as `swt6621s` |
+| `package.list`                              | `rootfs/` in each folder                        |
+| `build-*.sh` but `build.sh`, and `scripts/` | `tools/board/`; `aml-*.py` to `image/`          |
+
+Each step proven the same way: every package rebuilt identical, an image built. `stock/`,
 `research/`, `docs/` and `keyring/` stay where they are.
 
 The repo root ends with `build.sh`, the READMEs, `AGENTS.md`, `TODO.md` and folders. Build outputs

@@ -22,7 +22,7 @@ The work volume is a case-sensitive ext4, never a bind mount: macOS's APFS is ca
 the kernel has names that differ only by case (`xt_TCPMSS.h`, `xt_tcpmss.h`).
 
 Maskrom, `amlcmd` and writing a card stay on the host: a container on macOS reaches no USB. So do
-the tools they need: `./build.sh tool <name>` builds one from `src/tools/<name>/` natively, into
+the tools they need: `./build.sh tool <name>` builds one from `tools/<name>/` natively, into
 `build/tools/<name>/`, its commands linked in `build/bin/`; `./build.sh tools` builds every one.
 
 | Host         | Beyond the runtime                       |

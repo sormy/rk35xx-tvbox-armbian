@@ -14,7 +14,7 @@
 #          ./build.sh release [--key <file>]  plan, then assemble: what CI runs, in one go
 #          ./build.sh serve                   build/out/ on port 8000
 #          ./build.sh publish                 upload a release to GitHub
-#          ./build.sh tool <name> [args]      a host tool from src/tools/<name>/, built natively; its
+#          ./build.sh tool <name> [args]      a host tool from tools/<name>/, built natively; its
 #                                             executables linked into build/bin/
 #          ./build.sh tools                   every host tool
 #   env:   TVB_BUILD_CPUS (all cores), TVB_BUILD_MEMORY (8g), TVB_BUILD_SUITE (Debian stable),
@@ -57,7 +57,7 @@ EOF
 
 tool() {
   local f
-  bash "src/tools/$1/build.sh" "${@:2}"
+  bash "tools/$1/build.sh" "${@:2}"
   mkdir -p build/bin
   for f in "build/tools/$1"/*; do
     if [ -f "$f" ] && [ -x "$f" ]; then ln -sf "../tools/$1/${f##*/}" build/bin/; fi
@@ -70,9 +70,9 @@ case "${1:-}" in
   serve) cd "$OUT" && exec python3 -m http.server 8000 ;;
   publish) exec bash release/publish.sh ;;
   tool)
-    [ -f "src/tools/${2:-}/build.sh" ] || usage
+    [ -f "tools/${2:-}/build.sh" ] || usage
     tool "${@:2}"; exit ;;
-  tools) for t in src/tools/*/build.sh; do t=${t%/build.sh}; tool "${t##*/}"; done; exit ;;
+  tools) for t in tools/*/build.sh; do t=${t%/build.sh}; tool "${t##*/}"; done; exit ;;
   *) usage ;;
 esac
 
