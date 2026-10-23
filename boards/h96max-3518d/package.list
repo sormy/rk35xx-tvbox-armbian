@@ -10,7 +10,6 @@ link /usr/lib/firmware/updates/swt6621s/SWT6621S_NV_SDIO_SHARED_TDD.bin /usr/lib
 0755 common/led-shutdown           /usr/lib/systemd/system-shutdown/tvb-led
 0755 common/led-sleep              /usr/lib/systemd/system-sleep/tvb-led
 
-0644 common/suspend.conf           /usr/lib/systemd/sleep.conf.d/zz-tvb-suspend.conf
 0644 h96max-3518d/powerkey.conf    /usr/lib/systemd/logind.conf.d/zz-tvb-powerkey.conf
 
 # the video engines for a normal user, Bluetooth unblocked at registration

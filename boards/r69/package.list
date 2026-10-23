@@ -7,7 +7,6 @@
 0755 common/led-sleep              /usr/lib/systemd/system-sleep/tvb-led
 
 # a short press suspends, IR wakes it; no PMIC, so poweroff parks the SoC powered
-0644 common/suspend.conf           /usr/lib/systemd/sleep.conf.d/zz-tvb-suspend.conf
 0644 common/powerkey.conf          /usr/lib/systemd/logind.conf.d/zz-tvb-powerkey.conf
 
 # the video engines for a normal user, Bluetooth unblocked at registration
