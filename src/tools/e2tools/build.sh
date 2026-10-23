@@ -9,7 +9,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../../.." && pwd)"
 OUT="$REPO/build/tools/e2tools"                   # the binaries
 BUILD="$OUT/src"                                  # scratch clone
-PATCHES="$HERE/patches"
+PATCHES="$REPO/patches/e2tools"
 
 # --- pinned dependency (bump deliberately, never float) ---
 E2TOOLS_REPO="https://github.com/e2tools/e2tools.git"

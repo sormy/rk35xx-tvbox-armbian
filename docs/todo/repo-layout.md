@@ -1,26 +1,25 @@
 # Repo layout
 
-Every folder named for what it holds, every patch beside what it patches, every doc current or gone.
-Repo paths only: no box sees them.
+Every folder named for what it holds, every patch in `patches/`, every doc current or gone. Repo
+paths only: no box sees them.
 
 ## Folders
 
 Hand-written sources under `src/`; the pipeline's steps stay at the top. Decided 2026-10-22.
 
-| Today                                                               | To                        |
-| ------------------------------------------------------------------- | ------------------------- |
-| `firmware/<board>/`                                                 | `src/boards/<board>/`     |
-| `firmware/common/<chip>/`, `modules/<x>.conf`, `patches/<x>/`       | `src/chips/<chip>/`       |
-| `firmware/common/`, the rest                                        | `src/common/`             |
-| `build-*-dts.sh`, `build-rockchip-loaders.sh`, `build-firmware*.sh` | `src/tools/board/`        |
-| `scripts/aml-*.py`                                                  | `image/`, its only user   |
-| `patches/<kernel-wide topic>/`                                      | `kernel/patches/<topic>/` |
-| `README_AMLOGIC.md`                                                 | stays beside `README.md`  |
+| Today                                                               | To                       |
+| ------------------------------------------------------------------- | ------------------------ |
+| `firmware/<board>/`                                                 | `src/boards/<board>/`    |
+| `firmware/common/<chip>/`, `modules/<x>.conf`                       | `src/chips/<chip>/`      |
+| `firmware/common/`, the rest                                        | `src/common/`            |
+| `build-*-dts.sh`, `build-rockchip-loaders.sh`, `build-firmware*.sh` | `src/tools/board/`       |
+| `scripts/aml-*.py`                                                  | `image/`, its only user  |
+| `README_AMLOGIC.md`                                                 | stays beside `README.md` |
 
-A chip is one folder: its out-of-tree driver's pin, its patches, in-tree or not, its firmware, and
-one README. A board with a known chip touches only `src/boards/<board>/`; a new chip is one
-`src/chips/<chip>/`. `kernel/patches/` keeps what is not a chip's: SoC support, vendor fixes, DRM.
-`stock/`, `research/`, `docs/` and `keyring/` stay where they are.
+A chip is one folder: its out-of-tree driver's pin, its firmware, and one README. A board with a
+known chip touches only `src/boards/<board>/`; a new chip is one `src/chips/<chip>/`. Every patch
+stays in `patches/<upstream>/`, where its README says what upstream has of it. `stock/`,
+`research/`, `docs/` and `keyring/` stay where they are.
 
 The repo root ends with `build.sh`, the READMEs, `AGENTS.md`, `TODO.md` and folders. Build outputs
 go under `build/`, which is gitignored whole.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build patched dtc into build/tools/dtc. Vanilla dtc prints phandles as raw numbers, which a vendor
-# blob cannot be read or diffed with; patches/ adds -P/-n/-s.
+# blob cannot be read or diffed with; patches/dtc/ adds -P/-n/-s.
 #
 # Usage: ./build.sh tool dtc [--test]
 set -euo pipefail
@@ -9,7 +9,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../../.." && pwd)"
 OUT="$REPO/build/tools/dtc"
 BUILD="$OUT/src"                                  # scratch clone
-PATCHES="$HERE/patches"
+PATCHES="$REPO/patches/dtc"
 
 # --- pinned dependency (bump deliberately, never float) ---
 DTC_REPO="https://git.kernel.org/pub/scm/utils/dtc/dtc.git"

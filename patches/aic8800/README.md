@@ -11,3 +11,8 @@ AIC's release `2026_0123_5f7be68d`, with these on top, in order.
 
 `10` drops the default log level from every debug class to errors only. `99` is the old driver's
 stable-MAC patch, rebased: with it, the R69 keeps `8a:00:33:65:64:b6` across boots.
+
+## Upstream
+
+`01`–`17` are radxa-pkg/aic8800's own. `99` went to `armbian/linux-rockchip`, whose tree carries the
+driver, as `#527`: closed without merging. `98`: not submitted.

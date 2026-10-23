@@ -9,7 +9,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../../.." && pwd)"
 OUT="$REPO/build/tools/rkdeveloptool"
 BUILD="$OUT/src"                                  # scratch clone
-PATCHES="$HERE/patches"
+PATCHES="$REPO/patches/rkdeveloptool"
 
 # --- pinned dependencies (bump deliberately, never float) ---
 RKDEV_REPO="https://github.com/rockchip-linux/rkdeveloptool.git"

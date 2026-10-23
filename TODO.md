@@ -52,8 +52,8 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 - [ ] **Check the `ttyFIQ0` login on a serial header.** Every Rockchip board's console is `ttyFIQ0`,
       seen in `/proc/consoles` with its getty running; never on a cable.
-- [ ] **The repo restructure.** Folders named for what they hold, patches beside their owner, tools
-      under `tools/`, docs current or in `research/`: `docs/todo/repo-layout.md`.
+- [ ] **The repo restructure.** Folders named for what they hold, every patch in `patches/`, docs
+      current or in `research/`: `docs/todo/repo-layout.md`.
 
 - [ ] **`tvb-install`, a first real install.** `firmware/common/tvb-install` has reached its prompt
       on the H313, never past it: the H313 from its SD to the eMMC, keeping `DVKR`/`SSKR`; the M20

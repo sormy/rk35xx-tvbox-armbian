@@ -85,3 +85,7 @@ height. Sizes round down. HEVC and VP9 only: the other codecs run on cores witho
     echo 1080 > /sys/module/meson_vdec/parameters/capture_max_height
 
 `research/ffmpeg-v4l2m2m/` `0009` makes FFmpeg ask: its decoders' `-capture_max_height`.
+
+## Upstream
+
+Not submitted.

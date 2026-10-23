@@ -17,8 +17,8 @@ wrong.
 | `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                  |
 | `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                     |
 | `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                |
-| `patches/<topic>/`  | kernel, driver, U-Boot and GStreamer patches, formatted to send upstream             |
-| `src/tools/<tool>/` | a host tool: `./build.sh tool <tool>` builds it, its commands linked in `build/bin/` |
+| `patches/<topic>/`  | every patch to an upstream's code, one folder per upstream, with its upstream status |
+| `src/tools/<tool>/` | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`       |
 | `scripts/`          | host-side helpers, never installed on a box                                          |
 | `keyring/`          | the `apt` repo's public signing key                                                  |
 | `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it         |
@@ -75,11 +75,11 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                  |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
 | `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
-| `src/tools/<tool>/README.md`          | a host tool: what it does, why we build it, its patches              |
-| `src/tools/dtc/README.md`             | the patched `dtc` that round-trips a vendor blob with `&label`s      |
+| `src/tools/amlcmd/README.md`          | the Amlogic burning-mode client we wrote, and its worklog            |
+| `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s      |
 | `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage       |
-| `src/tools/rkdeveloptool/README.md`   | the patched `pack`; why the stock one cannot build a usable loader   |
-| `src/tools/e2tools/README.md`         | the patched `e2tools`; why the stock one corrupts an image on delete |
+| `patches/rkdeveloptool/README.md`     | the patched `pack`; why the stock one cannot build a usable loader   |
+| `patches/e2tools/README.md`           | the patched `e2tools`; why the stock one corrupts an image on delete |
 | `patches/linux-rockchip/README.md`    | the vendor kernel's patches, their PRs, what Rockchip fixed since    |
 | `patches/linux-meson/README.md`       | mainline kernel patches for Amlogic boards, on their way upstream    |
 | `patches/aic8800/README.md`           | the AIC8800 SDIO driver: Radxa's patches, then ours                  |
@@ -90,7 +90,7 @@ another, so nothing rots when one is rewritten.
 | `patches/meson-dw-hdmi/README.md`     | mainline HDMI for the GXLX2 (S905L3), in-tree                        |
 | `patches/meson-codecs/README.md`      | the video decoder in-tree and the encoders beside it on the GXLX2    |
 | `patches/gst-plugins-good/README.md`  | VC-1 through V4L2 on GStreamer 1.26.2: the patched plugin, by hand   |
-| `src/tools/gxlimg/README.md`          | the Amlogic boot-image tool, built on macOS                          |
+| `patches/gxlimg/README.md`            | the Amlogic boot-image tool, built on macOS                          |
 | `keyring/README.md`                   | the archive signing key: fingerprint, secret, rotation               |
 
 # Standing rules

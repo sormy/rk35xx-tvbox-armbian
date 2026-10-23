@@ -3,7 +3,8 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-OUT="$(cd "$HERE/../../.." && pwd)/build/tools/gxlimg"
+REPO="$(cd "$HERE/../../.." && pwd)"
+OUT="$REPO/build/tools/gxlimg"
 BUILD="$OUT/src"
 
 GXLIMG_REPO="https://github.com/repk/gxlimg.git"
@@ -21,7 +22,7 @@ mkdir -p "$OUT"
 git -C "$BUILD" fetch --quiet "$GXLIMG_REPO" "$GXLIMG_SHA" || true
 git -C "$BUILD" checkout --quiet --force "$GXLIMG_SHA"
 git -C "$BUILD" clean -qfd
-for p in "$HERE"/patches/*.patch; do
+for p in "$REPO"/patches/gxlimg/*.patch; do
   git -C "$BUILD" apply "$p"
 done
 make -s -C "$BUILD" CC=cc LD=cc \

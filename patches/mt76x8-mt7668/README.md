@@ -62,3 +62,7 @@ The factory Android log carries these on a box whose Wi-Fi worked:
 `bt_mt7668` probing while the Wi-Fi half initialises asserts the firmware's shared WMT task:
 `<ASSERT> system/cos/cos_api_t.c #1005 ... id=0x0 WMT`. Mainline `btmtksdio`, with
 `patches/btmtksdio-mt7668/`, runs alongside mt76 instead.
+
+## Upstream
+
+Not submitted: a fallback, not shipped.

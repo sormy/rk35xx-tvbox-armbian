@@ -39,3 +39,8 @@ The patch is guarded by `__APPLE__`, so Linux builds the same tree unchanged.
 `-t fip -e` expects a FIP, and a `bootloader` partition dump is not one — the FIP starts 512 bytes
 in. Passing the raw dump extracts a BL2 that is 512 bytes out of phase and then fails to unsign with
 `Invalid BL2 header`. Skip `0x200` first, and all of BL2, BL30, BL301, BL31 and BL33 come out.
+
+## Upstream
+
+Not submitted. `master` has moved past the pinned `d7a8d33e`; ❓ whether `0001` still applies there,
+or is still needed.

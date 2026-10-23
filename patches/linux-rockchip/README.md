@@ -48,3 +48,15 @@ cleanly and that these boxes would use. Each is validated on a box before it joi
 
 ❓ whether the RK3528's FEPHY is the v1 that `develop-6.1`'s `rockchip-fephy` fixes key on: the
 driver reads it from register `0xfc`.
+
+## Upstream
+
+Sent to `armbian/linux-rockchip`, all closed without merging:
+
+| Patch                                    | PR     |
+| ---------------------------------------- | ------ |
+| `input-remotectl-share-pwm-irq`          | `#523` |
+| `net-stmmac-skip-absent-mdio-reset-gpio` | `#524` |
+| `bluetooth-hci-h4-serdev`                | `#526` |
+
+`bluetooth-hci-h4-aic8800-bdaddr` and `mmc-dw-mmc-rockchip-per-host-inherit`: not submitted.

@@ -46,3 +46,8 @@ Zadig does — Rockchip's own DriverAssistant binds a driver libusb cannot open.
 round-tripped a packed RK322X loader, and `ftello` returned 7752122368 on a 7.22 GiB image, so the
 32-bit `long` Win64 uses does not truncate a `wl` of a full eMMC dump. 🟡 The USB transfer itself
 has not been run from a Windows host.
+
+## Upstream
+
+None submitted. Each is written to send: `master` is still the pinned `304f0737`, so all three apply
+to it as they are.
