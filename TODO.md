@@ -94,6 +94,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
       `esmart_lb_mode = [02]`, a 4K line buffer for Esmart0, where the factory's `[03]` corrupts the
       right third of a 4K frame; ✅ on the 3518D only. Check `3840x2160p60` full-screen with no
       fringe on the right, then that a 1080p display still comes up clean.
+- [ ] **The first release with `tvb-base`: run the release workflow with `unguarded`.** Every
+      published `tvb-<board>` still owns the files `tvb-base` now ships, and no box will upgrade
+      from them: all four run `tvb-base` already, and the 2026-10-22 image is a pre-release. The
+      switch covers the whole run: first run the guard, and expect it to name only `tvb-base`'s
+      files.
 - [ ] **R69 and H313: their IR tables onto the canonical keymap** in `docs/remote-keymap.md`. Each
       `ir_keyN` table in `board.patch` gives its own keys today (OK is `KEY_ENTER` on the R69,
       `KEY_REPLY` on the H313); then its pass over both transports, once a box has the remote.

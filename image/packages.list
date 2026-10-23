@@ -5,7 +5,7 @@ systemd-sysv udev kmod initramfs-tools zstd u-boot-menu e2fsprogs cloud-initramf
 network-manager wpasupplicant wireless-regdb iw iproute2 systemd-timesyncd
 # naming, access, apt
 avahi-daemon openssh-server sudo apt ca-certificates
-# swap in RAM; users and locales
-systemd-zram-generator adduser locales
+# users and locales
+adduser locales
 # the login banner's public address; debconf's prompts, which without it fall back noisily
 wget whiptail

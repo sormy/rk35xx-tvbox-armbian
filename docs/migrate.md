@@ -6,18 +6,15 @@ DKMS drivers. Those images and that tool are gone. Back up first; then move in p
 ## In place — Rockchip
 
 Keeps the system as it is. ✅ on three rk35xx boxes from local debs, 2026-10-20; 🟡 from the
-published repo, the same packages. Every command runs on the box.
+published repo, the same packages, and for `tvb-base`, which took over the files a tarball used to
+add. Every command runs on the box.
 
-**1. TVBian's packages and files**, then a reboot into its kernel:
+**1. TVBian's packages**, then a reboot into its kernel:
 
 ```sh
 wget https://github.com/sormy/tvbian/releases/download/apt/tvb-archive-keyring_1_all.deb
 sudo apt install ./tvb-archive-keyring_1_all.deb && sudo apt update
-sudo apt install u-boot-menu tvb-<board> systemd-zram-generator
-# the image's own /etc files, zram's among them; not its locale or its root-password login
-curl -fsSL https://github.com/sormy/tvbian/archive/refs/heads/main.tar.gz | sudo tar -xz -C / \
-  --strip-components=3 --exclude='*/etc/default/locale' --exclude='*/tvb-root-password.conf' \
-  tvbian-main/image/rootfs
+sudo apt install u-boot-menu tvb-<board>   # tvb-base, and zram with it, come along
 grep -m1 tvb /boot/extlinux/extlinux.conf && sudo reboot      # then: uname -r ends in -tvb-rk35xx
 ```
 

@@ -18,6 +18,7 @@ new() {
       kernel) find /out/debs -name "*_${version}_arm64.deb" ;;
       board) echo "/out/debs/tvb-${arg}_${version}_arm64.deb" ;;
       firmware) echo "/out/debs/tvb-firmware-$(sed -n 's/^FIRMWARE_CHIP=//p' "/repo/firmware/$arg/firmware.conf")_${version}_all.deb" ;;
+      base) echo "/out/debs/tvb-base_${version}_all.deb" ;;
       keyring) echo "/out/debs/tvb-archive-keyring_${version}_all.deb" ;;
     esac
   done <"$REL/plan"

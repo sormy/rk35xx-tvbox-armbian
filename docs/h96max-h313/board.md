@@ -101,9 +101,10 @@ The R69 measures within noise of every number above — same silicon, so neither
 
 ## Names on disk
 
-Every installed path is `tvb-`, the same as every other board, and ships in `tvb-h96max-h313`: the
-tree, loader and helpers under `/usr/lib/tvb/`, and systemd drop-ins under `/usr/lib/systemd/` named
-to sort last — `logind.conf.d/zz-tvb-powerkey.conf` and `system.conf.d/zz-tvb-watchdog.conf`.
+Every installed path is `tvb-`, the same as every other board: the tree, loader and helpers under
+`/usr/lib/tvb/` in `tvb-h96max-h313`, and systemd drop-ins under `/usr/lib/systemd/` named to sort
+last — `logind.conf.d/zz-tvb-powerkey.conf` in `tvb-h96max-h313`,
+`system.conf.d/zz-tvb-watchdog.conf` in `tvb-base`.
 
 ## LEDs
 
@@ -166,10 +167,9 @@ While BLE-connected the remote stops transmitting IR, so buttons never double-fi
 IR when unpaired, which is why the power button still wakes the box from "off". BLE keycodes differ
 from the IR ones (home is `KEY_HOMEPAGE`, not `KEY_HOME`), so a keybinding should handle both.
 
-The H96 Max 3518D ships a `hwdb` scancode remap for a remote reporting the same `2B54:1600`. ❓ **It
-is deliberately not installed here.** A shared USB id is not a shared button layout, and this
-remote's scancodes have never been captured — applying that map blind could mis-key every button.
-Capture them first; `docs/remote-keymap.md` has the procedure.
+🟡 **BLE keys:** `tvb-base` ships the `hwdb` remap for `2B54:1600`, ✅ on the 3518D, which the same
+remote drives over IR. Its scancodes have not been captured here; `docs/remote-keymap.md` has the
+pass.
 
 The **voice mic** is out of scope, not broken: the BLE link is up and the button reports
 `KEY_SEARCH`, but the audio rides the proprietary Android-TV voice GATT service (`0xfeb3`) rather

@@ -37,6 +37,8 @@ the tools they need: `./build.sh tool <name>` builds one from `tools/<name>/` na
 ./build.sh kernel kernel/meson64.conf   # host: the kernel, headers, its drivers, the metapackage
 ./build.sh board h96max-m20             # host: tvb-h96max-m20, after the U-Boot it ships
 ./build.sh kernel kernel/meson64-next.conf   # host: the same on the next series, opt-in
+./build.sh firmware swt6621s            # host: tvb-firmware-swt6621s, from firmware/swt6621s/
+./build.sh base                         # host: tvb-base, what every box gets
 ./build.sh keyring                      # host: tvb-archive-keyring
 ./build.sh debs                         # host: all of the above, every kernel and board
 ./build.sh image h96max-m20             # host: build/out/images/, from build/out/debs/
@@ -83,11 +85,11 @@ release names its commit. One key signs CI's releases and a Mac's alike.
 `.github/workflows/release.yml` splits the same steps into jobs, on `ubuntu-24.04-arm`: native
 arm64, GitHub's hosted runners, free for a public repo.
 
-| Job     | Count        | Does                                                        |
-| ------- | ------------ | ----------------------------------------------------------- |
-| plan    | 1            | each group's version, `new` or `published`, as an artifact  |
-| kernel  | one a kernel | that kernel's debs, unless already published; as artifacts  |
-| release | 1            | firmware, boards, keyring, the guard, images, repo, publish |
+| Job     | Count        | Does                                                              |
+| ------- | ------------ | ----------------------------------------------------------------- |
+| plan    | 1            | each group's version, `new` or `published`, as an artifact        |
+| kernel  | one a kernel | that kernel's debs, unless already published; as artifacts        |
+| release | 1            | firmware, boards, base, keyring, the guard, images, repo, publish |
 
 | Trigger                   | Builds                | Publishes |
 | ------------------------- | --------------------- | --------- |
@@ -97,7 +99,8 @@ arm64, GitHub's hosted runners, free for a public repo.
 | a pull request            | at the PR's pins      | no        |
 
 The last job starts only once every kernel job passed, so a failure publishes nothing; only it
-signs, from the `ARCHIVE_SIGNING_KEY` secret. A dispatch with `clean` builds without ccache.
+signs, from the `ARCHIVE_SIGNING_KEY` secret. A dispatch with `clean` builds without ccache; one
+with `unguarded` skips `release/guard.sh`, for a release no box upgrades into.
 
 - **Schedule:** off the hour, where GitHub delays or drops fewest runs. A public repo's schedule is
   disabled after 60 days without a push; a dispatch revives it, and covers a dropped week.
@@ -140,9 +143,9 @@ and could not fetch the fix. Rotation is in `keyring/README.md`.
 ## Image
 
 `mmdebstrap --variant=minbase` of the suite, plus one list, `image/packages.list`, shared by every
-board, and `image/rootfs/`'s files. A board adds packages only through `tvb-<board>`'s `Depends:`;
-nothing per image. Every package is Debian's except the `tvb-*` ones, so `apt upgrade` keeps the
-whole box current. No desktop, no recommends, no translations.
+board, `tvb-base`, and the two files of image state in `image/rootfs/`. A board adds packages only
+through `tvb-<board>`'s `Depends:`; nothing per image. Every package is Debian's except the `tvb-*`
+ones, so `apt upgrade` keeps the whole box current. No desktop, no recommends, no translations.
 
 Each build reads the suite's codename from Debian's `stable` alias, so a new Debian release
 publishes the week it lands. A box never moves on its own: its `sources.list` names the codename.
@@ -184,7 +187,7 @@ others are GXLX2's builds of names Debian builds for G12A and GXL: they install 
 | Writer      | Where                    | Mechanism                               |
 | ----------- | ------------------------ | --------------------------------------- |
 | swap        | zram, half of RAM        | `systemd-zram-generator`                |
-| the journal | RAM, batched to the eMMC | `tvb-journal-spill`, in `tvb-<board>`   |
+| the journal | RAM, batched to the eMMC | `tvb-journal-spill`, in `tvb-base`      |
 | `/tmp`      | tmpfs                    | trixie's default                        |
 | `/var/log`  | eMMC: `apt`, `dpkg` only | minbase ships no `rsyslog`              |
 | TRIM        | weekly                   | `fstrim.timer`, enabled by `util-linux` |
@@ -203,7 +206,7 @@ What `armbian-bsp` does, done by a Debian package where one exists and by ours o
 | rootfs fills the medium   | `armbian-resize-filesystem` | `x-systemd.growfs`                  |
 | swap in RAM               | `armbian-zram-config`       | `systemd-zram-generator`            |
 | logs in RAM               | `armbian-ramlog`            | `tvb-journal-spill`, journald flush |
-| login names the board     | `armbian-motd`              | `update-motd.d`, in `tvb-<board>`   |
+| login names the board     | `armbian-motd`              | `update-motd.d`, in `tvb-base`      |
 | Wi-Fi power-save off      | NM conf                     | the same, with a stable MAC         |
 | boot log stays on tty1    | `getty@tty1` drop-in        | the same drop-in                    |
 | lean image                | apt conf                    | the same lines                      |

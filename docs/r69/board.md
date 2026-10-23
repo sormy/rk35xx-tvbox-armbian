@@ -120,9 +120,10 @@ AVS2** are claimed by the capability word but stay 🟡 — no encoder exists to
 
 ## Names on disk
 
-Every installed path is `tvb-`, the same as every other board, and ships in `tvb-r69`: the tree,
-loader and helpers under `/usr/lib/tvb/`, and systemd drop-ins under `/usr/lib/systemd/` named to
-sort last — `logind.conf.d/zz-tvb-powerkey.conf` and `system.conf.d/zz-tvb-watchdog.conf`.
+Every installed path is `tvb-`, the same as every other board: the tree, loader and helpers under
+`/usr/lib/tvb/` in `tvb-r69`, and systemd drop-ins under `/usr/lib/systemd/` named to sort last —
+`logind.conf.d/zz-tvb-powerkey.conf` in `tvb-r69`, `system.conf.d/zz-tvb-watchdog.conf` in
+`tvb-base`.
 
 ## Front LED
 
@@ -191,10 +192,9 @@ line of sight; driving a running box does not.
 **BLE pairing ✅.** Hold **left + right** until the LED blinks. Bonds as **`Bluetooth remote`**,
 reports battery (97% here), creates `Bluetooth remote Consumer Control`, `Bluetooth remote Mouse`
 and a vendor node. BLE keycodes are **not** the IR ones above. Same BLE HID model as the H96 Max's
-remote (`usb:v2B54p1600`) despite the different IR usercodes, so 🟡 the H96 Max 3518D ships a `hwdb`
-scancode remap for that id. ❓ **It is deliberately not installed here** — a shared USB id is not a
-shared button layout, and this remote's scancodes have never been captured. Capture them before
-applying it; `docs/remote-keymap.md` has the procedure.
+remote (`usb:v2B54p1600`) despite the different IR usercodes. ❓ **BLE keys:** `tvb-base` ships the
+`hwdb` remap for that id, ✅ on the 3518D and the M20; this handset's IR usercodes differ from
+theirs, and its scancodes have not been captured here. `docs/remote-keymap.md` has the pass.
 
 ## Bluetooth
 

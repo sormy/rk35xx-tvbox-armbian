@@ -31,13 +31,7 @@ if [ -f "$BOARDS_DIR/$BOARD/preserve-sectors" ]; then
   cp "$BOARDS_DIR/$BOARD/preserve-sectors" "$LIB/preserve-sectors"
 fi
 
-while read -r mode src dest; do
-  case "$mode" in
-    '' | \#*) ;;
-    link) mkdir -p "$(dirname "$ROOT$dest")" && ln -s "$src" "$ROOT$dest" ;;
-    *) install -D -m "$mode" "$BOARDS_DIR/$src" "$ROOT$dest" ;;
-  esac
-done <"$BOARDS_DIR/$BOARD/package.list"
+bash /repo/package/install-list.sh "$BOARDS_DIR/$BOARD/package.list" "$BOARDS_DIR" "$ROOT"
 
 mkdir -p "$ROOT/usr/share/u-boot-menu/conf.d"
 # ro: systemd-fsck-root checks the rootfs; net.ifnames=0: eth0 and wlan0, as on Armbian
@@ -56,8 +50,6 @@ cat >"$ROOT/DEBIAN/postinst" <<'SCRIPT'
 set -e
 # extlinux.conf names the tree, which the kernel's own hook cannot see before this package exists
 [ "$1" != configure ] || [ ! -x /usr/sbin/u-boot-update ] || u-boot-update
-# the units this package enables by its .wants links: a running box sees them now
-[ ! -d /run/systemd/system ] || systemctl daemon-reload
 SCRIPT
 chmod 0755 "$ROOT/DEBIAN/postinst"
 
@@ -66,7 +58,7 @@ Package: tvb-$BOARD
 Version: $VERSION
 Architecture: arm64
 Maintainer: TVBian <archive@tvbian.com>
-Depends: linux-image-tvb-$BOARD_KERNEL, u-boot-menu${BOARD_DEPENDS:+, ${BOARD_DEPENDS// /, }}
+Depends: tvb-base, linux-image-tvb-$BOARD_KERNEL, u-boot-menu${BOARD_DEPENDS:+, ${BOARD_DEPENDS// /, }}
 Provides: tvb-board
 Conflicts: tvb-board
 Section: admin

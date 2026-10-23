@@ -58,5 +58,6 @@ for c in firmware/*/firmware.conf; do
   d=$(basename "$(dirname "$c")")
   plan firmware "$d" "tvb-firmware-$(sed -n 's/^FIRMWARE_CHIP=//p' "$c")" "$(bash release/inputs.sh firmware "$d")"
 done
+plan base - tvb-base "$(bash release/inputs.sh base)"
 plan keyring - tvb-archive-keyring "$(bash release/inputs.sh keyring)"
 cat "$REL/plan"

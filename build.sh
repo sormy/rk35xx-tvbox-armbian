@@ -4,6 +4,7 @@
 #          ./build.sh uboot <board>           the U-Boot a board package ships
 #          ./build.sh board <board>           tvb-<board>, after its U-Boot
 #          ./build.sh firmware <dir>          tvb-firmware-<chip>, from firmware/<dir>/
+#          ./build.sh base                    tvb-base, what every box gets, from base/
 #          ./build.sh keyring                 tvb-archive-keyring
 #          ./build.sh debs                    all of the above
 #          ./build.sh image <board>           its image, from build/out/debs/
@@ -26,6 +27,7 @@
 #          ./build.sh boards                  all three plurals, then whether boards/ drifted from git
 #   env:   TVB_BUILD_CPUS (all cores), TVB_BUILD_MEMORY (8g), TVB_BUILD_SUITE (Debian stable),
 #          TVB_BUILD_REVISION (0~local), TVB_BUILD_CACHE (1; 0: clean), TVB_BUILD_CCACHE_SIZE (5G),
+#          TVB_RELEASE_GUARD (1; 0: skip the guard on paths changing package),
 #          TVB_BUILD_CCACHE_DIR (in the work volume; a host directory for CI's cache to keep,
 #          slow on macOS, where a bind mount is a file share)
 set -euo pipefail
@@ -84,7 +86,7 @@ boards_files() {
 
 usage() { awk 'NR > 2 { if (!/^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 1; }
 case "${1:-}" in
-  kernel | uboot | board | firmware | keyring | debs | image | images | plan | repo | assemble | release) ;;
+  kernel | uboot | board | firmware | base | keyring | debs | image | images | plan | repo | assemble | release) ;;
   serve) cd "$OUT" && exec python3 -m http.server 8000 ;;
   publish) exec bash release/publish.sh ;;
   tool)
@@ -166,11 +168,13 @@ case "$1" in
   uboot) run bash uboot/build.sh "${2:?usage: ./build.sh uboot <board>}" ;;
   board) board "${2:?usage: ./build.sh board <board>}" ;;
   firmware) run bash package/firmware.sh "${2:?usage: ./build.sh firmware <dir>}" ;;
+  base) run bash package/base.sh ;;
   keyring) run bash package/keyring.sh ;;
   debs)
     for k in kernel/*.conf; do run bash kernel/build.sh "$k"; done
     for f in $(firmwares); do run bash package/firmware.sh "$f"; done
     for b in $(boards); do board "$b"; done
+    run bash package/base.sh
     run bash package/keyring.sh ;;
   image) run bash image/build.sh "${2:?usage: ./build.sh image <board>}" ;;
   images) for b in $(boards); do run bash image/build.sh "$b"; done ;;
@@ -193,10 +197,15 @@ case "$1" in
             TVB_BUILD_REVISION=${version##*-} run bash kernel/build.sh "$arg" ;;
           board) TVB_BUILD_REVISION=$version board "$arg" ;;
           firmware) TVB_BUILD_REVISION=$version run bash package/firmware.sh "$arg" ;;
+          base) TVB_BUILD_REVISION=$version run bash package/base.sh ;;
           keyring) TVB_BUILD_REVISION=$version run bash package/keyring.sh ;;
         esac
       done <"$OUT/release/plan"
-      run bash release/guard.sh
+      if [ "${TVB_RELEASE_GUARD:-1}" = 0 ]; then
+        echo "⚠ release guard skipped: TVB_RELEASE_GUARD=0" >&2
+      else
+        run bash release/guard.sh
+      fi
       for b in $(boards); do run bash image/build.sh "$b"; done
       run bash release/notes.sh
     fi

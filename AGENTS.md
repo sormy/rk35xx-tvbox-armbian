@@ -12,7 +12,8 @@ code** — one `boards/<board>/` directory. If a change needs new code per board
 | Tree               | Holds                                                                                          |
 | ------------------ | ---------------------------------------------------------------------------------------------- |
 | `boards/<board>/`  | `board.conf`, the factory trees, the patches on them and their output, loaders, `package.list` |
-| `boards/common/`   | everything shared between boards                                                               |
+| `boards/common/`   | mechanism some boards share, each picking it in its `package.list`                             |
+| `base/`            | `tvb-base`: what every box gets, and its `package.list`                                        |
 | `firmware/<chip>/` | a chip's firmware, packaged as `tvb-firmware-<chip>`                                           |
 | `docs/<board>/`    | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                            |
 | `stock/<board>/`   | factory evidence: dumps, logs, partition maps                                                  |
@@ -24,16 +25,16 @@ code** — one `boards/<board>/` directory. If a change needs new code per board
 | `build-env/`       | the build environment: one container image every `./build.sh` step runs in                     |
 | `modules/`         | each out-of-tree driver: its pin, our patches, the step packaging it per kernel                |
 | `uboot/`           | each U-Boot a board package ships: its pin and defconfig, and the step building it             |
-| `package/`         | the steps building `tvb-<board>` and `tvb-archive-keyring`                                     |
-| `image/`           | the image step, its package list, and the files every image's rootfs gets                      |
+| `package/`         | the steps building `tvb-<board>`, `tvb-firmware-<chip>`, `tvb-base` and `tvb-archive-keyring`  |
+| `image/`           | the image step, its package list, and the image's own state: locale, root's first SSH login    |
 | `release/`         | the release plan, the signed `apt` repo, and the upload to GitHub                              |
 
 **Repo files carry no prefix**: each board's `package.list` names where a file installs. A board
 directory holds `board.conf`, the tree, the factory idbloader and the maskrom loader,
 `package.list`, `preserve-sectors` where it has a `tvb-install`, and firmware only where it is shown
-to be this board's. **Shared mechanism lives in `boards/common/`** — a board never keeps its own
-copy of a family script. What it may keep is mechanism no other board can use: a unit for hardware
-only it has.
+to be this board's. **What every box gets lives in `base/`, mechanism some boards share in
+`boards/common/`** — a board never keeps its own copy of a family script. What it may keep is
+mechanism no other board can use: a unit for hardware only it has.
 
 **Tools we build, and must:** `dtc` (`./build.sh tool dtc` — vanilla cannot round-trip a vendor blob
 with `&label`s) · `rkdeveloptool` (`./build.sh tool rkdeveloptool`) and each board's maskrom loader

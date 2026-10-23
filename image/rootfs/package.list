@@ -1,0 +1,5 @@
+# the image's own state, never packaged (mode src dest, src under image/rootfs/): a locale the
+# first login may change, at /etc/locale.conf since Debian's /etc/default/locale links to it; and
+# root's SSH login for the expired password the image ships
+0644 locale.conf             /etc/locale.conf
+0644 sshd-root-password.conf /etc/ssh/sshd_config.d/tvb-root-password.conf

@@ -9,6 +9,10 @@ on:
         description: "No ccache: a clean-room build"
         type: boolean
         default: false
+      unguarded:
+        description: "Skip the guard on paths changing package: a box upgrading from the published debs would fail"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -23,6 +27,7 @@ on:
       - release/**
       - keyring/**
       - boards/**
+      - base/**
       - firmware/**
       - .github/workflows/release.yml
   pull_request:
@@ -38,6 +43,7 @@ on:
       - release/**
       - keyring/**
       - boards/**
+      - base/**
       - firmware/**
       - .github/workflows/release.yml
 
@@ -51,6 +57,7 @@ concurrency:
 
 env:
   TVB_BUILD_CACHE: ${{ inputs.clean && '0' || '1' }}
+  TVB_RELEASE_GUARD: ${{ inputs.unguarded && '0' || '1' }}
   # only these two events publish, so only they sign
   PUBLISH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
 

@@ -1,5 +1,6 @@
-# tvb-h96max-m20's files (mode src dest, src under firmware/). package/board.sh adds the tree,
-# the loader and the u-boot-menu drop-in. Firmware goes under updates/, ahead of Debian's own.
+# tvb-h96max-m20's files (mode src dest, src under boards/). package/board.sh adds the tree,
+# the loader and the u-boot-menu drop-in; tvb-base holds what every board shares. Firmware goes
+# under updates/, ahead of Debian's own.
 
 # the decoder's GXLX2 builds from tvb-firmware-amlogic, ahead of Debian's of the same names
 link /usr/lib/firmware/updates/meson/gxlx2/g12a_hevc_mmu.bin /usr/lib/tvb/firmware/meson/vdec/g12a_hevc_mmu.bin
@@ -8,22 +9,3 @@ link /usr/lib/firmware/updates/meson/gxlx2/gxl_mjpeg.bin     /usr/lib/tvb/firmwa
 
 # keys neither suspend nor power off a box nothing can wake
 0644 h96max-m20/powerkey.conf    /usr/lib/systemd/logind.conf.d/zz-tvb-powerkey.conf
-
-# stable names for the inputs, and the bundled BLE remote's keymap
-0644 common/input-names.rules    /usr/lib/udev/rules.d/60-tvb-input-names.rules
-0644 common/bt-remote.hwdb       /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb
-
-# hardware watchdog: systemd pings it, the SoC resets the box if it stops
-0644 common/watchdog.conf        /usr/lib/systemd/system.conf.d/zz-tvb-watchdog.conf
-0644 common/console-loglevel.conf /usr/lib/sysctl.d/50-tvb-console-loglevel.conf
-# the journal in RAM, batched to the eMMC: full, daily, at shutdown
-0644 common/journal.conf          /usr/lib/systemd/journald.conf.d/50-tvb-journal.conf
-0755 common/journal-spill         /usr/lib/tvb/journal-spill
-0644 common/tvb-journal-ram.service /usr/lib/systemd/system/tvb-journal-ram.service
-0644 common/tvb-journal-spill.service /usr/lib/systemd/system/tvb-journal-spill.service
-0644 common/tvb-journal-spill.timer /usr/lib/systemd/system/tvb-journal-spill.timer
-link ../tvb-journal-ram.service   /usr/lib/systemd/system/multi-user.target.wants/tvb-journal-ram.service
-link ../tvb-journal-spill.timer   /usr/lib/systemd/system/timers.target.wants/tvb-journal-spill.timer
-
-# the login banner
-0755 common/motd                 /etc/update-motd.d/10-tvbian

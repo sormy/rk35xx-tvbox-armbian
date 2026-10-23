@@ -1,6 +1,6 @@
 #!/bin/bash
 # Print the X-Tvb-Inputs hash of one package group: what the plan compares with the published deb.
-#   inputs.sh kernel <kernel/*.conf> <ref> | board <board> | firmware <dir> | keyring
+#   inputs.sh kernel <kernel/*.conf> <ref> | board <board> | firmware <dir> | base | keyring
 # Beside the files, the versions of the tools that shape the group's bytes: none for copied files,
 # so a build image changed for another step rebuilds nothing it does not touch.
 set -euo pipefail
@@ -25,7 +25,7 @@ files() {
     board)
       # shellcheck source=/dev/null
       . "boards/$2/board.conf"
-      echo "boards/$2/board.dtb" package/board.sh
+      echo "boards/$2/board.dtb" "boards/$2/package.list" package/board.sh package/install-list.sh
       [ ! -f "boards/$2/preserve-sectors" ] || echo "boards/$2/preserve-sectors" boards/common/tvb-install
       sed -E 's/#.*//' "boards/$2/package.list" | awk 'NF && $1 != "link" {print "boards/" $2}'
       if [ -n "${BOARD_UBOOT:-}" ]; then
@@ -36,8 +36,11 @@ files() {
       fi
       [ ! -f "boards/$2/factory_idbloader.bin" ] || echo "boards/$2/factory_idbloader.bin" ;;
     firmware)
-      echo "firmware/$2/firmware.conf" "firmware/$2/package.list" package/firmware.sh
+      echo "firmware/$2/firmware.conf" "firmware/$2/package.list" package/firmware.sh package/install-list.sh
       sed -E 's/#.*//' "firmware/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}' ;;
+    base)
+      echo base/package.list package/base.sh package/install-list.sh
+      sed -E 's/#.*//' base/package.list | awk 'NF && $1 != "link" {print "base/" $2}' ;;
     keyring) echo keyring/tvb-archive-keyring.gpg package/keyring.sh ;;
   esac
 }

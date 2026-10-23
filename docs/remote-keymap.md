@@ -108,7 +108,7 @@ The handset's HID descriptor is not ours, so the remap goes in `udev`'s keyboard
 the **model**, which is what the modalias carries:
 
 ```
-# boards/common/bt-remote.hwdb — the whole shipped file
+# base/bt-remote.hwdb — the whole shipped file
 evdev:input:b0005v2B54p1600*
  KEYBOARD_KEY_700aa=reserved
  KEYBOARD_KEY_c0011=menu
@@ -155,11 +155,10 @@ Only its companion usage is deleted, so one press yields one event.
 These are **model** fields — the Bluetooth address appears nowhere in a modalias, so one entry
 covers every unit of that model, and a board without that handset never matches.
 
-That makes it tempting to ship family-wide. Don't. The entry matches on the model id but **remaps by
-scancode**, and a shared id is not a shared button layout — OEMs reuse ids. List the file only in
-the `package.list` of a board whose handset you actually captured, and add a board only after
-capturing its remote too. `0x2B54` is not even in the USB vendor table, so an unrelated remote could
-in principle carry it.
+`tvb-base` ships it to every box. The entry matches on the model id but **remaps by scancode**, and
+a shared id is not a shared button layout — OEMs reuse ids, and `0x2B54` is not even in the USB
+vendor table. So a board's BLE keys are ✅ only once its handset's scancodes are captured against
+it.
 
 `=reserved` deletes an event rather than renaming it — the fix for a button that sends a second,
 useless usage alongside a good one.
@@ -172,13 +171,13 @@ sudo find /var/lib/bluetooth -name info | while read f; do sudo grep -E '^(Name|
 
 ### Installing it
 
-**udev reads only the compiled `hwdb.bin`, never `hwdb.d/`.** `tvb-<board>` installs the file into
+**udev reads only the compiled `hwdb.bin`, never `hwdb.d/`.** `tvb-base` installs the file into
 `/usr/lib/udev/hwdb.d/`, and udev's dpkg trigger rebuilds `/usr/lib/udev/hwdb.bin` with
 `systemd-hwdb --usr update`. A plain `systemd-hwdb update` writes `/etc/udev/hwdb.bin` instead,
 which masks the `/usr/lib` one from then on — always pass `--usr`. By hand, from the host:
 
 ```sh
-ssh box 'sudo tee /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb >/dev/null' < boards/common/bt-remote.hwdb
+ssh box 'sudo tee /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb >/dev/null' < base/bt-remote.hwdb
 ssh box 'md5sum /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb'   # compare with the local file
 ssh box 'sudo systemd-hwdb --usr update --strict'
 ```
@@ -241,4 +240,4 @@ the same button disagrees, known here:
   The app keys are YouTube `KEY_RED`, Netflix `KEY_YELLOW`, Prime Video `KEY_BLUE`, Google Play
   `KEY_GREEN`.
 - **BLE:** every board's remote reports `2B54:1600`, but the map is ✅ only where its scancodes were
-  captured; ❓ on the R69 and H313 until someone captures theirs.
+  captured: 🟡 on the H313, whose remote also drives the 3518D; ❓ on the R69, whose is not.
