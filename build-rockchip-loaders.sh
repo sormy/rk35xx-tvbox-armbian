@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Pack each Rockchip board's maskrom USB loader into firmware/<board>/maskrom_loader.bin: Rockchip's
+# Pack each Rockchip board's maskrom USB loader into boards/<board>/maskrom_loader.bin: Rockchip's
 # usbplug with that board's own DDR init, carved from its factory idbloader.
 #
-# Stamped with the idbloader's commit time, so a repack of the same inputs is byte-identical.
+# Stamped with the time of the commit that last changed the idbloader, so a repack is byte-identical.
 #
 # Usage: ./build-rockchip-loaders.sh [board...]   # default: every board with a factory_idbloader.bin
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-FW="$REPO/firmware"
+FW="$REPO/boards"
 RKDEV="$REPO/build/bin/rkdeveloptool"
 RKBIN="$REPO/build/rkbin"
 
@@ -18,9 +18,9 @@ RKBIN_SHA="ecb4fcbe954edf38b3ae037d5de6d9f5bccf81f4"
 RKBOOT_INI="RKBOOT/RK3528MINIALL.ini"             # declares NEWIDB + RC4_OFF; also names the usbplug and SPL
 USBPLUG="bin/rk35/rk3528_usbplug_v1.04.bin"       # presence of this marks rkbin as fetched
 
-boards() { for f in "$FW"/*/factory_idbloader.bin; do [ -f "$f" ] && basename "$(dirname "$f")"; done; return 0; }
+boards() { for c in "$FW"/*/board.conf; do d=$(dirname "$c"); [ ! -f "$d/factory_idbloader.bin" ] || basename "$d"; done; }
 BOARDS="${*:-$(boards)}"
-[ -n "$BOARDS" ] || { echo "no firmware/*/factory_idbloader.bin to build a loader from"; exit 1; }
+[ -n "$BOARDS" ] || { echo "no boards/*/factory_idbloader.bin to build a loader from"; exit 1; }
 [ -x "$RKDEV" ] || { echo "Need the patched rkdeveloptool. Run: ./build.sh tool rkdeveloptool"; exit 1; }
 
 if [ ! -e "$RKBIN/$USBPLUG" ]; then
@@ -46,7 +46,8 @@ for BOARD in $BOARDS; do
 	LOADER="loader-$BOARD.bin"
 	sed -e "s|bin/rk35/rk3528_ddr_[^ ]*\.bin|$DDR|g" -e "s|^PATH=.*|PATH=$LOADER|" \
 		"$RKBIN/$RKBOOT_INI" > "$RKBIN/config.ini"
-	epoch=$(git -C "$REPO" log -1 --format=%ct -- "$IDB")
+	# the last commit that changed its content: a move alone must not restamp the loader
+	epoch=$(git -C "$REPO" log -1 --follow --diff-filter=AM --format=%ct -- "$IDB")
 	pack_rc=0
 	( cd "$RKBIN" && SOURCE_DATE_EPOCH="${epoch:-$(date +%s)}" "$RKDEV" pack > /dev/null ) || pack_rc=1
 	[ "$pack_rc" = 0 ] && mv -f "$RKBIN/$LOADER" "$OUT" || true
@@ -57,5 +58,5 @@ for BOARD in $BOARDS; do
 	# fine and is then ignored in silence
 	[ "$(head -c 4 "$OUT")" = "LDR " ] && head -c 64 "$OUT" | strings | grep -q 8253 ||
 		{ echo "$BOARD: not an RK3528 new-IDB loader"; exit 1; }
-	echo "-> firmware/$BOARD/maskrom_loader.bin ($((CNT * 512)) B of DDR init)"
+	echo "-> boards/$BOARD/maskrom_loader.bin ($((CNT * 512)) B of DDR init)"
 done

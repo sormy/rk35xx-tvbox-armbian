@@ -10,8 +10,8 @@ the pinned source by `modules/swt6621s.conf`.
 - `0005` — the factory chip images advertise the HCI codec reads and then assert on them
   (`BSPASSERT:hci_tl.c-386`), ending controller init. The driver answers `0x100b`, `0x100d` and
   `0x100e` locally with Unknown HCI Command so they never reach the chip. Off by default; both
-  boards enable it with `skwbt.skip_codec_reads=1` from `firmware/common/skwbt-options.conf`, since
-  both run the factory chip code. Not submitted upstream.
+  boards enable it with `skwbt.skip_codec_reads=1` from `firmware/swt6621s/skwbt-options.conf`,
+  since both run the factory chip code. Not submitted upstream.
 - `0006` — the Bluetooth driver fails to build on 6.11 and later: `platform_driver.remove` returns
   void, and `class_create()` takes no module. Not submitted upstream.
 - `0007` — nothing can load the drivers on demand: the SDIO id table is never exported, and the

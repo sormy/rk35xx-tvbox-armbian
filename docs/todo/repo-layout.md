@@ -26,14 +26,11 @@ Locale and the first root-password login are image state, not packaged.
 
 In order, one commit each:
 
-| From                                        | To                                              |
-| ------------------------------------------- | ----------------------------------------------- |
-| `image/rootfs/` and the all-board files     | `base/`, packaged as `tvb-base`                 |
-| `firmware/<board>/`                         | `boards/<board>/`                               |
-| the family-shared files                     | `boards/common/<family>/`                       |
-| `firmware/common/<chip>/`                   | `firmware/<chip>/`; `seekwave-fw` as `swt6621s` |
-| `package.list`                              | `rootfs/` in each folder                        |
-| `build-*.sh` but `build.sh`, and `scripts/` | `tools/board/`; `aml-*.py` to `image/`          |
+| From                                        | To                                                    |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `build-*.sh` but `build.sh`, and `scripts/` | `tools/board/`; `aml-*.py` to `image/`                |
+| `package.list`                              | `rootfs/` in each folder, family files by family      |
+| `image/rootfs/` and the all-board files     | `base/`, packaged as `tvb-base`; it changes the boxes |
 
 Each step proven the same way: every package rebuilt identical, an image built. `stock/`,
 `research/`, `docs/` and `keyring/` stay where they are.

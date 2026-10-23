@@ -3,10 +3,10 @@
 #   build.sh <board>   -> /out/images/tvbian-<date>-<board>-<suite>.img.xz
 set -euo pipefail
 BOARD=$1
-FW=/repo/firmware
+FW=/repo/boards
 # shellcheck source=/dev/null
 . "$FW/$BOARD/board.conf"
-: "${BOARD_FAMILY:?firmware/$BOARD/board.conf names no BOARD_FAMILY}"
+: "${BOARD_FAMILY:?boards/$BOARD/board.conf names no BOARD_FAMILY}"
 # the disk layouts written so far, below; a board of another family waits for its own
 case "$BOARD_FAMILY" in meson-gxl | rk35xx) ;; *) echo "– $BOARD: no image layout for $BOARD_FAMILY yet"; exit 0 ;; esac
 SUITE=${TVB_BUILD_SUITE:?}

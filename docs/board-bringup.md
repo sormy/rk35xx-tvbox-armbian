@@ -45,7 +45,7 @@ The box's own firmware is the specification. Capture it before changing anything
 3. **Full eMMC image → `backup/<board>-stock.img.xz`**; verify byte count =
    `/sys/block/<dev>/size × 512`, then `xz -T0`. ~25 min at 100 Mb/s — start on the device tree
    while it runs.
-4. Carve `factory_idbloader.bin` (sector 64, 4096 sectors) → `firmware/<board>/`.
+4. Carve `factory_idbloader.bin` (sector 64, 4096 sectors) → `boards/<board>/`.
 5. Carve `board.dtb` out of the eMMC image — see below.
 
 **Gate, no exceptions:** the eMMC dump exists off-box and its size is verified. It is the only route
@@ -114,9 +114,10 @@ state with the SoC's GPIO function, or the EDID reads empty and the panel drops 
 Rockchip's SoC dtsi disables everything and the board file enables what's wired. Only in-SoC blocks
 needing no board routing are candidates.
 
-- **The grafts live in `firmware/<board>/board.patch`**; `./build-board-dts.sh` produces
-  `firmware/<board>/board.dts` + `.dtb` from it. Edit the patch, never `firmware/` — except where a
-  board diverges on purpose, which belongs in its `dtb.md` with the condition that ends it.
+- **The grafts live in `boards/<board>/board.patch`**; `./build-board-dts.sh` produces
+  `boards/<board>/board.dts` + `.dtb` from it. Edit the patch, never the generated `board.dts` —
+  except where a board diverges on purpose, which belongs in its `dtb.md` with the condition that
+  ends it.
 - **To move a board onto a kernel's own reference design**, run
   `scripts/rebase-board-dts.py <board>` on the host, adding `--rev <commit>` to choose the kernel.
   It rewrites `board.dtb` as overrides on that dtsi in `build/rebase/<board>/native.dts`, and fails
@@ -131,7 +132,7 @@ needing no board routing are candidates.
 
 ## Board data
 
-Copy the closest `firmware/<board>/` and edit: `board.conf` (`BOARD_ID`, the directory's name;
+Copy the closest `boards/<board>/` and edit: `board.conf` (`BOARD_ID`, the directory's name;
 `BOARD_NAME`, the product; `BOARD_PCB`, the PCB silkscreen, since these boxes vary between
 production runs; `BOARD_FAMILY`; `BOARD_HOSTNAME`, `BOARD_KERNEL`, `BOARD_DEPENDS`), `package.list`,
 plus the DTB and idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add the
@@ -140,7 +141,7 @@ board to the README's Boxes table and support matrix.
 - **`package.list` is `tvb-<board>`'s file list**: mode, repo file, install path, at Debian's paths
   (`/usr/lib/...`, never `/usr/local`); a `link <target> <dest>` line makes a symlink.
 - **Firmware is the vendor's, from the board's stock image:** built for that chip, it is the build
-  known to work with it. It ships in `tvb-firmware-<chip>`, from `firmware/common/<chip>/` with a
+  known to work with it. It ships in `tvb-firmware-<chip>`, from `firmware/<chip>/` with a
   `firmware.conf` and a `package.list`, which the board depends on from its first board on. A file
   keeps its name from the stock image, or from its source; `package.list` maps it to the name the
   driver asks for. Variants that share one stock name are named for what sets them apart.
@@ -172,9 +173,9 @@ board to the README's Boxes table and support matrix.
 
 Cheaper here than on the box. Attach the built image and check:
 
-- **Loaders byte-identical** to `firmware/<board>/factory_idbloader.bin` (sector 64) and
+- **Loaders byte-identical** to `boards/<board>/factory_idbloader.bin` (sector 64) and
   `/usr/lib/tvb/u-boot.bin` (16384) — `dd` + `md5`.
-- **DTB** matches `firmware/<board>/board.dtb` at `/usr/lib/tvb/board.dtb`.
+- **DTB** matches `boards/<board>/board.dtb` at `/usr/lib/tvb/board.dtb`.
 - **`/usr/lib/tvb/`** populated: `board-id`, `board-name`, `board-pcb`, `board.dtb`, the loaders.
 - **Filesystem clean** — the build's `fsck.ext4 -fn` gate must have passed.
 

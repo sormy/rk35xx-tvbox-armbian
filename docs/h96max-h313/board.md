@@ -122,7 +122,7 @@ Early boot briefly shows both LEDs dimly lit, until the kernel driver takes the 
 
 **Over IR, with no pairing at all** — every button works out of the box. The receiver is input
 device `ffa90030.pwm` at the stable path `/dev/input/ir-remote`; scancodes come from
-`rockchip,usercode = <0xfb04>` in `firmware/h96max-h313/board.dts`:
+`rockchip,usercode = <0xfb04>` in `boards/h96max-h313/board.dts`:
 
 | Button            | Key event                                        |
 | ----------------- | ------------------------------------------------ |

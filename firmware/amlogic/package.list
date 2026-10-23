@@ -1,0 +1,18 @@
+# tvb-firmware-amlogic's files (mode src dest, src under firmware/): the codec microcode, and per
+# SoC the builds of files Debian has, which a board links. gxlx2/: the factory
+# video_ucode.bin's G12A-class HEVC and VP9 and its MJPEG, unlike Debian's of those names; the multi
+# MPEG-1/2 and VC-1 from it too; the encoders' from the factory h264_enc.bin, and Chips&Media's
+# WAVE420L monet.bin. MPEG-4 is the factory's gxl_xvid, byte for byte linux-firmware's. H.264 is
+# the factory's, repacked into the layout mainline's driver loads: 4 KiB pages 0-3, then 4 2 6 3 5.
+0644 amlogic/vdec/gxl_h264.bin          /usr/lib/firmware/updates/meson/vdec/gxl_h264.bin
+0644 amlogic/vdec/gxl_xvid.bin       /usr/lib/firmware/updates/meson/vdec/gxl_mpeg4_5.bin
+0644 amlogic/vdec/LICENSE.amlogic_vdec   /usr/lib/firmware/updates/meson/vdec/LICENSE.amlogic_vdec
+0644 amlogic/vdec/gxl_mpeg12_multi.bin  /usr/lib/firmware/updates/meson/vdec/gxl_mpeg12_multi.bin
+0644 amlogic/vdec/gxl_vc1.bin           /usr/lib/firmware/updates/meson/vdec/gxl_vc1.bin
+0644 amlogic/venc/gxl_h264_enc.bin      /usr/lib/firmware/updates/meson/venc/gxl_h264_enc.bin
+0644 amlogic/venc/g12a_h264_enc_cabac.bin /usr/lib/firmware/updates/meson/venc/ga_h264_enc_cabac.bin
+0644 amlogic/venc/monet.bin             /usr/lib/firmware/updates/meson/venc/monet.bin
+0644 amlogic/venc/LICENSE.monet.txt     /usr/lib/firmware/updates/meson/venc/LICENSE.monet.txt
+0644 amlogic/gxlx2/g12a_hevc_mmu.bin    /usr/lib/firmware/updates/meson/gxlx2/g12a_hevc_mmu.bin
+0644 amlogic/gxlx2/g12a_vp9.bin         /usr/lib/firmware/updates/meson/gxlx2/g12a_vp9.bin
+0644 amlogic/gxlx2/gxl_mjpeg.bin        /usr/lib/firmware/updates/meson/gxlx2/gxl_mjpeg.bin

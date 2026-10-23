@@ -41,8 +41,8 @@ box before its pin moves.
 
 ## Firmware
 
-Copied into `firmware/common/<chip>/`, each with a README naming origin and version: the vendor's
-stock build by default, a newer one from any source where it is shown to work. It moves by hand. The
+Copied into `firmware/<chip>/`, each with a README naming origin and version: the vendor's stock
+build by default, a newer one from any source where it is shown to work. It moves by hand. The
 AIC8800 set comes from Radxa's tree at the driver's commit and moves with the driver.
 
 ## Userspace and the build

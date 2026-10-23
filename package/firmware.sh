@@ -1,9 +1,9 @@
 #!/bin/bash
 # Build tvb-firmware-<chip>, inside the build container: one chip's blobs, shared by its boards.
-#   firmware.sh <dir>   firmware/common/<dir>/ holds firmware.conf and package.list
+#   firmware.sh <dir>   firmware/<dir>/ holds firmware.conf and package.list
 set -euo pipefail
 FW=/repo/firmware
-DIR=$FW/common/$1
+DIR=$FW/$1
 # shellcheck source=/dev/null  # FIRMWARE_CHIP, FIRMWARE_NAME
 . "$DIR/firmware.conf"
 VERSION=${TVB_BUILD_REVISION:-0~local}

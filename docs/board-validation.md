@@ -56,7 +56,7 @@ Risk order: SDIO Wi-Fi, the Ethernet PHY, the video codec, anything the DTB touc
       with no SD slot** — it is the only way back
 - [ ] `db` loads the board's own loader, and `rfi` reports the true sector count
 - [ ] `rl` verified against a known range — a read of sector 64 must match
-      `firmware/<board>/factory_idbloader.bin` byte for byte
+      `boards/<board>/factory_idbloader.bin` byte for byte
 - [ ] `wl` verified **non-destructively**: write a pattern to empty space outside the partitions,
       read it back, restore the original, confirm the region is as it was
 - [ ] **A full-disk read in one pass**, or the chunk count and stall point it needed. A board whose

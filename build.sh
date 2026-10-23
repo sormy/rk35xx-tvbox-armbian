@@ -3,7 +3,7 @@
 #   usage: ./build.sh kernel <kernel/*.conf>  its debs and metapackage
 #          ./build.sh uboot <board>           the U-Boot a board package ships
 #          ./build.sh board <board>           tvb-<board>, after its U-Boot
-#          ./build.sh firmware <dir>          tvb-firmware-<chip>, from firmware/common/<dir>/
+#          ./build.sh firmware <dir>          tvb-firmware-<chip>, from firmware/<dir>/
 #          ./build.sh keyring                 tvb-archive-keyring
 #          ./build.sh debs                    all of the above
 #          ./build.sh image <board>           its image, from build/out/debs/
@@ -125,16 +125,16 @@ run() {  # run a command inside the image, the repo read-only at /repo
 # a board builds once kernel/ has its family's kernel
 boards() {
   local c
-  for c in firmware/*/board.conf; do
+  for c in boards/*/board.conf; do
     k=$(sed -n 's/^BOARD_KERNEL=//p' "$c")
     [ -n "$k" ] && [ -f "kernel/$k.conf" ] && basename "$(dirname "$c")"
   done
   return 0
 }
-firmwares() { for c in firmware/common/*/firmware.conf; do [ -f "$c" ] && basename "$(dirname "$c")"; done; return 0; }
+firmwares() { for c in firmware/*/firmware.conf; do [ -f "$c" ] && basename "$(dirname "$c")"; done; return 0; }
 
 board() {
-  ! grep -q '^BOARD_UBOOT=' "firmware/$1/board.conf" || [ -f "$OUT/uboot/$1/u-boot.bin" ] ||
+  ! grep -q '^BOARD_UBOOT=' "boards/$1/board.conf" || [ -f "$OUT/uboot/$1/u-boot.bin" ] ||
     run bash uboot/build.sh "$1"
   run bash package/board.sh "$1"
 }

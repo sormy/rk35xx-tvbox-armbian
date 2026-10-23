@@ -136,7 +136,7 @@ female adapter][ca] (~$8 for 4) on whichever end is USB-C.
 ./build.sh tool rkdeveloptool                                # once -> build/bin/rkdeveloptool
 
 build/bin/rkdeveloptool ld                                   # must say Maskrom
-build/bin/rkdeveloptool db firmware/<board>/maskrom_loader.bin
+build/bin/rkdeveloptool db boards/<board>/maskrom_loader.bin
 
 build/bin/rkdeveloptool rfi                                  # total sectors
 build/bin/rkdeveloptool rl 0 <sectors> emmc-stock.img        # back up first

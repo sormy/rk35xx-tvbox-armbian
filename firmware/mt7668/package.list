@@ -2,8 +2,8 @@
 # symlink): the MT7668's, from a factory image. The EEPROM is MediaTek's reference blob, the same on
 # every board known here. Bluetooth takes the stock ROM patch, as the vendor driver does, under the
 # name btmtksdio asks for: firmware-mediatek's is an older build, in a 46 MB package.
-0644 common/mt7668/mt7668_patch_e2_hdr.bin        /usr/lib/firmware/updates/mediatek/mt7668_patch_e2_hdr.bin
-0644 common/mt7668/WIFI_RAM_CODE_MT7668.bin       /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE_MT7668.bin
-0644 common/mt7668/WIFI_RAM_CODE2_SDIO_MT7668.bin /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin
-0644 common/mt7668/EEPROM_MT7668.bin              /usr/lib/firmware/updates/mediatek/EEPROM_MT7668.bin
+0644 mt7668/mt7668_patch_e2_hdr.bin        /usr/lib/firmware/updates/mediatek/mt7668_patch_e2_hdr.bin
+0644 mt7668/WIFI_RAM_CODE_MT7668.bin       /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE_MT7668.bin
+0644 mt7668/WIFI_RAM_CODE2_SDIO_MT7668.bin /usr/lib/firmware/updates/mediatek/WIFI_RAM_CODE2_SDIO_MT7668.bin
+0644 mt7668/EEPROM_MT7668.bin              /usr/lib/firmware/updates/mediatek/EEPROM_MT7668.bin
 link mt7668_patch_e2_hdr.bin                      /usr/lib/firmware/updates/mediatek/mt7668pr2h.bin

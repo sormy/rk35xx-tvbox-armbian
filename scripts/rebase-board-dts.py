@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rebase a board's tree onto a kernel's reference design, proven content-identical.
 
-firmware/<board>/board.dtb becomes overrides on the reference dtsi: /delete-node/ for what the box
+boards/<board>/board.dtb becomes overrides on the reference dtsi: /delete-node/ for what the box
 lacks, &label { } for what it changes, whole nodes for what it adds. The result is compiled with
 that kernel's includes and compared line for line against board.dtb, phandles translated by node
 path, so it matches only if every node and every &label resolves the same. Clock, reset, power and
@@ -249,7 +249,7 @@ def main() -> None:
 
     kernel = fetch_kernel(args.rev)
     includes = f'/dts-v1/;\n#include "{args.reference}"\n#include "{SOC_LINUX}"\n'
-    board_dtb = (REPO / "firmware" / args.board / "board.dtb").read_bytes()
+    board_dtb = (REPO / "boards" / args.board / "board.dtb").read_bytes()
     base = parse(decompile(compile_dts(includes, kernel)))
     board = overrides(base, parse(decompile(board_dtb)))
     native = includes + Bindings(kernel).named(board)
@@ -272,7 +272,7 @@ def main() -> None:
     mismatch = "\n".join(diff)
     if mismatch:
         sys.exit(f"{out.relative_to(REPO)} differs from board.dtb:\n{mismatch}")
-    print(f"-> {out.relative_to(REPO)}, content-identical to firmware/{args.board}/board.dtb")
+    print(f"-> {out.relative_to(REPO)}, content-identical to boards/{args.board}/board.dtb")
 
 
 if __name__ == "__main__":

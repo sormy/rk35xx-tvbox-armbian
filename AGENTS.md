@@ -7,32 +7,32 @@ Rules for anyone — human or agent — adding a board or changing this repo. Mo
 
 Debian with our own kernel, drivers and board packages, not a fork of a distro. Kernel sources and
 userspace come from upstream; we carry only what upstream can't know. **Adding a board is data, not
-code** — one `firmware/<board>/` directory. If a change needs new code per board, the design is
-wrong.
+code** — one `boards/<board>/` directory. If a change needs new code per board, the design is wrong.
 
-| Tree                | Holds                                                                                |
-| ------------------- | ------------------------------------------------------------------------------------ |
-| `firmware/<board>/` | `board.conf`, `package.list`, the trees and their patches, idbloader, maskrom loader |
-| `firmware/common/`  | everything shared between boards                                                     |
-| `docs/<board>/`     | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                  |
-| `stock/<board>/`    | factory evidence: dumps, logs, the box's own DTB                                     |
-| `backup/`           | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                |
-| `patches/<topic>/`  | every patch to an upstream's code, one folder per upstream, with its upstream status |
-| `tools/<tool>/`     | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`       |
-| `scripts/`          | host-side helpers, never installed on a box                                          |
-| `keyring/`          | the `apt` repo's public signing key                                                  |
-| `kernel/`           | each kernel's pin, config, fragment and patch list, and the step building it         |
-| `build-env/`        | the build environment: one container image every `./build.sh` step runs in           |
-| `modules/`          | each out-of-tree driver: its pin, our patches, the step packaging it per kernel      |
-| `uboot/`            | each U-Boot a board package ships: its pin and defconfig, and the step building it   |
-| `package/`          | the steps building `tvb-<board>` and `tvb-archive-keyring`                           |
-| `image/`            | the image step, its package list, and the files every image's rootfs gets            |
-| `release/`          | the release plan, the signed `apt` repo, and the upload to GitHub                    |
+| Tree               | Holds                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| `boards/<board>/`  | `board.conf`, `package.list`, the trees and their patches, idbloader, maskrom loader |
+| `boards/common/`   | everything shared between boards                                                     |
+| `firmware/<chip>/` | a chip's firmware, packaged as `tvb-firmware-<chip>`                                 |
+| `docs/<board>/`    | `worklog.md` (history), `dtb.md` (tree changes), `board.md` (usage)                  |
+| `stock/<board>/`   | factory evidence: dumps, logs, the box's own DTB                                     |
+| `backup/`          | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                |
+| `patches/<topic>/` | every patch to an upstream's code, one folder per upstream, with its upstream status |
+| `tools/<tool>/`    | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`       |
+| `scripts/`         | host-side helpers, never installed on a box                                          |
+| `keyring/`         | the `apt` repo's public signing key                                                  |
+| `kernel/`          | each kernel's pin, config, fragment and patch list, and the step building it         |
+| `build-env/`       | the build environment: one container image every `./build.sh` step runs in           |
+| `modules/`         | each out-of-tree driver: its pin, our patches, the step packaging it per kernel      |
+| `uboot/`           | each U-Boot a board package ships: its pin and defconfig, and the step building it   |
+| `package/`         | the steps building `tvb-<board>` and `tvb-archive-keyring`                           |
+| `image/`           | the image step, its package list, and the files every image's rootfs gets            |
+| `release/`         | the release plan, the signed `apt` repo, and the upload to GitHub                    |
 
 **Repo files carry no prefix**: each board's `package.list` names where a file installs. A board
 directory holds `board.conf`, the tree, the factory idbloader and the maskrom loader,
 `package.list`, `preserve-sectors` where it has a `tvb-install`, and firmware only where it is shown
-to be this board's. **Shared mechanism lives in `firmware/common/`** — a board never keeps its own
+to be this board's. **Shared mechanism lives in `boards/common/`** — a board never keeps its own
 copy of a family script. What it may keep is mechanism no other board can use: a unit for hardware
 only it has.
 

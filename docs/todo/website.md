@@ -19,7 +19,7 @@ character. Generated from this repo and hosted on GitHub Pages, with `tvbian.com
 1. **The name and the one-line pitch**, with the e-waste angle.
 2. **Sponsored**: commercial bring-up and store links to buy a supported box. Empty at first, with
    an email to ask; the maintainer vets each by hand. ❓ the address, one at `tvbian.com`.
-3. **Supported boards**: a photo each, its SoC, and its image link; generated from `firmware/*/` and
+3. **Supported boards**: a photo each, its SoC, and its image link; generated from `boards/*/` and
    the latest release, so it never lists a board the repo does not ship.
 4. **Contribute**: the best contribution is a board, one PR; then fixes and docs.
 5. **Report an issue**: what to include, a serial boot log above all.

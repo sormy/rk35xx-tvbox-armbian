@@ -24,20 +24,20 @@ files() {
       done ;;
     board)
       # shellcheck source=/dev/null
-      . "firmware/$2/board.conf"
-      echo "firmware/$2/board.dts" package/board.sh
-      [ ! -f "firmware/$2/preserve-sectors" ] || echo "firmware/$2/preserve-sectors" firmware/common/tvb-install
-      sed -E 's/#.*//' "firmware/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}'
+      . "boards/$2/board.conf"
+      echo "boards/$2/board.dts" package/board.sh
+      [ ! -f "boards/$2/preserve-sectors" ] || echo "boards/$2/preserve-sectors" boards/common/tvb-install
+      sed -E 's/#.*//' "boards/$2/package.list" | awk 'NF && $1 != "link" {print "boards/" $2}'
       if [ -n "${BOARD_UBOOT:-}" ]; then
         echo "uboot/$BOARD_UBOOT.conf" uboot/build.sh
-        [ ! -f "firmware/$2/uboot.dts" ] || echo "firmware/$2/uboot.dts"
+        [ ! -f "boards/$2/uboot.dts" ] || echo "boards/$2/uboot.dts"
         # shellcheck source=/dev/null
         (. "uboot/$BOARD_UBOOT.conf"; echo ${PATCHES:-}; [ -z "${SOC:-}" ] || echo "uboot/$SOC-u-boot.dtsi")
       fi
-      [ -z "${BOARD_IDBLOADER:-}" ] || echo "firmware/$BOARD_IDBLOADER" ;;
+      [ -z "${BOARD_IDBLOADER:-}" ] || echo "boards/$BOARD_IDBLOADER" ;;
     firmware)
-      echo "firmware/common/$2/firmware.conf" "firmware/common/$2/package.list" package/firmware.sh
-      sed -E 's/#.*//' "firmware/common/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}' ;;
+      echo "firmware/$2/firmware.conf" "firmware/$2/package.list" package/firmware.sh
+      sed -E 's/#.*//' "firmware/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}' ;;
     keyring) echo keyring/tvb-archive-keyring.gpg package/keyring.sh ;;
   esac
 }
@@ -46,7 +46,7 @@ settings() {
   case $1 in
     board) (
       # shellcheck source=/dev/null
-      . "firmware/$2/board.conf"
+      . "boards/$2/board.conf"
       for v in ${!BOARD_@}; do
         if [ "$v" = BOARD_DEPENDS ]; then echo "$v=$(tr ',' ' ' <<<"${!v}" | xargs -n1 | sort | xargs)"; else echo "$v=${!v}"; fi
       done
@@ -59,7 +59,7 @@ tools() {
     board)
       dtc --version
       # shellcheck source=/dev/null
-      (. "firmware/$2/board.conf"; [ -z "${BOARD_UBOOT:-}" ] || { gcc -dumpfullversion; ld --version | head -1; }) ;;
+      (. "boards/$2/board.conf"; [ -z "${BOARD_UBOOT:-}" ] || { gcc -dumpfullversion; ld --version | head -1; }) ;;
   esac
 }
 # shellcheck disable=SC2046  # one path per word

@@ -149,7 +149,7 @@ route to go when a box is genuinely broken — `ctrl+b` still outranks it.
 
 ```sh
 ./build.sh tool rkdeveloptool                                 # -> build/bin/rkdeveloptool
-build/bin/rkdeveloptool db firmware/<board>/maskrom_loader.bin
+build/bin/rkdeveloptool db boards/<board>/maskrom_loader.bin
 build/bin/rkdeveloptool rfi                                   # total sectors, e.g. 30777344
 build/bin/rkdeveloptool rl 0 <sectors> emmc-stock.img
 ```
@@ -163,7 +163,7 @@ Verify before trusting a dump — it must be `<sectors> × 512` bytes, and secto
 board's own idbloader:
 
 ```sh
-cmp <(dd if=emmc-stock.img bs=512 skip=64 count=4096 2>/dev/null) firmware/<board>/factory_idbloader.bin
+cmp <(dd if=emmc-stock.img bs=512 skip=64 count=4096 2>/dev/null) boards/<board>/factory_idbloader.bin
 ```
 
 ## Write an image over USB
@@ -172,7 +172,7 @@ The only way onto a box with no card slot, and the way back on any box. **Back u
 above. With the box in `Maskrom`:
 
 ```sh
-build/bin/rkdeveloptool db firmware/<board>/maskrom_loader.bin
+build/bin/rkdeveloptool db boards/<board>/maskrom_loader.bin
 build/bin/rkdeveloptool wl 0 <image>
 ```
 

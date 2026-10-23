@@ -3,11 +3,11 @@
 #   board.sh <board>   -> /out/debs/tvb-<board>_<revision>_arm64.deb
 set -euo pipefail
 BOARD=$1
-FW=/repo/firmware
+FW=/repo/boards
 # shellcheck source=/dev/null
 . "$FW/$BOARD/board.conf"
-: "${BOARD_FAMILY:?firmware/$BOARD/board.conf names no BOARD_FAMILY}" "${BOARD_NAME:?firmware/$BOARD/board.conf names no BOARD_NAME}"
-[ "${BOARD_ID:-}" = "$BOARD" ] || { echo "firmware/$BOARD/board.conf: BOARD_ID=${BOARD_ID:-} is not its directory" >&2; exit 1; }
+: "${BOARD_FAMILY:?boards/$BOARD/board.conf names no BOARD_FAMILY}" "${BOARD_NAME:?boards/$BOARD/board.conf names no BOARD_NAME}"
+[ "${BOARD_ID:-}" = "$BOARD" ] || { echo "boards/$BOARD/board.conf: BOARD_ID=${BOARD_ID:-} is not its directory" >&2; exit 1; }
 # Rockchip's defaults: the vendor's ttyFIQ0 console, and CMA for a 4K frame (the tree has 8 MiB)
 if [ "$BOARD_FAMILY" = rk35xx ]; then
   : "${BOARD_SERIALCON:=earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0}" "${BOARD_CMA:=256M}"

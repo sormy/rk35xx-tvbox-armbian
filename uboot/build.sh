@@ -1,16 +1,16 @@
 #!/bin/bash
 # Build one board's U-Boot, inside the build container, from the uboot/<conf>.conf its board.conf
-# names as BOARD_UBOOT: /out/uboot/<board>/u-boot.bin. A board with a firmware/<board>/uboot.dts
+# names as BOARD_UBOOT: /out/uboot/<board>/u-boot.bin. A board with a boards/<board>/uboot.dts
 # gets it as the control tree, and a conf naming a BL31 gets binman's FIT around the ATF.
 set -euo pipefail
 BOARD=$1
 # shellcheck source=/dev/null
-. "/repo/firmware/$BOARD/board.conf"
+. "/repo/boards/$BOARD/board.conf"
 # shellcheck source=/dev/null  # the conf: REPO, TAG, DEFCONFIG; CONFIGS, PATCHES, SOC, RKBIN...
-. "/repo/uboot/${BOARD_UBOOT:?firmware/$BOARD/board.conf names no BOARD_UBOOT}.conf"
+. "/repo/uboot/${BOARD_UBOOT:?boards/$BOARD/board.conf names no BOARD_UBOOT}.conf"
 TREE=/work/uboot/$BOARD
 OUT=/out/uboot/$BOARD
-DTS=/repo/firmware/$BOARD/uboot.dts
+DTS=/repo/boards/$BOARD/uboot.dts
 
 rm -rf "$TREE" && mkdir -p "$TREE" "$OUT" && cd "$TREE"
 git init -q && git fetch -q --depth=1 "$REPO" "refs/tags/$TAG" && git checkout -q FETCH_HEAD

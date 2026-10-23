@@ -48,13 +48,13 @@ for conf in kernel/*.conf; do
   plan kernel "$conf" "linux-image-tvb-$(basename "$conf" .conf)" \
     "$(bash release/inputs.sh kernel "$conf" "${ref% *}")" "${ref#* }"
 done
-for c in firmware/*/board.conf; do
+for c in boards/*/board.conf; do
   b=$(basename "$(dirname "$c")")
   k=$(sed -n 's/^BOARD_KERNEL=//p' "$c")
   [ -n "$k" ] && [ -f "kernel/$k.conf" ] || continue
   plan board "$b" "tvb-$b" "$(bash release/inputs.sh board "$b")"
 done
-for c in firmware/common/*/firmware.conf; do
+for c in firmware/*/firmware.conf; do
   d=$(basename "$(dirname "$c")")
   plan firmware "$d" "tvb-firmware-$(sed -n 's/^FIRMWARE_CHIP=//p' "$c")" "$(bash release/inputs.sh firmware "$d")"
 done

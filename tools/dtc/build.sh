@@ -22,7 +22,8 @@ selftest() {
 	local fail=0 tmp
 	[ -x "$OUT/dtc" ] || { echo "nothing built yet — run ./build.sh tool dtc first"; exit 1; }
 	tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
-	for dtb in "$REPO"/firmware/*/board.dtb; do
+	for c in "$REPO"/boards/*/board.conf; do
+		local dtb; dtb="$(dirname "$c")/board.dtb"
 		[ -f "$dtb" ] || continue
 		local name refs raw
 		name="$(basename "$(dirname "$dtb")")"

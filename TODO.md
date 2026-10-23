@@ -55,8 +55,8 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 - [ ] **The repo restructure.** Folders named for what they hold, every patch in `patches/`, docs
       current or in `research/`: `docs/todo/repo-layout.md`.
 
-- [ ] **`tvb-install`, a first real install.** `firmware/common/tvb-install` has reached its prompt
-      on the H313, never past it: the H313 from its SD to the eMMC, keeping `DVKR`/`SSKR`; the M20
+- [ ] **`tvb-install`, a first real install.** `boards/common/tvb-install` has reached its prompt on
+      the H313, never past it: the H313 from its SD to the eMMC, keeping `DVKR`/`SSKR`; the M20
       image from a stick to the eMMC, then back from the eMMC to a stick. Together they test phases
       4 and 5.
 - [ ] **Keep an Amlogic board's Ethernet address, as `LAN_MAC` is kept on Rockchip.** It is the

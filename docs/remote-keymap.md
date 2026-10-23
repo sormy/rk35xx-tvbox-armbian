@@ -70,7 +70,7 @@ The handset's HID descriptor is not ours, so the remap goes in `udev`'s keyboard
 the **model**, which is what the modalias carries:
 
 ```
-# firmware/common/bt-remote.hwdb — the whole shipped file
+# boards/common/bt-remote.hwdb — the whole shipped file
 evdev:input:b0005v2B54p1600*
  KEYBOARD_KEY_700aa=reserved
  KEYBOARD_KEY_c0011=menu
@@ -139,7 +139,7 @@ sudo find /var/lib/bluetooth -name info | while read f; do sudo grep -E '^(Name|
 which masks the `/usr/lib` one from then on — always pass `--usr`. By hand, from the host:
 
 ```sh
-ssh box 'sudo tee /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb >/dev/null' < firmware/common/bt-remote.hwdb
+ssh box 'sudo tee /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb >/dev/null' < boards/common/bt-remote.hwdb
 ssh box 'md5sum /usr/lib/udev/hwdb.d/60-tvb-bt-remote.hwdb'   # compare with the local file
 ssh box 'sudo systemd-hwdb --usr update --strict'
 ```

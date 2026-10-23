@@ -65,9 +65,9 @@ Ethernet, serial — is present at the same address.
 ## How the tree is built
 
 `stock/h96max-m20/board.dtb` is the base, as on every other board: `build-board-dts.sh` decompiles
-it with the patched `dtc` and applies `firmware/h96max-m20/board.patch`. The tree describes this
-board and the board has not changed — what changes is the driver that reads it, so the patch says
-what each modern binding needs and why.
+it with the patched `dtc` and applies `boards/h96max-m20/board.patch`. The tree describes this board
+and the board has not changed — what changes is the driver that reads it, so the patch says what
+each modern binding needs and why.
 
 The mainline `meson-gxlx-s905l-p271.dtb` is the **reference** for what a node should look like,
 never the base: p271 is a different board.

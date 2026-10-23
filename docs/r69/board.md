@@ -143,7 +143,7 @@ the BootROM's **maskrom trigger**.
 
 The receiver is input device **`ffa90030.pwm`**, reachable at the stable path
 **`/dev/input/ir-remote`**; scancodes come from `rockchip,usercode = <0xfb05>` in
-`firmware/r69/board.dts`. The kernel builds the driver in, with the shared-IRQ fix from
+`boards/r69/board.dts`. The kernel builds the driver in, with the shared-IRQ fix from
 `kernel/rk35xx.conf`.
 
 > **Baseline, not a spec** — this is the mapping of _our_ unit, and these boxes vary between
@@ -269,7 +269,7 @@ Still open:
 button inside the AV jack**, held _before_ power reaches the box, lands in `Maskrom` directly:
 U-Boot's `adc-keys` sees it and resets into BootROM download. `db` with its maskrom loader, then
 `rfi` (30777344 sectors) and `rl` — a read of sector 64 came back byte-identical to
-`firmware/r69/factory_idbloader.bin`, and slot A read over USB matched the FIT written over ssh.
+`boards/r69/factory_idbloader.bin`, and slot A read over USB matched the FIT written over ssh.
 
 The button is only as alive as the U-Boot in slot A: it needs a FIT with the ADC enabled, which is
 why this board ships its own.

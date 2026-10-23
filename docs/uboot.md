@@ -5,7 +5,7 @@ first and the image's own loader overwrites them.
 
 | Sector | Blob                                      | Origin                                 |
 | ------ | ----------------------------------------- | -------------------------------------- |
-| 64     | `firmware/<board>/factory_idbloader.bin`  | carved from that box's eMMC — **kept** |
+| 64     | `boards/<board>/factory_idbloader.bin`    | carved from that box's eMMC — **kept** |
 | 16384  | `u-boot.bin`, a FIT — see the table below | built by `./build.sh uboot <board>`    |
 
 ## Which loader each board ships
@@ -15,15 +15,15 @@ one that has never booted is not a free change**, so it is enabled per board rat
 family-wide.
 
 `board.conf` decides: `BOARD_UBOOT=rk3528` builds `uboot/rk3528.conf` around the board's own control
-tree, `firmware/<board>/uboot.dts`, and `tvb-<board>` installs the FIT as `/usr/lib/tvb/u-boot.bin`.
+tree, `boards/<board>/uboot.dts`, and `tvb-<board>` installs the FIT as `/usr/lib/tvb/u-boot.bin`.
 Every board here has one — a shared FIT built from mainline's `rk3528-generic` tree carries no board
 DT and no `CONFIG_ADC`, so the recovery button cannot reach Maskrom from U-Boot on it. Whether a
 board has ever booted its own belongs in that board's `board.md`.
 
-To enable a board: write `firmware/<board>/uboot.patch` against that box's
-`stock/<board>/uboot.dtb`, run `./build-uboot-dts.sh <board>` and `./build.sh uboot <board>`, boot
-it once with serial attached, confirm the recovery button reaches Maskrom — then commit the tree and
-set `BOARD_UBOOT=rk3528`.
+To enable a board: write `boards/<board>/uboot.patch` against that box's `stock/<board>/uboot.dtb`,
+run `./build-uboot-dts.sh <board>` and `./build.sh uboot <board>`, boot it once with serial
+attached, confirm the recovery button reaches Maskrom — then commit the tree and set
+`BOARD_UBOOT=rk3528`.
 
 The image fills all five BootROM idbloader slots (64, 1088, 2112, 3136, 4160) and both U-Boot slots.
 
@@ -37,7 +37,7 @@ The failure is a random `Synchronous Abort` whose `far` register holds ASCII tex
 not a code bug. Carve it per board; it is the one bootloader file that is not shared.
 
 A backup recovers only the DDR half, so `./build-rockchip-loaders.sh` packs a maskrom USB loader per
-board into `firmware/<board>/maskrom_loader.bin`: that board's DDR init + Rockchip's `usbplug`.
+board into `boards/<board>/maskrom_loader.bin`: that board's DDR init + Rockchip's `usbplug`.
 
 > ⚠️ **Our U-Boot still serves nothing on USB.** The vendor U-Boot runs rockusb, so `rkdeveloptool`
 > can always reach the box. Ours has `# CONFIG_USB is not set` and `CONFIG_NO_NET=y`, so once it
@@ -51,7 +51,7 @@ Same rule as everywhere else here: **follow the factory DTB and graft the minimu
 is built the way `board.dts` is — decompile the box's own blob, then apply a small commented patch.
 
 ```sh
-./build-uboot-dts.sh            # stock/<board>/uboot.dtb -> firmware/<board>/uboot.dts
+./build-uboot-dts.sh            # stock/<board>/uboot.dtb -> boards/<board>/uboot.dts
 ```
 
 Two stages, each auditable alone:
@@ -59,7 +59,7 @@ Two stages, each auditable alone:
 1. **Mechanical.** `dtc -P` decompiles the blob — and the result is checked to recompile
    **byte-identical**, so the base really is the board's own. Then `scripts/uboot-renumber.py`
    retargets it at mainline's bindings.
-2. **Judgement.** `firmware/<board>/uboot.patch`, every hunk carrying its reason.
+2. **Judgement.** `boards/<board>/uboot.patch`, every hunk carrying its reason.
 
 ### Why a retarget is needed at all
 
@@ -120,7 +120,7 @@ makes it work:
 | Piece                                     | Where                                                             |
 | ----------------------------------------- | ----------------------------------------------------------------- |
 | `CONFIG_ADC` + `CONFIG_SARADC_ROCKCHIP`   | `uboot/rk3528.conf`'s `CONFIGS`, on the generic defconfig         |
-| `saradc` node enabled, with a vref        | `firmware/<board>/uboot.dts`                                      |
+| `saradc` node enabled, with a vref        | `boards/<board>/uboot.dts`                                        |
 | `setup_boot_mode()` → `board_late_init()` | mainline, already wired; the flag register defaults to `ff370200` |
 
 **The node has to be named `saradc@ffae0000`.** `rockchip_dnl_key_pressed()` walks the ADC uclass
@@ -190,7 +190,7 @@ sudo dd if=u-boot.bin of=/dev/<disk> bs=512 seek=20480 conv=notrunc,fsync
 
 It builds in the container like every other step, from a defconfig made on the spot out of
 `generic-rk3528_defconfig` with the board's tree named in it, and aborts if a `CONFIGS` symbol does
-not survive Kconfig. `firmware/<board>/uboot.patch` is the only device-tree source we keep.
+not survive Kconfig. `boards/<board>/uboot.patch` is the only device-tree source we keep.
 
 Smoke-test before trusting it: the factory idbloader at sector 64 stays put, and the box must come
 back; `/proc/device-tree/chosen/u-boot,version` names the U-Boot that booted it.

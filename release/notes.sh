@@ -21,7 +21,7 @@ version() { awk -v c="kernel/$1.conf" '$1 == "kernel" && $2 == c { sub(/-[0-9]+$
     board=$(basename "$img" | sed -E 's/^tvbian-[0-9]{4}-[0-9]{2}-[0-9]{2}-(.*)-[a-z]+\.img\.xz$/\1/')
     unset "${!BOARD_@}"   # a key one board leaves out must not carry over from the last
     # shellcheck source=/dev/null
-    . "firmware/$board/board.conf"
+    . "boards/$board/board.conf"
     next=$(version "$BOARD_KERNEL-next")
     # the board's own chips, firmware and driver both; the SoC's, named after its maker, go unsaid
     soc=$(vendor "$BOARD_FAMILY")

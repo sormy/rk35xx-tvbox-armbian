@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
-# Regenerate firmware/<board>/board.dts and board.dtb from that board's factory kernel DTB.
+# Regenerate boards/<board>/board.dts and board.dtb from that board's factory kernel DTB.
 #
 # Two stages, so each is auditable on its own:
 #   1. mechanical — decompile the factory blob. It does not round-trip byte for byte: dtc re-packs
 #      the string table and writes path references where the vendor wrote phandles. The content is
 #      what matters, and the patch's own -F0 gate catches a base that has moved.
-#   2. judgement — apply firmware/<board>/board.patch, which says what we change and why.
+#   2. judgement — apply boards/<board>/board.patch, which says what we change and why.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-FW="$REPO/firmware"
+FW="$REPO/boards"
 DTC="$REPO/build/bin/dtc"
 
-# return 0: the last glob entry need not exist, and set -e would take that test as failure
-boards() { for d in "$FW"/*/board.patch; do [ -f "$d" ] && basename "$(dirname "$d")"; done; return 0; }
+boards() { for c in "$FW"/*/board.conf; do d=$(dirname "$c"); [ ! -f "$d/board.patch" ] || basename "$d"; done; }
 BOARDS="${*:-$(boards)}"
-[ -n "$BOARDS" ] || { echo "no firmware/<board>/board.patch found — name a board"; exit 1; }
+[ -n "$BOARDS" ] || { echo "no boards/<board>/board.patch found — name a board"; exit 1; }
 
 [ -x "$DTC" ] || { echo "Need the patched dtc. Run: ./build.sh tool dtc"; exit 1; }
 
@@ -36,6 +35,6 @@ for BOARD in $BOARDS; do
 
 	cp "$tmp/out.dts" "$FW/$BOARD/board.dts"
 	cp "$tmp/out.dtb" "$FW/$BOARD/board.dtb"
-	echo "-> firmware/$BOARD/board.dts + board.dtb"
+	echo "-> boards/$BOARD/board.dts + board.dtb"
 	rm -rf "$tmp"; trap - EXIT
 done

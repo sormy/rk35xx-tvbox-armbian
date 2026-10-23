@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Regenerate firmware/<board>/uboot.dts from that board's factory U-Boot DTB.
+# Regenerate boards/<board>/uboot.dts from that board's factory U-Boot DTB.
 #
 # Two stages, so each is auditable on its own:
 #   1. mechanical — decompile the blob, then renumber every CRU clock/reset specifier from the
 #      vendor's numbering to mainline's. The blob records only integers and no decompiler can
 #      recover which symbol produced one, so the vendor header is the dictionary that names it and
 #      mainline's header supplies the new value. Nothing that fails to map exactly is touched.
-#   2. judgement — apply firmware/<board>/uboot.patch, which says what we change and why.
+#   2. judgement — apply boards/<board>/uboot.patch, which says what we change and why.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-FW="$REPO/firmware"
+FW="$REPO/boards"
 # any vendor kernel since 2023-02 numbers the RK3528's clocks the same; pinned to stay reproducible
 VENDOR_REV=5280f9b4336199c4025c8eed894d2b4e2268dcc6
 # mainline's numbering, at the tag the boards' U-Boot builds from
@@ -18,10 +18,9 @@ UBOOT_TAG=$(sed -n 's/^TAG=//p' "$REPO/uboot/rk3528.conf")
 VHDR="${VHDR:-$REPO/build/uboot-dts/vendor/rk3528-cru.h}"
 MDIR="${MDIR:-$REPO/build/uboot-dts/$UBOOT_TAG}"
 
-# return 0: the last glob entry need not exist, and set -e would take that test as failure
-boards() { for d in "$FW"/*/uboot.patch; do [ -f "$d" ] && basename "$(dirname "$d")"; done; return 0; }
+boards() { for c in "$FW"/*/board.conf; do d=$(dirname "$c"); [ ! -f "$d/uboot.patch" ] || basename "$d"; done; }
 BOARDS="${*:-$(boards)}"
-[ -n "$BOARDS" ] || { echo "no firmware/<board>/uboot.patch found — name a board"; exit 1; }
+[ -n "$BOARDS" ] || { echo "no boards/<board>/uboot.patch found — name a board"; exit 1; }
 
 [ -x "$REPO/build/bin/dtc" ] || { echo "Need the patched dtc. Run: ./build.sh tool dtc"; exit 1; }
 if [ ! -f "$VHDR" ]; then
@@ -62,6 +61,6 @@ for BOARD in $BOARDS; do
   "$REPO/build/bin/dtc" -I dts -O dtb -o /dev/null "$tmp/out.dts" 2>/dev/null \
     || { echo "$BOARD: result does not compile"; exit 1; }
   cp "$tmp/out.dts" "$FW/$BOARD/uboot.dts"
-  echo "-> firmware/$BOARD/uboot.dts"
+  echo "-> boards/$BOARD/uboot.dts"
   rm -rf "$tmp"; trap - EXIT
 done

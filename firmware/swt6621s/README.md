@@ -15,7 +15,7 @@ driver asks for first, to its antenna's.
 
 The factory images assert on the HCI codec reads (`BSPASSERT:hci_tl.c-386`) and never finish
 controller init; `0005` answers those opcodes locally, enabled by
-`firmware/common/skwbt-options.conf`.
+`firmware/swt6621s/skwbt-options.conf`.
 
 The chip code is one build: `SWT6621S_IRAM_SDIO.bin` stamps it `20250618-15:38:14`. The NV and RF
 files carry no version.

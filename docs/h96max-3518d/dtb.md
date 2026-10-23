@@ -1,8 +1,8 @@
 # H96 Max 3518D — device tree
 
-**Grafts booted and running since 2026-09-06.** `firmware/h96max-3518d/board.patch` is the source;
-`./build-board-dts.sh` compiles it to `firmware/h96max-3518d/board.dtb`. The box boots from it and
-is reachable over SSH, so the grafts below are ✅ unless marked otherwise.
+**Grafts booted and running since 2026-09-06.** `boards/h96max-3518d/board.patch` is the source;
+`./build-board-dts.sh` compiles it to `boards/h96max-3518d/board.dtb`. The box boots from it and is
+reachable over SSH, so the grafts below are ✅ unless marked otherwise.
 
 Factory tree: `stock/h96max-3518d/board.dtb`, carved from the `boot` partition (not from
 `/proc/device-tree` — U-Boot edits that one). 4640 lines, round-trips through the patched `dtc`.
@@ -30,7 +30,7 @@ here has to be measured with `evtest`, not inferred.
 
 ## What that means for the grafts
 
-`firmware/h96max-h313/board.patch` is 47 changed lines. Every hunk except two lands on a region that
+`boards/h96max-h313/board.patch` is 47 changed lines. Every hunk except two lands on a region that
 is **byte-identical** in this board's tree, so it should apply essentially verbatim:
 
 | Graft                                                        | Transfers?                                                    |
@@ -54,7 +54,7 @@ With no node to bind, `rockchip_pwm_remotectl` does not run.
 
 ### Reading the patch: `NOT FITTED` marks a correction, not a change
 
-`firmware/h96max-3518d/board.patch` mixes two kinds of hunk, and the comments say which is which. A
+`boards/h96max-3518d/board.patch` mixes two kinds of hunk, and the comments say which is which. A
 comment opening **`NOT FITTED -`** means the factory tree declares hardware this PCB does not have,
 and the graft only stops it being claimed — nine hunks, all of them `status = "disabled"`: `tve`,
 `spdif` and its sound card, `acodec` and its sound card, `gmac0`, `sfc`, `sdmmc`, and `pwm@ffa90030`

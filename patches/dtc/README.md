@@ -10,7 +10,7 @@ dtc  :  clocks = <&cru 0xaf>;          # -P
 
 ```sh
 ./build.sh tool dtc          # fetch, patch, build -> build/bin/dtc, then gate
-./build.sh tool dtc --test   # re-run the gate on firmware/*/board.dtb
+./build.sh tool dtc --test   # re-run the gate on boards/*/board.dtb
 ```
 
 | Flag | Does                                                                  |
