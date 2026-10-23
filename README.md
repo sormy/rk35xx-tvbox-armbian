@@ -1,7 +1,7 @@
 # TVBian — Debian for TV boxes
 
 [![Latest release](https://img.shields.io/github/v/release/sormy/tvbian?label=release&sort=date)](https://github.com/sormy/tvbian/releases/latest)
-[![Released](https://img.shields.io/github/release-date/sormy/tvbian?label=released)](https://github.com/sormy/tvbian/releases/latest)
+[![Released](https://img.shields.io/github/release-date/sormy/tvbian?label=released&display_date=published_at)](https://github.com/sormy/tvbian/releases/latest)
 [![Weekly build](https://github.com/sormy/tvbian/actions/workflows/release.yml/badge.svg)](https://github.com/sormy/tvbian/actions/workflows/release.yml)
 
 Debian on a **$15–35 Android TV box**: silent, fanless, a remote in the box, and an Android it
