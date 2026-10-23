@@ -2,9 +2,11 @@
 # Fail the release when a path changes package unannounced, inside the build container: apt aborts an
 # upgrade on "trying to overwrite" unless the new owner Replaces and Breaks the old. A package it
 # Conflicts with, by name or by a virtual it Provides, never shares a box: one board's with another's.
-#   guard.sh: every deb in /out/debs against /out/release/Contents.published
+#   guard.sh [<out>]: every deb in <out>/debs against <out>/release/Contents.published; /out
+#   by default
 set -euo pipefail
-REL=/out/release
+OUT=${1:-/out}
+REL=$OUT/release
 [ -s "$REL/Contents.published" ] || { echo "✓ nothing published to move from"; exit 0; }
 
 names() { tr ',' '\n' | sed 's/^ *//; s/[ (].*//' | sed '/^$/d'; }
@@ -15,7 +17,7 @@ provides() { awk -v RS= -v p="$1" '$0 ~ "(^|\n)Package: " p "\n"' "$REL/Packages
 # a deb the published index already names moved nothing this run: its move was released before
 published=$(sed -n 's|^Filename: \(\./\)\{0,1\}||p' "$REL/Packages.published")
 fail=0
-for deb in /out/debs/*.deb; do
+for deb in "$OUT"/debs/*.deb; do
   grep -qxF "$(basename "$deb")" <<<"$published" && continue
   pkg=$(dpkg-deb -f "$deb" Package)
   conflicts=$(dpkg-deb -f "$deb" Conflicts | names)

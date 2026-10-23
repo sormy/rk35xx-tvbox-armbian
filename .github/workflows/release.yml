@@ -29,6 +29,7 @@ on:
       - boards/**
       - base/**
       - tests/**
+      - tools/**
       - firmware/**
       - .github/workflows/release.yml
   pull_request:
@@ -46,6 +47,7 @@ on:
       - boards/**
       - base/**
       - tests/**
+      - tools/**
       - firmware/**
       - .github/workflows/release.yml
 
@@ -137,7 +139,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
-      # dpkg orders versions for release/expire.py, and the runner has it
+      # the tests need dpkg, dpkg-deb and cc, and the runner has them
       - run: python3 -m unittest discover -s tests -v
 
   release:
