@@ -46,7 +46,7 @@ The box's own firmware is the specification. Capture it before changing anything
    `/sys/block/<dev>/size × 512`, then `xz -T0`. ~25 min at 100 Mb/s — start on the device tree
    while it runs.
 4. Carve `factory_idbloader.bin` (sector 64, 4096 sectors) → `boards/<board>/`.
-5. Carve `board.dtb` out of the eMMC image — see below.
+5. Carve `factory_board.dtb` out of the eMMC image — see below.
 
 **Gate, no exceptions:** the eMMC dump exists off-box and its size is verified. It is the only route
 back to Android once you migrate.
@@ -79,13 +79,23 @@ record of what the bootloader does. Derive from the pristine one.
 
 ## Device tree
 
-Derive `board.dtb` from the box's own factory Android DTB, never from a reference board's. Apply
-only these grafts, each with a functional consumer:
+Derive `board.dtb` from the box's own factory Android DTB, never from a reference board's. On the
+host, after `./build.sh tool dtc`:
+
+1. In `board.conf`, set `BOARD_KERNEL_DTB_SOURCE`, the `tools/dtcx/bases/` base the factory tree was
+   built from, and `BOARD_KERNEL_DTB_TARGET`, the one for the kernel the board runs.
+2. `tools/dtcx/dtcx.py -n <source> boards/<board>/factory_board.dtb > boards/<board>/factory_board.dts`
+3. Copy it to `board.dts`, graft, and write
+   `diff -u --label factory_board.dts --label board.dts factory_board.dts board.dts > board.patch`
+   in `boards/<board>/`.
+4. `./build.sh board-dtb <board>` regenerates all three and `board.dtb`, which is what ships.
+
+Apply only these grafts, each with a functional consumer:
 
 | Graft                                               | Consumer                                                          |
 | --------------------------------------------------- | ----------------------------------------------------------------- |
 | IR `remote_support_psci` → `1`                      | remote wakes the box from off                                     |
-| GPU → lima `clocks`/`clock-names`/`interrupt-names` | Armbian uses mainline lima                                        |
+| GPU → lima `clocks`/`clock-names`/`interrupt-names` | the kernel uses mainline lima                                     |
 | LEDs → labels `power`/`standby`, `retain-state-*`   | the shared LED hooks                                              |
 | `watchdog` → `okay`                                 | systemd `RuntimeWatchdogSec`                                      |
 | board `compatible` prepend                          | only if a driver keys firmware lookup off it                      |
@@ -114,18 +124,9 @@ state with the SoC's GPIO function, or the EDID reads empty and the panel drops 
 Rockchip's SoC dtsi disables everything and the board file enables what's wired. Only in-SoC blocks
 needing no board routing are candidates.
 
-- **The grafts live in `boards/<board>/board.patch`**; `./build-board-dtb.sh` produces
-  `boards/<board>/board.dts` + `.dtb` from it. Edit the patch, never the generated `board.dts` —
-  except where a board diverges on purpose, which belongs in its `dtb.md` with the condition that
-  ends it.
-- **To move a board onto a kernel's own reference design**, run
-  `scripts/rebase-board-dts.py <board>` on the host, adding `--rev <commit>` to choose the kernel.
-  It rewrites `board.dtb` as overrides on that dtsi in `build/rebase/<board>/native.dts`, and fails
-  unless that compiles content-identical.
-- **Verify the tree round-trips** before rebuilding:
-  `diff <(dtc -I dtb -O dts board.dtb) <(dtc -I dtb -O dts <(dtc -@ -I dts -O dtb board.dts))`. If
-  it doesn't, edit with `fdtput` instead.
-- **Diff the result against the factory tree**; the only differences must be your grafts.
+- **The grafts live in `boards/<board>/board.patch`**; `./build.sh board-dtb <board>` regenerates
+  `board.dts` and `board.dtb` from it, so an edit to `board.dts` alone is lost. Commit the
+  regenerated `board.dtb` with the patch: it is what the package ships.
 - **One change per test DTB**, serial attached. Two at once cost a day of not knowing which hung the
   boot.
 - Record every change in `docs/<board>/dtb.md`, including tried and reverted ones.
@@ -134,9 +135,11 @@ needing no board routing are candidates.
 
 Copy the closest `boards/<board>/` and edit: `board.conf` (`BOARD_ID`, the directory's name;
 `BOARD_NAME`, the product; `BOARD_PCB`, the PCB silkscreen, since these boxes vary between
-production runs; `BOARD_FAMILY`; `BOARD_HOSTNAME`, `BOARD_KERNEL`, `BOARD_DEPENDS`), `package.list`,
-plus the DTB and idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add the
-board to the README's Boxes table and support matrix.
+production runs; `BOARD_KERNEL_DTB_SOURCE`/`_TARGET` and `BOARD_UBOOT_DTB_SOURCE`/`_TARGET`, the
+`tools/dtcx/` bases each factory tree was built against and each patched tree compiles against;
+`BOARD_FAMILY`; `BOARD_HOSTNAME`, `BOARD_KERNEL`, `BOARD_DEPENDS`), `package.list`, plus the DTB and
+idbloader. Create `docs/<board>/`, starting `worklog.md` on day one, and add the board to the
+README's Boxes table and support matrix.
 
 - **`package.list` is `tvb-<board>`'s file list**: mode, repo file, install path, at Debian's paths
   (`/usr/lib/...`, never `/usr/local`); a `link <target> <dest>` line makes a symlink.

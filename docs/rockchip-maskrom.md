@@ -157,7 +157,7 @@ build/bin/rkdeveloptool rl 0 <sectors> emmc-stock.img
 Try the single pass first — it completes on a healthy board. If it stalls, see **Traps**.
 
 **One loader per board**: it carries that board's own DDR init, so they are not interchangeable.
-`./build-rockchip-loaders.sh` repacks them.
+`./build.sh loaders` repacks them.
 
 Verify before trusting a dump — it must be `<sectors> × 512` bytes, and sector 64 must match the
 board's own idbloader:

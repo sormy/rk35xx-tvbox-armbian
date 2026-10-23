@@ -93,7 +93,7 @@ does not have. One patch in `kernel/rk35xx.conf`, down to `debug`.
 |     2 | `hci0: Failed to read local supported codecs` | ❓ the SWT6621S answers `-56`         |
 |     2 | `Direct firmware load for <name>.<board>…`    | the driver's board name tried first   |
 |     1 | `optee: api uid mismatch`                     | `CONFIG_OPTEE` off: we ship no OP-TEE |
-|     2 | `alsa-restore.rules` stale lines              | `alsa-utils` from Armbian; not ours   |
+|     2 | `alsa-restore.rules` stale lines              | `alsa-utils`'s; not ours              |
 |     1 | `bpf-restrict-fs: Failed to load BPF object`  | no BPF LSM: `lsm=` or ignore          |
 
 ## Order

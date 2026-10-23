@@ -89,10 +89,10 @@ case "$BOARD_FAMILY" in
     AML_TUNING_OFFSET=6144 AML_TUNING_BYTES=131072
     UBOOT_ADDR=0x1000000
     STOCK=/repo/stock/$BOARD
-    python3 /repo/scripts/aml-layout.py "$STOCK/factory-mpt.bin" "$STOCK/factory-multidtb.bin" \
+    python3 /repo/image/aml-layout.py "$STOCK/factory-mpt.bin" "$STOCK/factory-multidtb.bin" \
       "$BOARD_AML_EMMC_SECTORS" "$WORK/mpt.bin" "$WORK/dtb.bin"
-    read -r ENV_SEEK ENV_SECTORS <<<"$(python3 /repo/scripts/aml-mpt.py "$WORK/mpt.bin" env)"
-    read -r RESERVED_SEEK _ <<<"$(python3 /repo/scripts/aml-mpt.py "$WORK/mpt.bin" reserved)"
+    read -r ENV_SEEK ENV_SECTORS <<<"$(python3 /repo/image/aml-mpt.py "$WORK/mpt.bin" env)"
+    read -r RESERVED_SEEK _ <<<"$(python3 /repo/image/aml-mpt.py "$WORK/mpt.bin" reserved)"
     FAT_SECTORS=$((RESERVED_SEEK - FAT_SEEK))
     ROOT_SEEK=$((ENV_SEEK + ENV_SECTORS))
 
@@ -125,7 +125,7 @@ EOF
     mcopy -i "$WORK/boot.fat" "$WORK/u-boot.ext" "$WORK/aml_autoscript" "$WORK/boot.scr" ::
     # the eMMC's env: the factory one, booting the u-boot.ext beside it; a bare number is hex
     UEXT_COUNT=$((($(stat -c %s "$WORK/u-boot.ext") + 511) / 512))
-    python3 /repo/scripts/aml-env.py "$STOCK/factory-env.bin" "$WORK/env.bin" \
+    python3 /repo/image/aml-env.py "$STOCK/factory-env.bin" "$WORK/env.bin" \
       "bootcmd=run linux_boot; run storeboot" \
       "linux_boot=if amlmmc read $BOARD_AML_MMC_DEV $UBOOT_ADDR $(printf 0x%x $UEXT_SEEK) $(printf 0x%x $UEXT_COUNT); then go $UBOOT_ADDR; fi"
 

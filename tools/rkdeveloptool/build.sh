@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build patched rkdeveloptool into build/tools/rkdeveloptool, for talking to a Rockchip box in
-# maskrom. Each board's loader is packed with it by build-rockchip-loaders.sh.
+# maskrom. Each board's loader is packed with it by ./build.sh loaders.
 #
 # Usage: ./build.sh tool rkdeveloptool
 set -euo pipefail

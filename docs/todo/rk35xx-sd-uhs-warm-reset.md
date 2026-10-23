@@ -78,5 +78,5 @@ non-v2 path whatever the SD does. The two subjects are unrelated.
 ## Done means
 
 Either the `-110` is root-caused and `sd-uhs-sdr12/25/50/104` goes back into
-`boards/h96max-h313/board.dts` with warm reboots still clean over 10 iterations — or the cause is
+`boards/h96max-h313/board.patch` with warm reboots still clean over 10 iterations — or the cause is
 found to be unfixable in the tree, and this file says so with the evidence.

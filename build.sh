@@ -17,6 +17,13 @@
 #          ./build.sh tool <name> [args]      a host tool from tools/<name>/, built natively; its
 #                                             executables linked into build/bin/
 #          ./build.sh tools                   every host tool
+#          ./build.sh board-dtb <board>       factory_board.dts, board.dts, board.dtb from
+#                                             factory_board.dtb + board.patch
+#          ./build.sh uboot-dtb <board>       factory_uboot.dts, uboot.dts from factory_uboot.dtb +
+#                                             uboot.patch
+#          ./build.sh loader <board>          maskrom_loader.bin from factory_idbloader.bin + rkbin
+#          ./build.sh board-dtbs | uboot-dtbs | loaders   the same, for every board that has the input
+#          ./build.sh boards                  all three plurals, then whether boards/ drifted from git
 #   env:   TVB_BUILD_CPUS (all cores), TVB_BUILD_MEMORY (8g), TVB_BUILD_SUITE (Debian stable),
 #          TVB_BUILD_REVISION (0~local), TVB_BUILD_CACHE (1; 0: clean), TVB_BUILD_CCACHE_SIZE (5G),
 #          TVB_BUILD_CCACHE_DIR (in the work volume; a host directory for CI's cache to keep,
@@ -64,7 +71,18 @@ tool() {
   done
 }
 
-usage() { sed -n '3,23p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+# every board's boot files, then whether they still match what git has
+boards_files() {
+  bash tools/board/build-dtb.sh kernel && bash tools/board/build-dtb.sh uboot && bash tools/board/build-loader.sh
+  if [ -z "$(git status --porcelain -- boards/)" ]; then
+    echo "boards/ is up to date"
+  else
+    echo "boards/ changed — commit these or find out why they drifted:"
+    git status --short -- boards/
+  fi
+}
+
+usage() { awk 'NR > 2 { if (!/^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 1; }
 case "${1:-}" in
   kernel | uboot | board | firmware | keyring | debs | image | images | plan | repo | assemble | release) ;;
   serve) cd "$OUT" && exec python3 -m http.server 8000 ;;
@@ -73,6 +91,10 @@ case "${1:-}" in
     [ -f "tools/${2:-}/build.sh" ] || usage
     tool "${@:2}"; exit ;;
   tools) for t in tools/*/build.sh; do t=${t%/build.sh}; tool "${t##*/}"; done; exit ;;
+  board-dtb | board-dtbs) exec bash tools/board/build-dtb.sh kernel "${@:2}" ;;
+  uboot-dtb | uboot-dtbs) exec bash tools/board/build-dtb.sh uboot "${@:2}" ;;
+  loader | loaders) exec bash tools/board/build-loader.sh "${@:2}" ;;
+  boards) boards_files; exit ;;
   *) usage ;;
 esac
 

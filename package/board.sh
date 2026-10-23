@@ -3,9 +3,9 @@
 #   board.sh <board>   -> /out/debs/tvb-<board>_<revision>_arm64.deb
 set -euo pipefail
 BOARD=$1
-FW=/repo/boards
+BOARDS_DIR=/repo/boards
 # shellcheck source=/dev/null
-. "$FW/$BOARD/board.conf"
+. "$BOARDS_DIR/$BOARD/board.conf"
 : "${BOARD_FAMILY:?boards/$BOARD/board.conf names no BOARD_FAMILY}" "${BOARD_NAME:?boards/$BOARD/board.conf names no BOARD_NAME}"
 [ "${BOARD_ID:-}" = "$BOARD" ] || { echo "boards/$BOARD/board.conf: BOARD_ID=${BOARD_ID:-} is not its directory" >&2; exit 1; }
 # Rockchip's defaults: the vendor's ttyFIQ0 console, and CMA for a 4K frame (the tree has 8 MiB)
@@ -17,27 +17,27 @@ ROOT=/work/package/$BOARD
 LIB=$ROOT/usr/lib/tvb
 rm -rf "$ROOT" && mkdir -p "$ROOT/DEBIAN" "$LIB"
 
-dtc -q -@ -I dts -O dtb -o "$LIB/board.dtb" "$FW/$BOARD/board.dts"
+cp "$BOARDS_DIR/$BOARD/board.dtb" "$LIB/board.dtb"
 echo "$BOARD_ID" >"$LIB/board-id"
 echo "$BOARD_NAME" >"$LIB/board-name"
 [ -z "${BOARD_PCB:-}" ] || echo "$BOARD_PCB" >"$LIB/board-pcb"
 
 # loader files only: nothing in this package writes a sector
 [ -z "${BOARD_UBOOT:-}" ] || cp "/out/uboot/$BOARD/u-boot.bin" "$LIB/u-boot.bin"
-[ ! -f "$FW/$BOARD/factory_idbloader.bin" ] || cp "$FW/$BOARD/factory_idbloader.bin" "$LIB/idbloader.bin"
+[ ! -f "$BOARDS_DIR/$BOARD/factory_idbloader.bin" ] || cp "$BOARDS_DIR/$BOARD/factory_idbloader.bin" "$LIB/idbloader.bin"
 # tvb-install, on a board that names the sectors a copy leaves as they are: the unit's own
-if [ -f "$FW/$BOARD/preserve-sectors" ]; then
-  install -D -m 0755 "$FW/common/tvb-install" "$ROOT/usr/sbin/tvb-install"
-  cp "$FW/$BOARD/preserve-sectors" "$LIB/preserve-sectors"
+if [ -f "$BOARDS_DIR/$BOARD/preserve-sectors" ]; then
+  install -D -m 0755 "$BOARDS_DIR/common/tvb-install" "$ROOT/usr/sbin/tvb-install"
+  cp "$BOARDS_DIR/$BOARD/preserve-sectors" "$LIB/preserve-sectors"
 fi
 
 while read -r mode src dest; do
   case "$mode" in
     '' | \#*) ;;
     link) mkdir -p "$(dirname "$ROOT$dest")" && ln -s "$src" "$ROOT$dest" ;;
-    *) install -D -m "$mode" "$FW/$src" "$ROOT$dest" ;;
+    *) install -D -m "$mode" "$BOARDS_DIR/$src" "$ROOT$dest" ;;
   esac
-done <"$FW/$BOARD/package.list"
+done <"$BOARDS_DIR/$BOARD/package.list"
 
 mkdir -p "$ROOT/usr/share/u-boot-menu/conf.d"
 # ro: systemd-fsck-root checks the rootfs; net.ifnames=0: eth0 and wlan0, as on Armbian

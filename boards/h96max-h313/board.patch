@@ -1,7 +1,7 @@
---- board.dts
-+++ armbian.dts
-@@ -1,11 +1,13 @@
- /dts-v1/;
+--- factory_board.dts
++++ board.dts
+@@ -11,11 +11,13 @@
+ #include <dt-bindings/thermal/thermal.h>
  
  / {
 -	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518";
@@ -9,14 +9,14 @@
 +	 * rk3528a last, because rkmpp has no rk3518 entry and cannot otherwise find the VPU */
 +	compatible = "h96max-h313,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
  	interrupt-parent = <&gic>;
- 	#address-cells = <0x02>;
- 	#size-cells = <0x02>;
+ 	#address-cells = <2>;
+ 	#size-cells = <2>;
 -	model = "Rockchip RK3518 EVB1 DDR4 V10 Board";
 +	model = "H96 Max H313 3518_ZX_V01";
  
  	aliases {
  		ethernet0 = "/ethernet@ffbd0000";
-@@ -767,6 +769,9 @@
+@@ -783,6 +785,9 @@
  			mode-charge = <0x5242c30b>;
  			mode-fastboot = <0x5242c309>;
  			mode-loader = <0x5242c301>;
@@ -26,21 +26,21 @@
  			mode-normal = <0x5242c300>;
  			mode-recovery = <0x5242c303>;
  			mode-ums = <0x5242c30c>;
-@@ -845,9 +850,10 @@
- 		compatible = "arm,mali-450";
- 		reg = <0x00 0xff700000 0x00 0x40000>;
- 		interrupts = <0x00 0x58 0x04 0x00 0x59 0x04 0x00 0x56 0x04 0x00 0x5c 0x04 0x00 0x5d 0x04 0x00 0x5a 0x04 0x00 0x5b 0x04>;
+@@ -907,9 +912,10 @@
+ 		             <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 90 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 91 IRQ_TYPE_LEVEL_HIGH>;
 -		interrupt-names = "Mali_GP_IRQ", "Mali_GP_MMU_IRQ", "IRQPP", "Mali_PP0_IRQ", "Mali_PP0_MMU_IRQ", "Mali_PP1_IRQ", "Mali_PP1_MMU_IRQ";
--		clocks = <&scmi_clk 0x16 &cru 0x113 &cru 0x10e>;
+-		clocks = <&scmi_clk SCMI_CLK_GPU>, <&cru ACLK_GPU_MALI>, <&cru PCLK_GPU_ROOT>;
 -		clock-names = "clk_mali", "aclk_gpu_mali", "pclk_gpu";
 +		/* names mainline lima expects; the vendor Mali blob used its own */
 +		interrupt-names = "gp", "gpmmu", "pp", "pp0", "ppmmu0", "pp1", "ppmmu1";
-+		clocks = <&cru 0x113 &cru 0x113>;
++		clocks = <&cru ACLK_GPU_MALI>, <&cru ACLK_GPU_MALI>;
 +		clock-names = "bus", "core";
- 		assigned-clocks = <&scmi_clk 0x16>;
- 		assigned-clock-rates = <0x11e1a300>;
- 		power-domains = <&power 0x04>;
-@@ -1080,7 +1086,8 @@
+ 		assigned-clocks = <&scmi_clk SCMI_CLK_GPU>;
+ 		assigned-clock-rates = <300000000>;
+ 		power-domains = <&power RK3528_PD_GPU>;
+@@ -1148,7 +1154,8 @@
  		iommus = <&vop_mmu>;
  		rockchip,grf = <&grf>;
  		status = "okay";
@@ -50,7 +50,7 @@
  		support-multi-area;
  		phandle = <0xea>;
  
-@@ -1668,7 +1678,8 @@
+@@ -1746,7 +1753,8 @@
  		status = "okay";
  		remote_pwm_id = <0x03>;
  		handle_cpu_id = <0x01>;
@@ -60,20 +60,20 @@
  		phandle = <0x107>;
  
  		ir_key1 {
-@@ -1784,7 +1795,8 @@
- 		clocks = <&cru 0x73 &cru 0x72>;
+@@ -1862,7 +1870,8 @@
+ 		clocks = <&cru TCLK_WDT_NS>, <&cru PCLK_WDT_NS>;
  		clock-names = "tclk", "pclk";
- 		interrupts = <0x00 0x1c 0x04>;
+ 		interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
 -		status = "disabled";
 +		/* /dev/watchdog for systemd RuntimeWatchdogSec - also the only hang recorder */
 +		status = "okay";
  		phandle = <0x10d>;
  	};
  
-@@ -2082,11 +2094,9 @@
+@@ -2187,11 +2196,9 @@
  		pinctrl-names = "default";
- 		pinctrl-0 = <&sdmmc_clk &sdmmc_cmd &sdmmc_det &sdmmc_bus4>;
- 		rockchip,default-sample-phase = <0x5a>;
+ 		pinctrl-0 = <&sdmmc_clk>, <&sdmmc_cmd>, <&sdmmc_det>, <&sdmmc_bus4>;
+ 		rockchip,default-sample-phase = <90>;
 +		/* sd-uhs-* removed: with UHS the SD intermittently fails to re-initialise after a
 +		 * warm reset and the box comes up with no root. Costs SDR104, keeps reboots. */
  		supports-sd;
@@ -84,7 +84,7 @@
  		vqmmc-supply = <&vccio_sd>;
  		vmmc-supply = <&vcc_sd>;
  		phandle = <0x114>;
-@@ -4104,7 +4114,9 @@
+@@ -4321,7 +4328,9 @@
  		compatible = "gpio-leds";
  		phandle = <0x1c7>;
  
@@ -92,20 +92,20 @@
 +		/* power/standby are the names the shared LED hooks drive; the factory called
 +		 * them work-green and work-red */
 +		power {
- 			gpios = <&gpio4 0x11 0x01>;
+ 			gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
  			linux,default-trigger = "none";
  			default-state = "on";
-@@ -4112,7 +4124,8 @@
+@@ -4329,7 +4338,8 @@
  			retain-state-shutdown;
  		};
  
 -		work-red {
 +		/* the standby half of the same rename; the factory called it work-red */
 +		standby {
- 			gpios = <&gpio4 0x0b 0x01>;
+ 			gpios = <&gpio4 11 GPIO_ACTIVE_LOW>;
  			linux,default-trigger = "none";
  			default-state = "off";
-@@ -4121,10 +4134,7 @@
+@@ -4338,10 +4348,8 @@
  		};
  	};
  
@@ -113,7 +113,8 @@
 -		bootargs = "earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0";
 -		phandle = <0x1c8>;
 -	};
-+	/* chosen dropped: u-boot supplies bootargs, and the vendor string names ttyFIQ0 */
++	/* chosen dropped: U-Boot overwrites /chosen/bootargs with extlinux.conf's append before
++	 * handing the tree to Linux, so anything here is inert */
  
  	fiq-debugger {
  		compatible = "rockchip,fiq-debugger";

@@ -1,9 +1,19 @@
 /dts-v1/;
 
+/* dt-bindings from u-boot/u-boot v2026.10 (5508406582f6f7120dce0c4b3059819a41788db2), dts/upstream/include/ */
+#include <dt-bindings/clock/rockchip,rk3528-cru.h>
+#include <dt-bindings/reset/rockchip,rk3528-cru.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/pinctrl/rockchip.h>
+#include <dt-bindings/input/linux-event-codes.h>
+#include <dt-bindings/thermal/thermal.h>
+
 / {
 	compatible = "rockchip,rk3528-evb", "rockchip,rk3528";
-	#address-cells = <0x02>;
-	#size-cells = <0x02>;
+	#address-cells = <2>;
+	#size-cells = <2>;
 	/* the U-Boot banner's "Model:" line, so three near-identical boxes are
 	 * distinguishable on a serial console; nothing else reads it */
 	model = "R69 XR821_V1.1";
@@ -27,13 +37,13 @@
 			compatible = "arm,scmi-smc";
 			shmem = <&{/scmi-shmem@10f000}>;
 			arm,smc-id = <0x82000010>;
-			#address-cells = <0x01>;
-			#size-cells = <0x00>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 			bootph-pre-ram;
 
 			protocol@14 {
 				reg = <0x14>;
-				#clock-cells = <0x01>;
+				#clock-cells = <1>;
 				bootph-pre-ram;
 				phandle = <0x10000005>;
 			};
@@ -66,8 +76,8 @@
 		compatible = "rockchip,rk3528-cru";
 		reg = <0x00 0xff4a0000 0x00 0x30000>;
 		rockchip,grf = <&{/syscon@ff300000}>;
-		#clock-cells = <0x01>;
-		#reset-cells = <0x01>;
+		#clock-cells = <1>;
+		#reset-cells = <1>;
 		bootph-pre-ram;
 		status = "okay";
 		phandle = <0x10000011>;
@@ -84,13 +94,14 @@
 	serial@ffa00000 {
 		compatible = "rockchip,rk3528-uart", "snps,dw-apb-uart";
 		reg = <0x00 0xffa00000 0x00 0x100>;
-		interrupts = <0x00 0x2a 0x04>;
-		clocks = <&{/clock-controller@ff4a0000} 0x19 &{/clock-controller@ff4a0000} 0xa0>;
-		reg-shift = <0x02>;
-		reg-io-width = <0x04>;
+		interrupts = <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&{/clock-controller@ff4a0000} SCLK_UART2>,
+		         <&{/clock-controller@ff4a0000} PCLK_UART2>;
+		reg-shift = <2>;
+		reg-io-width = <4>;
 		dmas = <0x1000002b 0x0d 0x1000002b 0x0c>;
 		status = "okay";
-		clock-frequency = <0x16e3600>;
+		clock-frequency = <24000000>;
 		bootph-pre-ram;
 	};
 
@@ -102,8 +113,8 @@
 	serial@ff9f0000 {
 		compatible = "rockchip,rk3528-uart", "snps,dw-apb-uart";
 		reg = <0x0 0xff9f0000 0x0 0x100>;
-		clocks = <&{/clock-controller@ff4a0000} 19>,	/* SCLK_UART0 */
-			 <&{/clock-controller@ff4a0000} 107>;	/* PCLK_UART0 */
+		clocks = <&{/clock-controller@ff4a0000} SCLK_UART0>,
+		         <&{/clock-controller@ff4a0000} PCLK_UART0>;
 		clock-names = "baudclk", "apb_pclk";
 		clock-frequency = <24000000>;
 		reg-io-width = <4>;
@@ -115,10 +126,11 @@
 	saradc@ffae0000 {
 		compatible = "rockchip,rk3528-saradc";
 		reg = <0x00 0xffae0000 0x00 0x10000>;
-		interrupts = <0x00 0x8c 0x04>;
-		#io-channel-cells = <0x01>;
-		clocks = <&{/clock-controller@ff4a0000} 0xc3 &{/clock-controller@ff4a0000} 0xc2>;
-		resets = <&{/clock-controller@ff4a0000} 0x6f>;
+		interrupts = <GIC_SPI 140 IRQ_TYPE_LEVEL_HIGH>;
+		#io-channel-cells = <1>;
+		clocks = <&{/clock-controller@ff4a0000} CLK_SARADC>,
+		         <&{/clock-controller@ff4a0000} PCLK_SARADC>;
+		resets = <&{/clock-controller@ff4a0000} SRST_P_SARADC>;
 		reset-names = "saradc-apb";
 		/* mainline's saradc driver fails probe with no vref-supply and no explicit reference;
 		 * the vendor's defaulted, so the factory tree carries neither */
@@ -131,13 +143,21 @@
 	mmc@ffbf0000 {
 		compatible = "rockchip,rk3528-dwcmshc";
 		reg = <0x00 0xffbf0000 0x00 0x10000>;
-		interrupts = <0x00 0x88 0x04>;
-		clocks = <&{/clock-controller@ff4a0000} 0x8c &{/clock-controller@ff4a0000} 0x8d &{/clock-controller@ff4a0000} 0x8e &{/clock-controller@ff4a0000} 0x8f &{/clock-controller@ff4a0000} 0x90>;
-		resets = <&{/clock-controller@ff4a0000} 0x41 &{/clock-controller@ff4a0000} 0x42 &{/clock-controller@ff4a0000} 0x43 &{/clock-controller@ff4a0000} 0x44 &{/clock-controller@ff4a0000} 0x45>;
+		interrupts = <GIC_SPI 136 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&{/clock-controller@ff4a0000} CCLK_SRC_EMMC>,
+		         <&{/clock-controller@ff4a0000} HCLK_EMMC>,
+		         <&{/clock-controller@ff4a0000} ACLK_EMMC>,
+		         <&{/clock-controller@ff4a0000} BCLK_EMMC>,
+		         <&{/clock-controller@ff4a0000} TCLK_EMMC>;
+		resets = <&{/clock-controller@ff4a0000} SRST_C_EMMC>,
+		         <&{/clock-controller@ff4a0000} SRST_H_EMMC>,
+		         <&{/clock-controller@ff4a0000} SRST_A_EMMC>,
+		         <&{/clock-controller@ff4a0000} SRST_B_EMMC>,
+		         <&{/clock-controller@ff4a0000} SRST_T_EMMC>;
 		reset-names = "core", "bus", "axi", "block", "timer";
-		max-frequency = <0x2faf080>;
+		max-frequency = <50000000>;
 		status = "okay";
-		bus-width = <0x08>;
+		bus-width = <8>;
 		bootph-pre-ram;
 		mmc-hs200-1_8v;
 		fixed-emmc-driver-type = <0x01>;
@@ -146,10 +166,11 @@
 	spi@ffc00000 {
 		compatible = "rockchip,sfc";
 		reg = <0x00 0xffc00000 0x00 0x4000>;
-		interrupts = <0x00 0x87 0x04>;
-		clocks = <&{/clock-controller@ff4a0000} 0x8b &{/clock-controller@ff4a0000} 0x8a>;
-		#address-cells = <0x01>;
-		#size-cells = <0x00>;
+		interrupts = <GIC_SPI 135 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&{/clock-controller@ff4a0000} SCLK_SFC>,
+		         <&{/clock-controller@ff4a0000} HCLK_SFC>;
+		#address-cells = <1>;
+		#size-cells = <0>;
 		status = "okay";
 		bootph-pre-ram;
 
@@ -157,9 +178,9 @@
 			bootph-pre-ram;
 			compatible = "spi-nand";
 			reg = <0x00>;
-			spi-tx-bus-width = <0x01>;
-			spi-rx-bus-width = <0x04>;
-			spi-max-frequency = <0x47868c0>;
+			spi-tx-bus-width = <1>;
+			spi-rx-bus-width = <4>;
+			spi-max-frequency = <75000000>;
 		};
 
 		flash@1 {
@@ -167,24 +188,27 @@
 			compatible = "jedec,spi-nor";
 			label = "sfc_nor";
 			reg = <0x00>;
-			spi-tx-bus-width = <0x01>;
-			spi-rx-bus-width = <0x04>;
-			spi-max-frequency = <0x5f5e100>;
+			spi-tx-bus-width = <1>;
+			spi-rx-bus-width = <4>;
+			spi-max-frequency = <100000000>;
 		};
 	};
 
 	mmc@ffc30000 {
 		compatible = "rockchip,rk3528-dw-mshc", "rockchip,rk3288-dw-mshc";
 		reg = <0x00 0xffc30000 0x00 0x4000>;
-		interrupts = <0x00 0x85 0x04>;
-		max-frequency = <0x8f0d180>;
-		clocks = <0x10000011 0x128 0x10000011 0x127 0x10000056 0x01 0x10000056 0x02>;
-		fifo-depth = <0x100>;
-		resets = <&{/clock-controller@ff4a0000} 0xbd>;
+		interrupts = <GIC_SPI 133 IRQ_TYPE_LEVEL_HIGH>;
+		max-frequency = <150000000>;
+		clocks = <0x10000011 HCLK_SDMMC0 0x10000011 CCLK_SRC_SDMMC0 0x10000056 0x01 0x10000056 0x02>;
+		fifo-depth = <256>;
+		resets = <&{/clock-controller@ff4a0000} SRST_H_SDMMC0>;
 		reset-names = "reset";
 		rockchip,use-v2-tuning;
 		pinctrl-names = "default";
-		pinctrl-0 = <&{/pinctrl/sdmmc-pins/sdmmc-clk} &{/pinctrl/sdmmc-pins/sdmmc-cmd} &{/pinctrl/sdmmc-pins/sdmmc-det} &{/pinctrl/sdmmc-pins/sdmmc-bus4}>;
+		pinctrl-0 = <&{/pinctrl/sdmmc-pins/sdmmc-clk}>,
+		            <&{/pinctrl/sdmmc-pins/sdmmc-cmd}>,
+		            <&{/pinctrl/sdmmc-pins/sdmmc-det}>,
+		            <&{/pinctrl/sdmmc-pins/sdmmc-bus4}>;
 		status = "okay";
 		bootph-pre-ram;
 	};
@@ -192,11 +216,15 @@
 	crypto@ffc40000 {
 		compatible = "rockchip,crypto-v4";
 		reg = <0x00 0xffc40000 0x00 0x2000>;
-		interrupts = <0x00 0x13 0x04>;
-		clocks = <&{/firmware/scmi/protocol@14} 0x18 &{/firmware/scmi/protocol@14} 0x1a &{/firmware/scmi/protocol@14} 0x17 &{/firmware/scmi/protocol@14} 0x19>;
-		assigned-clocks = <&{/firmware/scmi/protocol@14} 0x17 &{/firmware/scmi/protocol@14} 0x19>;
-		assigned-clock-rates = <0x11e1a300 0x11e1a300>;
-		resets = <&{/clock-controller@ff4a0000} 0xa>;
+		interrupts = <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&{/firmware/scmi/protocol@14} SCMI_ACLK_CRYPTO>,
+		         <&{/firmware/scmi/protocol@14} SCMI_HCLK_CRYPTO>,
+		         <&{/firmware/scmi/protocol@14} SCMI_CORE_CRYPTO>,
+		         <&{/firmware/scmi/protocol@14} SCMI_PKA_CRYPTO>;
+		assigned-clocks = <&{/firmware/scmi/protocol@14} SCMI_CORE_CRYPTO>,
+		                  <&{/firmware/scmi/protocol@14} SCMI_PKA_CRYPTO>;
+		assigned-clock-rates = <300000000>, <300000000>;
+		resets = <&{/clock-controller@ff4a0000} SRST_CORE_CRYPTO>;
 		reset-names = "crypto-rst";
 		status = "okay";
 		bootph-pre-ram;
@@ -205,9 +233,9 @@
 	rng@ffc50000 {
 		compatible = "rockchip,rkrng";
 		reg = <0x00 0xffc50000 0x00 0x200>;
-		interrupts = <0x00 0x17 0x04>;
-		clocks = <&{/firmware/scmi/protocol@14} 0x20>;
-		resets = <&{/clock-controller@ff4a0000} 0x29>;
+		interrupts = <GIC_SPI 23 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&{/firmware/scmi/protocol@14} SCMI_HCLK_TRNG>;
+		resets = <&{/clock-controller@ff4a0000} SRST_H_TRNG_NS>;
 		reset-names = "reset";
 		status = "okay";
 		bootph-all;
@@ -216,11 +244,14 @@
 	phy@ffdc0000 {
 		compatible = "rockchip,rk3528-naneng-combphy";
 		reg = <0x00 0xffdc0000 0x00 0x10000>;
-		#phy-cells = <0x01>;
-		clocks = <&{/clock-controller@ff4a0000} 0x7b &{/clock-controller@ff4a0000} 0xb3 &{/clock-controller@ff4a0000} 0xb4>;
-		assigned-clocks = <&{/clock-controller@ff4a0000} 0x7b>;
-		assigned-clock-rates = <0x5f5e100>;
-		resets = <&{/clock-controller@ff4a0000} 0x65 &{/clock-controller@ff4a0000} 0x63>;
+		#phy-cells = <1>;
+		clocks = <&{/clock-controller@ff4a0000} CLK_REF_PCIE_INNER_PHY>,
+		         <&{/clock-controller@ff4a0000} PCLK_PCIE_PHY>,
+		         <&{/clock-controller@ff4a0000} PCLK_PIPE_GRF>;
+		assigned-clocks = <&{/clock-controller@ff4a0000} CLK_REF_PCIE_INNER_PHY>;
+		assigned-clock-rates = <100000000>;
+		resets = <&{/clock-controller@ff4a0000} SRST_P_PCIE_PHY>,
+		         <&{/clock-controller@ff4a0000} SRST_PCIE_PIPE_PHY>;
 		reset-names = "combphy-apb", "combphy";
 		rockchip,pipe-grf = <&{/syscon@ff300000}>;
 		rockchip,pipe-phy-grf = <&{/syscon@ff300000}>;
@@ -232,16 +263,19 @@
 	usb2-phy@ffdf0000 {
 		compatible = "rockchip,rk3528-usb2phy";
 		reg = <0x00 0xffdf0000 0x00 0x10000>;
-		clocks = <&{/clock-controller@ff4a0000} 0x137 &{/clock-controller@ff4a0000} 0x136>;
-		#clock-cells = <0x00>;
+		clocks = <&{/clock-controller@ff4a0000} CLK_REF_USBPHY>,
+		         <&{/clock-controller@ff4a0000} PCLK_USBPHY>;
+		#clock-cells = <0>;
 		rockchip,usbgrf = <&{/syscon@ff300000}>;
 		status = "okay";
 		bootph-all;
 		phandle = <0x10000015>;
 
 		otg-port {
-			#phy-cells = <0x00>;
-			interrupts = <0x00 0x92 0x04 0x00 0x93 0x04 0x00 0x94 0x04>;
+			#phy-cells = <0>;
+			interrupts = <GIC_SPI 146 IRQ_TYPE_LEVEL_HIGH>,
+			             <GIC_SPI 147 IRQ_TYPE_LEVEL_HIGH>,
+			             <GIC_SPI 148 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-names = "otg-bvalid", "otg-id", "linestate";
 			status = "okay";
 			bootph-all;
@@ -252,8 +286,8 @@
 	pinctrl {
 		compatible = "rockchip,rk3528-pinctrl";
 		rockchip,grf = <&{/syscon@ff540000}>;
-		#address-cells = <0x02>;
-		#size-cells = <0x02>;
+		#address-cells = <2>;
+		#size-cells = <2>;
 		ranges;
 		bootph-pre-ram;
 		status = "okay";
@@ -262,13 +296,14 @@
 		gpio@ff610000 {
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xff610000 0x00 0x200>;
-			interrupts = <0x00 0x47 0x04>;
-			clocks = <&{/clock-controller@ff4a0000} 0x172 &{/clock-controller@ff4a0000} 0x173>;
+			interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&{/clock-controller@ff4a0000} PCLK_GPIO0>,
+			         <&{/clock-controller@ff4a0000} DBCLK_GPIO0>;
 			gpio-controller;
-			#gpio-cells = <0x02>;
-			gpio-ranges = <&{/pinctrl} 0x00 0x00 0x20>;
+			#gpio-cells = <2>;
+			gpio-ranges = <&{/pinctrl} 0 0 32>;
 			interrupt-controller;
-			#interrupt-cells = <0x02>;
+			#interrupt-cells = <2>;
 			bootph-pre-ram;
 			phandle = <0x10000029>;
 		};
@@ -276,52 +311,56 @@
 		gpio@ffaf0000 {
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffaf0000 0x00 0x200>;
-			interrupts = <0x00 0x49 0x04>;
-			clocks = <&{/clock-controller@ff4a0000} 0x91 &{/clock-controller@ff4a0000} 0x92>;
+			interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&{/clock-controller@ff4a0000} PCLK_GPIO1>,
+			         <&{/clock-controller@ff4a0000} DBCLK_GPIO1>;
 			gpio-controller;
-			#gpio-cells = <0x02>;
-			gpio-ranges = <&{/pinctrl} 0x00 0x20 0x20>;
+			#gpio-cells = <2>;
+			gpio-ranges = <&{/pinctrl} 0 32 32>;
 			interrupt-controller;
-			#interrupt-cells = <0x02>;
+			#interrupt-cells = <2>;
 			bootph-pre-ram;
 		};
 
 		gpio@ffb00000 {
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffb00000 0x00 0x200>;
-			interrupts = <0x00 0x4b 0x04>;
-			clocks = <&{/clock-controller@ff4a0000} 0x124 &{/clock-controller@ff4a0000} 0x125>;
+			interrupts = <GIC_SPI 75 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&{/clock-controller@ff4a0000} PCLK_GPIO2>,
+			         <&{/clock-controller@ff4a0000} DBCLK_GPIO2>;
 			gpio-controller;
-			#gpio-cells = <0x02>;
-			gpio-ranges = <&{/pinctrl} 0x00 0x40 0x20>;
+			#gpio-cells = <2>;
+			gpio-ranges = <&{/pinctrl} 0 64 32>;
 			interrupt-controller;
-			#interrupt-cells = <0x02>;
+			#interrupt-cells = <2>;
 			bootph-pre-ram;
 		};
 
 		gpio@ffb10000 {
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffb10000 0x00 0x200>;
-			interrupts = <0x00 0x4c 0x04>;
-			clocks = <&{/clock-controller@ff4a0000} 0x9b &{/clock-controller@ff4a0000} 0x9c>;
+			interrupts = <GIC_SPI 76 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&{/clock-controller@ff4a0000} PCLK_GPIO3>,
+			         <&{/clock-controller@ff4a0000} DBCLK_GPIO3>;
 			gpio-controller;
-			#gpio-cells = <0x02>;
-			gpio-ranges = <&{/pinctrl} 0x00 0x60 0x20>;
+			#gpio-cells = <2>;
+			gpio-ranges = <&{/pinctrl} 0 96 32>;
 			interrupt-controller;
-			#interrupt-cells = <0x02>;
+			#interrupt-cells = <2>;
 			bootph-all;
 		};
 
 		gpio@ffb20000 {
 			compatible = "rockchip,gpio-bank";
 			reg = <0x00 0xffb20000 0x00 0x200>;
-			interrupts = <0x00 0x4e 0x04>;
-			clocks = <&{/clock-controller@ff4a0000} 0xe4 &{/clock-controller@ff4a0000} 0xe5>;
+			interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&{/clock-controller@ff4a0000} PCLK_GPIO4>,
+			         <&{/clock-controller@ff4a0000} DBCLK_GPIO4>;
 			gpio-controller;
-			#gpio-cells = <0x02>;
-			gpio-ranges = <&{/pinctrl} 0x00 0x80 0x20>;
+			#gpio-cells = <2>;
+			gpio-ranges = <&{/pinctrl} 0 128 32>;
 			interrupt-controller;
-			#interrupt-cells = <0x02>;
+			#interrupt-cells = <2>;
 			bootph-all;
 			phandle = <0x10000063>;
 		};
@@ -340,25 +379,25 @@
 
 		pcfg-pull-none-drv-level-1 {
 			bias-disable;
-			drive-strength = <0x01>;
+			drive-strength = <1>;
 			bootph-pre-ram;
 		};
 
 		pcfg-pull-none-drv-level-2 {
 			bias-disable;
-			drive-strength = <0x02>;
+			drive-strength = <2>;
 			bootph-pre-ram;
 		};
 
 		pcfg-pull-up-drv-level-1 {
 			bias-pull-up;
-			drive-strength = <0x01>;
+			drive-strength = <1>;
 			bootph-pre-ram;
 		};
 
 		pcfg-pull-up-drv-level-2 {
 			bias-pull-up;
-			drive-strength = <0x02>;
+			drive-strength = <2>;
 			bootph-pre-ram;
 			phandle = <0x1000005f>;
 		};
@@ -367,25 +406,28 @@
 			bootph-pre-ram;
 
 			sdmmc-bus4 {
-				rockchip,pins = <0x02 0x00 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2} 0x02 0x01 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2} 0x02 0x02 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2} 0x02 0x03 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
+				rockchip,pins = <2 RK_PA0 1 &{/pinctrl/pcfg-pull-up-drv-level-2}>,
+				                <2 RK_PA1 1 &{/pinctrl/pcfg-pull-up-drv-level-2}>,
+				                <2 RK_PA2 1 &{/pinctrl/pcfg-pull-up-drv-level-2}>,
+				                <2 RK_PA3 1 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
 				bootph-pre-ram;
 				phandle = <0x1000005a>;
 			};
 
 			sdmmc-clk {
-				rockchip,pins = <0x02 0x05 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
+				rockchip,pins = <2 RK_PA5 1 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
 				bootph-pre-ram;
 				phandle = <0x10000057>;
 			};
 
 			sdmmc-cmd {
-				rockchip,pins = <0x02 0x04 0x01 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
+				rockchip,pins = <2 RK_PA4 1 &{/pinctrl/pcfg-pull-up-drv-level-2}>;
 				bootph-pre-ram;
 				phandle = <0x10000058>;
 			};
 
 			sdmmc-det {
-				rockchip,pins = <0x02 0x06 0x01 &{/pinctrl/pcfg-pull-up}>;
+				rockchip,pins = <2 RK_PA6 1 &{/pinctrl/pcfg-pull-up}>;
 				bootph-pre-ram;
 				phandle = <0x10000059>;
 			};
@@ -409,17 +451,17 @@
 
 	adc-keys {
 		compatible = "adc-keys";
-		io-channels = <&{/saradc@ffae0000} 0x01>;
+		io-channels = <&{/saradc@ffae0000} 1>;
 		io-channel-names = "buttons";
-		keyup-threshold-microvolt = <0x1b7740>;
+		keyup-threshold-microvolt = <1800000>;
 		bootph-all;
 		status = "okay";
 
 		volumeup-key {
 			bootph-all;
-			linux,code = <0x73>;
+			linux,code = <KEY_VOLUMEUP>;
 			label = "volume up";
-			press-threshold-microvolt = <0x09>;
+			press-threshold-microvolt = <9>;
 		};
 	};
 };

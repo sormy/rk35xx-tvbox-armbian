@@ -7,8 +7,8 @@ through `[SYSTEM] NEWIDB=true` and `[FLAG] RC4_OFF=true` — sections the stock 
 outright with `unknown sec: [SYSTEM]!`.
 
 `./build.sh tool rkdeveloptool` fetches rkdeveloptool, applies these, and builds it to
-`build/bin/rkdeveloptool`. `./build-rockchip-loaders.sh` then packs each board's loader from that
-same rkbin ini, so the flags come from Rockchip's file rather than from anything this repo invents.
+`build/bin/rkdeveloptool`. `./build.sh loaders` then packs each board's loader from that same rkbin
+ini, so the flags come from Rockchip's file rather than from anything this repo invents.
 
 | Patch  | Fixes                                                                             |
 | ------ | --------------------------------------------------------------------------------- |

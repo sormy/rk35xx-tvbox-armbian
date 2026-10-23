@@ -1,11 +1,11 @@
 # H96 Max 3518D — device tree
 
 **Grafts booted and running since 2026-09-06.** `boards/h96max-3518d/board.patch` is the source;
-`./build-board-dtb.sh` compiles it to `boards/h96max-3518d/board.dtb`. The box boots from it and is
-reachable over SSH, so the grafts below are ✅ unless marked otherwise.
+`./build.sh board-dtb h96max-3518d` compiles it to `boards/h96max-3518d/board.dtb`. The box boots
+from it and is reachable over SSH, so the grafts below are ✅ unless marked otherwise.
 
 Factory tree: `boards/h96max-3518d/factory_board.dtb`, carved from the `boot` partition (not from
-`/proc/device-tree` — U-Boot edits that one). 4640 lines, round-trips through the patched `dtc`.
+`/proc/device-tree` — U-Boot edits that one). `tools/dtcx/` decompiles it byte-identically.
 
 ## It is four lines away from the H96 Max
 

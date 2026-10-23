@@ -1,7 +1,7 @@
---- board.dts
-+++ armbian.dts
-@@ -1,11 +1,13 @@
- /dts-v1/;
+--- factory_board.dts
++++ board.dts
+@@ -11,11 +11,13 @@
+ #include <dt-bindings/thermal/thermal.h>
  
  / {
 -	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518";
@@ -9,22 +9,22 @@
 +	 * rk3528a last, because rkmpp has no rk3518 entry and cannot otherwise find the VPU */
 +	compatible = "h96max-3518d,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
  	interrupt-parent = <&gic>;
- 	#address-cells = <0x02>;
- 	#size-cells = <0x02>;
+ 	#address-cells = <2>;
+ 	#size-cells = <2>;
 -	model = "Rockchip RK3518 EVB1 DDR4 V10 Board";
 +	model = "H96 Max 3518D 3518_DG_ZX_V01";
  
  	aliases {
  		ethernet0 = "/ethernet@ffbd0000";
-@@ -496,6 +498,7 @@
+@@ -512,6 +514,7 @@
  			reg = <0x00 0xfe500000 0x00 0x400000>;
- 			interrupts = <0x00 0x98 0x04>;
+ 			interrupts = <GIC_SPI 152 IRQ_TYPE_LEVEL_HIGH>;
  			dr_mode = "host";
 +			/* NOT FITTED - USB 3, but left wired: removing usb3-phy breaks xhci suspend (-110) */
- 			phys = <&u2phy_otg &combphy_pu 0x04>;
+ 			phys = <&u2phy_otg>, <&combphy_pu 4>;
  			phy-names = "usb2-phy", "usb3-phy";
  			phy_type = "utmi_wide";
-@@ -767,6 +770,9 @@
+@@ -783,6 +786,9 @@
  			mode-charge = <0x5242c30b>;
  			mode-fastboot = <0x5242c309>;
  			mode-loader = <0x5242c301>;
@@ -34,21 +34,21 @@
  			mode-normal = <0x5242c300>;
  			mode-recovery = <0x5242c303>;
  			mode-ums = <0x5242c30c>;
-@@ -845,9 +851,10 @@
- 		compatible = "arm,mali-450";
- 		reg = <0x00 0xff700000 0x00 0x40000>;
- 		interrupts = <0x00 0x58 0x04 0x00 0x59 0x04 0x00 0x56 0x04 0x00 0x5c 0x04 0x00 0x5d 0x04 0x00 0x5a 0x04 0x00 0x5b 0x04>;
+@@ -907,9 +913,10 @@
+ 		             <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 90 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 91 IRQ_TYPE_LEVEL_HIGH>;
 -		interrupt-names = "Mali_GP_IRQ", "Mali_GP_MMU_IRQ", "IRQPP", "Mali_PP0_IRQ", "Mali_PP0_MMU_IRQ", "Mali_PP1_IRQ", "Mali_PP1_MMU_IRQ";
--		clocks = <&scmi_clk 0x16 &cru 0x113 &cru 0x10e>;
+-		clocks = <&scmi_clk SCMI_CLK_GPU>, <&cru ACLK_GPU_MALI>, <&cru PCLK_GPU_ROOT>;
 -		clock-names = "clk_mali", "aclk_gpu_mali", "pclk_gpu";
 +		/* names mainline lima expects; the vendor Mali blob used its own */
 +		interrupt-names = "gp", "gpmmu", "pp", "pp0", "ppmmu0", "pp1", "ppmmu1";
-+		clocks = <&cru 0x113 &cru 0x113>;
++		clocks = <&cru ACLK_GPU_MALI>, <&cru ACLK_GPU_MALI>;
 +		clock-names = "bus", "core";
- 		assigned-clocks = <&scmi_clk 0x16>;
- 		assigned-clock-rates = <0x11e1a300>;
- 		power-domains = <&power 0x04>;
-@@ -1080,7 +1087,8 @@
+ 		assigned-clocks = <&scmi_clk SCMI_CLK_GPU>;
+ 		assigned-clock-rates = <300000000>;
+ 		power-domains = <&power RK3528_PD_GPU>;
+@@ -1148,7 +1155,8 @@
  		iommus = <&vop_mmu>;
  		rockchip,grf = <&grf>;
  		status = "okay";
@@ -58,9 +58,9 @@
  		support-multi-area;
  		phandle = <0xea>;
  
-@@ -1263,7 +1271,8 @@
+@@ -1338,7 +1346,8 @@
  		rockchip,grf = <&grf>;
- 		nvmem-cells = <&vdac_out_current &test_version>;
+ 		nvmem-cells = <&vdac_out_current>, <&test_version>;
  		nvmem-cell-names = "out-current", "version";
 -		status = "okay";
 +		/* NOT FITTED - composite video encoder, and this board has no AV jack */
@@ -68,9 +68,9 @@
  		phandle = <0xef>;
  
  		ports {
-@@ -1665,7 +1674,9 @@
+@@ -1743,7 +1752,9 @@
  		pinctrl-0 = <&pwm3m0_pins>;
- 		clocks = <&cru 0x7f &cru 0x7e>;
+ 		clocks = <&cru CLK_PWM0>, <&cru PCLK_PWM0>;
  		clock-names = "pwm", "pclk";
 -		status = "okay";
 +		/* NOT FITTED - no IR receiver. The bundled remote drives the board over IR, but nothing
@@ -79,18 +79,18 @@
  		remote_pwm_id = <0x03>;
  		handle_cpu_id = <0x01>;
  		remote_support_psci = <0x00>;
-@@ -1784,7 +1795,8 @@
- 		clocks = <&cru 0x73 &cru 0x72>;
+@@ -1862,7 +1873,8 @@
+ 		clocks = <&cru TCLK_WDT_NS>, <&cru PCLK_WDT_NS>;
  		clock-names = "tclk", "pclk";
- 		interrupts = <0x00 0x1c 0x04>;
+ 		interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
 -		status = "disabled";
 +		/* /dev/watchdog for systemd RuntimeWatchdogSec - also the only hang recorder */
 +		status = "okay";
  		phandle = <0x10d>;
  	};
  
-@@ -1915,7 +1927,8 @@
- 		#sound-dai-cells = <0x00>;
+@@ -2007,7 +2019,8 @@
+ 		#sound-dai-cells = <0>;
  		pinctrl-names = "default";
  		pinctrl-0 = <&spdifm0_pins>;
 -		status = "okay";
@@ -99,7 +99,7 @@
  		phandle = <0x9b>;
  	};
  
-@@ -1939,7 +1952,9 @@
+@@ -2036,7 +2049,9 @@
  		phy-handle = <&rmii0_phy>;
  		nvmem-cells = <&macphy_bgs>;
  		nvmem-cell-names = "bgs";
@@ -110,27 +110,27 @@
  		phandle = <0x10e>;
  
  		mdio0: mdio {
-@@ -2016,7 +2031,8 @@
- 		assigned-clock-rates = <0x5f5e100>;
- 		#address-cells = <0x01>;
- 		#size-cells = <0x00>;
+@@ -2121,7 +2136,8 @@
+ 		assigned-clock-rates = <100000000>;
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
 -		status = "okay";
 +		/* NOT FITTED - SFC with no flash: SPL reports "unrecognized JEDEC id bytes: 00, 00, 00" */
 +		status = "disabled";
  		phandle = <0x111>;
  	};
  
-@@ -2073,7 +2089,8 @@
- 		resets = <&cru 0x2a9>;
+@@ -2178,7 +2194,8 @@
+ 		resets = <&cru SRST_HRESETN_SDMMC0>;
  		reset-names = "reset";
  		rockchip,use-v2-tuning;
 -		status = "okay";
 +		/* NOT FITTED - no SD slot; the controller binds and claims vcc-sd/vccio_sd regardless */
 +		status = "disabled";
- 		bus-width = <0x04>;
+ 		bus-width = <4>;
  		cap-mmc-highspeed;
  		cap-sd-highspeed;
-@@ -2259,6 +2276,7 @@
+@@ -2377,6 +2394,7 @@
  		reset-names = "combphy-apb", "combphy";
  		rockchip,pipe-grf = <&grf>;
  		rockchip,pipe-phy-grf = <&grf>;
@@ -138,17 +138,17 @@
  		status = "okay";
  		phandle = <0x23>;
  	};
-@@ -2318,7 +2336,8 @@
+@@ -2438,7 +2456,8 @@
  		clock-names = "pclk", "mclk";
- 		resets = <&cru 0x1ad>;
+ 		resets = <&cru SRST_PRESETN_ACODEC>;
  		reset-names = "acodec";
 -		status = "okay";
 +		/* NOT FITTED - no analog audio output on this board */
 +		status = "disabled";
- 		pa-ctl-gpios = <&gpio0 0x00 0x00>;
+ 		pa-ctl-gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
  		phandle = <0x91>;
  	};
-@@ -3797,7 +3816,8 @@
+@@ -4014,7 +4033,8 @@
  	};
  
  	acodec_sound: acodec-sound {
@@ -158,7 +158,7 @@
  		compatible = "simple-audio-card";
  		simple-audio-card,name = "rk3528-acodec";
  		simple-audio-card,format = "i2s";
-@@ -3914,7 +3934,8 @@
+@@ -4131,7 +4151,8 @@
  	};
  
  	spdif-sound {
@@ -167,8 +167,8 @@
 +		status = "disabled";
  		compatible = "simple-audio-card";
  		simple-audio-card,name = "ROCKCHIP,SPDIF";
- 		simple-audio-card,mclk-fs = <0x80>;
-@@ -4103,7 +4124,9 @@
+ 		simple-audio-card,mclk-fs = <128>;
+@@ -4320,7 +4341,9 @@
  		compatible = "gpio-leds";
  		phandle = <0x1c7>;
  
@@ -176,20 +176,20 @@
 +		/* power/standby are the names the shared LED hooks drive; the factory called
 +		 * them work-green and work-red */
 +		power {
- 			gpios = <&gpio4 0x11 0x01>;
+ 			gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
  			linux,default-trigger = "none";
  			default-state = "on";
-@@ -4111,7 +4134,8 @@
+@@ -4328,7 +4351,8 @@
  			retain-state-shutdown;
  		};
  
 -		work-red {
 +		/* the standby half of the same rename; the factory called it work-red */
 +		standby {
- 			gpios = <&gpio4 0x0b 0x01>;
+ 			gpios = <&gpio4 11 GPIO_ACTIVE_LOW>;
  			linux,default-trigger = "none";
  			default-state = "off";
-@@ -4120,10 +4144,9 @@
+@@ -4337,10 +4361,8 @@
  		};
  	};
  
@@ -197,9 +197,8 @@
 -		bootargs = "earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0";
 -		phandle = <0x1c8>;
 -	};
-+	/* chosen dropped: u-boot overwrites /chosen/bootargs from its own env before handing the
-+	 * tree to Linux (fdt_chosen -> board_fdt_chosen_bootargs -> env_get), so anything here is
-+	 * inert. The cmdline lives in armbianEnv.txt, per board via BOARD_SERIALCON. */
++	/* chosen dropped: U-Boot overwrites /chosen/bootargs with extlinux.conf's append before
++	 * handing the tree to Linux, so anything here is inert */
  
  	fiq-debugger {
  		compatible = "rockchip,fiq-debugger";

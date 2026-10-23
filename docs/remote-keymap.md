@@ -5,7 +5,7 @@ about the other, and on these boxes they genuinely disagree.
 
 | Transport | Node                   | Keymap from              | Ours?       |
 | --------- | ---------------------- | ------------------------ | ----------- |
-| IR        | `/dev/input/ir-remote` | `ir_keyN` in `board.dts` | in the tree |
+| IR        | `/dev/input/ir-remote` | `ir_keyN` in the tree    | in the tree |
 | BLE       | `/dev/input/bt-remote` | the handset's HID usages | `hwdb` only |
 
 `rockchip-pwm-remotectl` drives the IR node; `hid-input` drives the BLE ones.
@@ -61,8 +61,9 @@ nothing to map them to.
 
 ## Fixing IR
 
-Edit the `ir_keyN` table in `board.dts` — the scancode-to-keycode pairs are plain data in the tree,
-and the tree is the lowest layer that can express it.
+Edit the `ir_keyN` table through `boards/<board>/board.patch`, then `./build.sh board-dtb <board>` —
+the scancode-to-keycode pairs are plain data in the tree, and the tree is the lowest layer that can
+express it.
 
 ## Fixing BLE with an hwdb override
 

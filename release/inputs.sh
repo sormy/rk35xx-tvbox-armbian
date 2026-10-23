@@ -25,7 +25,7 @@ files() {
     board)
       # shellcheck source=/dev/null
       . "boards/$2/board.conf"
-      echo "boards/$2/board.dts" package/board.sh
+      echo "boards/$2/board.dtb" package/board.sh
       [ ! -f "boards/$2/preserve-sectors" ] || echo "boards/$2/preserve-sectors" boards/common/tvb-install
       sed -E 's/#.*//' "boards/$2/package.list" | awk 'NF && $1 != "link" {print "boards/" $2}'
       if [ -n "${BOARD_UBOOT:-}" ]; then
@@ -57,7 +57,6 @@ tools() {
   case $1 in
     kernel) gcc -dumpfullversion; ld --version | head -1 ;;
     board)
-      dtc --version
       # shellcheck source=/dev/null
       (. "boards/$2/board.conf"; [ -z "${BOARD_UBOOT:-}" ] || { gcc -dumpfullversion; ld --version | head -1; }) ;;
   esac

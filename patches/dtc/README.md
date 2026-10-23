@@ -1,6 +1,6 @@
 # dtc — patches to round-trip a vendor DTB
 
-Vanilla `dtc` v1.8.1 plus five patches, built by `./build.sh tool dtc` into `build/tools/dtc/`.
+Vanilla `dtc` v1.8.1 plus six patches, built by `./build.sh tool dtc` into `build/tools/dtc/`.
 Decompiling a blob normally gives raw numbers; this gives references:
 
 ```

@@ -1,21 +1,33 @@
---- board.dts
-+++ armbian.dts
-@@ -1,28 +1,42 @@
+--- factory_board.dts
++++ board.dts
+@@ -1,7 +1,10 @@
  /dts-v1/;
+ 
+-/* dt-bindings from khadas/linux khadas-vims-4.9.y (bd9460728746cc080acbaa084e53460437f43211), include/ */
+-#include <dt-bindings/clock/amlogic,gxl-clkc.h>
++/* dt-bindings from torvalds/linux v6.18 (7d0a66e4bb9081d75c82ec4957c50034cb0ea449), include/ */
++#include <dt-bindings/clock/gxbb-clkc.h>
++#include <dt-bindings/clock/gxbb-aoclkc.h>
++#include <dt-bindings/reset/amlogic,meson-gxbb-reset.h>
++#include <dt-bindings/reset/gxbb-aoclkc.h>
+ #include <dt-bindings/gpio/gpio.h>
+ #include <dt-bindings/interrupt-controller/arm-gic.h>
+ #include <dt-bindings/interrupt-controller/irq.h>
+@@ -9,18 +12,28 @@
+ #include <dt-bindings/thermal/thermal.h>
  
  / {
 -	model = "Amlogic";
-+	/* Board name first, as on the other boards here: userspace and the DKMS
-+	   packages identify the box by it. The factory model string is only
-+	   "Amlogic"; amlogic-dt-id below carries the real identity. */
++	/* the factory model string is only "Amlogic"; amlogic-dt-id is the vendor's identity */
 +	model = "H96 Max M20 905_DG_ZX01_V01";
  	amlogic-dt-id = "gxlx2_p291_2g";
 -	compatible = "amlogic, Gxl";
-+	/* meson-gxlx last, so mainline still matches the SoC. */
++	/* board name first, as on the other boards; meson-gxlx last, so mainline still matches
++	   the SoC */
 +	compatible = "h96max-m20,gxlx2-tvbox", "amlogic,p291", "amlogic,s905l", "amlogic,meson-gxlx";
  	interrupt-parent = <&gic>;
- 	#address-cells = <0x01>;
- 	#size-cells = <0x01>;
+ 	#address-cells = <1>;
+ 	#size-cells = <1>;
  
 +	/* mainline wants the console in the tree; the vendor tree has no chosen
 +	   node and relied on bootargs the vendor U-Boot built. */
@@ -24,35 +36,39 @@
 +	};
 +
  	gpu: mali@d00c0000 {
- 		#cooling-cells = <0x02>;
+ 		#cooling-cells = <2>;
 -		compatible = "arm,mali-450";
 +		/* lima's binding: the vendor's extra reg windows, IRQ names and clocks are its own */
 +		compatible = "amlogic,meson-gxl-mali", "arm,mali-450";
  		interrupt-parent = <&gic>;
 -		reg = <0xd00c0000 0x40000 0xc1104440 0x1000 0xc8100000 0x1000 0xc883c000 0x1000 0xc1104440 0x1000>;
 +		reg = <0xd00c0000 0x40000>;
- 		interrupts = <0x00 0xa0 0x04 0x00 0xa1 0x04 0x00 0xa2 0x04 0x00 0xa3 0x04 0x00 0xa4 0x04 0x00 0xa5 0x04 0x00 0xa6 0x04 0x00 0xa7 0x04>;
+ 		interrupts = <GIC_SPI 160 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 161 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 162 IRQ_TYPE_LEVEL_HIGH>,
+@@ -29,15 +42,18 @@
+ 		             <GIC_SPI 165 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 166 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 167 IRQ_TYPE_LEVEL_HIGH>;
 -		interrupt-names = "IRQGP", "IRQGPMMU", "IRQPP", "IRQPMU", "IRQPP0", "IRQPPMMU0", "IRQPP1", "IRQPPMMU1";
 +		interrupt-names = "gp", "gpmmu", "pp", "pmu", "pp0", "ppmmu0", "pp1", "ppmmu1";
  		pmu_domain_config = <0x01 0x02 0x04 0x00 0x00 0x00 0x00 0x00 0x00 0x01 0x02 0x00>;
  		pmu_switch_delay = <0xffff>;
- 		num_of_pp = <0x02>;
+ 		num_of_pp = <2>;
  		def_clock = <0x03>;
  		sc_mpp = <0x02>;
  		tbl = <0x02 0x03 0x04 0x05 0x06 0x07>;
--		clocks = <&clkc 0x97 &clkc 0x09>;
+-		clocks = <&clkc CLKID_GPU_MUX>, <&clkc CLKID_GP0_PLL>;
 -		clock-names = "gpu_mux", "gp0_pll";
-+		clocks = <&clkc 0x0c &clkc 0x6a>;
++		clocks = <&clkc CLKID_CLK81>, <&clkc CLKID_MALI>;
 +		clock-names = "bus", "core";
-+		assigned-clocks = <&clkc 0x09>;
-+		assigned-clock-rates = <0x2c588a00>;
++		assigned-clocks = <&clkc CLKID_GP0_PLL>;
++		assigned-clock-rates = <744000000>;
 +		operating-points-v2 = <&gpu_opp_table>;
- 		control_interval = <0xc8>;
+ 		control_interval = <200>;
  		phandle = <0x85>;
  
-@@ -105,10 +119,42 @@
- 			threshold = <0xe6 0xff>;
- 			phandle = <0x88>;
+@@ -122,6 +138,38 @@
  		};
  	};
  
@@ -60,40 +76,38 @@
 +		compatible = "operating-points-v2";
 +
 +		opp-125000000 {
-+			opp-hz = <0x00 0x7735940>;
++			opp-hz = /bits/ 64 <125000000>;
 +		};
 +
 +		opp-250000000 {
-+			opp-hz = <0x00 0xee6b280>;
++			opp-hz = /bits/ 64 <250000000>;
 +		};
 +
 +		opp-285714285 {
-+			opp-hz = <0x00 0x1107a76d>;
++			opp-hz = /bits/ 64 <285714285>;
 +		};
 +
 +		opp-400000000 {
-+			opp-hz = <0x00 0x17d78400>;
++			opp-hz = /bits/ 64 <400000000>;
 +		};
 +
 +		opp-500000000 {
-+			opp-hz = <0x00 0x1dcd6500>;
++			opp-hz = /bits/ 64 <500000000>;
 +		};
 +
 +		opp-666666666 {
-+			opp-hz = <0x00 0x27bc86aa>;
++			opp-hz = /bits/ 64 <666666666>;
 +		};
 +
 +		opp-744000000 {
-+			opp-hz = <0x00 0x2c588a00>;
++			opp-hz = /bits/ 64 <744000000>;
 +		};
 +	};
 +
  	cpus: cpus {
- 		#address-cells = <0x01>;
- 		#size-cells = <0x00>;
- 		phandle = <0x89>;
- 
-@@ -137,47 +183,53 @@
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+@@ -152,47 +200,53 @@
  
  		CPU0: cpu@0 {
  			device_type = "cpu";
@@ -102,9 +116,9 @@
 +			compatible = "arm,cortex-a53";
  			reg = <0x00>;
  			enable-method = "psci";
- 			clocks = <&scpi_dvfs 0x00>;
+ 			clocks = <&scpi_dvfs 0>;
  			clock-names = "cpu-cluster.0";
-+			#cooling-cells = <0x02>;
++			#cooling-cells = <2>;
  			phandle = <0x09>;
  		};
  
@@ -114,9 +128,9 @@
 +			compatible = "arm,cortex-a53";
  			reg = <0x01>;
  			enable-method = "psci";
- 			clocks = <&scpi_dvfs 0x00>;
+ 			clocks = <&scpi_dvfs 0>;
  			clock-names = "cpu-cluster.0";
-+			#cooling-cells = <0x02>;
++			#cooling-cells = <2>;
  			phandle = <0x0a>;
  		};
  
@@ -126,9 +140,9 @@
 +			compatible = "arm,cortex-a53";
  			reg = <0x02>;
  			enable-method = "psci";
- 			clocks = <&scpi_dvfs 0x00>;
+ 			clocks = <&scpi_dvfs 0>;
  			clock-names = "cpu-cluster.0";
-+			#cooling-cells = <0x02>;
++			#cooling-cells = <2>;
  			phandle = <0x0b>;
  		};
  
@@ -138,9 +152,9 @@
 +			compatible = "arm,cortex-a53";
  			reg = <0x03>;
  			enable-method = "psci";
- 			clocks = <&scpi_dvfs 0x00>;
+ 			clocks = <&scpi_dvfs 0>;
  			clock-names = "cpu-cluster.0";
-+			#cooling-cells = <0x02>;
++			#cooling-cells = <2>;
  			phandle = <0x0c>;
  		};
  	};
@@ -149,36 +163,38 @@
 -		compatible = "arm,armv7-timer";
 +		/* same driver entry as armv7-timer, but this core is ARMv8 */
 +		compatible = "arm,armv8-timer";
- 		interrupts = <0x01 0x0d 0xff01 0x01 0x0e 0xff01 0x01 0x0b 0xff01 0x01 0x0a 0xff01>;
- 	};
- 
-@@ -203,7 +255,8 @@
+ 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_EDGE_RISING)>,
+ 		             <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_EDGE_RISING)>,
+ 		             <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_EDGE_RISING)>,
+@@ -221,7 +275,8 @@
  	};
  
  	arm_pmu {
 -		compatible = "arm,cortex-a15-pmu";
 +		/* these are A53s: the a15 PMU model maps the wrong performance events */
 +		compatible = "arm,cortex-a53-pmu";
- 		interrupts = <0x00 0x89 0x04 0x00 0x8a 0x04 0x00 0x99 0x04 0x00 0x9a 0x04>;
- 	};
- 
-@@ -285,30 +338,62 @@
+ 		interrupts = <GIC_SPI 137 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 138 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH>,
+@@ -306,30 +361,64 @@
  		};
  	};
  
 -	mailbox: mhu@c883c400 {
 -		compatible = "amlogic, meson_mhu";
 -		reg = <0xc883c400 0x4c 0xc8013000 0x800>;
--		interrupts = <0x00 0xd1 0x01 0x00 0xd2 0x01>;
+-		interrupts = <GIC_SPI 209 IRQ_TYPE_EDGE_RISING>, <GIC_SPI 210 IRQ_TYPE_EDGE_RISING>;
 +	/* CPU DVFS and the SoC sensor through the SCP firmware, as mainline's SCPI does it. The
 +	   vendor nodes had the same blocks under bindings mainline does not match. */
 +	mailbox: mhu@c883c404 {
 +		compatible = "amlogic,meson-gxbb-mhu";
 +		reg = <0xc883c404 0x4c>;
-+		interrupts = <0x00 0xd0 0x01 0x00 0xd1 0x01 0x00 0xd2 0x01>;
- 		#mbox-cells = <0x01>;
++		interrupts = <GIC_SPI 208 IRQ_TYPE_EDGE_RISING>,
++		             <GIC_SPI 209 IRQ_TYPE_EDGE_RISING>,
++		             <GIC_SPI 210 IRQ_TYPE_EDGE_RISING>;
+ 		#mbox-cells = <1>;
 -		mbox-names = "cpu_to_scp_low", "cpu_to_scp_high";
--		mboxes = <&mailbox 0x00 &mailbox 0x01>;
+-		mboxes = <&mailbox 0>, <&mailbox 1>;
  		phandle = <0x0f>;
  	};
  
@@ -187,21 +203,21 @@
 +	sram@c8000000 {
 +		compatible = "mmio-sram";
 +		reg = <0xc8000000 0x14000>;
-+		#address-cells = <0x01>;
-+		#size-cells = <0x01>;
++		#address-cells = <1>;
++		#size-cells = <1>;
 +		ranges = <0x00 0xc8000000 0x14000>;
- 
--		scpi_dvfs: scpi_clocks@0 {
--			compatible = "arm, scpi-clk-indexed";
--			#clock-cells = <0x01>;
--			clock-indices = <0x00>;
--			clock-output-names = "vcpu";
--			phandle = <0x0d>;
++
 +		cpu_scp_lpri: scp-sram@13000 {
 +			compatible = "amlogic,meson-gxbb-scp-shmem";
 +			reg = <0x13000 0x400>;
 +		};
-+
+ 
+-		scpi_dvfs: scpi_clocks@0 {
+-			compatible = "arm, scpi-clk-indexed";
+-			#clock-cells = <1>;
+-			clock-indices = <0x00>;
+-			clock-output-names = "vcpu";
+-			phandle = <0x0d>;
 +		cpu_scp_hpri: scp-sram@13400 {
 +			compatible = "amlogic,meson-gxbb-scp-shmem";
 +			reg = <0x13400 0x400>;
@@ -210,15 +226,15 @@
 +
 +	scpi {
 +		compatible = "amlogic,meson-gxbb-scpi", "arm,scpi-pre-1.0";
-+		mboxes = <&mailbox 0x01 &mailbox 0x02>;
-+		shmem = <&cpu_scp_lpri &cpu_scp_hpri>;
++		mboxes = <&mailbox 1>, <&mailbox 2>;
++		shmem = <&cpu_scp_lpri>, <&cpu_scp_hpri>;
 +
 +		scpi_clocks {
 +			compatible = "arm,scpi-clocks";
 +
 +			scpi_dvfs: clocks-0 {
 +				compatible = "arm,scpi-dvfs-clocks";
-+				#clock-cells = <0x01>;
++				#clock-cells = <1>;
 +				clock-indices = <0x00>;
 +				clock-output-names = "vcpu";
 +				phandle = <0x0d>;
@@ -227,7 +243,7 @@
 +
 +		scpi_sensors: sensors {
 +			compatible = "amlogic,meson-gxbb-scpi-sensors";
-+			#thermal-sensor-cells = <0x01>;
++			#thermal-sensor-cells = <1>;
  		};
  	};
  
@@ -238,9 +254,9 @@
 +		   node sits at an address the SoC does not use; the block is at c11098d0. */
 +		compatible = "amlogic,meson-gxbb-wdt";
  		status = "okay";
- 		default_timeout = <0x0a>;
+ 		default_timeout = <10>;
  		reset_watchdog_method = <0x01>;
-@@ -397,7 +482,9 @@
+@@ -418,7 +507,9 @@
  	};
  
  	pinctrl_aobus: pinctrl@14 {
@@ -248,10 +264,10 @@
 +		/* mainline's pinctrl driver has no gxlx entry; the GXL pin data names every
 +		   group and function this tree already asks for. */
 +		compatible = "amlogic,meson-gxl-aobus-pinctrl";
- 		#address-cells = <0x01>;
- 		#size-cells = <0x01>;
+ 		#address-cells = <1>;
+ 		#size-cells = <1>;
  		ranges;
-@@ -472,7 +559,9 @@
+@@ -493,7 +584,9 @@
  
  			mux {
  				groups = "ao_cec";
@@ -262,7 +278,7 @@
  			};
  		};
  
-@@ -505,7 +594,9 @@
+@@ -526,7 +619,9 @@
  	};
  
  	pinctrl_periphs: pinctrl@4b0 {
@@ -270,32 +286,28 @@
 +		/* as above. Unbound, this supplies no pin groups, and sd/sdio/emmc each sit
 +		   in deferred probe waiting for one - which is what keeps Wi-Fi off. */
 +		compatible = "amlogic,meson-gxl-periphs-pinctrl";
- 		#address-cells = <0x01>;
- 		#size-cells = <0x01>;
+ 		#address-cells = <1>;
+ 		#size-cells = <1>;
  		ranges;
-@@ -769,11 +860,20 @@
- 		hdmitx_ddc: hdmitx_ddc {
- 			phandle = <0x6e>;
+@@ -795,7 +890,16 @@
  
  			mux {
  				groups = "hdmi_sda", "hdmi_scl";
 -				function = "hdmi_ddc";
 +				/* mainline's name for the vendor's hdmi_ddc */
 +				function = "hdmi_i2c";
- 			};
- 		};
- 
++			};
++		};
++
 +		/* the DDC pins as GPIOs, for i2c-hdmi-ddc; U-Boot leaves them on hdmi_i2c */
 +		hdmitx_ddc_gpio: hdmitx-ddc-gpio {
 +			mux {
 +				groups = "GPIOH_1", "GPIOH_2";
 +				function = "gpio_periphs";
-+			};
-+		};
-+
- 		a_i2c_master: a_i2c {
- 			phandle = <0x98>;
-@@ -1049,18 +1149,31 @@
+ 			};
+ 		};
+ 
+@@ -1073,18 +1177,31 @@
  			ranges = <0x00 0xc1100000 0x100000>;
  			phandle = <0xb0>;
  
@@ -305,14 +317,14 @@
 +			reset: reset-controller@4404 {
 +				compatible = "amlogic,meson-gxbb-reset";
 +				reg = <0x4404 0x9c>;
-+				#reset-cells = <0x01>;
++				#reset-cells = <1>;
 +			};
 +
  			meson_clk_msr {
-+				/* the vendor spelling binds no mainline driver; mainline's maps the four
-+				   registers from 0x8758 as one window */
 -				compatible = "amlogic,gxlx-measure";
 -				reg = <0x875c 0x04 0x8764 0x04>;
++				/* the vendor spelling binds no mainline driver; mainline's maps the four
++				   registers from 0x8758 as one window */
 +				compatible = "amlogic,meson-gx-clk-measure";
 +				reg = <0x8758 0x10>;
  			};
@@ -321,67 +333,67 @@
 -				compatible = "amlogic, meson-uart";
 +				compatible = "amlogic,meson-gx-uart";
  				reg = <0x84c0 0x18>;
- 				interrupts = <0x00 0x1a 0x01>;
+ 				interrupts = <GIC_SPI 26 IRQ_TYPE_EDGE_RISING>;
  				status = "okay";
--				clocks = <&clkc 0x23>;
+-				clocks = <&clkc CLKID_UART0>;
 -				clock-names = "clk_uart";
 +				/* meson-gx-uart looks up three clocks by name; the vendor's single clk_uart is
 +				   none of them, so this node probed with -ENOENT every boot. */
-+				clocks = <&xtal &clkc 0x1a &xtal>;
++				clocks = <&xtal>, <&clkc CLKID_UART0>, <&xtal>;
 +				clock-names = "xtal", "pclk", "baud";
- 				fifosize = <0x80>;
+ 				fifosize = <128>;
  				pinctrl-names = "default";
  				pinctrl-0 = <&a_uart_pins>;
-@@ -1068,7 +1181,7 @@
+@@ -1092,7 +1209,7 @@
  			};
  
  			uart_B: serial@84dc {
 -				compatible = "amlogic, meson-uart";
 +				compatible = "amlogic,meson-gx-uart";
  				reg = <0x84dc 0x18>;
- 				interrupts = <0x00 0x4b 0x01>;
+ 				interrupts = <GIC_SPI 75 IRQ_TYPE_EDGE_RISING>;
  				status = "disabled";
-@@ -1081,7 +1194,7 @@
+@@ -1105,7 +1222,7 @@
  			};
  
  			uart_C: serial@8700 {
 -				compatible = "amlogic, meson-uart";
 +				compatible = "amlogic,meson-gx-uart";
  				reg = <0x8700 0x18>;
- 				interrupts = <0x00 0x5d 0x01>;
+ 				interrupts = <GIC_SPI 93 IRQ_TYPE_EDGE_RISING>;
  				status = "disabled";
-@@ -1094,7 +1207,7 @@
+@@ -1118,7 +1235,7 @@
  			};
  
  			pwm_ab: pwm@8550 {
 -				compatible = "amlogic,gx-ee-pwm";
 +				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
  				reg = <0x8550 0x1c>;
- 				#pwm-cells = <0x03>;
- 				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1106,7 +1219,7 @@
+ 				#pwm-cells = <3>;
+ 				clocks = <&xtal>, <&xtal>, <&xtal>, <&xtal>;
+@@ -1130,7 +1247,7 @@
  			};
  
  			pwm_cd: pwm@8640 {
 -				compatible = "amlogic,gx-ee-pwm";
 +				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
  				reg = <0x8640 0x1c>;
- 				#pwm-cells = <0x03>;
- 				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1116,17 +1229,24 @@
+ 				#pwm-cells = <3>;
+ 				clocks = <&xtal>, <&xtal>, <&xtal>, <&xtal>;
+@@ -1140,17 +1257,24 @@
  			};
  
  			pwm_ef: pwm@86c0 {
 -				compatible = "amlogic,gx-ee-pwm";
 +				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
  				reg = <0x86c0 0x1c>;
- 				#pwm-cells = <0x03>;
--				clocks = <&xtal &xtal &xtal &xtal>;
+ 				#pwm-cells = <3>;
+-				clocks = <&xtal>, <&xtal>, <&xtal>, <&xtal>;
 +				/* clk81 as a parent: the 24 MHz crystal cannot divide to 32768 Hz any
 +				   closer than 577 ppm, which is outside what the Wi-Fi and
 +				   Bluetooth halves of the combo chip expect of their shared sleep
 +				   clock. clk81 reaches 52 ppm. */
-+				clocks = <&clkc 0x0c &xtal &xtal &xtal>;
++				clocks = <&clkc CLKID_CLK81>, <&xtal>, <&xtal>, <&xtal>;
  				clock-names = "clkin0", "clkin1", "clkin2", "clkin3";
  				status = "okay";
 +				pinctrl-names = "default";
@@ -395,8 +407,8 @@
 +				compatible = "amlogic,meson-gxbb-i2c";
  				status = "disabled";
  				reg = <0x8500 0x20>;
- 				interrupts = <0x00 0x15 0x01 0x00 0x2f 0x01>;
-@@ -1138,7 +1258,7 @@
+ 				interrupts = <GIC_SPI 21 IRQ_TYPE_EDGE_RISING>,
+@@ -1163,7 +1287,7 @@
  			};
  
  			i2c1: i2c@87c0 {
@@ -404,8 +416,8 @@
 +				compatible = "amlogic,meson-gxbb-i2c";
  				status = "disabled";
  				reg = <0x87c0 0x20>;
- 				interrupts = <0x00 0xd6 0x01 0x00 0x30 0x01>;
-@@ -1150,7 +1270,7 @@
+ 				interrupts = <GIC_SPI 214 IRQ_TYPE_EDGE_RISING>,
+@@ -1176,7 +1300,7 @@
  			};
  
  			i2c2: i2c@87e0 {
@@ -413,8 +425,8 @@
 +				compatible = "amlogic,meson-gxbb-i2c";
  				status = "disabled";
  				reg = <0x87e0 0x20>;
- 				interrupts = <0x00 0xd7 0x01 0x00 0x31 0x01>;
-@@ -1162,7 +1282,7 @@
+ 				interrupts = <GIC_SPI 215 IRQ_TYPE_EDGE_RISING>,
+@@ -1189,7 +1313,7 @@
  			};
  
  			i2c3: i2c@8d20 {
@@ -422,8 +434,8 @@
 +				compatible = "amlogic,meson-gxbb-i2c";
  				status = "disabled";
  				reg = <0x8d20 0x20>;
- 				interrupts = <0x00 0x27 0x01 0x00 0x32 0x01>;
-@@ -1182,17 +1302,48 @@
+ 				interrupts = <GIC_SPI 39 IRQ_TYPE_EDGE_RISING>,
+@@ -1210,17 +1334,48 @@
  			ranges = <0x00 0xc8100000 0x100000>;
  			phandle = <0xba>;
  
@@ -437,9 +449,9 @@
 +			
 +				clkc_AO: clock-controller {
 +					compatible = "amlogic,meson-gxl-aoclkc", "amlogic,meson-gx-aoclkc";
-+					#clock-cells = <0x01>;
-+					#reset-cells = <0x01>;
-+					clocks = <&xtal &clkc 0x0c>;
++					#clock-cells = <1>;
++					#reset-cells = <1>;
++					clocks = <&xtal>, <&clkc CLKID_CLK81>;
 +					clock-names = "xtal", "mpeg-clk";
 +				};
 +			};
@@ -452,8 +464,8 @@
 +			cec_AO: cec@100 {
 +				compatible = "amlogic,meson-gx-ao-cec";
 +				reg = <0x100 0x14>;
-+				interrupts = <0x00 0xc7 0x01>;
-+				clocks = <&clkc_AO 0x06>;
++				interrupts = <GIC_SPI 199 IRQ_TYPE_EDGE_RISING>;
++				clocks = <&clkc_AO CLKID_AO_CEC_32K>;
 +				clock-names = "core";
 +				pinctrl-names = "default";
 +				pinctrl-0 = <&hdmitx_aocec>;
@@ -466,16 +478,16 @@
 +				   the three clocks meson-gx-uart looks up by name. */
 +				compatible = "amlogic,meson-gx-uart", "amlogic,meson-ao-uart";
  				reg = <0x4c0 0x18>;
- 				interrupts = <0x00 0xc1 0x01>;
+ 				interrupts = <GIC_SPI 193 IRQ_TYPE_EDGE_RISING>;
  				status = "okay";
 -				clocks = <&xtal>;
 -				clock-names = "clk_uart";
-+				clocks = <&xtal &clkc_AO 0x03 &xtal>;
++				clocks = <&xtal>, <&clkc_AO CLKID_AO_UART1>, <&xtal>;
 +				clock-names = "xtal", "pclk", "baud";
  				xtal_tick_en = <0x01>;
- 				fifosize = <0x40>;
+ 				fifosize = <64>;
  				pinctrl-names = "default";
-@@ -1201,7 +1352,9 @@
+@@ -1229,7 +1384,9 @@
  			};
  
  			uart_AO_B: serial@4e0 {
@@ -484,9 +496,9 @@
 +				   already carries the mainline pair; these are its idle siblings. */
 +				compatible = "amlogic,meson-gx-uart", "amlogic,meson-ao-uart";
  				reg = <0x4e0 0x18>;
- 				interrupts = <0x00 0xc5 0x01>;
+ 				interrupts = <GIC_SPI 197 IRQ_TYPE_EDGE_RISING>;
  				status = "disable";
-@@ -1214,7 +1367,8 @@
+@@ -1242,7 +1399,8 @@
  			};
  
  			pwm_aoab: pwm@550 {
@@ -494,16 +506,16 @@
 +				/* same: the gx-ao/gx-ee spellings are the vendor driver's, not mainline's */
 +				compatible = "amlogic,meson-gxbb-pwm-v2", "amlogic,meson8-pwm-v2";
  				reg = <0x550 0x1c>;
- 				#pwm-cells = <0x03>;
- 				clocks = <&xtal &xtal &xtal &xtal>;
-@@ -1247,13 +1401,46 @@
+ 				#pwm-cells = <3>;
+ 				clocks = <&xtal>, <&xtal>, <&xtal>, <&xtal>;
+@@ -1275,13 +1433,65 @@
  			ranges = <0x00 0xc883c000 0x2000>;
  			phandle = <0xbf>;
  
 -			clkc: clock-controller@0 {
 -				compatible = "amlogic,gxl-clkc";
--				#clock-cells = <0x01>;
--				#reset-cells = <0x01>;
+-				#clock-cells = <1>;
+-				#reset-cells = <1>;
 -				reg = <0x00 0x3db>;
 -				phandle = <0x08>;
 +			/* amlogic,gxl-clkc is a syscon child in mainline: the driver takes its
@@ -516,8 +528,8 @@
 +
 +				clkc: clock-controller@0 {
 +					compatible = "amlogic,gxl-clkc";
-+					#clock-cells = <0x01>;
-+					#reset-cells = <0x01>;
++					#clock-cells = <1>;
++					#reset-cells = <1>;
 +					/* Without its crystal input every PLL parent resolves to nothing and the
 +					   whole tree reads 0 Hz - the eMMC then crawls at 200 kB/s and there is
 +					   no cpufreq or thermal. The regmap comes from the parent syscon, so the
@@ -529,36 +541,58 @@
 +				/* power domains mainline expects for USB and the VPU */
 +				pwrc: power-controller {
 +					compatible = "amlogic,meson-gxbb-pwrc";
-+					#power-domain-cells = <0x01>;
++					#power-domain-cells = <1>;
 +					amlogic,ao-sysctrl = <&sysctrl_AO>;
-+					resets = <&reset 0x05 &reset 0x0a &reset 0x0d &reset 0x25 &reset 0x84
-+						  &reset 0x85 &reset 0x86 &reset 0x87 &reset 0x89 &reset 0x8c
-+						  &reset 0x8d &reset 0xe7>;
-+					reset-names = "viu", "venc", "vcbus", "bt656", "dvin", "rdma", "venci",
-+						      "vencp", "vdac", "vdi6", "vencl", "vid_lock";
-+					clocks = <&clkc 0x84 &clkc 0x8c>;
++					resets = <&reset RESET_VIU>,
++					         <&reset RESET_VENC>,
++					         <&reset RESET_VCBUS>,
++					         <&reset RESET_BT656>,
++					         <&reset RESET_DVIN_RESET>,
++					         <&reset RESET_RDMA>,
++					         <&reset RESET_VENCI>,
++					         <&reset RESET_VENCP>,
++					         <&reset RESET_VDAC>,
++					         <&reset RESET_VDI6>,
++					         <&reset RESET_VENCL>,
++					         <&reset RESET_VID_LOCK>;
++					reset-names = "viu", "venc", "vcbus", "bt656", "dvin", "rdma", "venci", "vencp", "vdac", "vdi6", "vencl", "vid_lock";
++					clocks = <&clkc CLKID_VPU>, <&clkc CLKID_VAPB>;
 +					clock-names = "vpu", "vapb";
-+					assigned-clocks = <&clkc 0x7e &clkc 0x80 &clkc 0x84 &clkc 0x85 &clkc 0x87
-+							   &clkc 0x8b>;
-+					assigned-clock-parents = <&clkc 0x05 0x00 &clkc 0x80 &clkc 0x06 0x00
-+								  &clkc 0x87>;
-+					assigned-clock-rates = <0x00 0x27bc86aa 0x00 0x00 0xee6b280 0x00>;
++					assigned-clocks = <&clkc CLKID_VPU_0_SEL>,
++					                  <&clkc CLKID_VPU_0>,
++					                  <&clkc CLKID_VPU>,
++					                  <&clkc CLKID_VAPB_0_SEL>,
++					                  <&clkc CLKID_VAPB_0>,
++					                  <&clkc CLKID_VAPB_SEL>;
++					assigned-clock-parents = <&clkc CLKID_FCLK_DIV3 0>,
++					                         <&clkc CLKID_VPU_0>,
++					                         <&clkc CLKID_FCLK_DIV4 0>,
++					                         <&clkc CLKID_VAPB_0>;
++					assigned-clock-rates = <0>,
++					                       <666666666>,
++					                       <0>,
++					                       <0>,
++					                       <250000000>,
++					                       <0>;
 +				};
  			};
 +
  		};
  	};
  
-@@ -1281,10 +1468,13 @@
+@@ -1309,10 +1519,16 @@
  		compatible = "amlogic,meson-gxl-saradc";
  		status = "okay";
- 		#io-channel-cells = <0x01>;
--		clocks = <&xtal &clkc 0x58 &clkc 0xe4>;
+ 		#io-channel-cells = <1>;
+-		clocks = <&xtal>, <&clkc CLKID_SARADC>, <&clkc CLKID_SARADC_COMP>;
 -		clock-names = "xtal", "clk81_gate", "saradc_clk";
 +		/* meson-saradc looks these four up by name; the vendor's three are none of them. */
-+		clocks = <&xtal &clkc 0x17 &clkc 0x61 &clkc 0x62>;
++		clocks = <&xtal>,
++		         <&clkc CLKID_SAR_ADC>,
++		         <&clkc CLKID_SAR_ADC_CLK>,
++		         <&clkc CLKID_SAR_ADC_SEL>;
 +		clock-names = "clkin", "core", "adc_clk", "adc_sel";
- 		interrupts = <0x00 0x49 0x01>;
+ 		interrupts = <GIC_SPI 73 IRQ_TYPE_EDGE_RISING>;
 -		reg = <0x00 0xc1108680 0x00 0x38>;
 +		/* root is #address-cells = 1, so the vendor's two-cell reg reads as two resources -
 +		   the first being address 0 sized 0xc1108680, which the ADC then fails to claim. */
@@ -566,7 +600,8 @@
  		phandle = <0xc2>;
  	};
  
-@@ -1501,6 +1691,18 @@
+@@ -1528,8 +1744,20 @@
+ 		interrupts = <GIC_SPI 51 IRQ_TYPE_EDGE_RISING>;
  	};
  
 +	/* meson-gx-socinfo reads the chip ID here, so soc0 names the GXLX2 (S905L3) */
@@ -577,17 +612,16 @@
 +	};
 +
  	firmware {
-+
+ 
 +		/* meson_sm: the chip serial, as firmware:secure-monitor */
 +		secure-monitor {
 +			compatible = "amlogic,meson-gxbb-sm";
 +		};
- 
++
  		android {
  			compatible = "android,firmware";
-@@ -1719,11 +1921,14 @@
- 			record-size = <0x8000>;
- 			console-size = <0x8000>;
+ 
+@@ -1749,7 +1977,10 @@
  			ftrace-size = <0x40000>;
  		};
  
@@ -598,11 +632,7 @@
  			compatible = "shared-dma-pool";
  			reusable;
  			size = <0x400000>;
- 			alignment = <0x400000>;
- 			alloc-ranges = <0x10000000 0x400000>;
-@@ -1737,73 +1942,90 @@
- 			no-map;
- 			phandle = <0xc6>;
+@@ -1767,6 +1998,7 @@
  		};
  
  		logo_reserved: linux,meson-fb {
@@ -610,9 +640,7 @@
  			compatible = "shared-dma-pool";
  			reusable;
  			size = <0x800000>;
- 			alignment = <0x400000>;
- 			alloc-ranges = <0x7f800000 0x800000>;
- 			phandle = <0x3d>;
+@@ -1776,6 +2008,7 @@
  		};
  
  		di_cma_reserved: linux,di_cma {
@@ -620,8 +648,7 @@
  			compatible = "shared-dma-pool";
  			reusable;
  			size = <0x4400000>;
- 			alignment = <0x400000>;
- 			phandle = <0x42>;
+@@ -1784,6 +2017,7 @@
  		};
  
  		ion_reserved: linux,ion-dev {
@@ -629,9 +656,7 @@
  			compatible = "shared-dma-pool";
  			reusable;
  			size = <0x7c00000>;
- 			alignment = <0x400000>;
- 			alloc-ranges = <0x30000000 0x50000000>;
- 			phandle = <0x3b>;
+@@ -1793,12 +2027,14 @@
  		};
  
  		ppmgr_reserved: linux,ppmgr {
@@ -646,9 +671,7 @@
  			compatible = "shared-dma-pool";
  			reusable;
  			size = <0x10400000>;
- 			alignment = <0x400000>;
- 			linux,contiguous-region;
- 			phandle = <0x3e>;
+@@ -1808,6 +2044,7 @@
  		};
  
  		picdec_cma_reserved: linux,picdec {
@@ -656,9 +679,7 @@
  			compatible = "shared-dma-pool";
  			reusable;
  			size = <0x00>;
- 			alignment = <0x00>;
- 			linux,contiguous-region;
- 			phandle = <0x40>;
+@@ -1817,6 +2054,7 @@
  		};
  
  		codec_mm_reserved: linux,codec_mm_reserved {
@@ -666,7 +687,7 @@
  			compatible = "amlogic, codec-mm-reserved";
  			size = <0x00>;
  			alignment = <0x100000>;
- 			phandle = <0x3f>;
+@@ -1824,12 +2062,22 @@
  		};
  
  		vdin1_cma_reserved: linux,vdin1_cma {
@@ -689,43 +710,106 @@
  	};
  
  	sysled {
- 		compatible = "amlogic, sysled";
- 		dev_name = "sysled";
-@@ -1816,15 +2038,15 @@
+@@ -1844,17 +2092,17 @@
  		compatible = "gpio-leds";
  		status = "okay";
  
 -		sys_red {
 -			label = "sys_red";
--			gpios = <&gpio 0x4c 0x00>;
+-			gpios = <&gpio 76 GPIO_ACTIVE_HIGH>;
 -			default-state = "off";
 -		};
 -
 -		sys_green {
 -			label = "sys_green";
--			gpios = <&gpio 0x0e 0x00>;
--			default-state = "on";
--		};
+-			gpios = <&gpio 14 GPIO_ACTIVE_HIGH>;
 +		/* The board's one LED, blue: the factory's sys_red. Its disabled sysled node names
 +		   the pin led_active_low, which is why the factory's active-high "off" lit it.
 +		   power is the name the shared LED hooks drive. */
 +		power {
 +			label = "power";
-+			gpios = <&gpio 73 0x01>;
-+			default-state = "on";
-+		};
++			gpios = <&gpio 73 GPIO_ACTIVE_LOW>;
+ 			default-state = "on";
+ 		};
 +
 +		/* NOT FITTED - the factory's sys_green, GPIOZ_14: driven either way, it lights
 +		   nothing on this unit. */
  	};
-@@ -2083,10 +2305,162 @@
- 		clocks = <&clkc 0xc4 &clkc 0x59 &clkc 0x09 &clkc 0xb6 &clkc 0xba &clkc 0xbb>;
- 		clock-names = "vapb_clk", "vpu_intr_gate", "gp_pll", "vpu_clk0", "vpu_clk1", "vpu_clk";
- 		clk_level = <0x07>;
+ 
+ 	gpio_keypad {
+@@ -1875,17 +2123,6 @@
+ 		fr_auto_policy = <0x00>;
  	};
  
+-	cvbsout {
+-		compatible = "amlogic, cvbsout-gxlx";
+-		dev_name = "cvbsout";
+-		status = "okay";
+-		clocks = <&clkc CLKID_VCLK2_ENCI>,
+-		         <&clkc CLKID_VCLK2_VENCI0>,
+-		         <&clkc CLKID_VCLK2_VENCI1>,
+-		         <&clkc CLKID_DAC_CLK>;
+-		clock-names = "venci_top_gate", "venci_0_gate", "venci_1_gate", "vdac_clk_gate";
+-		performance = <0x1bf0 0x09 0x1b56 0x343 0x1b12 0x8080 0x1b05 0xfd 0x1c59 0xf752 0xffff 0x00>;
+-	};
+ 
+ 	meson-fb {
+ 		compatible = "amlogic, meson-gxl";
+@@ -1901,15 +2138,6 @@
+ 		logo_addr = "0x7f800000";
+ 	};
+ 
+-	ge2d {
+-		compatible = "amlogic, ge2d-gxl";
+-		dev_name = "ge2d";
+-		status = "okay";
+-		interrupts = <GIC_SPI 150 IRQ_TYPE_EDGE_RISING>;
+-		interrupt-names = "ge2d";
+-		clocks = <&clkc CLKID_VAPB_MUX>, <&clkc CLKID_G2D>, <&clkc CLKID_GE2D_GATE>;
+-		clock-names = "clk_vapb_0", "clk_ge2d", "clk_ge2d_gate";
+-	};
+ 
+ 	codec_io {
+ 		compatible = "amlogic, codec_io";
+@@ -1956,19 +2184,6 @@
+ 		reg = <0xc8838000 0x400>;
+ 	};
+ 
+-	mesonstream {
+-		compatible = "amlogic, codec, streambuf";
+-		dev_name = "mesonstream";
+-		status = "okay";
+-		clocks = <&clkc CLKID_DOS_PARSER>,
+-		         <&clkc CLKID_DEMUX>,
+-		         <&clkc CLKID_DOS>,
+-		         <&clkc CLKID_CLK81>,
+-		         <&clkc CLKID_VDEC_MUX>,
+-		         <&clkc CLKID_HCODEC_MUX>,
+-		         <&clkc CLKID_HEVC_MUX>;
+-		clock-names = "parser_top", "demux", "vdec", "clk_81", "clk_vdec_mux", "clk_hcodec_mux", "clk_hevc_mux";
+-	};
+ 
+ 	vdec {
+ 		compatible = "amlogic, vdec";
+@@ -2127,18 +2342,168 @@
+ 		};
+ 	};
+ 
+-	vpu {
+-		compatible = "amlogic, vpu-gxl";
+-		dev_name = "vpu";
+-		status = "okay";
+-		clocks = <&clkc CLKID_VAPB_MUX>,
+-		         <&clkc CLKID_VPU_INTR>,
+-		         <&clkc CLKID_GP0_PLL>,
+-		         <&clkc CLKID_VPU_P0_COMP>,
+-		         <&clkc CLKID_VPU_P1_COMP>,
+-		         <&clkc CLKID_VPU_MUX>;
+-		clock-names = "vapb_clk", "vpu_intr_gate", "gp_pll", "vpu_clk0", "vpu_clk1", "vpu_clk";
+-		clk_level = <0x07>;
++
 +	/* The display pipeline, as mainline's meson-drm describes it. The vendor nodes beside
-+	   it (vpu, vout, amhdmitx, canvas) bind to no mainline driver. */
++	   it (vout, amhdmitx, canvas) bind to no mainline driver. */
 +	canvas: video-lut@c8838048 {
 +		compatible = "amlogic,canvas";
 +		reg = <0xc8838048 0x14>;
@@ -733,13 +817,13 @@
 +
 +	vpu: vpu@d0100000 {
 +		compatible = "amlogic,meson-gxl-vpu", "amlogic,meson-gx-vpu";
-+		reg = <0xd0100000 0x100000 0xc883c000 0x1000>;
++		reg = <0xd0100000 0x100000>, <0xc883c000 0x1000>;
 +		reg-names = "vpu", "hhi";
-+		interrupts = <0x00 0x03 0x01>;
++		interrupts = <GIC_SPI 3 IRQ_TYPE_EDGE_RISING>;
 +		amlogic,canvas = <&canvas>;
-+		power-domains = <&pwrc 0x00>;
-+		#address-cells = <0x01>;
-+		#size-cells = <0x00>;
++		power-domains = <&pwrc 0>;
++		#address-cells = <1>;
++		#size-cells = <0>;
 +
 +		port@1 {
 +			reg = <0x01>;
@@ -753,40 +837,40 @@
 +	/* the HDMI DDC lines as a full I2C bus: dw-hdmi's own master reads the EDID but refuses DDC/CI */
 +	hdmi_ddc: i2c-hdmi-ddc {
 +		compatible = "i2c-gpio";
-+		sda-gpios = <&gpio 0x11 0x06>;
-+		scl-gpios = <&gpio 0x12 0x06>;
-+		i2c-gpio,delay-us = <0x05>;
++		sda-gpios = <&gpio 17 GPIO_OPEN_DRAIN>;
++		scl-gpios = <&gpio 18 GPIO_OPEN_DRAIN>;
++		i2c-gpio,delay-us = <5>;
 +		pinctrl-names = "default";
 +		pinctrl-0 = <&hdmitx_ddc_gpio>;
-+		#address-cells = <0x01>;
-+		#size-cells = <0x00>;
++		#address-cells = <1>;
++		#size-cells = <0>;
 +	};
 +
 +	/* GXLX2 maps the controller directly, as G12A does, where GXL went through an
-+	   address/data port at 0xc883a000. Mainline has no driver for it yet: the gxlx2 half is
-+	   the DKMS meson-dw-hdmi-gxlx2's, the GXL fallback is what built-in meson-drm matches.
-+	   No reset-names: built-in meson-dw-hdmi binds first and must fail before it writes its
-+	   GXL port layout into this window, which stops the boot. */
++	   address/data port at 0xc883a000. The gxlx2 match is TVBian's meson-dw-hdmi patch;
++	   the GXL fallback is what meson-drm matches. */
 +	hdmi_tx: hdmi-tx@da800000 {
 +		compatible = "amlogic,meson-gxlx2-dw-hdmi", "amlogic,meson-gxl-dw-hdmi";
 +		reg = <0xda800000 0x10000>;
-+		interrupts = <0x00 0x39 0x01>;
-+		resets = <&reset 0x13 &reset 0x4f &reset 0x42>;
++		interrupts = <GIC_SPI 57 IRQ_TYPE_EDGE_RISING>;
++		resets = <&reset RESET_HDMITX_CAPB3>,
++		         <&reset RESET_HDMI_SYSTEM_RESET>,
++		         <&reset RESET_HDMI_TX>;
 +		/* in-tree dw-hdmi takes its resets by name */
 +		reset-names = "hdmitx_apb", "hdmitx", "hdmitx_phy";
-+		clocks = <&clkc 0xcd &clkc 0x3f &clkc 0x4d>;
++		clocks = <&clkc CLKID_HDMI>, <&clkc CLKID_HDMI_PCLK>, <&clkc CLKID_GCLK_VENCI_INT0>;
 +		clock-names = "isfr", "iahb", "venci";
-+		power-domains = <&pwrc 0x00>;
-+		assigned-clocks = <&clkc 0xcb &clkc 0xcd>;
-+		assigned-clock-parents = <&xtal 0x00>;
-+		assigned-clock-rates = <0x00 0x16e3600>;
++		power-domains = <&pwrc 0>;
++		assigned-clocks = <&clkc CLKID_HDMI_SEL>, <&clkc CLKID_HDMI>;
++		assigned-clock-parents = <&xtal 0>;
++		assigned-clock-rates = <0>, <24000000>;
 +		pinctrl-0 = <&hdmitx_hpd>;
 +		ddc-i2c-bus = <&hdmi_ddc>;
 +		pinctrl-names = "default";
-+		#sound-dai-cells = <0x00>;
++		#sound-dai-cells = <0>;
 +		sound-name-prefix = "HDMITX";
-+		#address-cells = <0x01>;
-+		#size-cells = <0x00>;
++		#address-cells = <1>;
++		#size-cells = <0>;
 +
 +		port@0 {
 +			reg = <0x00>;
@@ -819,15 +903,20 @@
 +	/* meson-vdec's decoder; the vendor vdec beside it binds to nothing in mainline */
 +	video-codec@c8820000 {
 +		compatible = "amlogic,gxlx-vdec", "amlogic,gx-vdec";
-+		reg = <0xc8820000 0x10000 0xc110a580 0xe4>;
++		reg = <0xc8820000 0x10000>, <0xc110a580 0xe4>;
 +		reg-names = "dos", "esparser";
-+		interrupts = <0x00 0x2c 0x01 0x00 0x20 0x01 0x00 0x2b 0x01>;
++		interrupts = <GIC_SPI 44 IRQ_TYPE_EDGE_RISING>,
++		             <GIC_SPI 32 IRQ_TYPE_EDGE_RISING>,
++		             <GIC_SPI 43 IRQ_TYPE_EDGE_RISING>;
 +		interrupt-names = "vdec", "esparser", "mbox0";
 +		amlogic,ao-sysctrl = <&sysctrl_AO>;
 +		amlogic,canvas = <&canvas>;
-+		clocks = <&clkc 0x36 &clkc 0x11 &clkc 0x99 &clkc 0x9c>;
++		clocks = <&clkc CLKID_DOS_PARSER>,
++		         <&clkc CLKID_DOS>,
++		         <&clkc CLKID_VDEC_1>,
++		         <&clkc CLKID_VDEC_HEVC>;
 +		clock-names = "dos_parser", "dos", "vdec_1", "vdec_hevc";
-+		resets = <&reset 0x28>;
++		resets = <&reset RESET_PARSER>;
 +		reset-names = "esparser";
 +	};
 +
@@ -835,54 +924,56 @@
 +	aiu: audio-controller@c1105400 {
 +		compatible = "amlogic,aiu-gxl", "amlogic,aiu";
 +		reg = <0xc1105400 0x2ac>;
-+		interrupts = <0x00 0x30 0x01 0x00 0x32 0x01>;
++		interrupts = <GIC_SPI 48 IRQ_TYPE_EDGE_RISING>, <GIC_SPI 50 IRQ_TYPE_EDGE_RISING>;
 +		interrupt-names = "i2s", "spdif";
-+		clocks = <&clkc 0x26 &clkc 0x28 &clkc 0x50 &clkc 0x6b &clkc 0x2c
-+			  &clkc 0x27 &clkc 0x51 &clkc 0x6e &clkc 0x71>;
-+		clock-names = "pclk", "i2s_pclk", "i2s_aoclk", "i2s_mclk", "i2s_mixer",
-+			      "spdif_pclk", "spdif_aoclk", "spdif_mclk", "spdif_mclk_sel";
-+		resets = <&reset 0x06>;
-+		#sound-dai-cells = <0x02>;
++		clocks = <&clkc CLKID_AIU_GLUE>,
++		         <&clkc CLKID_I2S_OUT>,
++		         <&clkc CLKID_AOCLK_GATE>,
++		         <&clkc CLKID_CTS_AMCLK>,
++		         <&clkc CLKID_MIXER_IFACE>,
++		         <&clkc CLKID_IEC958>,
++		         <&clkc CLKID_IEC958_GATE>,
++		         <&clkc CLKID_CTS_MCLK_I958>,
++		         <&clkc CLKID_CTS_I958>;
++		clock-names = "pclk", "i2s_pclk", "i2s_aoclk", "i2s_mclk", "i2s_mixer", "spdif_pclk", "spdif_aoclk", "spdif_mclk", "spdif_mclk_sel";
++		resets = <&reset RESET_AIU>;
++		#sound-dai-cells = <2>;
 +		sound-name-prefix = "AIU";
 +	};
 +
 +	sound {
 +		compatible = "amlogic,gx-sound-card";
 +		model = "H96-MAX-M20";
-+		assigned-clocks = <&clkc 0x0d &clkc 0x0e &clkc 0x0f>;
++		assigned-clocks = <&clkc CLKID_MPLL0>, <&clkc CLKID_MPLL1>, <&clkc CLKID_MPLL2>;
 +		assigned-clock-parents = <0x00 0x00 0x00>;
-+		assigned-clock-rates = <0x11940000 0x10266000 0x17700000>;
++		assigned-clock-rates = <294912000>, <270950400>, <393216000>;
 +
 +		dai-link-0 {
-+			sound-dai = <&aiu 0x00 0x00>;
++			sound-dai = <&aiu 0 0>;
 +		};
 +
 +		dai-link-1 {
-+			sound-dai = <&aiu 0x00 0x02>;
++			sound-dai = <&aiu 0 2>;
 +			dai-format = "i2s";
-+			mclk-fs = <0x100>;
++			mclk-fs = <256>;
 +
 +			codec-0 {
-+				sound-dai = <&aiu 0x01 0x00>;
++				sound-dai = <&aiu 1 0>;
 +			};
 +		};
 +
 +		dai-link-2 {
-+			sound-dai = <&aiu 0x01 0x02>;
++			sound-dai = <&aiu 1 2>;
 +
 +			codec-0 {
 +				sound-dai = <&hdmi_tx>;
 +			};
 +		};
-+	};
-+
+ 	};
+ 
  	rdma {
- 		compatible = "amlogic, meson, rdma";
- 		dev_name = "amlogic-rdma";
- 		status = "ok";
- 		interrupts = <0x00 0x59 0x01>;
-@@ -2109,6 +2483,38 @@
- 		gpio_reset = <0x14 0x63 0x00>;
+@@ -2165,6 +2530,38 @@
+ 		gpio_reset = <&gpio 99 GPIO_ACTIVE_HIGH>;
  	};
  
 +
@@ -900,7 +991,7 @@
 +
 +	wifi32k: wifi32k {
 +		compatible = "pwm-clock";
-+		#clock-cells = <0x00>;
++		#clock-cells = <0>;
 +		clock-frequency = <32768>;
 +		pwms = <&pwm_ef 0 30518 0>;
 +	};
@@ -911,7 +1002,7 @@
 +		   vendor wifi and bt-dev nodes' power_on_pin and gpio_en. Read as resets: active
 +		   low, so the sequencer drives both high to bring the chip up, and drops them on
 +		   power-off, which is the only way to get the part out of a wedged state. */
-+		reset-gpios = <&gpio 85 1>, <&gpio 96 1>;
++		reset-gpios = <&gpio 85 GPIO_ACTIVE_LOW>, <&gpio 96 GPIO_ACTIVE_LOW>;
 +		clocks = <&wifi32k>;
 +		clock-names = "ext_clock";
 +		post-power-on-delay-ms = <100>;
@@ -920,51 +1011,53 @@
  	wifi {
  		compatible = "amlogic, aml_wifi";
  		dev_name = "aml_wifi";
-@@ -2140,18 +2546,27 @@
+@@ -2196,20 +2593,29 @@
  
  	sd_emmc_c: emmc@d0074000 {
  		status = "okay";
 -		compatible = "amlogic, meson-mmc-gxlx";
-+		/* mainline meson-gx-mmc for eMMC: its own clkc gate numbers,
++		/* mainline meson-gx-mmc for eMMC: its own clkc clocks,
 +		   and a reset line the vendor driver did not use. */
 +		compatible = "amlogic,meson-gx-mmc", "amlogic,meson-gxbb-mmc";
-+		resets = <&reset 0x2e>;
++		resets = <&reset RESET_SD_EMMC_C>;
  		reg = <0xd0074000 0x2000>;
- 		interrupts = <0x00 0xda 0x01>;
+ 		interrupts = <GIC_SPI 218 IRQ_TYPE_EDGE_RISING>;
 -		pinctrl-names = "emmc_clk_cmd_pins", "emmc_all_pins";
 -		pinctrl-0 = <&emmc_clk_cmd_pins>;
--		pinctrl-1 = <&emmc_conf_pull_up &emmc_conf_pull_done>;
--		clocks = <&clkc 0x2e &clkc 0x82 &clkc 0x04>;
+-		pinctrl-1 = <&emmc_conf_pull_up>, <&emmc_conf_pull_done>;
 +		/* Linux applies only the state named "default". The vendor's first state muxes clk
 +		   and cmd alone - the eight data lines are in emmc_conf_pull_up - so naming that one
 +		   default left the data pins unconfigured and reads returned I/O errors. */
 +		pinctrl-names = "default";
-+		pinctrl-0 = <&emmc_conf_pull_up &emmc_conf_pull_done>;
-+		clocks = <&clkc 0x60 &clkc 0x7d &clkc 0x04>;
++		pinctrl-0 = <&emmc_conf_pull_up>, <&emmc_conf_pull_done>;
+ 		clocks = <&clkc CLKID_SD_EMMC_C>,
+-		         <&clkc CLKID_SD_EMMC_C_P0_COMP>,
++		         <&clkc CLKID_SD_EMMC_C_CLK0>,
+ 		         <&clkc CLKID_FCLK_DIV2>;
  		clock-names = "core", "clkin0", "clkin1";
 +		vmmc-supply = <&vcc_3v3>;
 +		vqmmc-supply = <&vcc_3v3>;
- 		bus-width = <0x08>;
+ 		bus-width = <8>;
  		cap-sd-highspeed;
  		cap-mmc-highspeed;
--		max-frequency = <0xbebc200>;
+-		max-frequency = <200000000>;
 +		/* 200 MHz is HS200/HS400, which needs the 1.8 V signalling this board never switches
 +		   to; 50 MHz is the fastest mode a fixed 3.3 V rail supports. */
 +		max-frequency = <50000000>;
  		non-removable;
  		disable-wp;
  		phandle = <0xc8>;
-@@ -2171,20 +2586,19 @@
+@@ -2229,21 +2635,20 @@
  
  	sd_emmc_b: sd@d0072000 {
  		status = "okay";
 -		compatible = "amlogic, meson-mmc-gxlx";
-+		/* mainline meson-gx-mmc for the SD slot: its own clkc gate numbers,
++		/* mainline meson-gx-mmc for the SD slot: its own clkc clocks,
 +		   and a reset line the vendor driver did not use. */
 +		compatible = "amlogic,meson-gx-mmc", "amlogic,meson-gxbb-mmc";
-+		resets = <&reset 0x2d>;
++		resets = <&reset RESET_SD_EMMC_B>;
  		reg = <0xd0072000 0x2000>;
- 		interrupts = <0x00 0xd9 0x01>;
+ 		interrupts = <GIC_SPI 217 IRQ_TYPE_EDGE_RISING>;
 -		pinctrl-names = "sd_all_pins", "sd_clk_cmd_pins", "sd_1bit_pins", "sd_clk_cmd_uart_pins", "sd_1bit_uart_pins", "sd_to_ao_uart_pins", "ao_to_sd_uart_pins", "ao_to_sd_jtag_pins", "sd_to_ao_jtag_pins";
 +		/* Linux registers the pin map for every state at probe, and the vendor's spare
 +		   states mux these pins to uart_ao_a_card, a function mainline's gxl pinctrl does
@@ -974,46 +1067,49 @@
  		pinctrl-0 = <&sd_all_pins>;
 -		pinctrl-1 = <&sd_clk_cmd_pins>;
 -		pinctrl-2 = <&sd_1bit_pins>;
--		pinctrl-3 = <&sd_to_ao_uart_clr_pins &sd_clk_cmd_pins &ao_to_sd_uart_pins>;
--		pinctrl-4 = <&sd_to_ao_uart_clr_pins &sd_1bit_pins &ao_to_sd_uart_pins>;
--		pinctrl-5 = <&sd_all_pins &sd_to_ao_uart_pins>;
--		pinctrl-6 = <&sd_to_ao_uart_clr_pins &ao_to_sd_uart_pins>;
--		pinctrl-7 = <&sd_to_ao_uart_clr_pins &ao_to_sd_uart_pins>;
--		pinctrl-8 = <&sd_all_pins &sd_to_ao_uart_pins>;
--		clocks = <&clkc 0x2d &clkc 0x7e &clkc 0x04>;
-+		clocks = <&clkc 0x5f &clkc 0x7a &clkc 0x04>;
+-		pinctrl-3 = <&sd_to_ao_uart_clr_pins>, <&sd_clk_cmd_pins>, <&ao_to_sd_uart_pins>;
+-		pinctrl-4 = <&sd_to_ao_uart_clr_pins>, <&sd_1bit_pins>, <&ao_to_sd_uart_pins>;
+-		pinctrl-5 = <&sd_all_pins>, <&sd_to_ao_uart_pins>;
+-		pinctrl-6 = <&sd_to_ao_uart_clr_pins>, <&ao_to_sd_uart_pins>;
+-		pinctrl-7 = <&sd_to_ao_uart_clr_pins>, <&ao_to_sd_uart_pins>;
+-		pinctrl-8 = <&sd_all_pins>, <&sd_to_ao_uart_pins>;
+ 		clocks = <&clkc CLKID_SD_EMMC_B>,
+-		         <&clkc CLKID_SD_EMMC_B_P0_COMP>,
++		         <&clkc CLKID_SD_EMMC_B_CLK0>,
+ 		         <&clkc CLKID_FCLK_DIV2>;
  		clock-names = "core", "clkin0", "clkin1";
- 		bus-width = <0x04>;
- 		cap-sd-highspeed;
-@@ -2208,22 +2622,34 @@
+ 		bus-width = <4>;
+@@ -2268,22 +2673,34 @@
  
  	sd_emmc_a: sdio@d0070000 {
  		status = "okay";
 -		compatible = "amlogic, meson-mmc-gxlx";
-+		/* mainline meson-gx-mmc for the SDIO Wi-Fi: its own clkc gate numbers,
++		/* mainline meson-gx-mmc for the SDIO Wi-Fi: its own clkc clocks,
 +		   and a reset line the vendor driver did not use. */
 +		compatible = "amlogic,meson-gx-mmc", "amlogic,meson-gxbb-mmc";
-+		resets = <&reset 0x2c>;
++		resets = <&reset RESET_SD_EMMC_A>;
  		reg = <0xd0070000 0x2000>;
- 		interrupts = <0x00 0xd8 0x04>;
+ 		interrupts = <GIC_SPI 216 IRQ_TYPE_LEVEL_HIGH>;
 -		pinctrl-names = "sdio_clk_cmd_pins", "sdio_all_pins";
 -		pinctrl-0 = <&sdio_clk_cmd_pins>;
 -		pinctrl-1 = <&sdio_all_pins>;
--		clocks = <&clkc 0x2c &clkc 0x7a &clkc 0x04>;
 +		/* Linux applies the state called "default" and nothing else; the vendor names its
 +		   states for its own driver's lookup, so without this the SDIO pins are never muxed
 +		   and the bus is dead. The eMMC only escapes that because the bootloader muxed it. */
 +		pinctrl-names = "default";
 +		pinctrl-0 = <&sdio_all_pins>;
-+		clocks = <&clkc 0x5e &clkc 0x77 &clkc 0x04>;
+ 		clocks = <&clkc CLKID_SD_EMMC_A>,
+-		         <&clkc CLKID_SD_EMMC_A_P0_COMP>,
++		         <&clkc CLKID_SD_EMMC_A_CLK0>,
+ 		         <&clkc CLKID_FCLK_DIV2>;
  		clock-names = "core", "clkin0", "clkin1";
 +		mmc-pwrseq = <&sdio_pwrseq>;
 +		vmmc-supply = <&vcc_3v3>;
 +		vqmmc-supply = <&vcc_3v3>;
- 		bus-width = <0x04>;
+ 		bus-width = <4>;
  		cap-sd-highspeed;
  		cap-mmc-highspeed;
--		max-frequency = <0x5f5e100>;
+-		max-frequency = <100000000>;
 +		/* 100 MHz is SDR104, which needs 1.8 V signalling this board does not switch to.
 +		   Enumeration survives it because that runs at 400 kHz in 1-bit mode. */
 +		max-frequency = <50000000>;
@@ -1024,9 +1120,7 @@
  		phandle = <0xca>;
  
  		sdio {
- 			pinname = "sdio";
- 			ocr_avail = <0x200080>;
-@@ -2311,7 +2737,12 @@
+@@ -2373,7 +2790,12 @@
  	};
  
  	ethmac: ethernet@0xc9410000 {
@@ -1038,20 +1132,34 @@
 +		compatible = "amlogic,meson-gxbb-dwmac", "snps,dwmac";
 +		status = "disabled";
  		reg = <0xc9410000 0x10000 0xc8834540 0x08 0xc8834558 0x0c 0xc1104408 0x04>;
- 		interrupts = <0x00 0x08 0x01>;
+ 		interrupts = <GIC_SPI 8 IRQ_TYPE_EDGE_RISING>;
  		pinctrl-names = "external_eth_pins";
-@@ -2329,30 +2760,72 @@
+@@ -2391,53 +2813,73 @@
  		phandle = <0xcb>;
  	};
  
 -	dwc3: dwc3@c9000000 {
 -		compatible = "synopsys, dwc3";
 -		reg = <0xc9000000 0x100000>;
--		interrupts = <0x00 0x1e 0x04>;
+-		interrupts = <GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>;
 -		usb-phy = <0x57 0x58>;
 -		cpu-type = "gxl";
 -		clock-src = "usb3.0";
 -		phandle = <0xcc>;
+-	};
+-
+-	usb2_phy: usb2phy@d0078000 {
+-		compatible = "amlogic, amlogic-new-usb2";
+-		portnum = <0x03>;
+-		reg = <0xd0078000 0x80 0xc1104408 0x04>;
+-		phandle = <0x57>;
+-	};
+-
+-	usb3_phy: usb3phy@d0078080 {
+-		compatible = "amlogic, amlogic-new-usb3";
+-		portnum = <0x00>;
+-		reg = <0xd0078080 0x20>;
+-		phandle = <0x58>;
 +	/* mainline's gxl USB is a controller wrapper holding dwc2 and dwc3, fed by
 +	   two usb2 phys. The vendor tree has a flat dwc3 with a vendor "usb-phy"
 +	   property and its own phy bindings, which no mainline driver claims - so the
@@ -1059,55 +1167,67 @@
 +	   no /dev/sda to mount a rootfs from. */
 +	usb2_phy0: phy@d0078000 {
 +		compatible = "amlogic,meson-gxl-usb2-phy";
-+		#phy-cells = <0x00>;
++		#phy-cells = <0>;
 +		reg = <0xd0078000 0x20>;
-+		clocks = <&clkc 0x37>;
++		clocks = <&clkc CLKID_USB>;
 +		clock-names = "phy";
-+		resets = <&reset 0x22>;
++		resets = <&reset RESET_USB_OTG>;
 +		reset-names = "phy";
 +		status = "okay";
  	};
  
--	usb2_phy: usb2phy@d0078000 {
--		compatible = "amlogic, amlogic-new-usb2";
--		portnum = <0x03>;
--		reg = <0xd0078000 0x80 0xc1104408 0x04>;
--		phandle = <0x57>;
+-	dwc2_a {
+-		compatible = "amlogic, dwc2";
+-		device_name = "dwc2_a";
+-		reg = <0xc9100000 0x40000>;
+-		status = "okay";
+-		interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
+-		pl-periph-id = <0x00>;
+-		clock-src = "usb0";
+-		port-id = <0x00>;
+-		port-type = <0x02>;
+-		port-speed = <0x00>;
+-		port-config = <0x00>;
+-		port-dma = <0x00>;
+-		port-id-mode = <0x00>;
+-		usb-fifo = <0x2d8>;
+-		cpu-type = "gxl";
+-		controller-type = <0x01>;
+-		phy-reg = <0xd0078000>;
+-		phy-reg-size = <0xa0>;
+-		clocks = <&clkc CLKID_USB_GENERAL>, <&clkc CLKID_USB1_TO_DDR>, <&clkc CLKID_USB1>;
+-		clock-names = "usb_general", "usb1", "usb1_to_ddr";
 +	usb2_phy1: phy@d0078020 {
 +		compatible = "amlogic,meson-gxl-usb2-phy";
-+		#phy-cells = <0x00>;
++		#phy-cells = <0>;
 +		reg = <0xd0078020 0x20>;
-+		clocks = <&clkc 0x37>;
++		clocks = <&clkc CLKID_USB>;
 +		clock-names = "phy";
-+		resets = <&reset 0x22>;
++		resets = <&reset RESET_USB_OTG>;
 +		reset-names = "phy";
 +		status = "okay";
- 	};
- 
--	usb3_phy: usb3phy@d0078080 {
--		compatible = "amlogic, amlogic-new-usb3";
--		portnum = <0x00>;
++	};
++
 +	usb: usb@d0078080 {
 +		compatible = "amlogic,meson-gxl-usb-ctrl";
- 		reg = <0xd0078080 0x20>;
--		phandle = <0x58>;
-+		interrupts = <0x00 0x10 0x04>;
-+		#address-cells = <0x01>;
-+		#size-cells = <0x01>;
++		reg = <0xd0078080 0x20>;
++		interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
++		#address-cells = <1>;
++		#size-cells = <1>;
 +		ranges;
-+		clocks = <&clkc 0x37 &clkc 0x40>;
++		clocks = <&clkc CLKID_USB>, <&clkc CLKID_USB1_DDR_BRIDGE>;
 +		clock-names = "usb_ctrl", "ddr";
-+		resets = <&reset 0x22>;
++		resets = <&reset RESET_USB_OTG>;
 +		dr_mode = "host";
-+		phys = <&usb2_phy0 &usb2_phy1>;
++		phys = <&usb2_phy0>, <&usb2_phy1>;
 +		phy-names = "usb2-phy0", "usb2-phy1";
 +		status = "okay";
 +
 +		dwc2: usb@c9100000 {
 +			compatible = "amlogic,meson-g12a-usb", "snps,dwc2";
 +			reg = <0xc9100000 0x40000>;
-+			interrupts = <0x00 0x1f 0x04>;
-+			clocks = <&clkc 0x33>;
++			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&clkc CLKID_USB1>;
 +			clock-names = "otg";
 +			phys = <&usb2_phy1>;
 +			dr_mode = "peripheral";
@@ -1119,7 +1239,7 @@
 +		dwc3: usb@c9000000 {
 +			compatible = "snps,dwc3";
 +			reg = <0xc9000000 0x100000>;
-+			interrupts = <0x00 0x1e 0x04>;
++			interrupts = <GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>;
 +			dr_mode = "host";
 +			maximum-speed = "high-speed";
 +			snps,dis_u2_susphy_quirk;
@@ -1127,58 +1247,183 @@
  	};
  
 +
- 	dwc2_a {
- 		compatible = "amlogic, dwc2";
- 		device_name = "dwc2_a";
-@@ -2769,67 +3242,42 @@
++
+ 	unifykey {
+ 		compatible = "amlogic, unifykey";
+ 		status = "ok";
+@@ -2638,71 +3080,9 @@
+ 		phandle = <0xce>;
+ 	};
+ 
+-	i2s_dai: I2S {
+-		#sound-dai-cells = <0>;
+-		compatible = "amlogic, aml-i2s-dai";
+-		clocks = <&clkc CLKID_MPLL2>,
+-		         <&clkc CLKID_AMCLK_COMP>,
+-		         <&clkc CLKID_AIU_GLUE>,
+-		         <&clkc CLKID_IEC958>,
+-		         <&clkc CLKID_I2S_OUT>,
+-		         <&clkc CLKID_AMCLK>,
+-		         <&clkc CLKID_AIFIFO2>,
+-		         <&clkc CLKID_MIXER>,
+-		         <&clkc CLKID_MIXER_IFACE>,
+-		         <&clkc CLKID_ADC>,
+-		         <&clkc CLKID_AIU_TOP>,
+-		         <&clkc CLKID_AOCLK_GATE>,
+-		         <&clkc CLKID_I2S_SPDIF>;
+-		clock-names = "mpll", "mclk", "top_glue", "aud_buf", "i2s_out", "amclk_measure", "aififo2", "aud_mixer", "mixer_reg", "adc", "top_level", "aoclk", "aud_in";
+-		i2s_pos_sync = <0x00>;
+-		phandle = <0x7b>;
+-	};
+ 
+-	dmic: snd_dmic {
+-		#sound-dai-cells = <0>;
+-		compatible = "aml, aml_snd_dmic";
+-		reg = <0xd0042000 0x2000>;
+-		status = "disabled";
+-		resets = <&clkc 212>;
+-		reset-names = "pdm";
+-		pinctrl-names = "audio_dmic";
+-		pinctrl-0 = <&aml_dmic_pins>;
+-		clocks = <&clkc CLKID_PDM_COMP>, <&clkc CLKID_AMCLK_COMP>;
+-		clock-names = "pdm", "mclk";
+-		phandle = <0xcf>;
+-	};
+ 
+-	spdif_dai: SPDIF {
+-		#sound-dai-cells = <0>;
+-		compatible = "amlogic, aml-spdif-dai";
+-		clocks = <&clkc CLKID_MPLL1>,
+-		         <&clkc CLKID_I958_COMP>,
+-		         <&clkc CLKID_AMCLK_COMP>,
+-		         <&clkc CLKID_I958_COMP_SPDIF>,
+-		         <&clkc CLKID_CLK81>,
+-		         <&clkc CLKID_IEC958>,
+-		         <&clkc CLKID_IEC958_GATE>;
+-		clock-names = "mpll1", "i958", "mclk", "spdif", "clk_81", "iec958", "iec958_amclk";
+-		phandle = <0x7c>;
+-	};
+ 
+-	pcm_dai: PCM {
+-		#sound-dai-cells = <0>;
+-		compatible = "amlogic, aml-pcm-dai";
+-		pinctrl-names = "audio_pcm";
+-		clocks = <&clkc CLKID_MPLL0>,
+-		         <&clkc CLKID_PCM_MCLK_COMP>,
+-		         <&clkc CLKID_PCM_SCLK_GATE>;
+-		clock-names = "mpll0", "pcm_mclk", "pcm_sclk";
+-		pcm_mode = <0x01>;
+-		dai-format = "dsp_a";
+-		dai-tdm-slot-tx-mask = <0x01>;
+-		dai-tdm-slot-rx-mask = <0x01>;
+-		dai-tdm-slot-num = <2>;
+-		dai-tdm-slot-width = <16>;
+-		phandle = <0x7d>;
+-	};
+ 
+ 	i2s_plat: i2s_platform {
+ 		compatible = "amlogic, aml-i2s";
+@@ -2744,52 +3124,6 @@
+ 		phandle = <0x7e>;
+ 	};
+ 
+-	aml_sound_meson {
+-		compatible = "aml, meson-snd-card";
+-		status = "okay";
+-		aml-sound-card,format = "i2s";
+-		aml_sound_card,name = "AML-MESONAUDIO";
+-		aml,audio-routing = "Ext Spk", "LOUTL", "Ext Spk", "LOUTR";
+-		mute_gpio-gpios = <&gpio 21 GPIO_ACTIVE_HIGH>;
+-		mute_inv;
+-		hp_disable;
+-		hp_paraments = <0x320 0x12c 0x00 0x05 0x01>;
+-		pinctrl-names = "audio_i2s";
+-		pinctrl-0 = <&audio_i2s_pins>;
+-		cpu_list = <&cpudai0>, <&cpudai1>, <&cpudai2>;
+-		codec_list = <&codec0>, <&codec1>, <&codec2>;
+-		plat_list = <&i2s_plat>, <&i2s_plat>, <&pcm_plat>;
+-
+-		cpudai0: cpudai0 {
+-			sound-dai = <&i2s_dai>;
+-			phandle = <0x73>;
+-		};
+-
+-		cpudai1: cpudai1 {
+-			sound-dai = <&spdif_dai>;
+-			phandle = <0x74>;
+-		};
+-
+-		cpudai2: cpudai2 {
+-			sound-dai = <&pcm_dai>;
+-			phandle = <0x75>;
+-		};
+-
+-		codec0: codec0 {
+-			sound-dai = <&amlogic_codec>;
+-			phandle = <0x76>;
+-		};
+-
+-		codec1: codec1 {
+-			sound-dai = <&spdif_codec>;
+-			phandle = <0x77>;
+-		};
+-
+-		codec2: codec2 {
+-			sound-dai = <&pcm_codec>;
+-			phandle = <0x78>;
+-		};
+-	};
+ 
+ 	aml_sensor0: aml-sensor@0 {
+ 		compatible = "amlogic, aml-thermal";
+@@ -2851,67 +3185,48 @@
  
  	thermal-zones {
  
 -		soc_thermal {
 +		cpu-thermal {
-+			polling-delay-passive = <0xfa>;
- 			polling-delay = <0x3e8>;
--			polling-delay-passive = <0x64>;
--			sustainable-power = <0x866>;
--			thermal-sensors = <&aml_sensor0 0x03>;
-+			thermal-sensors = <&scpi_sensors 0x00>;
++			polling-delay-passive = <250>;
+ 			polling-delay = <1000>;
+-			polling-delay-passive = <100>;
+-			sustainable-power = <2150>;
+-			thermal-sensors = <&aml_sensor0 3>;
++			thermal-sensors = <&scpi_sensors 0>;
  
  			trips {
  
 -				switch_on: trip-point@0 {
--					temperature = <0x124f8>;
--					hysteresis = <0x3e8>;
-+				cpu_passive: cpu-passive {
-+					temperature = <0x13880>;
-+					hysteresis = <0x7d0>;
- 					type = "passive";
--					phandle = <0xd1>;
- 				};
- 
--				control: trip-point@1 {
--					temperature = <0x14c08>;
--					hysteresis = <0x3e8>;
+-					temperature = <75000>;
+-					hysteresis = <1000>;
 -					type = "passive";
+-					phandle = <0xd1>;
+-				};
+-
+-				control: trip-point@1 {
+-					temperature = <85000>;
+-					hysteresis = <1000>;
++				cpu_passive: cpu-passive {
++					temperature = <80000>;
++					hysteresis = <2000>;
+ 					type = "passive";
 -					phandle = <0x82>;
-+				cpu_hot: cpu-hot {
-+					temperature = <0x15f90>;
-+					hysteresis = <0x7d0>;
-+					type = "hot";
  				};
  
 -				hot: trip-point@2 {
--					temperature = <0x17318>;
--					hysteresis = <0x1388>;
--					type = "hot";
+-					temperature = <95000>;
+-					hysteresis = <5000>;
++				cpu_hot: cpu-hot {
++					temperature = <90000>;
++					hysteresis = <2000>;
+ 					type = "hot";
 -					phandle = <0xd2>;
--				};
--
+ 				};
+ 
 -				critical: trip-point@3 {
--					temperature = <0x3f7a0>;
--					hysteresis = <0x3e8>;
+-					temperature = <260000>;
+-					hysteresis = <1000>;
 +				cpu_critical: cpu-critical {
-+					temperature = <0x1adb0>;
-+					hysteresis = <0x7d0>;
++					temperature = <110000>;
++					hysteresis = <2000>;
  					type = "critical";
 -					phandle = <0xd3>;
  				};
@@ -1187,33 +1432,39 @@
  			cooling-maps {
  
 -				cpufreq_cooling_map {
--					trip = <0x82>;
--					cooling-device = <&cpufreq_cool0 0x00 0x04>;
--					contribution = <0x400>;
-+				map0 {
-+					trip = <&cpu_passive>;
-+					cooling-device = <&CPU0 0xffffffff 0xffffffff &CPU1 0xffffffff 0xffffffff &CPU2 0xffffffff 0xffffffff &CPU3 0xffffffff 0xffffffff>;
- 				};
- 
+-					trip = <&control>;
+-					cooling-device = <&cpufreq_cool0 0 4>;
+-					contribution = <1024>;
+-				};
+-
 -				cpucore_cooling_map {
--					trip = <0x82>;
--					cooling-device = <&cpucore_cool0 0x00 0x03>;
--					contribution = <0x400>;
+-					trip = <&control>;
+-					cooling-device = <&cpucore_cool0 0 3>;
+-					contribution = <1024>;
 -				};
 -
 -				gpufreq_cooling_map {
--					trip = <0x82>;
--					cooling-device = <&gpu 0x00 0x04>;
--					contribution = <0x400>;
--				};
--
+-					trip = <&control>;
+-					cooling-device = <&gpu 0 4>;
+-					contribution = <1024>;
++				map0 {
++					trip = <&cpu_passive>;
++					cooling-device = <&CPU0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					                 <&CPU1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					                 <&CPU2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					                 <&CPU3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+ 				};
+ 
 -				gpucore_cooling_map {
--					trip = <0x82>;
--					cooling-device = <&gpucore_cool0 0x00 0x02>;
--					contribution = <0x400>;
+-					trip = <&control>;
+-					cooling-device = <&gpucore_cool0 0 2>;
+-					contribution = <1024>;
 +				map1 {
 +					trip = <&cpu_hot>;
-+					cooling-device = <&CPU0 0xffffffff 0xffffffff &CPU1 0xffffffff 0xffffffff &CPU2 0xffffffff 0xffffffff &CPU3 0xffffffff 0xffffffff>;
++					cooling-device = <&CPU0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					                 <&CPU1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					                 <&CPU2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					                 <&CPU3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
  				};
  			};
  		};

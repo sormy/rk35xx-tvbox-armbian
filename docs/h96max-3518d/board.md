@@ -266,7 +266,7 @@ Things that surprise you once and then cost you an hour if you forgot them.
 - **The bundled remote works — on the _other_ box, without pairing.** This stick's handset drives
   the **H96 Max box** over IR perfectly. The transmitter was never the problem; this board has no IR
   receiver. Here the same handset works fine once paired over BLE, just not before.
-- **Bluetooth works under Armbian but never did under the factory Android.** The stock build was
+- **Bluetooth works under Linux but never did under the factory Android.** The stock build was
   missing `android.hardware.bluetooth.IBluetoothHci`. Do not use "it did not work on Android" as
   evidence about this hardware.
 - **The serial console is `ttyFIQ0`, not `ttyS0`.** `serial@ff9f0000` is `disabled` in the tree and

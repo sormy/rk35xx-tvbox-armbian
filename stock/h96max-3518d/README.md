@@ -97,7 +97,7 @@ needs. `docs/h96max-3518d/worklog.md` has how it was finally captured.
 
 ### Radio
 
-`swt6621s_wifi` + `skw_sdio_lite` — the **same Seekwave SWT6621S** as `firmware/h96max-h313/`,
+`swt6621s_wifi` + `skw_sdio_lite` — the **same Seekwave SWT6621S** as `stock/h96max-h313/firmware/`,
 driver `VERSION: 2.0.250319-250618.eececbe`. SDIO on `mmc@ffc20000`, control GPIOs off
 `/seekwcn_boot` (`seekwave,sv6160lite`).
 
@@ -107,13 +107,8 @@ driver `VERSION: 2.0.250319-250618.eececbe`. SDIO on `mmc@ffc20000`, control GPI
 `SWT6621S_NV_SDIO.bin` differs in **two bytes**, at offsets `0x20` and `0x24` — `0x00` here, `0x01`
 there. Neither looks like a MAC; they read as flags.
 
-Note what this does **not** mean: what the overlay _ships_ for DRAM/IRAM is the newer armbian/KICKPI
-build (193468 / 360128 B), deliberately, because the factory build asserts on HCI opcode `0x100e`
-and leaves BT dead. Comparing a factory blob against a shipped one is what produced an earlier wrong
-claim here that the two boards' firmware revisions differed.
-
-**Blobs stay per board regardless.** Identical bytes today are an observation, not a licence to
-share a file between boards.
+`tvb-firmware-swt6621s` ships these stock files; the assert they hit on HCI opcode `0x100e` is
+answered in the driver (`skwbt.skip_codec_reads=1`). Only the NV file stays per board.
 
 `seekwave_nv_name = "SEEKWAVE_NV_SWT6652.bin"` in the tree names a file that does not exist in
 `/vendor/etc/firmware` — same dangling reference as the other H96 Max.

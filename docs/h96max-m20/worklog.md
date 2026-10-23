@@ -1560,3 +1560,23 @@ October, past the image's `/etc/fstab`, and `mount` compares the two. Reproduced
 timesyncd stopped and its clock file removed: `System time advanced to built-in epoch`, units loaded
 `2026-04-13`. With `/usr/lib/clock-epoch` touched: `advanced to timestamp on /usr/lib/clock-epoch`,
 units loaded after `fstab`. The image now touches it last.
+
+## 2026-10-23 — the tree on mainline's clock numbers
+
+The factory tree was decompiled with mainline's headers, but it was built from the vendor 4.9
+kernel's, and the two number GXL clocks differently: 69 of the 84 names both declare differ
+(`CLKID_SD_EMMC_C` 46 vendor, 96 mainline). Khadas' `khadas-vims-4.9.y` `amlogic,gxl-clkc.h` decodes
+every factory MMC clock to its `clock-names` (`CLKID_SD_EMMC_C`, `_P0_COMP`, `CLKID_FCLK_DIV2`);
+mainline's reads `CLKID_BLKMV`, `CLKID_VPU_1_DIV`.
+
+So `board.dtb` carried vendor numbers in nodes mainline binds: the four `i2c`, `uart_B`, `uart_C`
+and `ethmac`, whose compatibles the patch had moved to mainline. All seven are `disabled`, so
+nothing read the wrong clock. Now the factory tree is named from the vendor header and the patched
+one compiled against mainline's, so those clocks take mainline's numbers.
+
+19 vendor clock names have no mainline equivalent, all in nodes no mainline driver binds. Dropped:
+`cvbsout`, `ge2d`, `mesonstream`, `vpu`, `dwc2_a`, the four vendor DAIs and `aml_sound_meson`.
+
+Deployed to the box and rebooted: HDMI, `wlan0`, three MMC hosts, two sound cards, `hci0`, lima,
+three video devices, 23 err/warn lines and no failed units, as before; the messages differ only in
+probe order. `/usr/lib/tvb/board.dtb.good` holds the previous tree.

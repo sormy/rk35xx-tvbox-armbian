@@ -18,8 +18,7 @@ code** — one `boards/<board>/` directory. If a change needs new code per board
 | `stock/<board>/`   | factory evidence: dumps, logs, partition maps                                                  |
 | `backup/`          | `<board>-stock.img.xz`, the factory eMMC (gitignored)                                          |
 | `patches/<topic>/` | every patch to an upstream's code, one folder per upstream, with its upstream status           |
-| `tools/<tool>/`    | a host tool's build script, or our own tool's source; `./build.sh tool <tool>`                 |
-| `scripts/`         | host-side helpers, never installed on a box                                                    |
+| `tools/<tool>/`    | host tools: a build script or our own source; `tools/board/`, the boot-file generators         |
 | `keyring/`         | the `apt` repo's public signing key                                                            |
 | `kernel/`          | each kernel's pin, config, fragment and patch list, and the step building it                   |
 | `build-env/`       | the build environment: one container image every `./build.sh` step runs in                     |
@@ -38,12 +37,13 @@ only it has.
 
 **Tools we build, and must:** `dtc` (`./build.sh tool dtc` — vanilla cannot round-trip a vendor blob
 with `&label`s) · `rkdeveloptool` (`./build.sh tool rkdeveloptool`) and each board's maskrom loader
-(`./build-rockchip-loaders.sh`) · `amlcmd` and `gxlimg` (`./build.sh tool amlcmd`,
-`./build.sh tool gxlimg` — Amlogic's own are closed and x86-64 Linux only) · a per-board `uboot.dts`
-(`./build-uboot-dtb.sh`) — or all of a board's at once with `./build-firmware-all.sh`. **From the
-host:** `fdtput` · `fsck.ext4` (keg-only on Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` ·
-`npx prettier` · `python3` · `mtools` and `mkimage`, for a board whose image carries a FAT boot
-partition. **On the box:** `evtest`, `fio`, `stress-ng`, `iw`, `bluez`.
+(`./build.sh loaders`) · `amlcmd` and `gxlimg` (`./build.sh tool amlcmd`, `./build.sh tool gxlimg` —
+Amlogic's own are closed and x86-64 Linux only) · each board's `board.dtb` and `uboot.dts` from its
+factory trees (`./build.sh board-dtb <board>`, `./build.sh uboot-dtb <board>`) — or every board's
+boot files at once with `./build.sh boards`. **From the host:** `cc` and `patch` · `fdtput` ·
+`fsck.ext4` (keg-only on Homebrew: `/opt/homebrew/opt/e2fsprogs/sbin/`) · `xz` · `npx prettier` ·
+`python3` · `mtools` and `mkimage`, for a board whose image carries a FAT boot partition. **On the
+box:** `evtest`, `fio`, `stress-ng`, `iw`, `bluez`.
 
 **`e2tools`** (`./build.sh tool e2tools`) — edit a box's ext4 rootfs on an SD card or USB stick from
 a Mac, which cannot mount ext4; the stock one corrupts an image on delete.
@@ -75,6 +75,7 @@ another, so nothing rots when one is rewritten.
 | `docs/<board>/board.md`               | that board's identity, measured numbers, known gaps                  |
 | `docs/<board>/dtb.md`                 | that board's device-tree changes, tried and reverted ones too        |
 | `docs/<board>/worklog*.md`            | dated history, wrong turns included; split by topic once it grows    |
+| `tools/dtcx/README.md`                | a blob decompiled as its vendor wrote it: named constants, decimal   |
 | `tools/amlcmd/README.md`              | the Amlogic burning-mode client we wrote, and its worklog            |
 | `patches/dtc/README.md`               | the patched `dtc` that round-trips a vendor blob with `&label`s      |
 | `patches/u-boot/README.md`            | U-Boot's pylibfdt build off Linux; the MAC from vendor storage       |

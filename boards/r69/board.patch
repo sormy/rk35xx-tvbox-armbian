@@ -1,7 +1,7 @@
---- board.dts
-+++ armbian.dts
-@@ -1,11 +1,13 @@
- /dts-v1/;
+--- factory_board.dts
++++ board.dts
+@@ -11,11 +11,13 @@
+ #include <dt-bindings/thermal/thermal.h>
  
  / {
 -	compatible = "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518";
@@ -9,14 +9,14 @@
 +	 * otherwise find the VPU */
 +	compatible = "r69,rk3518-tvbox", "rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518", "rockchip,rk3528a";
  	interrupt-parent = <&gic>;
- 	#address-cells = <0x02>;
- 	#size-cells = <0x02>;
+ 	#address-cells = <2>;
+ 	#size-cells = <2>;
 -	model = "Rockchip RK3518 EVB1 DDR4 V10 Board";
 +	model = "R69 XR821_V1.1";
  
  	aliases {
  		ethernet0 = "/ethernet@ffbd0000";
-@@ -769,6 +771,9 @@
+@@ -785,6 +787,9 @@
  			mode-charge = <0x5242c30b>;
  			mode-fastboot = <0x5242c309>;
  			mode-loader = <0x5242c301>;
@@ -26,21 +26,21 @@
  			mode-normal = <0x5242c300>;
  			mode-recovery = <0x5242c303>;
  			mode-ums = <0x5242c30c>;
-@@ -847,9 +852,10 @@
- 		compatible = "arm,mali-450";
- 		reg = <0x00 0xff700000 0x00 0x40000>;
- 		interrupts = <0x00 0x58 0x04 0x00 0x59 0x04 0x00 0x56 0x04 0x00 0x5c 0x04 0x00 0x5d 0x04 0x00 0x5a 0x04 0x00 0x5b 0x04>;
+@@ -909,9 +914,10 @@
+ 		             <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 90 IRQ_TYPE_LEVEL_HIGH>,
+ 		             <GIC_SPI 91 IRQ_TYPE_LEVEL_HIGH>;
 -		interrupt-names = "Mali_GP_IRQ", "Mali_GP_MMU_IRQ", "IRQPP", "Mali_PP0_IRQ", "Mali_PP0_MMU_IRQ", "Mali_PP1_IRQ", "Mali_PP1_MMU_IRQ";
--		clocks = <&scmi_clk 0x16 &cru 0x113 &cru 0x10e>;
+-		clocks = <&scmi_clk SCMI_CLK_GPU>, <&cru ACLK_GPU_MALI>, <&cru PCLK_GPU_ROOT>;
 -		clock-names = "clk_mali", "aclk_gpu_mali", "pclk_gpu";
 +		/* names mainline lima expects; the vendor Mali blob used its own */
 +		interrupt-names = "gp", "gpmmu", "pp", "pp0", "ppmmu0", "pp1", "ppmmu1";
-+		clocks = <&cru 0x113 &cru 0x113>;
++		clocks = <&cru ACLK_GPU_MALI>, <&cru ACLK_GPU_MALI>;
 +		clock-names = "bus", "core";
- 		assigned-clocks = <&scmi_clk 0x16>;
- 		assigned-clock-rates = <0x11e1a300>;
- 		power-domains = <&power 0x04>;
-@@ -1082,7 +1088,8 @@
+ 		assigned-clocks = <&scmi_clk SCMI_CLK_GPU>;
+ 		assigned-clock-rates = <300000000>;
+ 		power-domains = <&power RK3528_PD_GPU>;
+@@ -1150,7 +1156,8 @@
  		iommus = <&vop_mmu>;
  		rockchip,grf = <&grf>;
  		status = "okay";
@@ -50,20 +50,20 @@
  		support-multi-area;
  		phandle = <0xeb>;
  
-@@ -1416,6 +1423,12 @@
+@@ -1494,6 +1501,12 @@
  		pinctrl-names = "default";
- 		pinctrl-0 = <&uart2m0_xfer &uart2m0_ctsn>;
+ 		pinctrl-0 = <&uart2m0_xfer>, <&uart2m0_ctsn>;
  		phandle = <0xf6>;
 +
 +		/* the AIC8800's Bluetooth, bound on the serdev bus by bluetooth-hci-h4-serdev */
 +		bluetooth {
 +			compatible = "aicsemi,aic8800-bt";
-+			max-speed = <0x16e360>;
++			max-speed = <1500000>;
 +		};
  	};
  
  	uart3: serial@ffa08000 {
-@@ -1670,7 +1683,8 @@
+@@ -1748,7 +1761,8 @@
  		status = "okay";
  		remote_pwm_id = <0x03>;
  		handle_cpu_id = <0x01>;
@@ -73,30 +73,30 @@
  		phandle = <0x108>;
  
  		ir_key1 {
-@@ -1786,7 +1800,8 @@
- 		clocks = <&cru 0x73 &cru 0x72>;
+@@ -1864,7 +1878,8 @@
+ 		clocks = <&cru TCLK_WDT_NS>, <&cru PCLK_WDT_NS>;
  		clock-names = "tclk", "pclk";
- 		interrupts = <0x00 0x1c 0x04>;
+ 		interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
 -		status = "disabled";
 +		/* /dev/watchdog for systemd RuntimeWatchdogSec - also the only hang recorder */
 +		status = "okay";
  		phandle = <0x10e>;
  	};
  
-@@ -4153,27 +4168,28 @@
+@@ -4373,27 +4388,29 @@
  	leds {
  		compatible = "gpio-leds";
  
 -		normal_led: normal {
 -			label = "normal";
--			gpios = <&gpio4 0x11 0x00>;
+-			gpios = <&gpio4 17 GPIO_ACTIVE_HIGH>;
 -			linux,default-trigger = "default-on";
 -			rockchip,invert-on-shutdown;
 +		/* power/standby are the names the shared LED hooks drive; retain-state-*
 +		 * stops the LED core clearing them at shutdown and suspend */
 +		power_led: power {
 +			label = "power";
-+			gpios = <&gpio4 0x11 0x01>;
++			gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
 +			default-state = "on";
 +			retain-state-shutdown;
 +			retain-state-suspended;
@@ -105,7 +105,7 @@
  
  		standby_led: standby {
  			label = "standby";
- 			gpios = <&gpio4 0x0b 0x01>;
+ 			gpios = <&gpio4 11 GPIO_ACTIVE_LOW>;
 -			linux,default-trigger = "timer";
 -			rockchip,invert-on-shutdown;
 +			default-state = "off";
@@ -119,7 +119,8 @@
 -		bootargs = "earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0 driver_async_probe=dwmmc_rockchip,rockchip-drm drm_kms_helper.fbdev_emulation=0";
 -		phandle = <0x1ce>;
 -	};
-+	/* chosen dropped: u-boot supplies bootargs, and the vendor string names ttyFIQ0 */
++	/* chosen dropped: U-Boot overwrites /chosen/bootargs with extlinux.conf's append before
++	 * handing the tree to Linux, so anything here is inert */
  
  	fiq-debugger {
  		compatible = "rockchip,fiq-debugger";

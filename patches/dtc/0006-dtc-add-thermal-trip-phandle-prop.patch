@@ -1,0 +1,20 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] dtc: recognise the thermal cooling-map trip phandle property
+
+A cooling map's trip reaches its trip point by bare phandle. Without it in
+the table the cell stays numeric, and a number that means a node is only
+valid for the exact allocation it was dumped from.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+diff --git a/livetree.c b/livetree.c
+--- a/livetree.c
++++ b/livetree.c
+@@ -1191,6 +1191,7 @@ static const struct phandle_prop phandle_props[] = {
+ 	{ "io-channels",		"#io-channel-cells" },
+ 	{ "interrupt-parent",		NULL },
+ 	{ "cpu-idle-states",		NULL },
++	{ "trip",			NULL },
+ 	{ "interrupt-affinity",		NULL },
+ 	{ "devfreq-events",		NULL },
+ 	{ "extcon",			NULL },

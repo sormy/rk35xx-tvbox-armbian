@@ -20,8 +20,9 @@ Every board here has one — a shared FIT built from mainline's `rk3528-generic`
 DT and no `CONFIG_ADC`, so the recovery button cannot reach Maskrom from U-Boot on it. Whether a
 board has ever booted its own belongs in that board's `board.md`.
 
-To enable a board: write `boards/<board>/uboot.patch` against that box's
-`boards/<board>/factory_uboot.dtb`, run `./build-uboot-dtb.sh <board>` and
+To enable a board: set `BOARD_UBOOT_DTB_SOURCE` and `BOARD_UBOOT_DTB_TARGET` in its `board.conf`,
+write `boards/<board>/uboot.patch` against `factory_uboot.dts`
+(`tools/dtcx/dtcx.py --strict <source> factory_uboot.dtb`), run `./build.sh uboot-dtb <board>` and
 `./build.sh uboot <board>`, boot it once with serial attached, confirm the recovery button reaches
 Maskrom — then commit the tree and set `BOARD_UBOOT=rk3528`.
 
@@ -36,8 +37,8 @@ Its DDR tuning is the only one proven stable on this DRAM die; public rkbin DDR 
 The failure is a random `Synchronous Abort` whose `far` register holds ASCII text — RAM corruption,
 not a code bug. Carve it per board; it is the one bootloader file that is not shared.
 
-A backup recovers only the DDR half, so `./build-rockchip-loaders.sh` packs a maskrom USB loader per
-board into `boards/<board>/maskrom_loader.bin`: that board's DDR init + Rockchip's `usbplug`.
+A backup recovers only the DDR half, so `./build.sh loaders` packs a maskrom USB loader per board
+into `boards/<board>/maskrom_loader.bin`: that board's DDR init + Rockchip's `usbplug`.
 
 > ⚠️ **Our U-Boot still serves nothing on USB.** The vendor U-Boot runs rockusb, so `rkdeveloptool`
 > can always reach the box. Ours has `# CONFIG_USB is not set` and `CONFIG_NO_NET=y`, so once it
@@ -45,49 +46,46 @@ board into `boards/<board>/maskrom_loader.bin`: that board's DDR init + Rockchip
 > mainline's `rk3528.dtsi` describes no USB controller at all. `docs/todo/rk35xx-uboot-usb.md` has
 > the analysis and what fixing it would buy.
 
-## The tree is the factory tree, retargeted
+## The tree is the factory tree, in names
 
 Same rule as everywhere else here: **follow the factory DTB and graft the minimum.** The U-Boot tree
-is built the way `board.dts` is — decompile the box's own blob, then apply a small commented patch.
+is built the way `board.dts` is — decompile the box's own blob, then apply a patch whose comments
+mark every judgement hunk.
 
 ```sh
-./build-uboot-dtb.sh            # boards/<board>/factory_uboot.dtb -> boards/<board>/uboot.dts
+./build.sh uboot-dtbs            # boards/<board>/factory_uboot.dtb -> factory_uboot.dts, uboot.dts
 ```
 
 Two stages, each auditable alone:
 
-1. **Mechanical.** `dtc -P` decompiles the blob — and the result is checked to recompile
-   **byte-identical**, so the base really is the board's own. Then `scripts/uboot-renumber.py`
-   retargets it at mainline's bindings.
-2. **Judgement.** `boards/<board>/uboot.patch`, every hunk carrying its reason.
+1. **Mechanical.** `tools/dtcx/` decompiles the blob into `factory_uboot.dts` as the vendor U-Boot's
+   source wrote it, every clock and reset cell named from its `rk3528-cru.h`, the board's
+   `BOARD_UBOOT_DTB_SOURCE`. The tree is written only once it decompiles back to the blob's own.
+2. **Judgement.** `boards/<board>/uboot.patch` turns that into `uboot.dts`, which must compile
+   against `BOARD_UBOOT_DTB_TARGET`: mainline's two headers, the reset names mainline spells
+   differently (`SRST_PRESETN_SARADC` → `SRST_P_SARADC`), the phase tags (`u-boot,dm-pre-reloc` →
+   `bootph-all`, `u-boot,dm-spl` → `bootph-pre-ram`), and every change we make, each with its
+   reason.
 
-### Why a retarget is needed at all
+### Why names, not numbers
 
-A clock reference is `<&cru N>`. The phandle picks the controller and survives untouched; `N` is an
-index into whichever driver reads it, and the vendor and mainline number the same clocks
-differently:
+A clock reference is `<&cru N>`. The phandle picks the controller; `N` is an index into whichever
+driver reads it, and the vendor and mainline number the same clocks differently:
 
 | Node              | vendor    | mainline  |
 | ----------------- | --------- | --------- |
 | saradc clk/pclk   | 257 / 256 | 195 / 194 |
 | eMMC, five clocks | 163–167   | 140–144   |
-| sdmmc cclk/hclk   | 408 / 407 | 295 / 296 |
+| sdmmc cclk/hclk   | 407 / 408 | 295 / 296 |
 
 Mainline reads the vendor's 257 as `ACLK_VOP_BIU` and its 163 as `PCLK_UART7`. Nothing errors — the
-eMMC just gets clocked against a UART. `board.dts` needs no such pass because a vendor tree meets a
-vendor kernel there; our U-Boot is mainline.
+eMMC just gets clocked against a UART. The blob keeps only the number, but the vendor's source named
+it, and the header gives the name back: `CLK_SARADC` is 257 against the vendor's header and 195
+against mainline's, so U-Boot's build resolves `uboot.dts` to mainline's numbers by itself.
 
-The blob stores only the integer and no decompiler can recover which symbol produced it, so the
-**vendor header is the dictionary** (the vendor kernel's `rk3528-cru.h`, which `build-uboot-dtb.sh`
-fetches at a pinned commit) and mainline's supplies the new value. Resets need a spelling rule too —
-vendor `SRST_PRESETN_SARADC`, mainline `SRST_P_SARADC`. Per board: 29 clock cells, 11 reset cells,
-40 phase tags (`u-boot,dm-pre-reloc` → `bootph-all`, `u-boot,dm-spl` → `bootph-pre-ram`).
-
-**A cell that does not map to exactly one value stops the build**, never guessed and never shipped:
-a half-retargeted tree carries vendor indices mainline reads as other clocks. `SCMI_*` names are
-kept out of the dictionary — they address the `scmi_clk` provider and can never appear in a
-`<&cru N>` cell, while collecting them collided with the whole low CRU range. No board here produces
-an unmapped cell.
+**A cell whose number has no single name stops the build**, never guessed. `SCMI_*` names are kept
+out: they address the `scmi_clk` provider, never a `<&cru N>` cell, and would collide with the low
+CRU numbers. Per board: 29 clock and 11 reset cells named, none left unnamed.
 
 ### What the patch grafts
 
@@ -168,8 +166,10 @@ of the same inputs match byte for byte.
 - **`ROCKCHIP_TPL=` never reaches the artifact.** Binman assembles TPL+SPL+FIT as one image; only
   the FIT is extracted and the built idbloader discarded. Reproducibility rests on the U-Boot and
   BL31 pins alone.
-- **`rkbin` is pinned twice**, in `uboot/rk3528.conf` and `build-rockchip-loaders.sh`. Bump both
+- **`rkbin` is pinned twice**, in `uboot/rk3528.conf` and `tools/board/build-loader.sh`. Bump both
   together.
+- **The U-Boot tag is pinned twice**, `TAG` in `uboot/rk3528.conf` and the commit in the
+  `uboot-rk3528-mainline-*` base, whose name says the version. Bump both together.
 
 ## Rebuilding
 
@@ -190,7 +190,7 @@ sudo dd if=u-boot.bin of=/dev/<disk> bs=512 seek=20480 conv=notrunc,fsync
 
 It builds in the container like every other step, from a defconfig made on the spot out of
 `generic-rk3528_defconfig` with the board's tree named in it, and aborts if a `CONFIGS` symbol does
-not survive Kconfig. `boards/<board>/uboot.patch` is the only device-tree source we keep.
+not survive Kconfig. `boards/<board>/uboot.patch` is the only device-tree source we edit.
 
 Smoke-test before trusting it: the factory idbloader at sector 64 stays put, and the box must come
 back; `/proc/device-tree/chosen/u-boot,version` names the U-Boot that booted it.
