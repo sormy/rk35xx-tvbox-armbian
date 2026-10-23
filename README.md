@@ -142,8 +142,14 @@ build/bin/rkdeveloptool rfi                                  # total sectors
 build/bin/rkdeveloptool rl 0 <sectors> emmc-stock.img        # back up first
 xz -dk tvbian-<date>-<board>-trixie.img.xz
 build/bin/rkdeveloptool wl 0 tvbian-<date>-<board>-trixie.img
+dd if=emmc-stock.img of=window.bin bs=512 skip=7168 count=9216
+build/bin/rkdeveloptool wl 7168 window.bin                   # the factory window, from the dump
 build/bin/rkdeveloptool rd                                   # reboot
 ```
+
+The image leaves sectors 7168–16383 blank, and they hold the box's `DVKR` and `SSKR` stores. From an
+SD card `tvb-install` keeps them; a write over OTG cannot, so put them back from your dump **after**
+the image, or the box boots without its label MAC and serial.
 
 More routes, and what to do if a transfer stalls: `docs/rockchip-maskrom.md`.
 
