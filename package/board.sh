@@ -24,7 +24,7 @@ echo "$BOARD_NAME" >"$LIB/board-name"
 
 # loader files only: nothing in this package writes a sector
 [ -z "${BOARD_UBOOT:-}" ] || cp "/out/uboot/$BOARD/u-boot.bin" "$LIB/u-boot.bin"
-[ -z "${BOARD_IDBLOADER:-}" ] || cp "$FW/$BOARD_IDBLOADER" "$LIB/idbloader.bin"
+[ ! -f "$FW/$BOARD/factory_idbloader.bin" ] || cp "$FW/$BOARD/factory_idbloader.bin" "$LIB/idbloader.bin"
 # tvb-install, on a board that names the sectors a copy leaves as they are: the unit's own
 if [ -f "$FW/$BOARD/preserve-sectors" ]; then
   install -D -m 0755 "$FW/common/tvb-install" "$ROOT/usr/sbin/tvb-install"

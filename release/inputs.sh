@@ -34,7 +34,7 @@ files() {
         # shellcheck source=/dev/null
         (. "uboot/$BOARD_UBOOT.conf"; echo ${PATCHES:-}; [ -z "${SOC:-}" ] || echo "uboot/$SOC-u-boot.dtsi")
       fi
-      [ -z "${BOARD_IDBLOADER:-}" ] || echo "boards/$BOARD_IDBLOADER" ;;
+      [ ! -f "boards/$2/factory_idbloader.bin" ] || echo "boards/$2/factory_idbloader.bin" ;;
     firmware)
       echo "firmware/$2/firmware.conf" "firmware/$2/package.list" package/firmware.sh
       sed -E 's/#.*//' "firmware/$2/package.list" | awk 'NF && $1 != "link" {print "firmware/" $2}' ;;
