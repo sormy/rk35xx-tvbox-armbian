@@ -18,7 +18,7 @@ version() { awk -v c="kernel/$1.conf" '$1 == "kernel" && $2 == c { sub(/-[0-9]+$
   echo "| Box | Silkscreen | Family | Base | Kernel | Opt-in next | Extras | Image |"
   echo "| --- | --- | --- | --- | --- | --- | --- | --- |"
   for img in /out/images/*.img.xz; do
-    board=$(basename "$img" | sed -E 's/^tvbian-[0-9]{4}-[0-9]{2}-[0-9]{2}-(.*)-[a-z]+\.img\.xz$/\1/')
+    board=$(basename "$img" | sed -E 's/^tvbian-(.*)-[a-z]+-[0-9]{4}-[0-9]{2}-[0-9]{2}\.img\.xz$/\1/')
     unset "${!BOARD_@}"   # a key one board leaves out must not carry over from the last
     # shellcheck source=/dev/null
     . "boards/$board/board.conf"

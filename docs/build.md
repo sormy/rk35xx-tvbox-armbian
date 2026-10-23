@@ -127,10 +127,11 @@ Everything is published from this repo, as GitHub releases.
 | checksums   | `SHA256SUMS`, signed, beside the images                 |
 | signing key | `keyring/tvb-archive-keyring.gpg`; CI signs from secret |
 
-An image is named `tvbian-<YYYY-MM-DD>-<board>-<codename>.img.xz`, so a downloaded file still says
-what it is. Nothing is pruned: a past image can be flashed to bisect, and `apt` keeps every kernel
-it published under versioned names, so `apt install linux-image-<kernelrelease>` goes back without a
-reflash. ❓ whether GitHub caps assets per release; `apt` gains about 150 kernel debs a year.
+An image is named `tvbian-<board>-<codename>-<YYYY-MM-DD>.img.xz`, so a downloaded file still says
+what it is, and a board's images sort together. Nothing is pruned: a past image can be flashed to
+bisect, and `apt` keeps every kernel it published under versioned names, so
+`apt install linux-image-<kernelrelease>` goes back without a reflash. ❓ whether GitHub caps assets
+per release; `apt` gains about 150 kernel debs a year.
 
 The repo is flat, `Packages.xz`, `Release` and `InRelease` beside the `.deb`s, from
 `apt-ftparchive`, signed with `gpg`. apt's `https` method follows `releases/download`'s redirect to

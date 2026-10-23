@@ -83,7 +83,7 @@ needs. None of it is built yet.
 | 9   | Voice GATT decoder, then local STT          | the voice key                 |
 | 10  | Chiaki                                      | the extra prize               |
 
-**The Kodi image** is `tvbian-<date>-<board>-trixie-kodi.img.xz`: the same image step plus a Kodi
+**The Kodi image** is `tvbian-<board>-trixie-kodi-<date>.img.xz`: the same image step plus a Kodi
 package list, Kodi started at boot, released alongside the plain images. Only once steps 1 and 2
 work. It can be sealed once sealed images exist.
 

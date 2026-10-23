@@ -96,8 +96,8 @@ A stock box needs no button. If `connect` waits forever, hold the button, plug i
 1. Flash the image to a stick, and plug it into the USB-A port:
 
 ```sh
-xz -dc tvbian-<date>-<board>-trixie.img.xz | sudo dd of=/dev/rdiskN bs=4m status=progress; sync   # macOS
-xz -dc tvbian-<date>-<board>-trixie.img.xz | sudo dd of=/dev/sdX bs=4M status=progress; sync      # Linux
+xz -dc tvbian-<board>-trixie-<date>.img.xz | sudo dd of=/dev/rdiskN bs=4m status=progress; sync   # macOS
+xz -dc tvbian-<board>-trixie-<date>.img.xz | sudo dd of=/dev/sdX bs=4M status=progress; sync      # Linux
 ```
 
 2. Point the box at it once, over the OTG cable:

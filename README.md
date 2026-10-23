@@ -94,8 +94,8 @@ signed checksums. Build it yourself instead with `./build.sh`: [docs/build.md](d
 ```bash
 diskutil list                                    # macOS — find the card   ·   lsblk on Linux
 diskutil unmountDisk /dev/diskN
-xz -dc tvbian-<date>-<board>-trixie.img.xz | sudo dd of=/dev/rdiskN bs=4m status=progress; sync   # macOS
-xz -dc tvbian-<date>-<board>-trixie.img.xz | sudo dd of=/dev/sdX bs=4M status=progress; sync      # Linux
+xz -dc tvbian-<board>-trixie-<date>.img.xz | sudo dd of=/dev/rdiskN bs=4m status=progress; sync   # macOS
+xz -dc tvbian-<board>-trixie-<date>.img.xz | sudo dd of=/dev/sdX bs=4M status=progress; sync      # Linux
 ```
 
 …or [Balena Etcher](https://etcher.balena.io/), which takes the `.img.xz` as it is. Android is
@@ -140,8 +140,8 @@ build/bin/rkdeveloptool db boards/<board>/maskrom_loader.bin
 
 build/bin/rkdeveloptool rfi                                  # total sectors
 build/bin/rkdeveloptool rl 0 <sectors> emmc-stock.img        # back up first
-xz -dk tvbian-<date>-<board>-trixie.img.xz
-build/bin/rkdeveloptool wl 0 tvbian-<date>-<board>-trixie.img
+xz -dk tvbian-<board>-trixie-<date>.img.xz
+build/bin/rkdeveloptool wl 0 tvbian-<board>-trixie-<date>.img
 dd if=emmc-stock.img of=window.bin bs=512 skip=7168 count=9216
 build/bin/rkdeveloptool wl 7168 window.bin                   # the factory window, from the dump
 build/bin/rkdeveloptool rd                                   # reboot

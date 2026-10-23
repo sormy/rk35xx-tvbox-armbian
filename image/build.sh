@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build one board's image, inside the build container, from the debs in /out/debs:
-#   build.sh <board>   -> /out/images/tvbian-<date>-<board>-<suite>.img.xz
+#   build.sh <board>   -> /out/images/tvbian-<board>-<suite>-<date>.img.xz
 set -euo pipefail
 BOARD=$1
 FW=/repo/boards
@@ -13,7 +13,7 @@ SUITE=${TVB_BUILD_SUITE:?}
 DATE=${TVB_BUILD_DATE:-$(date -u +%F)}
 WORK=/work/image/$BOARD
 ROOT=$WORK/root
-NAME=tvbian-$DATE-$BOARD-$SUITE
+NAME=tvbian-$BOARD-$SUITE-$DATE
 rm -rf "$WORK" && mkdir -p "$WORK" /out/images
 
 newest() {  # the last built /out/debs/<package>_*.deb: a release's revision outsorts 0~local

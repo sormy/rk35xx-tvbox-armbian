@@ -26,7 +26,7 @@ python3 release/verify.py
 
 images=$(find "$OUT/images" -name '*.img.xz' 2>/dev/null)
 [ -n "$images" ] || { echo "✓ apt published; no images to release"; exit 0; }
-day=$(basename "$(echo "$images" | head -1)" | cut -d- -f2-4)
+day=$(basename "$(echo "$images" | head -1)" | sed -E 's/.*-([0-9]{4}-[0-9]{2}-[0-9]{2})\.img\.xz$/\1/')
 tag=$day n=1
 while gh release view "$tag" >/dev/null 2>&1 || git ls-remote --exit-code -q origin "refs/tags/$tag"; do
   n=$((n + 1)) tag=$day.$n
