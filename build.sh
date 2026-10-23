@@ -105,7 +105,7 @@ run() {  # run a command inside the image, the repo read-only at /repo
   local rel="" ccache=()
   "$RT" image inspect "$IMAGE" >/dev/null 2>&1 ||
     "$RT" build ${PLATFORM:+"$PLATFORM"} --build-arg SUITE="$SUITE" -t "$IMAGE" -f build-env/Containerfile build-env
-  mkdir -p "$OUT"
+  mkdir -p "$OUT/debs"
   [ "$RT" = podman ] && rel=",Z"   # SELinux hosts relabel bind mounts; a no-op elsewhere
   "$RT" volume create "$WORK" >/dev/null 2>&1 || true
   if [ -n "${TVB_BUILD_CCACHE_DIR:-}" ]; then
