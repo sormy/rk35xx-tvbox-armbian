@@ -1376,7 +1376,7 @@
  
  	aml_sensor0: aml-sensor@0 {
  		compatible = "amlogic, aml-thermal";
-@@ -2851,67 +3185,48 @@
+@@ -2851,67 +3185,50 @@
  
  	thermal-zones {
  
@@ -1399,10 +1399,11 @@
 -				};
 -
 -				control: trip-point@1 {
--					temperature = <85000>;
--					hysteresis = <1000>;
++				/* the factory's power-allocator target; 80, mainline's GX default, throttles
++				   this fanless stick within two minutes of load */
 +				cpu_passive: cpu-passive {
-+					temperature = <80000>;
+ 					temperature = <85000>;
+-					hysteresis = <1000>;
 +					hysteresis = <2000>;
  					type = "passive";
 -					phandle = <0x82>;

@@ -3192,8 +3192,10 @@
 
 			trips {
 
+				/* the factory's power-allocator target; 80, mainline's GX default, throttles
+				   this fanless stick within two minutes of load */
 				cpu_passive: cpu-passive {
-					temperature = <80000>;
+					temperature = <85000>;
 					hysteresis = <2000>;
 					type = "passive";
 				};

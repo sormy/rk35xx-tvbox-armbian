@@ -244,7 +244,7 @@ Mainline's nodes, grafted beside the vendor's, which bind to nothing:
 | `hdmi_tx` audio        | `#sound-dai-cells`, the card's HDMI codec                          |
 | `mhu`, `sram`, `scpi`  | mainline's MHU, SCP shared memory and SCPI: DVFS clock and sensors |
 | CPUs                   | `#cooling-cells`                                                   |
-| `thermal-zones`        | `cpu-thermal` on the SCPI sensor, cooling the four CPUs            |
+| `thermal-zones`        | `cpu-thermal` on the SCPI sensor; passive at the factory's 85 °C   |
 
 **secmon overlaid BL31.** The vendor's reusable `linux,secmon` pool sits on the 2 MiB U-Boot
 `/memreserve/`s at `0x10000000`. Activating a CMA area hands its pages to the page allocator, so

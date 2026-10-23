@@ -1580,3 +1580,19 @@ one compiled against mainline's, so those clocks take mainline's numbers.
 Deployed to the box and rebooted: HDMI, `wlan0`, three MMC hosts, two sound cards, `hci0`, lima,
 three video devices, 23 err/warn lines and no failed units, as before; the messages differ only in
 probe order. `/usr/lib/tvb/board.dtb.good` holds the previous tree.
+
+## 2026-10-23 — the passive trip at 85 °C
+
+The 80 °C passive trip came with the SCPI graft, copied from mainline's `meson-gx.dtsi`; nothing
+measured it against the factory, whose `power_allocator` zone starts at 75 °C and holds 85 °C. Our
+kernel offers `step_wise`, `bang_bang`, `fair_share` and `user_space`, no `power_allocator`.
+
+Ten minutes of `stress-ng --cpu 4` each, on the stick as it sits:
+
+| Trip  | Start | Full 1.752 GHz | Then        | Mean after 60 s | Peak  |
+| ----- | ----- | -------------- | ----------- | --------------- | ----- |
+| 80 °C | 65 °C | ~2 min         | 1.0-1.4 GHz | 1250 MHz        | 82 °C |
+| 85 °C | 62 °C | ~5½ min        | 1.4-1.5 GHz | 1572 MHz        | 86 °C |
+
+The trip is now 85 °C; hot stays 90 °C and critical 110 °C. The idle reading was 50 °C cold, 62-65
+°C straight after a run; the 67 °C idle recorded on 2026-10-12 matches the latter.

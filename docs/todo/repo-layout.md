@@ -10,29 +10,31 @@ Subject folders at the root, the pipeline's steps beside them; one mechanism per
 
 | Folder              | Holds                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
-| `base/`             | `tvb-base`: what every box gets, laid out at install paths            |
-| `boards/<board>/`   | `board.conf`, trees, loaders, and its own files under `rootfs/`       |
-| `boards/common/`    | one folder a family, `rootfs/` taken whole by that family's boards    |
-| `firmware/<chip>/`  | a chip's blobs and its driver's options, under `rootfs/`              |
+| `base/`             | `tvb-base`: what every box gets, and its `package.list`               |
+| `boards/<board>/`   | `board.conf`, trees, loaders, and the `package.list` installing files |
+| `boards/common/`    | files shared between boards, named by each board's `package.list`     |
+| `firmware/<chip>/`  | a chip's blobs, its driver's options, and its `package.list`          |
 | `modules/`          | out-of-tree driver pins, and the step packaging them                  |
 | `patches/<target>/` | every deviation from an upstream, its README saying what upstream has |
 | `tools/<tool>/`     | host tools; `tools/board/` for the board generators                   |
 
 A board is a folder with a `board.conf`: no loop lists `boards/` by name.
 
+**`package.list` stays**, over a `rootfs/` tree: one flat file names every install path, reaches
+across folders, and states a symlink as a `link` line. Decided 2026-10-23.
+
 **On the box: vanilla Debian plus packages.** A default goes under `/usr/lib` where the program
 reads it, an `/etc` conffile only where it does not, and never into a file another package owns.
 Locale and the first root-password login are image state, not packaged.
 
-In order, one commit each:
+One step left:
 
-| From                                    | To                                                    |
-| --------------------------------------- | ----------------------------------------------------- |
-| `package.list`                          | `rootfs/` in each folder, family files by family      |
-| `image/rootfs/` and the all-board files | `base/`, packaged as `tvb-base`; it changes the boxes |
+| From                                    | To                                                                |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| `image/rootfs/` and the all-board files | `base/` and a `package.list`, as `tvb-base`; it changes the boxes |
 
-Each step proven the same way: every package rebuilt identical, an image built. `stock/`,
-`research/`, `docs/` and `keyring/` stay where they are.
+Proven by an image built, and every other package rebuilt identical. `stock/`, `research/`, `docs/`
+and `keyring/` stay where they are.
 
 The repo root ends with `build.sh`, the READMEs, `AGENTS.md`, `TODO.md` and folders. Build outputs
 go under `build/`, which is gitignored whole.
