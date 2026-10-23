@@ -39,8 +39,9 @@ rebuilt=$(find . -name '*.deb' -exec dpkg-deb -f {} Package \;)
       { p = $NF; sub(/.*\//, "", p); if (!(p in skip)) print }' "$REL/Contents.published"
   apt-ftparchive contents .
 } | sort -u >Contents
+# Contents too: a flat repo's has no -<arch> suffix, which the default patterns want
 apt-ftparchive -o APT::FTPArchive::Release::Origin=TVBian -o APT::FTPArchive::Release::Label=TVBian \
-  release . >Release
+  -o APT::FTPArchive::Release::Patterns::=Contents release . >Release
 
 IMAGES=""
 if ls /out/images/*.img.xz >/dev/null 2>&1; then

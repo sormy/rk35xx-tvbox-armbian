@@ -21,6 +21,8 @@ debs=$(find "$OUT/repo" -name '*.deb' | while read -r d; do grep -qxF "$(basenam
 [ -z "$debs" ] || gh release upload apt $debs
 gh release upload apt --clobber "$OUT/repo/Packages" "$OUT/repo/Packages.xz" "$OUT/repo/Contents" \
   "$OUT/repo/Release" "$OUT/repo/InRelease" "$OUT/repo/Release.gpg"
+# the repo as a box sees it, before any image points boxes at it
+python3 release/verify.py
 
 images=$(find "$OUT/images" -name '*.img.xz' 2>/dev/null)
 [ -n "$images" ] || { echo "✓ apt published; no images to release"; exit 0; }
