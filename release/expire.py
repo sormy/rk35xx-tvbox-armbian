@@ -7,7 +7,8 @@ release (linux-image-6.1.172-tvb-rk35xx, its headers, its drivers) stays while w
 stays: by a kept package's Depends, or beside a kept package of the same release and version. A deb
 this run built or reused always stays: the images are made of them.
 
-  Usage: expire.py <release dir> <debs dir> <repo dir>   (inside the build container)
+  Usage: expire.py [--keep-all] <release dir> <debs dir> <repo dir>   (inside the build container)
+  --keep-all: a run that publishes nothing expires nothing; it only merges
   reads <release dir>/{Packages,Contents}.{published,new} and the debs; writes <repo dir>/Packages
   and <repo dir>/Contents
 """
@@ -71,10 +72,15 @@ def satisfying(index: list[Stanza], dependency: str) -> list[Stanza]:
 
 
 def expire(
-    index: list[Stanza], today: datetime.date, keep_days: int, shipped: frozenset[str] = frozenset()
+    index: list[Stanza],
+    today: datetime.date,
+    keep_days: int | None,
+    shipped: frozenset[str] = frozenset(),
 ) -> list[Stanza]:
     """The stanzas the repo keeps, each stamped, by package and then version. shipped names the
-    debs this run built or reused, which stay whatever their age."""
+    debs this run built or reused, which stay whatever their age; keep_days None keeps all."""
+    if keep_days is None:
+        keep_days = (today - datetime.date.min).days
     cutoff = (today - datetime.timedelta(days=keep_days)).isoformat()
     # a deb copied in again, as a kernel at another's version does, is the published one: its stamp
     unique = {(s.package, s.version): s for s in reversed(index)}
@@ -121,14 +127,17 @@ def read(path: Path) -> str:
 
 
 def main() -> None:
-    days = os.environ.get("TVB_APT_KEEP_DAYS") or sys.exit(
-        "TVB_APT_KEEP_DAYS unset: build.sh sets it"
-    )
-    release, debs, repo = (Path(a) for a in sys.argv[1:4])
+    keep_all = sys.argv[1:2] == ["--keep-all"]
+    release, debs, repo = (Path(a) for a in sys.argv[1 + keep_all : 4 + keep_all])
+    days = None
+    if not keep_all:
+        days = os.environ.get("TVB_APT_KEEP_DAYS") or sys.exit(
+            "TVB_APT_KEEP_DAYS unset: build.sh sets it"
+        )
     new = parse(read(release / "Packages.new"))
     published = parse(read(release / "Packages.published"))
     shipped = frozenset(p.name for p in debs.glob("*.deb"))
-    kept = expire(published + new, datetime.date.today(), int(days), shipped)
+    kept = expire(published + new, datetime.date.today(), int(days) if days else None, shipped)
     (repo / "Packages").write_text("\n\n".join(s.text for s in kept) + "\n")
     indexed = {s.package for s in kept}
     old, fresh = read(release / "Contents.published"), read(release / "Contents.new")

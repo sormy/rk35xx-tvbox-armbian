@@ -158,6 +158,11 @@ class ExpireTest(unittest.TestCase):
         out = expire.expire(index, TODAY, KEEP_DAYS, frozenset({"tvb-r69_1.deb"}))
         self.assertEqual(kept(out), versions(R69, "1", "3"))
 
+    def test_no_window_keeps_every_version(self) -> None:
+        index = [deb(R69, v, OLD) for v in ("1", "2", "3")] + kernel(DEFAULT, "6.1.170", "1", OLD)
+        index += kernel(DEFAULT, "6.1.172", "1", OLD)
+        self.assertEqual(kept(expire.expire(index, TODAY, None)), kept(index))
+
     def test_a_deb_in_both_indexes_is_listed_once_with_its_published_stamp(self) -> None:
         out = expire.expire([deb(R69, "1", OLD), deb(R69, "1")], TODAY, KEEP_DAYS)
         self.assertEqual([(s.version, s.published) for s in out], [("1", OLD)])
@@ -244,6 +249,19 @@ class MainTest(unittest.TestCase):
             self.assertEqual(
                 (repo / "Contents").read_text(), "etc/issue tvb-base\netc/motd tvb-r69\n"
             )
+
+    def test_main_keep_all_needs_no_window_and_drops_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            release, debs, repo = (Path(tmp) / d for d in ("release", "debs", "repo"))
+            for d in (release, debs, repo):
+                d.mkdir()
+            old = "\n\n".join(deb(R69, v, OLD).text for v in ("1", "2"))
+            (release / "Packages.published").write_text(f"{old}\n")
+            argv = ["expire.py", "--keep-all", str(release), str(debs), str(repo)]
+            with mock.patch.dict(os.environ, clear=True), mock.patch.object(sys, "argv", argv):
+                expire.main()
+            written = expire.parse((repo / "Packages").read_text())
+            self.assertEqual(kept(written), versions(R69, "1", "2"))
 
     def test_main_refuses_without_the_window(self) -> None:
         with mock.patch.dict(os.environ, clear=True), self.assertRaises(SystemExit):

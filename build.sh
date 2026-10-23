@@ -210,7 +210,8 @@ case "$1" in
         run bash release/guard.sh
       fi
       for b in $(boards); do run bash image/build.sh "$b"; done
-      run bash release/notes.sh
+      # the notes are a published release's, and only a run that publishes signs
+      [ ! -f "$OUT/signing.key" ] || run bash release/notes.sh
     fi
     run bash release/repo.sh ;;
 esac

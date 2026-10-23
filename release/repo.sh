@@ -26,10 +26,17 @@ new() {
 new | sort -u | xargs -r cp -t "$REPO"
 
 cd "$REPO"
-# the published index and this run's debs, less what has expired: publish.sh deletes those debs
-apt-ftparchive packages . >"$REL/Packages.new"
-apt-ftparchive contents . >"$REL/Contents.new"
-python3 /repo/release/expire.py "$REL" /out/debs .
+if ls ./*.deb >/dev/null 2>&1; then
+  # the published index and this run's debs, less what has expired: publish.sh deletes those debs
+  apt-ftparchive packages . >"$REL/Packages.new"
+  apt-ftparchive contents . >"$REL/Contents.new"
+  # expiry only when publishing, and only a run that publishes signs
+  keep=(); [ -f /out/signing.key ] || keep=(--keep-all)
+  python3 /repo/release/expire.py "${keep[@]}" "$REL" /out/debs .
+else
+  # nothing new: the published index as it is, and nothing expires without a release
+  cp "$REL/Packages.published" Packages && cp "$REL/Contents.published" Contents
+fi
 xz -k Packages
 # Contents too: a flat repo's has no -<arch> suffix, which the default patterns want
 apt-ftparchive -o APT::FTPArchive::Release::Origin=TVBian -o APT::FTPArchive::Release::Label=TVBian \

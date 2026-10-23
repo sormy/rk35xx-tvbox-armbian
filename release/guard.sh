@@ -12,8 +12,11 @@ names() { tr ',' '\n' | sed 's/^ *//; s/[ (].*//' | sed '/^$/d'; }
 provides() { awk -v RS= -v p="$1" '$0 ~ "(^|\n)Package: " p "\n"' "$REL/Packages.published" |
   sed -n 's/^Provides: //p' | names; }
 
+# a deb the published index already names moved nothing this run: its move was released before
+published=$(sed -n 's|^Filename: \(\./\)\{0,1\}||p' "$REL/Packages.published")
 fail=0
 for deb in /out/debs/*.deb; do
+  grep -qxF "$(basename "$deb")" <<<"$published" && continue
   pkg=$(dpkg-deb -f "$deb" Package)
   conflicts=$(dpkg-deb -f "$deb" Conflicts | names)
   dpkg-deb -c "$deb" | awk '$1 !~ /^d/ { sub(/^\.\//, "", $6); print $6 }' >"$REL/paths"

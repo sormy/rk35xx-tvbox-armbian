@@ -12,6 +12,8 @@ git merge-base --is-ancestor HEAD "origin/$(git rev-parse --abbrev-ref HEAD)" ||
   { echo "✗ HEAD is not pushed: a release names a commit others can see" >&2; exit 1; }
 
 APT=${TVB_APT_URL:-https://github.com/sormy/tvbian/releases/download/apt}
+# GitHub's download URLs serve an asset replaced a minute or two late
+SERVED_TRIES=20 SERVED_PAUSE_S=15
 # indexed <Packages>: the deb files it names
 indexed() { sed -n 's|^Filename: \(\./\)\{0,1\}||p' "$1"; }
 # assets <names>: delete every .deb asset the names leave out
@@ -26,29 +28,43 @@ prune() {
 gh release view apt >/dev/null 2>&1 ||
   gh release create apt --prerelease --latest=false --title "apt repository" \
     --notes "TVBian's flat apt repository. Install tvb-archive-keyring, or see the README."
-# one publisher at a time: CI's concurrency group covers its own runs, not a Mac's beside them
-running=$(gh run list --workflow release.yml --status in_progress --json databaseId -q '.[].databaseId')
-[ -n "${GITHUB_ACTIONS:-}" ] || [ -z "$running" ] ||
-  { echo "✗ a release workflow run is in progress: publish after it" >&2; exit 1; }
-# the index this run was planned against must still be the live one: expiry deletes what it omits
-live=$(mktemp); trap 'rm -f "$live"' EXIT
-curl -fsSL "$APT/Packages" -o "$live" 2>/dev/null || : >"$live"
-cmp -s "$live" "$OUT/release/Packages.published" ||
-  { echo "✗ $APT/Packages changed since this run's plan: plan again" >&2; exit 1; }
-# a deb the live index does not name is a failed run's, maybe with other bytes under the same name
-prune "$(indexed "$live")"
-# the debs before the index that names them; the plan fetched the published ones, already there
-have=$(gh release view apt --json assets -q '.assets[].name')
-debs=$(find "$OUT/repo" -name '*.deb' | while read -r d; do grep -qxF "$(basename "$d")" <<<"$have" || echo "$d"; done)
-[ -z "$debs" ] || gh release upload apt $debs
-gh release upload apt --clobber "$OUT/repo/Packages" "$OUT/repo/Packages.xz" "$OUT/repo/Contents" \
-  "$OUT/repo/Release" "$OUT/repo/InRelease" "$OUT/repo/Release.gpg"
-# the repo as a box sees it, before any image points boxes at it or any expired deb goes
-python3 release/verify.py
-# the debs the new index no longer names have expired, release/expire.py says how
-names=$(indexed "$OUT/repo/Packages")
-[ -n "$names" ] || { echo "✗ the new index names no deb: deleting nothing" >&2; exit 1; }
-prune "$names"
+# publish_apt: the new debs and the index, then what expired goes
+publish_apt() {
+  local running live have debs names
+  # one publisher at a time: CI's concurrency group covers its own runs, not a Mac's beside them
+  running=$(gh run list --workflow release.yml --status in_progress --json databaseId \
+    -q '.[].databaseId')
+  [ -n "${GITHUB_ACTIONS:-}" ] || [ -z "$running" ] ||
+    { echo "✗ a release workflow run is in progress: publish after it" >&2; exit 1; }
+  # the index this run was planned against must still be the live one: expiry deletes what it omits
+  live=$(mktemp)
+  curl -fsSL "$APT/Packages" -o "$live" 2>/dev/null || : >"$live"
+  cmp -s "$live" "$OUT/release/Packages.published" ||
+    { echo "✗ $APT/Packages changed since this run's plan: plan again" >&2; exit 1; }
+  # a deb the live index does not name is a failed run's, maybe with other bytes under the same name
+  prune "$(indexed "$live")"
+  rm -f "$live"
+  # the debs before the index that names them; the plan fetched the published ones, already there
+  have=$(gh release view apt --json assets -q '.assets[].name')
+  debs=$(find "$OUT/repo" -name '*.deb' | while read -r d; do
+    grep -qxF "$(basename "$d")" <<<"$have" || echo "$d"
+  done)
+  [ -z "$debs" ] || gh release upload apt $debs
+  gh release upload apt --clobber "$OUT/repo/Packages" "$OUT/repo/Packages.xz" \
+    "$OUT/repo/Contents" "$OUT/repo/Release" "$OUT/repo/InRelease" "$OUT/repo/Release.gpg"
+  # the repo as a box sees it, before any image points boxes at it or any expired deb goes
+  for _ in $(seq "$SERVED_TRIES"); do
+    curl -fsSL "$APT/Packages" 2>/dev/null | cmp -s - "$OUT/repo/Packages" && break
+    sleep "$SERVED_PAUSE_S"
+  done
+  python3 release/verify.py
+  # the debs the new index no longer names have expired, release/expire.py says how
+  names=$(indexed "$OUT/repo/Packages")
+  [ -n "$names" ] || { echo "✗ the new index names no deb: deleting nothing" >&2; exit 1; }
+  prune "$names"
+}
+# nothing new: the apt repo stays as it is, and nothing expires without a release
+if grep -qs ' new$' "$OUT/release/plan"; then publish_apt; else echo "✓ nothing new for apt"; fi
 
 images=$(find "$OUT/images" -name '*.img.xz' 2>/dev/null)
 [ -n "$images" ] || { echo "✓ apt published; no images to release"; exit 0; }

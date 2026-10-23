@@ -28,6 +28,7 @@ on:
       - keyring/**
       - boards/**
       - base/**
+      - tests/**
       - firmware/**
       - .github/workflows/release.yml
   pull_request:
@@ -44,6 +45,7 @@ on:
       - keyring/**
       - boards/**
       - base/**
+      - tests/**
       - firmware/**
       - .github/workflows/release.yml
 
@@ -131,10 +133,17 @@ jobs:
           path: build/out/debs
           retention-days: 1
 
+  test:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+      # dpkg orders versions for release/expire.py, and the runner has it
+      - run: python3 -m unittest discover -s tests -v
+
   release:
-    needs: [plan, kernel]
-    # every kernel built, or none needed building
-    if: always() && needs.plan.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.kernel.result)
+    needs: [plan, kernel, test]
+    # every kernel built, or none needed building; and the tests passed
+    if: always() && needs.plan.result == 'success' && needs.test.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.kernel.result)
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
     permissions:

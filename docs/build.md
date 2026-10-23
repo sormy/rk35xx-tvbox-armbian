@@ -66,8 +66,9 @@ The plan looks up each group's `X-Tvb-Inputs`, from `release/inputs.sh`, in the 
 `build/out/debs/`, then the guard, the images and the repo.
 
 A path that moves between packages needs `Replaces` and `Breaks` on its new owner, versioned below
-the old owner's first release without it; `release/guard.sh` fails the release otherwise, against
-the published `Contents`. A path renamed within one package needs neither.
+the old owner's first release without it; `release/guard.sh` fails the release otherwise, checking
+the debs a run adds against the published `Contents`. A path renamed within one package needs
+neither.
 
 Testing the served repo from a box, 🟡 run from a trixie container only:
 
@@ -94,7 +95,8 @@ arm64, GitHub's hosted runners, free for a public repo.
 | ------- | ------------ | ----------------------------------------------------------------- |
 | plan    | 1            | each group's version, `new` or `published`, as an artifact        |
 | kernel  | one a kernel | that kernel's debs, unless already published; as artifacts        |
-| release | 1            | firmware, boards, base, keyring, the guard, images, repo, publish |
+| test    | 1            | `tests/`, on the runner; the release waits on it                  |
+| release | 1            | firmware, boards, base, keyring, the guard, images, repo; publish |
 
 | Trigger                   | Builds                | Publishes |
 | ------------------------- | --------------------- | --------- |
@@ -102,6 +104,9 @@ arm64, GitHub's hosted runners, free for a public repo.
 | `workflow_dispatch`       | the same              | yes       |
 | a push to a build input   | the same              | no        |
 | a pull request            | at the PR's pins      | no        |
+
+A run that does not publish also skips expiry and the release notes; it checks what a release would
+build, and the `test` job runs on every one.
 
 The last job starts only once every kernel job passed, so a failure publishes nothing; only it
 signs, from the `ARCHIVE_SIGNING_KEY` secret. A dispatch with `clean` builds without ccache; one
@@ -138,7 +143,10 @@ package's newest version, and an older one for `TVB_APT_KEEP_DAYS` after somethi
 it, six months by default; a kernel's own packages, named for its release, stay while a kept
 metapackage depends on them, its headers beside them, and every deb a run built or reused stays. So
 `apt install linux-image-<kernelrelease>` goes back to any kernel replaced in that window without a
-reflash. `./build.sh test` runs the rule's cases.
+reflash. Expiry happens only in a run that publishes, a scheduled or dispatched one, which is the
+only kind that signs: an unsigned run, a push, a pull request or a local `./build.sh assemble`,
+merges its debs into the index and drops nothing. A publishing run with nothing new leaves the `apt`
+repo as it is, though its images still go out. `./build.sh test` runs the rule's cases.
 
 The repo is flat, `Packages.xz`, `Release` and `InRelease` beside the `.deb`s, from
 `apt-ftparchive`, signed with `gpg`. apt's `https` method follows `releases/download`'s redirect to
