@@ -24,7 +24,8 @@ link ../tvb-journal-spill.timer /usr/lib/systemd/system/timers.target.wants/tvb-
 
 # the console: the boot log stays under the login prompt, and the banners
 0644 getty-tty1.conf           /usr/lib/systemd/system/getty@tty1.service.d/50-tvb.conf
-0644 tvbian.issue              /etc/issue.d/tvbian.issue
+# /etc/issue in place of base-files', which package/base.sh diverts to /etc/issue.debian
+0644 issue                     /etc/issue
 0755 motd                      /etc/update-motd.d/10-tvbian
 
 # apt: no Recommends, no translations
