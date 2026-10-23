@@ -2165,3 +2165,22 @@ came out byte-identical; only U-Boot proper differs, a different compiler's code
 - `v2026.10` (`b6c0e0a8…`) in slot A on its SD card, `mmcblk0`, rebooted: `u-boot,version`
   `2026.10`, back in under a minute; nothing failed, `eth0` on `00:EF:00:4A:43:A6`, the label MAC.
   Slot B then copied from slot A; both read back `b6c0e0a8…`.
+
+## 2026-10-22 — the RK630 PHY driver loads by alias
+
+`tvb-rk630phy.conf` was an overlay leftover: `rk630phy` declares the PHY's ID `0x00441400`, so udev
+loads it as the device is replayed. Moved aside and rebooted: the PHY bound to `RK630 PHY` at 12.8
+s. The Seekwave modules still need `tvb-seekwave.conf`: none of the three declares an alias.
+
+## 2026-10-22 — the Seekwave drivers load by alias
+
+The three Seekwave modules declared no alias, so `tvb-seekwave.conf` in `/usr/lib/modules-load.d/`
+was what loaded them. `patches/seekwave-swt6621s/0007` exports the SDIO id table and adds
+`platform:sv6621s_wireless1` and `platform:btseekwave`: the card, present on the SDIO bus before any
+driver loads, brings in `skw_sdio_lite`, and the devices it creates bring in the other two.
+
+- Before the patch, with the conf moved aside: `mmc1:0001:1` `sdio:c00v1FFEd6621` on the bus and no
+  Seekwave module loaded at 45 s.
+- With `tvb-swt6621s-modules` and `tvb-firmware-swt6621s` built locally with `0007` and without the
+  conf: `systemd-modules-load` inserted nothing, `wlan0` at 12.8 s, `hci0` up, nothing failed; a
+  fallback unit found all three loaded at 60 s.

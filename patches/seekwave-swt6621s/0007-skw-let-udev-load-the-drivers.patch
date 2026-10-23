@@ -1,0 +1,39 @@
+From: Artem Butusov <art.sormy@gmail.com>
+Subject: [PATCH] skw: let udev load the drivers
+
+The SDIO driver has an id table but never exports it, and the Wi-Fi and
+Bluetooth drivers bind platform devices the SDIO driver creates by name
+without a matching alias. Nothing can load them on demand, so every
+system lists all three for loading at boot. Export the table and add the
+two platform aliases: the card brings in skw_sdio_lite, and the devices
+it creates bring in swt6621s_wifi and skwbt.
+
+Signed-off-by: Artem Butusov <art.sormy@gmail.com>
+---
+--- a/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c
++++ b/drivers/seekwaveplatform_lite/sdio/skw_sdio_main.c
+@@ -1180,6 +1180,7 @@ static const struct sdio_device_id skw_sdio_ids[] = {
+ 	{SDIO_DEVICE(0x1FFE, 0x6621)},
+ 	{},
+ };
++MODULE_DEVICE_TABLE(sdio, skw_sdio_ids);
+ 
+ static struct sdio_driver skw_sdio_driver = {
+ 	.probe = skw_sdio_probe,
+--- a/drivers/swt6621s_wifi/skw_core.c
++++ b/drivers/swt6621s_wifi/skw_core.c
+@@ -2586,5 +2586,6 @@ module_param_array_named(mac, skw_mac, byte, NULL, 0444);
+ MODULE_PARM_DESC(mac, "config mac address");
+ 
+ MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:sv6621s_wireless1");
+ MODULE_VERSION("1.0.0");
+ MODULE_AUTHOR("seekwavetech");
+--- a/drivers/swtbt4l/skw_btdriver.c
++++ b/drivers/swtbt4l/skw_btdriver.c
+@@ -1247,4 +1247,5 @@ module_exit(btseekwave_exit);
+ MODULE_DESCRIPTION("Seekwave Bluetooth driver ver " VERSION);
+ MODULE_VERSION(VERSION);
+ MODULE_LICENSE("GPL");
++MODULE_ALIAS("platform:btseekwave");
+ 

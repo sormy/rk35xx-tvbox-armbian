@@ -3156,3 +3156,14 @@ came out byte-identical; only U-Boot proper differs, a different compiler's code
 - `v2026.10` (`118bc614…`) in slot A on the eMMC, rebooted: `u-boot,version` `2026.10`, back in
   under a minute; nothing failed (no Ethernet fitted). Slot B then copied from slot A; both read
   back `118bc614…`.
+
+## 2026-10-22 — the Seekwave drivers load by alias
+
+The three Seekwave modules declared no alias, so `tvb-seekwave.conf` in `/usr/lib/modules-load.d/`
+was what loaded them. `patches/seekwave-swt6621s/0007` exports the SDIO id table and adds
+`platform:sv6621s_wireless1` and `platform:btseekwave`: the card, present on the SDIO bus before any
+driver loads, brings in `skw_sdio_lite`, and the devices it creates bring in the other two.
+
+- With `tvb-swt6621s-modules` and `tvb-firmware-swt6621s` built locally with `0007` and without the
+  conf: `systemd-modules-load` inserted nothing, `wlan0` at 10.8 s, `hci0` up, nothing failed; a
+  fallback unit found all three loaded at 60 s.

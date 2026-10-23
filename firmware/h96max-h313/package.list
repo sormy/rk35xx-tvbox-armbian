@@ -29,7 +29,6 @@ link ../tvb-journal-spill.timer    /usr/lib/systemd/system/timers.target.wants/t
 0644 common/vpu.rules              /usr/lib/udev/rules.d/99-tvb-vpu.rules
 0644 common/input-names.rules      /usr/lib/udev/rules.d/60-tvb-input-names.rules
 0644 common/rfkill-bt.rules        /usr/lib/udev/rules.d/60-tvb-rfkill-bt.rules
-0644 common/rk630phy.conf          /usr/lib/modules-load.d/tvb-rk630phy.conf
 
 # the login banner
 0755 common/motd                   /etc/update-motd.d/10-tvbian

@@ -218,8 +218,7 @@ and hides the problem), `rfkill block bluetooth`, reboot. Both times `bt_default
 ## Ethernet PHY
 
 The integrated RK630 PHY needs OTP calibration — bound to Generic PHY instead, some units drop to 10
-Mb/s. The vendor kernel ships `rk630phy`; `/usr/lib/modules-load.d/tvb-rk630phy.conf` loads it at
-boot.
+Mb/s. The vendor kernel ships `rk630phy`, and udev loads it by the PHY's ID before `eth0` opens.
 
 ```sh
 readlink /sys/class/net/eth0/phydev/driver   # want "RK630 PHY", not "Generic PHY"

@@ -30,7 +30,7 @@ find /etc /usr/local /usr/lib/systemd /usr/src \( -name '*r69*' -o -name '*rk35x
   while read -r f; do dpkg -S "$f" >/dev/null 2>&1 || sudo rm -rf "$f"; done
 # and the ones it named without a prefix
 sudo rm -f /etc/udev/hwdb.bin /etc/systemd/system/multi-user.target.d/10-{r69,h96max*}.conf \
-  /etc/modules-load.d/seekwave.conf /etc/systemd/system/serial-getty@ttyFIQ0.service \
+  /etc/modules-load.d/{seekwave,aic8800}.conf /etc/systemd/system/serial-getty@ttyFIQ0.service \
   /etc/modprobe.d/blacklist-aic8800-usb.conf
 ```
 

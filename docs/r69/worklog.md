@@ -1850,3 +1850,16 @@ byte-identical; only U-Boot proper differs, a different compiler's code.
 - `v2026.10` (`34644c8d…`) in slot A on /dev/mmcblk1 (eMMC), rebooted: `u-boot,version` `2026.10`,
   back in 29 s; `cncjs` active, nothing failed, `eth0` on `C4:2A:FE:10:51:77`, the label MAC. Slot B
   then copied from slot A; both read back `34644c8d…`.
+
+## 2026-10-22 — the AIC8800 and RK630 drivers load by alias
+
+`tvb-aic8800.conf` and `tvb-rk630phy.conf` in `/usr/lib/modules-load.d/` were overlay leftovers: the
+overlay built these drivers with DKMS on first boot, after udev's coldplug. `aic8800_fdrv` declares
+`sdio:c*vC8A1d0082*`, the card's function 1, and `rk630phy` declares the PHY's ID `0x00441400`;
+`udevadm test` on the card runs `80-drivers.rules`' `kmod load`.
+
+- Both moved aside, with a fallback unit to `modprobe` them 60 s after boot. The first boot still
+  showed `aic8800_fdrv` from `systemd-modules-load`: `/etc/modules-load.d/aic8800.conf`, owned by no
+  package and dated 2026-08-15, the Armbian era, which the migration's list missed. Removed too.
+- Second boot: `systemd-modules-load` inserted nothing, `aicbsp_init` at 12.3 s, `wlan0` up, the PHY
+  on `RK630 PHY`, `cncjs` active; the fallback logged both drivers already loaded. Unit removed.

@@ -14,6 +14,10 @@ the pinned source by `modules/swt6621s.conf`.
   both run the factory chip code. Not submitted upstream.
 - `0006` — the Bluetooth driver fails to build on 6.11 and later: `platform_driver.remove` returns
   void, and `class_create()` takes no module. Not submitted upstream.
+- `0007` — nothing can load the drivers on demand: the SDIO id table is never exported, and the
+  Wi-Fi and Bluetooth drivers have no alias for the platform devices they bind. Exports the table
+  and adds both aliases, so udev loads all three as the card and its devices appear. Not submitted
+  upstream.
 
 Every patch here applies to pinned commit `b1b15016`; after a bump,
 `./build.sh kernel kernel/rk35xx.conf` builds the module from them, which is how to check they still
