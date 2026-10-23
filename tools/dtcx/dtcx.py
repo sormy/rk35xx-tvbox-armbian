@@ -456,6 +456,8 @@ class Renderer:
                     flag = number(out[i + 2])
                     if flag in GPIO_FLAGS:
                         out[i + 2] = GPIO_FLAGS[flag]
+                    elif flag is not None:
+                        self.unnamed.append(f"{node} {prop} {out[i + 2]}: no gpio flag name")
         if any(fnmatch(prop, p) for p in self.base.refs) and all(c in self.refs for c in out):
             out = [self.refs[c] for c in out]
         if "gic" in self.base.renderers and prop == "interrupts":
@@ -482,6 +484,8 @@ class Renderer:
                 found = self.lookup(("KEY_", "BTN_"), v) if v is not None else []
                 if len(found) == 1:
                     out[i] = found[0]
+                elif v is not None:
+                    self.unnamed.append(f"{node} {prop} {c}: {found or 'no name'}")
         if "thermal" in self.base.renderers and prop == "cooling-device":
             out = ["THERMAL_NO_LIMIT" if c == "0xffffffff" else c for c in out]
         if self.decimal(node, prop):
