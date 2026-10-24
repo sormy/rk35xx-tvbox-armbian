@@ -46,8 +46,8 @@ The appended string is the box's own truth, not a lie: its `rkvdec`/`rkvenc` nod
 tree carries `rockchip,rk3528a`; it does not. Carved from eMMC, **both** boards' stored DTBs say
 `"rockchip,rk3518-evb1-ddr4-v10", "rockchip,rk3518"`. The R69's vendor U-Boot rewrites the SoC
 compatible to `rockchip,rk3528a` before handing the tree to Linux; the H96 Max's does not. The
-earlier claim came from reading the R69's tree off a running box — the trap `board-bringup.md` opens
-with. This graft does by hand what the R69 gets from its bootloader.
+earlier claim came from reading the R69's tree off a running box — which shows the tree after U-Boot
+edited it. This graft does by hand what the R69 gets from its bootloader.
 
 `rk3528a` vs `rk3528` differ in MPP by one capability, VP9 decode, which makes the choice real
 rather than cosmetic. **Measured on the R69**: VP9 decodes at 635 / 325 / 85 fps at 720p / 1080p /

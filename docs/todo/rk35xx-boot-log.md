@@ -2,8 +2,8 @@
 
 `dmesg` on the R69 is **1317 lines, 524 err/warn** (2026-08-26, 41 min uptime, kernel 6.1.115 pkg
 26.8.3); the H96 Max is 1508/676. An earlier 914/121 reading predates the two entries below. The bar
-in `board-validation.md` is _no repeated chatter at any level_, so the total is what matters. Almost
-none of it is a real fault; most is drivers announcing normal progress.
+is _no repeated chatter at any level_, so the total is what matters. Almost none of it is a real
+fault; most is drivers announcing normal progress.
 
 Two entries dominate the err/warn count:
 

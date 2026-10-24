@@ -97,6 +97,10 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 - [ ] **R69 and H313: their IR tables onto the canonical keymap** in `docs/remote-keymap.md`. Each
       `ir_keyN` table in `board.patch` gives its own keys today (OK is `KEY_ENTER` on the R69,
       `KEY_REPLY` on the H313); then its pass over both transports, once a box has the remote.
+- [ ] **Rename the R69 to `r69-1`.** `r69` names boxes of several designs, against
+      `docs/bring-up.md`'s board identity. `boards/`, `stock/` and `docs/` move; a last `tvb-r69`
+      depends on `tvb-r69-1`, which `Replaces` and `Breaks` it, so an installed box upgrades into
+      it; `/usr/lib/tvb/board-id` changes with it.
 - [ ] **A USB keyboard's keymap on `tty1`:** `console-setup` in the image and a README line, or US
       only.
 - [ ] **BTF:** dropped with debug info by `CONFIG_DEBUG_INFO_NONE`, or kept for BPF tools at the

@@ -57,8 +57,7 @@ another, so nothing rots when one is rewritten.
 
 | Doc                                   | Holds                                                                |
 | ------------------------------------- | -------------------------------------------------------------------- |
-| `docs/board-bringup.md`               | serial, evidence, device tree, board data, offline verify            |
-| `docs/board-validation.md`            | the criteria of done, and the caveats behind them                    |
+| `docs/bring-up.md`                    | board, chip and family bring-up, the kit, the criteria of done       |
 | `docs/first-login.md`                 | a new box's user, timezone, locale and Wi-Fi, by hand                |
 | `docs/mpp.md`                         | reaching the video engines; the codec test commands                  |
 | `docs/emmc-layout.md`                 | the measured eMMC map: every replicated structure and its sectors    |
@@ -110,8 +109,9 @@ Five states, meaning exactly what they say:
 - **❌ tested and broken.**
 - **➖ not present on this box.**
 
-**Verification is per-board.** A shared mechanism earns 🟡, never ✅. 🟡 and ❓ are not
-interchangeable: 🟡 has a reason behind it, ❓ is an unknown.
+**Verification is per-board.** A shared mechanism earns 🟡. It earns ✅ only from a sister board's
+✅ plus a weak check on this board, a sister being identical for that block: the same SoC, chip and
+tree node. 🟡 and ❓ are not interchangeable: 🟡 has a reason behind it, ❓ is an unknown.
 
 **Check before asserting** — read the file, query the box, run the command. A doc is not evidence
 about hardware; reconcile against the box. Don't publish a recipe you haven't run, and when a claim
@@ -141,8 +141,9 @@ cannot be backed, say so rather than rounding up.
 - **One command, one line.** The mechanism behind it goes in `docs/todo/` or the patch that
   implements it. Never warn against a command the doc does not give, or defend against a state it
   forbids.
-- **Keep a doc around 300 lines** — past that by much, split it or cut it. Two exceptions:
-  `docs/<board>/board.md` gets 500, and `worklog.md` has no limit, being append-only history.
+- **Keep a doc around 300 lines** — past that by much, split it or cut it. Three exceptions:
+  `docs/<board>/board.md` gets 500; `docs/bring-up.md` 600, being the procedure and its validation
+  in one; and `worklog.md` has no limit, being append-only history.
 - **README is scannable**: no filler, no repeated links, no per-board hardcoding where a pattern
   works. Warnings go in blockquotes. Humour is fine; it must not cost clarity.
 - `npx prettier --write` on every markdown file you touch.

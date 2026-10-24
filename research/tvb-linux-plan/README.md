@@ -295,7 +295,7 @@ Each phase ships alone and reverts by reinstalling Armbian's kernel.
 
 1. **The meson64 kernel debs on the M20's Armbian image**, the first TVBian box. Install beside
    Armbian's kernel, Armbian's held; the chain-loaded Lepotato U-Boot stays. Done when:
-   - it boots with no DKMS package installed, and `docs/board-validation.md` passes;
+   - it boots with no DKMS package installed, and passes the criteria of done;
    - mt76, btmtksdio, `meson-dw-hdmi` and `meson-codecs` are in-tree patches;
    - it boots from `extlinux.conf`, rewritten by `u-boot-menu`'s kernel hook on every install: no
      Armbian `/boot` links, no `uInitrd`. Checked first, since it is 🟡: that the chain-loaded
@@ -334,8 +334,8 @@ The loud rows are rarer than they look: the mt76 and btmtksdio patches applied u
 to 7.2.8 and built (M20 worklog, 2026-10-12). What failed there was DKMS building 6.18's sources
 against 7.2.8's headers, a mismatch in-tree drivers cannot have.
 
-The quiet rows cost most. The only check that sees them is `docs/board-validation.md` as a script,
-run on one box per family; until then a moved pin is a risk the release takes unseen.
+The quiet rows cost most. The only check that sees them is the criteria of done as a script, run on
+one box per family; until then a moved pin is a risk the release takes unseen.
 
 ## Name
 

@@ -11,11 +11,11 @@ The agent gets the box on serial and USB, `AGENTS.md`, and the docs it indexes, 
 point where it stalls, guesses, or asks is a doc defect: fixed in that doc, logged in this board's
 worklog. Done when a second agent could repeat the port from the fixed docs.
 
-| Instruction under test     | Proves                                                  |
-| -------------------------- | ------------------------------------------------------- |
-| `docs/board-bringup.md`    | evidence, backup, tree, board data, from a factory box  |
-| a new family's steps       | kernel, U-Boot, image layout for a SoC the repo lacks   |
-| `docs/board-validation.md` | the criteria of done, each ✅ with its command's output |
+| Instruction under test | Proves                                                 |
+| ---------------------- | ------------------------------------------------------ |
+| the board bring-up     | evidence, backup, tree, board data, from a factory box |
+| a new family's steps   | kernel, U-Boot, image layout for a SoC the repo lacks  |
+| the criteria of done   | each line ✅ with its command's output                 |
 
 A new family has no steps written yet; writing them, from this port, is part of the work.
 
@@ -30,8 +30,8 @@ A new family has no steps written yet; writing them, from this port, is part of 
    boot ROM runs an unsigned loader: first proven from SD, the eMMC untouched.
 4. **The board.** Tree, `board.conf`, `preserve-sectors`; the Wi-Fi chip as a `chips/<chip>/` if no
    mainline driver covers it.
-5. **Validation**, every criterion in `docs/board-validation.md`, then `tvb-install` to the eMMC
-   with the identity sectors kept.
+5. **Validation**, every criterion of done, then `tvb-install` to the eMMC with the identity sectors
+   kept.
 
 ## Expected trouble, from linux-sunxi practice
 
