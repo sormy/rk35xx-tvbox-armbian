@@ -113,12 +113,11 @@ Small items live here. An item that needs its own page gets one in `docs/todo/`,
 
 ## Bigger todos
 
-| File                                    | Open question                                  |
-| --------------------------------------- | ---------------------------------------------- |
-| `docs/todo/media-stick.md`              | the universal media stick                      |
-| `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                               |
-| `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset          |
-| `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                              |
-| `docs/todo/website.md`                  | tvbian.com: one page on GitHub Pages           |
-| `docs/todo/repo-layout.md`              | folders, patches, tools and docs, regrouped    |
-| `docs/todo/tanix-h313.md`               | first Allwinner board; the bring-up docs' test |
+| File                                    | Open question                               |
+| --------------------------------------- | ------------------------------------------- |
+| `docs/todo/media-stick.md`              | the universal media stick                   |
+| `docs/todo/rk35xx-boot-log.md`          | boot log cleanup                            |
+| `docs/todo/rk35xx-sd-uhs-warm-reset.md` | `dwmmc` first init after a warm reset       |
+| `docs/todo/rk35xx-uboot-usb.md`         | USB in our U-Boot                           |
+| `docs/todo/website.md`                  | tvbian.com: one page on GitHub Pages        |
+| `docs/todo/repo-layout.md`              | folders, patches, tools and docs, regrouped |
